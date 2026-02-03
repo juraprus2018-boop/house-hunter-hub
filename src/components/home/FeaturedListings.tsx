@@ -1,4 +1,4 @@
-import { ArrowRight, MapPin, Bed, Square, Heart } from "lucide-react";
+import { ArrowRight, MapPin, Bed, Square, Heart, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -10,67 +10,66 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
-
-// Mock data - will be replaced with real data from database
-const mockListings = [
-  {
-    id: "1",
-    title: "Modern appartement centrum",
-    location: "Amsterdam Centrum",
-    price: 1850,
-    bedrooms: 2,
-    area: 75,
-    image: "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800&auto=format&fit=crop&q=60",
-    type: "Appartement",
-    isNew: true,
-  },
-  {
-    id: "2",
-    title: "Ruime eengezinswoning",
-    location: "Utrecht Oost",
-    price: 1650,
-    bedrooms: 4,
-    area: 120,
-    image: "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=800&auto=format&fit=crop&q=60",
-    type: "Huis",
-    isNew: false,
-  },
-  {
-    id: "3",
-    title: "Luxe penthouse met dakterras",
-    location: "Rotterdam Zuid",
-    price: 2450,
-    bedrooms: 3,
-    area: 110,
-    image: "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800&auto=format&fit=crop&q=60",
-    type: "Appartement",
-    isNew: true,
-  },
-  {
-    id: "4",
-    title: "Gezellige studio",
-    location: "Den Haag Centrum",
-    price: 895,
-    bedrooms: 1,
-    area: 35,
-    image: "https://images.unsplash.com/photo-1493809842364-78817add7ffb?w=800&auto=format&fit=crop&q=60",
-    type: "Studio",
-    isNew: false,
-  },
-  {
-    id: "5",
-    title: "Karakteristiek grachtenpand",
-    location: "Amsterdam Jordaan",
-    price: 2200,
-    bedrooms: 3,
-    area: 95,
-    image: "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&auto=format&fit=crop&q=60",
-    type: "Appartement",
-    isNew: true,
-  },
-];
+import { useFeaturedProperties } from "@/hooks/useProperties";
+import { useToggleFavorite } from "@/hooks/useFavorites";
+import { useAuth } from "@/contexts/AuthContext";
+import { cn } from "@/lib/utils";
 
 const FeaturedListings = () => {
+  const { data: properties, isLoading } = useFeaturedProperties();
+  const { user } = useAuth();
+  const { toggle, isFavorite, isLoading: favoriteLoading } = useToggleFavorite();
+
+  const formatPrice = (price: number, listingType: string) => {
+    const formatted = new Intl.NumberFormat("nl-NL", {
+      style: "currency",
+      currency: "EUR",
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(price);
+    return listingType === "huur" ? `${formatted}/mnd` : formatted;
+  };
+
+  const isNew = (createdAt: string) => {
+    return new Date(createdAt).getTime() > Date.now() - 7 * 24 * 60 * 60 * 1000;
+  };
+
+  if (isLoading) {
+    return (
+      <section className="py-16">
+        <div className="container">
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (!properties || properties.length === 0) {
+    return (
+      <section className="py-16">
+        <div className="container">
+          <div className="mb-8">
+            <h2 className="font-display text-3xl font-bold text-foreground">
+              Uitgelichte woningen
+            </h2>
+            <p className="mt-2 text-muted-foreground">
+              Er zijn nog geen woningen beschikbaar. Wees de eerste om een woning te plaatsen!
+            </p>
+          </div>
+          <div className="text-center">
+            <Link to="/plaatsen">
+              <Button className="bg-accent text-accent-foreground hover:bg-accent/90">
+                Plaats je eerste woning
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section className="py-16">
       <div className="container">
@@ -99,59 +98,75 @@ const FeaturedListings = () => {
           className="w-full"
         >
           <CarouselContent className="-ml-4">
-            {mockListings.map((listing) => (
-              <CarouselItem key={listing.id} className="pl-4 md:basis-1/2 lg:basis-1/3">
-                <Link to={`/woning/${listing.id}`}>
+            {properties.map((property) => (
+              <CarouselItem key={property.id} className="pl-4 md:basis-1/2 lg:basis-1/3">
+                <Link to={`/woning/${property.id}`}>
                   <Card className="group overflow-hidden border-0 shadow-md transition-shadow hover:shadow-xl">
                     <div className="relative aspect-[4/3] overflow-hidden">
                       <img
-                        src={listing.image}
-                        alt={listing.title}
+                        src={property.images?.[0] || "/placeholder.svg"}
+                        alt={property.title}
                         className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
                       />
-                      {listing.isNew && (
+                      {isNew(property.created_at) && (
                         <Badge className="absolute left-3 top-3 bg-accent text-accent-foreground">
                           Nieuw
                         </Badge>
                       )}
-                      <button
-                        className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-white/80 text-muted-foreground backdrop-blur transition-colors hover:bg-white hover:text-destructive"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          // TODO: Add to favorites
-                        }}
-                      >
-                        <Heart className="h-5 w-5" />
-                      </button>
+                      {user && (
+                        <button
+                          className={cn(
+                            "absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-white/80 backdrop-blur transition-colors hover:bg-white",
+                            isFavorite(property.id)
+                              ? "text-red-500"
+                              : "text-muted-foreground hover:text-destructive"
+                          )}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            toggle(property.id);
+                          }}
+                          disabled={favoriteLoading}
+                        >
+                          <Heart
+                            className={cn(
+                              "h-5 w-5",
+                              isFavorite(property.id) && "fill-current"
+                            )}
+                          />
+                        </button>
+                      )}
                       <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-4">
-                        <Badge variant="secondary" className="bg-white/90 text-foreground">
-                          {listing.type}
+                        <Badge variant="secondary" className="bg-white/90 capitalize text-foreground">
+                          {property.property_type}
                         </Badge>
                       </div>
                     </div>
                     <CardContent className="p-4">
                       <div className="mb-2 flex items-start justify-between">
                         <h3 className="font-display text-lg font-semibold text-foreground line-clamp-1">
-                          {listing.title}
+                          {property.title}
                         </h3>
-                        <p className="font-display text-lg font-bold text-primary">
-                          € {listing.price.toLocaleString("nl-NL")}
-                          <span className="text-sm font-normal text-muted-foreground">/mnd</span>
+                        <p className="font-display text-lg font-bold text-primary whitespace-nowrap">
+                          {formatPrice(Number(property.price), property.listing_type)}
                         </p>
                       </div>
                       <div className="flex items-center gap-1 text-sm text-muted-foreground">
                         <MapPin className="h-4 w-4" />
-                        {listing.location}
+                        <span className="line-clamp-1">{property.city}</span>
                       </div>
                       <div className="mt-3 flex items-center gap-4 text-sm text-muted-foreground">
-                        <div className="flex items-center gap-1">
-                          <Bed className="h-4 w-4" />
-                          <span>{listing.bedrooms} slaapkamers</span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <Square className="h-4 w-4" />
-                          <span>{listing.area} m²</span>
-                        </div>
+                        {property.bedrooms && (
+                          <div className="flex items-center gap-1">
+                            <Bed className="h-4 w-4" />
+                            <span>{property.bedrooms} slaapkamers</span>
+                          </div>
+                        )}
+                        {property.surface_area && (
+                          <div className="flex items-center gap-1">
+                            <Square className="h-4 w-4" />
+                            <span>{property.surface_area} m²</span>
+                          </div>
+                        )}
                       </div>
                     </CardContent>
                   </Card>
