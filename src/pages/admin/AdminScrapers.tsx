@@ -12,7 +12,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { useScrapers, useToggleScraper, useScraperLogs } from "@/hooks/useAdmin";
+import { useScrapers, useToggleScraper, useScraperLogs, useRunScraper } from "@/hooks/useAdmin";
 import { 
   Loader2, 
   Play, 
@@ -29,10 +29,10 @@ import { nl } from "date-fns/locale";
 const AdminScrapers = () => {
   const { data: scrapers, isLoading } = useScrapers();
   const toggleScraper = useToggleScraper();
+  const runScraper = useRunScraper();
   const { toast } = useToast();
   const [selectedScraper, setSelectedScraper] = useState<string | null>(null);
   const { data: logs } = useScraperLogs(selectedScraper || undefined);
-  const [runningScrapers, setRunningScrapers] = useState<Set<string>>(new Set());
 
   const handleToggle = async (id: string, currentState: boolean) => {
     try {
@@ -53,26 +53,33 @@ const AdminScrapers = () => {
   };
 
   const handleRunScraper = async (id: string, name: string) => {
-    setRunningScrapers((prev) => new Set(prev).add(id));
-    
-    // Simulate scraper run (in production this would call an edge function)
     toast({
       title: `${name} wordt gestart...`,
       description: "De scraper wordt uitgevoerd. Dit kan enkele minuten duren.",
     });
 
-    // Simulate delay
-    setTimeout(() => {
-      setRunningScrapers((prev) => {
-        const newSet = new Set(prev);
-        newSet.delete(id);
-        return newSet;
-      });
+    try {
+      const result = await runScraper.mutateAsync(id);
+      
+      if (result.success) {
+        toast({
+          title: `${name} voltooid`,
+          description: `${result.properties_scraped} woningen gevonden in ${(result.duration_ms / 1000).toFixed(1)}s. Check de review queue.`,
+        });
+      } else {
+        toast({
+          title: `${name} fout`,
+          description: result.error || "Er ging iets mis bij het scrapen.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
       toast({
-        title: `${name} voltooid`,
-        description: "De scraper heeft de run afgerond. Check de logs voor details.",
+        title: "Fout",
+        description: "Kon de scraper niet uitvoeren.",
+        variant: "destructive",
       });
-    }, 3000);
+    }
   };
 
   if (isLoading) {
@@ -206,10 +213,10 @@ const AdminScrapers = () => {
                   <Button
                     size="sm"
                     className="flex-1"
-                    disabled={!scraper.is_active || runningScrapers.has(scraper.id)}
+                    disabled={!scraper.is_active || runScraper.isPending}
                     onClick={() => handleRunScraper(scraper.id, scraper.name)}
                   >
-                    {runningScrapers.has(scraper.id) ? (
+                    {runScraper.isPending ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                         Bezig...
