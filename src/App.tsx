@@ -15,6 +15,8 @@ import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminProperties from "./pages/admin/AdminProperties";
 import AdminScrapers from "./pages/admin/AdminScrapers";
 import AdminSettings from "./pages/admin/AdminSettings";
+import MyProperties from "./pages/MyProperties";
+import CreateProperty from "./pages/CreateProperty";
 
 const queryClient = new QueryClient();
 
@@ -32,6 +34,8 @@ const App = () => (
             <Route path="/zoeken" element={<Search />} />
             <Route path="/woning/:id" element={<PropertyDetail />} />
             <Route path="/favorieten" element={<Favorites />} />
+            <Route path="/mijn-woningen" element={<MyProperties />} />
+            <Route path="/plaatsen" element={<CreateProperty />} />
             <Route path="/admin" element={<AdminDashboard />} />
             <Route path="/admin/woningen" element={<AdminProperties />} />
             <Route path="/admin/scrapers" element={<AdminScrapers />} />
