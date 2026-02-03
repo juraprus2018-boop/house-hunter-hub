@@ -135,3 +135,64 @@ export const useDeletePropertyAdmin = () => {
     },
   });
 };
+
+export const useRunScraper = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (scraperId: string) => {
+      const { data, error } = await supabase.functions.invoke("run-scraper", {
+        body: { scraper_id: scraperId },
+      });
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["scrapers"] });
+      queryClient.invalidateQueries({ queryKey: ["scraper-logs"] });
+      queryClient.invalidateQueries({ queryKey: ["scraped-properties"] });
+    },
+  });
+};
+
+export const useScrapedProperties = (status?: string) => {
+  return useQuery({
+    queryKey: ["scraped-properties", status],
+    queryFn: async () => {
+      let query = supabase
+        .from("scraped_properties")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (status) {
+        query = query.eq("status", status);
+      }
+
+      const { data, error } = await query;
+      if (error) throw error;
+      return data;
+    },
+  });
+};
+
+export const useUpdateScrapedProperty = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, ...updates }: { id: string; status?: string; reviewed_at?: string; reviewed_by?: string }) => {
+      const { data, error } = await supabase
+        .from("scraped_properties")
+        .update(updates)
+        .eq("id", id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["scraped-properties"] });
+    },
+  });
+};

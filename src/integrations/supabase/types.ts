@@ -157,6 +157,102 @@ export type Database = {
         }
         Relationships: []
       }
+      scraped_properties: {
+        Row: {
+          bathrooms: number | null
+          bedrooms: number | null
+          city: string | null
+          created_at: string
+          description: string | null
+          house_number: string | null
+          id: string
+          images: string[] | null
+          listing_type: string | null
+          postal_code: string | null
+          price: number | null
+          property_type: string | null
+          published_property_id: string | null
+          raw_data: Json | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          scraper_id: string | null
+          source_site: string
+          source_url: string
+          status: string
+          street: string | null
+          surface_area: number | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          bathrooms?: number | null
+          bedrooms?: number | null
+          city?: string | null
+          created_at?: string
+          description?: string | null
+          house_number?: string | null
+          id?: string
+          images?: string[] | null
+          listing_type?: string | null
+          postal_code?: string | null
+          price?: number | null
+          property_type?: string | null
+          published_property_id?: string | null
+          raw_data?: Json | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          scraper_id?: string | null
+          source_site: string
+          source_url: string
+          status?: string
+          street?: string | null
+          surface_area?: number | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          bathrooms?: number | null
+          bedrooms?: number | null
+          city?: string | null
+          created_at?: string
+          description?: string | null
+          house_number?: string | null
+          id?: string
+          images?: string[] | null
+          listing_type?: string | null
+          postal_code?: string | null
+          price?: number | null
+          property_type?: string | null
+          published_property_id?: string | null
+          raw_data?: Json | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          scraper_id?: string | null
+          source_site?: string
+          source_url?: string
+          status?: string
+          street?: string | null
+          surface_area?: number | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scraped_properties_published_property_id_fkey"
+            columns: ["published_property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scraped_properties_scraper_id_fkey"
+            columns: ["scraper_id"]
+            isOneToOne: false
+            referencedRelation: "scrapers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       scraper_logs: {
         Row: {
           created_at: string
