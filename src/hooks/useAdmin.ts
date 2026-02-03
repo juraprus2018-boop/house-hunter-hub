@@ -1,0 +1,137 @@
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+
+export const useIsAdmin = () => {
+  const { user } = useAuth();
+
+  return useQuery({
+    queryKey: ["is-admin", user?.id],
+    queryFn: async () => {
+      if (!user) return false;
+
+      const { data, error } = await supabase.rpc("has_role", {
+        _user_id: user.id,
+        _role: "admin",
+      });
+
+      if (error) {
+        console.error("Error checking admin role:", error);
+        return false;
+      }
+
+      return data === true;
+    },
+    enabled: !!user,
+  });
+};
+
+export const useScrapers = () => {
+  return useQuery({
+    queryKey: ["scrapers"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("scrapers")
+        .select("*")
+        .order("name");
+
+      if (error) throw error;
+      return data;
+    },
+  });
+};
+
+export const useToggleScraper = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, isActive }: { id: string; isActive: boolean }) => {
+      const { data, error } = await supabase
+        .from("scrapers")
+        .update({ is_active: isActive })
+        .eq("id", id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["scrapers"] });
+    },
+  });
+};
+
+export const useScraperLogs = (scraperId?: string) => {
+  return useQuery({
+    queryKey: ["scraper-logs", scraperId],
+    queryFn: async () => {
+      let query = supabase
+        .from("scraper_logs")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(50);
+
+      if (scraperId) {
+        query = query.eq("scraper_id", scraperId);
+      }
+
+      const { data, error } = await query;
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!scraperId || true,
+  });
+};
+
+export const useAllProperties = () => {
+  return useQuery({
+    queryKey: ["all-properties"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("properties")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      return data;
+    },
+  });
+};
+
+export const useUpdatePropertyAdmin = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, ...updates }: { id: string; [key: string]: unknown }) => {
+      const { data, error } = await supabase
+        .from("properties")
+        .update(updates)
+        .eq("id", id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["all-properties"] });
+      queryClient.invalidateQueries({ queryKey: ["properties"] });
+    },
+  });
+};
+
+export const useDeletePropertyAdmin = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("properties").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["all-properties"] });
+      queryClient.invalidateQueries({ queryKey: ["properties"] });
+    },
+  });
+};

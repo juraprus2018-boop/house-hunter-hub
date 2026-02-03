@@ -6,7 +6,6 @@ const categories = [
     title: "Appartement",
     description: "Ruime appartementen in de stad",
     icon: Building2,
-    count: 456,
     slug: "appartement",
     gradient: "from-blue-500/10 to-cyan-500/10",
     iconColor: "text-blue-600",
@@ -15,7 +14,6 @@ const categories = [
     title: "Huis",
     description: "Eengezinswoningen met tuin",
     icon: Home,
-    count: 234,
     slug: "huis",
     gradient: "from-green-500/10 to-emerald-500/10",
     iconColor: "text-green-600",
@@ -24,7 +22,6 @@ const categories = [
     title: "Studio",
     description: "Compacte woonruimtes",
     icon: Building,
-    count: 189,
     slug: "studio",
     gradient: "from-purple-500/10 to-pink-500/10",
     iconColor: "text-purple-600",
@@ -33,7 +30,6 @@ const categories = [
     title: "Kamer",
     description: "Kamers in gedeelde woningen",
     icon: DoorOpen,
-    count: 355,
     slug: "kamer",
     gradient: "from-orange-500/10 to-amber-500/10",
     iconColor: "text-orange-600",
@@ -69,9 +65,6 @@ const CategorySection = () => {
                 </h3>
                 <p className="mt-1 text-sm text-muted-foreground">
                   {category.description}
-                </p>
-                <p className="mt-3 text-sm font-medium text-foreground">
-                  {category.count} woningen
                 </p>
               </div>
             </Link>

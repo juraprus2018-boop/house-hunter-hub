@@ -1,0 +1,114 @@
+import { ReactNode, useEffect } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { useIsAdmin } from "@/hooks/useAdmin";
+import { 
+  LayoutDashboard, 
+  Home as HomeIcon, 
+  Settings, 
+  Activity,
+  ArrowLeft,
+  Loader2 
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+
+interface AdminLayoutProps {
+  children: ReactNode;
+}
+
+const AdminLayout = ({ children }: AdminLayoutProps) => {
+  const { user, loading: authLoading } = useAuth();
+  const { data: isAdmin, isLoading: adminLoading } = useIsAdmin();
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  useEffect(() => {
+    if (!authLoading && !user) {
+      navigate("/inloggen");
+    }
+  }, [user, authLoading, navigate]);
+
+  useEffect(() => {
+    if (!adminLoading && user && isAdmin === false) {
+      navigate("/");
+    }
+  }, [isAdmin, adminLoading, user, navigate]);
+
+  if (authLoading || adminLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (!user || !isAdmin) {
+    return null;
+  }
+
+  const navItems = [
+    { to: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
+    { to: "/admin/woningen", label: "Woningen", icon: HomeIcon },
+    { to: "/admin/scrapers", label: "Scrapers", icon: Activity },
+    { to: "/admin/instellingen", label: "Instellingen", icon: Settings },
+  ];
+
+  const isActive = (path: string, exact?: boolean) => {
+    if (exact) return location.pathname === path;
+    return location.pathname.startsWith(path);
+  };
+
+  return (
+    <div className="flex min-h-screen bg-muted/30">
+      {/* Sidebar */}
+      <aside className="fixed left-0 top-0 z-40 h-screen w-64 border-r bg-card">
+        <div className="flex h-full flex-col">
+          {/* Logo */}
+          <div className="flex h-16 items-center gap-2 border-b px-6">
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
+              <HomeIcon className="h-5 w-5 text-primary-foreground" />
+            </div>
+            <span className="font-display text-lg font-semibold">Admin</span>
+          </div>
+
+          {/* Navigation */}
+          <nav className="flex-1 space-y-1 p-4">
+            {navItems.map((item) => (
+              <Link
+                key={item.to}
+                to={item.to}
+                className={cn(
+                  "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+                  isActive(item.to, item.exact)
+                    ? "bg-primary text-primary-foreground"
+                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                )}
+              >
+                <item.icon className="h-5 w-5" />
+                {item.label}
+              </Link>
+            ))}
+          </nav>
+
+          {/* Back to site */}
+          <div className="border-t p-4">
+            <Link to="/">
+              <Button variant="ghost" className="w-full justify-start gap-2">
+                <ArrowLeft className="h-4 w-4" />
+                Terug naar site
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </aside>
+
+      {/* Main content */}
+      <main className="ml-64 flex-1 p-8">
+        {children}
+      </main>
+    </div>
+  );
+};
+
+export default AdminLayout;
