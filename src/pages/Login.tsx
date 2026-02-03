@@ -5,24 +5,80 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Home, Loader2 } from "lucide-react";
+import { Home, Loader2, Mail } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { supabase } from "@/integrations/supabase/client";
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [showEmailNotConfirmed, setShowEmailNotConfirmed] = useState(false);
+  const [isResending, setIsResending] = useState(false);
   const { signIn } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
+  const resendConfirmation = async () => {
+    if (!email) {
+      toast({
+        variant: "destructive",
+        title: "E-mailadres ontbreekt",
+        description: "Vul eerst je e-mailadres in, dan kan ik de bevestigingsmail opnieuw sturen.",
+      });
+      return;
+    }
+
+    setIsResending(true);
+    try {
+      const { error } = await supabase.auth.resend({
+        type: "signup",
+        email,
+      });
+
+      if (error) {
+        toast({
+          variant: "destructive",
+          title: "Versturen mislukt",
+          description: error.message,
+        });
+        return;
+      }
+
+      toast({
+        title: "Bevestigingsmail verstuurd",
+        description: "Check je inbox (en eventueel spam) en klik op de bevestigingslink.",
+      });
+      setShowEmailNotConfirmed(false);
+    } finally {
+      setIsResending(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    setShowEmailNotConfirmed(false);
 
     const { error } = await signIn(email, password);
 
     if (error) {
+      const isEmailNotConfirmed =
+        error.message === "Email not confirmed" ||
+        error.message.toLowerCase().includes("not confirmed");
+
+      if (isEmailNotConfirmed) {
+        setShowEmailNotConfirmed(true);
+        toast({
+          variant: "destructive",
+          title: "E-mail nog niet bevestigd",
+          description: "Bevestig eerst je e-mailadres of stuur de bevestigingsmail opnieuw.",
+        });
+        setIsLoading(false);
+        return;
+      }
+
       toast({
         variant: "destructive",
         title: "Inloggen mislukt",
@@ -78,6 +134,30 @@ const Login = () => {
                 required
               />
             </div>
+
+            {showEmailNotConfirmed && (
+              <Alert>
+                <Mail className="h-4 w-4" />
+                <div>
+                  <AlertTitle>E-mail nog niet bevestigd</AlertTitle>
+                  <AlertDescription>
+                    Je account is nog niet geactiveerd. Open je bevestigingsmail of stuur ‘m opnieuw.
+                    <div className="mt-3">
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        onClick={resendConfirmation}
+                        disabled={isResending}
+                        className="gap-2"
+                      >
+                        {isResending && <Loader2 className="h-4 w-4 animate-spin" />}
+                        Bevestigingsmail opnieuw sturen
+                      </Button>
+                    </div>
+                  </AlertDescription>
+                </div>
+              </Alert>
+            )}
           </CardContent>
           <CardFooter className="flex flex-col gap-4">
             <Button type="submit" className="w-full" disabled={isLoading}>
