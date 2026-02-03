@@ -1,17 +1,37 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Home, Search, Heart, PlusCircle, User, Menu } from "lucide-react";
+import { Home, Search, Heart, PlusCircle, User, Menu, LogOut } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 const Header = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const { user, signOut } = useAuth();
+  const navigate = useNavigate();
 
   const navLinks = [
     { to: "/zoeken", label: "Zoeken", icon: Search },
     { to: "/favorieten", label: "Favorieten", icon: Heart },
     { to: "/plaatsen", label: "Woning plaatsen", icon: PlusCircle },
   ];
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate("/");
+  };
+
+  const getInitials = (email: string) => {
+    return email.substring(0, 2).toUpperCase();
+  };
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -40,17 +60,50 @@ const Header = () => {
 
         {/* Desktop Auth Buttons */}
         <div className="hidden items-center gap-2 md:flex">
-          <Link to="/login">
-            <Button variant="ghost" className="gap-2">
-              <User className="h-4 w-4" />
-              Inloggen
-            </Button>
-          </Link>
-          <Link to="/registreren">
-            <Button className="bg-accent text-accent-foreground hover:bg-accent/90">
-              Registreren
-            </Button>
-          </Link>
+          {user ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="gap-2">
+                  <Avatar className="h-8 w-8">
+                    <AvatarFallback className="bg-primary text-primary-foreground text-xs">
+                      {getInitials(user.email || "U")}
+                    </AvatarFallback>
+                  </Avatar>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuItem className="text-muted-foreground text-sm">
+                  {user.email}
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link to="/mijn-woningen">Mijn woningen</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/favorieten">Mijn favorieten</Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleSignOut} className="text-destructive">
+                  <LogOut className="mr-2 h-4 w-4" />
+                  Uitloggen
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <>
+              <Link to="/inloggen">
+                <Button variant="ghost" className="gap-2">
+                  <User className="h-4 w-4" />
+                  Inloggen
+                </Button>
+              </Link>
+              <Link to="/registreren">
+                <Button className="bg-accent text-accent-foreground hover:bg-accent/90">
+                  Registreren
+                </Button>
+              </Link>
+            </>
+          )}
         </div>
 
         {/* Mobile Menu */}
@@ -75,19 +128,46 @@ const Header = () => {
                 </Link>
               ))}
               <div className="my-4 border-t" />
-              <Link
-                to="/login"
-                onClick={() => setIsOpen(false)}
-                className="flex items-center gap-3 rounded-lg px-3 py-2 text-foreground transition-colors hover:bg-muted"
-              >
-                <User className="h-5 w-5" />
-                Inloggen
-              </Link>
-              <Link to="/registreren" onClick={() => setIsOpen(false)}>
-                <Button className="w-full bg-accent text-accent-foreground hover:bg-accent/90">
-                  Registreren
-                </Button>
-              </Link>
+              {user ? (
+                <>
+                  <div className="px-3 py-2 text-sm text-muted-foreground">
+                    {user.email}
+                  </div>
+                  <Link
+                    to="/mijn-woningen"
+                    onClick={() => setIsOpen(false)}
+                    className="flex items-center gap-3 rounded-lg px-3 py-2 text-foreground transition-colors hover:bg-muted"
+                  >
+                    Mijn woningen
+                  </Link>
+                  <button
+                    onClick={() => {
+                      handleSignOut();
+                      setIsOpen(false);
+                    }}
+                    className="flex items-center gap-3 rounded-lg px-3 py-2 text-destructive transition-colors hover:bg-muted"
+                  >
+                    <LogOut className="h-5 w-5" />
+                    Uitloggen
+                  </button>
+                </>
+              ) : (
+                <>
+                  <Link
+                    to="/inloggen"
+                    onClick={() => setIsOpen(false)}
+                    className="flex items-center gap-3 rounded-lg px-3 py-2 text-foreground transition-colors hover:bg-muted"
+                  >
+                    <User className="h-5 w-5" />
+                    Inloggen
+                  </Link>
+                  <Link to="/registreren" onClick={() => setIsOpen(false)}>
+                    <Button className="w-full bg-accent text-accent-foreground hover:bg-accent/90">
+                      Registreren
+                    </Button>
+                  </Link>
+                </>
+              )}
             </nav>
           </SheetContent>
         </Sheet>
