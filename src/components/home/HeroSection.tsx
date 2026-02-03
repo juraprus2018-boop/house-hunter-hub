@@ -102,20 +102,20 @@ const HeroSection = () => {
             </div>
           </form>
 
-          {/* Quick stats */}
+          {/* Quick stats - will be dynamic later */}
           <div className="mt-10 flex flex-wrap items-center justify-center gap-8 text-sm text-muted-foreground">
             <div className="flex items-center gap-2">
-              <span className="font-display text-2xl font-bold text-foreground">1.234</span>
+              <span className="font-display text-2xl font-bold text-foreground">-</span>
               <span>woningen</span>
             </div>
             <div className="hidden h-8 w-px bg-border md:block" />
             <div className="flex items-center gap-2">
-              <span className="font-display text-2xl font-bold text-foreground">567</span>
+              <span className="font-display text-2xl font-bold text-foreground">-</span>
               <span>gebruikers</span>
             </div>
             <div className="hidden h-8 w-px bg-border md:block" />
             <div className="flex items-center gap-2">
-              <span className="font-display text-2xl font-bold text-foreground">89</span>
+              <span className="font-display text-2xl font-bold text-foreground">-</span>
               <span>steden</span>
             </div>
           </div>

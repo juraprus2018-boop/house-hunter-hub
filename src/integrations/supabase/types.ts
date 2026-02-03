@@ -157,6 +157,86 @@ export type Database = {
         }
         Relationships: []
       }
+      scraper_logs: {
+        Row: {
+          created_at: string
+          duration_ms: number | null
+          id: string
+          message: string | null
+          properties_scraped: number | null
+          scraper_id: string
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          duration_ms?: number | null
+          id?: string
+          message?: string | null
+          properties_scraped?: number | null
+          scraper_id: string
+          status: string
+        }
+        Update: {
+          created_at?: string
+          duration_ms?: number | null
+          id?: string
+          message?: string | null
+          properties_scraped?: number | null
+          scraper_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scraper_logs_scraper_id_fkey"
+            columns: ["scraper_id"]
+            isOneToOne: false
+            referencedRelation: "scrapers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      scrapers: {
+        Row: {
+          config: Json | null
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          last_run_at: string | null
+          last_run_status: string | null
+          name: string
+          properties_found: number | null
+          updated_at: string
+          website_url: string
+        }
+        Insert: {
+          config?: Json | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          last_run_at?: string | null
+          last_run_status?: string | null
+          name: string
+          properties_found?: number | null
+          updated_at?: string
+          website_url: string
+        }
+        Update: {
+          config?: Json | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          last_run_at?: string | null
+          last_run_status?: string | null
+          name?: string
+          properties_found?: number | null
+          updated_at?: string
+          website_url?: string
+        }
+        Relationships: []
+      }
       search_alerts: {
         Row: {
           city: string | null
@@ -214,14 +294,42 @@ export type Database = {
         }
         Relationships: []
       }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
+      app_role: "admin" | "user"
       energy_label: "A++" | "A+" | "A" | "B" | "C" | "D" | "E" | "F" | "G"
       listing_type: "huur" | "koop"
       property_status: "actief" | "verhuurd" | "verkocht" | "inactief"
@@ -353,6 +461,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      app_role: ["admin", "user"],
       energy_label: ["A++", "A+", "A", "B", "C", "D", "E", "F", "G"],
       listing_type: ["huur", "koop"],
       property_status: ["actief", "verhuurd", "verkocht", "inactief"],
