@@ -9,6 +9,7 @@ import NotFound from "./pages/NotFound";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Search from "./pages/Search";
+import Explore from "./pages/Explore";
 import PropertyDetail from "./pages/PropertyDetail";
 import Favorites from "./pages/Favorites";
 import AdminDashboard from "./pages/admin/AdminDashboard";
@@ -33,6 +34,7 @@ const App = () => (
             <Route path="/inloggen" element={<Login />} />
             <Route path="/registreren" element={<Register />} />
             <Route path="/zoeken" element={<Search />} />
+            <Route path="/verkennen" element={<Explore />} />
             <Route path="/woning/:id" element={<PropertyDetail />} />
             <Route path="/favorieten" element={<Favorites />} />
             <Route path="/mijn-woningen" element={<MyProperties />} />
