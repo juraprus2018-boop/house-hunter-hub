@@ -1,20 +1,35 @@
 import AdminLayout from "./AdminLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useScrapers, useAllProperties, useScrapedProperties } from "@/hooks/useAdmin";
-import { Home, Activity, Users, TrendingUp, Loader2, ClipboardCheck } from "lucide-react";
+import { useScrapers, useAllProperties, useScrapedProperties, useScraperLogs } from "@/hooks/useAdmin";
+import { Home, Activity, Users, Loader2, ClipboardCheck, Clock, CheckCircle, XCircle } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { format, formatDistanceToNow } from "date-fns";
+import { nl } from "date-fns/locale";
 
 const AdminDashboard = () => {
   const { data: scrapers, isLoading: scrapersLoading } = useScrapers();
   const { data: properties, isLoading: propertiesLoading } = useAllProperties();
   const { data: scrapedProperties } = useScrapedProperties("pending");
+  const { data: allLogs } = useScraperLogs();
 
   const activeScrapers = scrapers?.filter((s) => s.is_active).length || 0;
   const totalProperties = properties?.length || 0;
   const activeProperties = properties?.filter((p) => p.status === "actief").length || 0;
   const pendingReviews = scrapedProperties?.length || 0;
+
+  // Last scrape run info
+  const lastLog = allLogs?.[0];
+  const lastSuccessLog = allLogs?.find((l) => l.status === "success");
+  const totalScrapedToday = allLogs
+    ?.filter((l) => {
+      const logDate = new Date(l.created_at);
+      const today = new Date();
+      return logDate.toDateString() === today.toDateString();
+    })
+    .reduce((sum, l) => sum + (l.properties_scraped || 0), 0) || 0;
+  const recentLogs = allLogs?.slice(0, 8) || [];
 
   const stats = [
     {
@@ -176,6 +191,81 @@ const AdminDashboard = () => {
             </CardContent>
           </Card>
         </div>
+
+        {/* Last Scrape Overview */}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <Clock className="h-5 w-5 text-muted-foreground" />
+              Laatste Automatische Scrape
+            </CardTitle>
+            {lastLog && (
+              <span className="text-sm text-muted-foreground">
+                {formatDistanceToNow(new Date(lastLog.created_at), { addSuffix: true, locale: nl })}
+              </span>
+            )}
+          </CardHeader>
+          <CardContent>
+            {lastLog ? (
+              <div className="space-y-4">
+                {/* Summary stats */}
+                <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+                  <div className="rounded-lg border p-3 text-center">
+                    <p className="text-2xl font-bold">{totalScrapedToday}</p>
+                    <p className="text-xs text-muted-foreground">Gescraped vandaag</p>
+                  </div>
+                  <div className="rounded-lg border p-3 text-center">
+                    <p className="text-2xl font-bold">{properties?.filter(p => p.status === "actief").length || 0}</p>
+                    <p className="text-xs text-muted-foreground">Actieve woningen</p>
+                  </div>
+                  <div className="rounded-lg border p-3 text-center">
+                    <p className="text-2xl font-bold">{properties?.filter(p => p.status === "inactief").length || 0}</p>
+                    <p className="text-xs text-muted-foreground">Gedeactiveerd</p>
+                  </div>
+                  <div className="rounded-lg border p-3 text-center">
+                    <p className="text-2xl font-bold">
+                      {lastSuccessLog
+                        ? format(new Date(lastSuccessLog.created_at), "HH:mm", { locale: nl })
+                        : "-"}
+                    </p>
+                    <p className="text-xs text-muted-foreground">Laatste succesvolle run</p>
+                  </div>
+                </div>
+
+                {/* Recent log entries */}
+                <div>
+                  <h4 className="mb-2 text-sm font-medium text-muted-foreground">Recente runs</h4>
+                  <div className="space-y-2">
+                    {recentLogs.map((log) => (
+                      <div key={log.id} className="flex items-center justify-between rounded-lg border p-3">
+                        <div className="flex items-center gap-2">
+                          {log.status === "success" ? (
+                            <CheckCircle className="h-4 w-4 text-green-500" />
+                          ) : (
+                            <XCircle className="h-4 w-4 text-red-500" />
+                          )}
+                          <span className="text-sm">{log.message || log.status}</span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          {log.properties_scraped ? (
+                            <Badge variant="secondary">{log.properties_scraped} woningen</Badge>
+                          ) : null}
+                          <span className="text-xs text-muted-foreground">
+                            {format(new Date(log.created_at), "dd MMM HH:mm", { locale: nl })}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <p className="py-8 text-center text-muted-foreground">
+                Nog geen scrape-runs uitgevoerd
+              </p>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </AdminLayout>
   );
