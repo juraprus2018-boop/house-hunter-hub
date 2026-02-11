@@ -1,6 +1,5 @@
 import { useState, useMemo } from "react";
 import Header from "@/components/layout/Header";
-import Footer from "@/components/layout/Footer";
 import PropertyCard from "@/components/properties/PropertyCard";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -8,9 +7,10 @@ import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { useProperties } from "@/hooks/useProperties";
-import { Loader2, MapPin, ChevronRight } from "lucide-react";
+import { Loader2, MapPin, ChevronRight, SlidersHorizontal, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import ExploreMap from "@/components/explore/ExploreMap";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 type ListingType = "huur" | "koop";
 
@@ -19,6 +19,8 @@ const ExplorePage = () => {
   const [listingType, setListingType] = useState<ListingType | null>(null);
   const [maxPrice, setMaxPrice] = useState<number>(5000);
   const [priceActive, setPriceActive] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const isMobile = useIsMobile();
 
   const { data: allProperties, isLoading } = useProperties({
     city: selectedCity || undefined,
@@ -26,7 +28,6 @@ const ExplorePage = () => {
     maxPrice: priceActive ? maxPrice : undefined,
   });
 
-  // Extract unique cities from properties for the sidebar
   const { data: unfilteredProperties } = useProperties();
   const cities = useMemo(() => {
     if (!unfilteredProperties) return [];
@@ -42,129 +43,172 @@ const ExplorePage = () => {
 
   const [hoveredPropertyId, setHoveredPropertyId] = useState<string | null>(null);
 
+  const sidebarContent = (
+    <>
+      <div className="p-5 flex items-center justify-between">
+        <div>
+          <h2 className="font-display text-lg font-bold">Verkennen</h2>
+          <p className="text-sm text-muted-foreground">
+            {isLoading ? "Laden..." : `${allProperties?.length || 0} woningen`}
+          </p>
+        </div>
+        {isMobile && (
+          <Button variant="ghost" size="icon" onClick={() => setSidebarOpen(false)}>
+            <X className="h-5 w-5" />
+          </Button>
+        )}
+      </div>
+
+      <Separator />
+
+      <div className="p-5">
+        <Label className="mb-2 block text-sm font-medium">Aanbod</Label>
+        <div className="flex gap-2">
+          <Button
+            size="sm"
+            variant={listingType === "huur" ? "default" : "outline"}
+            onClick={() => setListingType(listingType === "huur" ? null : "huur")}
+            className="flex-1"
+          >
+            Te huur
+          </Button>
+          <Button
+            size="sm"
+            variant={listingType === "koop" ? "default" : "outline"}
+            onClick={() => setListingType(listingType === "koop" ? null : "koop")}
+            className="flex-1"
+          >
+            Te koop
+          </Button>
+        </div>
+      </div>
+
+      <Separator />
+
+      <div className="p-5">
+        <div className="mb-2 flex items-center justify-between">
+          <Label className="text-sm font-medium">Max. prijs</Label>
+          <button
+            className={cn(
+              "text-xs underline-offset-2",
+              priceActive ? "text-primary underline" : "text-muted-foreground hover:underline"
+            )}
+            onClick={() => setPriceActive(!priceActive)}
+          >
+            {priceActive ? "Actief" : "Inactief"}
+          </button>
+        </div>
+        <p className="mb-3 text-sm font-semibold">
+          {priceActive ? `€${maxPrice.toLocaleString("nl-NL")}` : "Geen limiet"}
+        </p>
+        <Slider
+          value={[maxPrice]}
+          onValueChange={([v]) => {
+            setMaxPrice(v);
+            if (!priceActive) setPriceActive(true);
+          }}
+          max={5000}
+          min={200}
+          step={50}
+          disabled={!priceActive}
+        />
+      </div>
+
+      <Separator />
+
+      <div className="p-5">
+        <Label className="mb-3 block text-sm font-medium">Plaatsen</Label>
+        {selectedCity && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="mb-2 w-full justify-start text-primary"
+            onClick={() => setSelectedCity(null)}
+          >
+            ← Alle plaatsen
+          </Button>
+        )}
+        <div className="space-y-1">
+          {cities.map(({ name, count }) => (
+            <button
+              key={name}
+              onClick={() => {
+                setSelectedCity(selectedCity === name ? null : name);
+                if (isMobile) setSidebarOpen(false);
+              }}
+              className={cn(
+                "flex w-full items-center justify-between rounded-lg px-3 py-2 text-sm transition-colors",
+                selectedCity === name
+                  ? "bg-primary text-primary-foreground"
+                  : "text-foreground hover:bg-muted"
+              )}
+            >
+              <span className="flex items-center gap-2">
+                <MapPin className="h-3.5 w-3.5" />
+                {name}
+              </span>
+              <span className="flex items-center gap-1">
+                <Badge variant="secondary" className={cn("text-xs", selectedCity === name && "bg-primary-foreground/20 text-primary-foreground")}>
+                  {count}
+                </Badge>
+                <ChevronRight className="h-3.5 w-3.5 opacity-50" />
+              </span>
+            </button>
+          ))}
+          {cities.length === 0 && !isLoading && (
+            <p className="py-4 text-center text-sm text-muted-foreground">
+              Geen plaatsen beschikbaar
+            </p>
+          )}
+        </div>
+      </div>
+    </>
+  );
+
   return (
     <div className="flex min-h-screen flex-col">
       <Header />
       <main className="flex-1">
-        <div className="flex h-[calc(100vh-4rem)]">
-          {/* Left Sidebar */}
-          <aside className="w-80 shrink-0 overflow-y-auto border-r bg-card">
-            <div className="p-5">
-              <h2 className="font-display text-lg font-bold">Verkennen</h2>
-              <p className="text-sm text-muted-foreground">
+        <div className="flex h-[calc(100vh-4rem)] flex-col md:flex-row">
+          {/* Mobile filter button */}
+          {isMobile && (
+            <div className="flex items-center gap-2 border-b bg-card px-4 py-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setSidebarOpen(true)}
+                className="gap-2"
+              >
+                <SlidersHorizontal className="h-4 w-4" />
+                Filters
+              </Button>
+              <span className="text-sm text-muted-foreground">
                 {isLoading ? "Laden..." : `${allProperties?.length || 0} woningen`}
-              </p>
+              </span>
             </div>
+          )}
 
-            <Separator />
-
-            {/* Huur / Koop toggle */}
-            <div className="p-5">
-              <Label className="mb-2 block text-sm font-medium">Aanbod</Label>
-              <div className="flex gap-2">
-                <Button
-                  size="sm"
-                  variant={listingType === "huur" ? "default" : "outline"}
-                  onClick={() => setListingType(listingType === "huur" ? null : "huur")}
-                  className="flex-1"
-                >
-                  Te huur
-                </Button>
-                <Button
-                  size="sm"
-                  variant={listingType === "koop" ? "default" : "outline"}
-                  onClick={() => setListingType(listingType === "koop" ? null : "koop")}
-                  className="flex-1"
-                >
-                  Te koop
-                </Button>
-              </div>
+          {/* Mobile sidebar overlay */}
+          {isMobile && sidebarOpen && (
+            <div className="fixed inset-0 z-50 flex">
+              <div className="absolute inset-0 bg-black/40" onClick={() => setSidebarOpen(false)} />
+              <aside className="relative z-10 w-80 max-w-[85vw] overflow-y-auto bg-card shadow-xl">
+                {sidebarContent}
+              </aside>
             </div>
+          )}
 
-            <Separator />
-
-            {/* Price filter */}
-            <div className="p-5">
-              <div className="mb-2 flex items-center justify-between">
-                <Label className="text-sm font-medium">Max. prijs</Label>
-                <button
-                  className={cn(
-                    "text-xs underline-offset-2",
-                    priceActive ? "text-primary underline" : "text-muted-foreground hover:underline"
-                  )}
-                  onClick={() => setPriceActive(!priceActive)}
-                >
-                  {priceActive ? "Actief" : "Inactief"}
-                </button>
-              </div>
-              <p className="mb-3 text-sm font-semibold">
-                {priceActive ? `€${maxPrice.toLocaleString("nl-NL")}` : "Geen limiet"}
-              </p>
-              <Slider
-                value={[maxPrice]}
-                onValueChange={([v]) => {
-                  setMaxPrice(v);
-                  if (!priceActive) setPriceActive(true);
-                }}
-                max={5000}
-                min={200}
-                step={50}
-                disabled={!priceActive}
-              />
-            </div>
-
-            <Separator />
-
-            {/* City list */}
-            <div className="p-5">
-              <Label className="mb-3 block text-sm font-medium">Plaatsen</Label>
-              {selectedCity && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="mb-2 w-full justify-start text-primary"
-                  onClick={() => setSelectedCity(null)}
-                >
-                  ← Alle plaatsen
-                </Button>
-              )}
-              <div className="space-y-1">
-                {cities.map(({ name, count }) => (
-                  <button
-                    key={name}
-                    onClick={() => setSelectedCity(selectedCity === name ? null : name)}
-                    className={cn(
-                      "flex w-full items-center justify-between rounded-lg px-3 py-2 text-sm transition-colors",
-                      selectedCity === name
-                        ? "bg-primary text-primary-foreground"
-                        : "text-foreground hover:bg-muted"
-                    )}
-                  >
-                    <span className="flex items-center gap-2">
-                      <MapPin className="h-3.5 w-3.5" />
-                      {name}
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <Badge variant="secondary" className={cn("text-xs", selectedCity === name && "bg-primary-foreground/20 text-primary-foreground")}>
-                        {count}
-                      </Badge>
-                      <ChevronRight className="h-3.5 w-3.5 opacity-50" />
-                    </span>
-                  </button>
-                ))}
-                {cities.length === 0 && !isLoading && (
-                  <p className="py-4 text-center text-sm text-muted-foreground">
-                    Geen plaatsen beschikbaar
-                  </p>
-                )}
-              </div>
-            </div>
-          </aside>
+          {/* Desktop sidebar */}
+          {!isMobile && (
+            <aside className="w-80 shrink-0 overflow-y-auto border-r bg-card">
+              {sidebarContent}
+            </aside>
+          )}
 
           {/* Map + results area */}
-          <div className="flex flex-1 flex-col">
+          <div className="flex flex-1 flex-col overflow-hidden">
             {/* Map */}
-            <div className="relative h-1/2 min-h-[300px] border-b">
+            <div className="relative h-48 min-h-[200px] border-b md:h-1/2 md:min-h-[300px]">
               {isLoading ? (
                 <div className="flex h-full items-center justify-center bg-muted/50">
                   <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -178,13 +222,13 @@ const ExplorePage = () => {
             </div>
 
             {/* Property cards grid */}
-            <div className="flex-1 overflow-y-auto p-6">
+            <div className="flex-1 overflow-y-auto p-4 md:p-6">
               {isLoading ? (
                 <div className="flex items-center justify-center py-12">
                   <Loader2 className="h-8 w-8 animate-spin text-primary" />
                 </div>
               ) : allProperties && allProperties.length > 0 ? (
-                <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 xl:grid-cols-3">
                   {allProperties.map((property) => (
                     <div
                       key={property.id}
