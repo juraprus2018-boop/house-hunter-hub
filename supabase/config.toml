@@ -2,3 +2,6 @@ project_id = "uszlfqgxjvceugrpavde"
 
 [functions.run-scraper]
 verify_jwt = false
+
+[functions.daily-scrape]
+verify_jwt = false
