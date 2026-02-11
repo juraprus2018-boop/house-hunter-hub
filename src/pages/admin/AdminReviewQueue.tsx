@@ -50,6 +50,7 @@ const AdminReviewQueue = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [viewingProperty, setViewingProperty] = useState<any>(null);
   const [rejectingId, setRejectingId] = useState<string | null>(null);
+  const [bulkApproving, setBulkApproving] = useState(false);
 
   // Edit form state for approval
   const [editForm, setEditForm] = useState<Record<string, any>>({});
@@ -152,6 +153,52 @@ const AdminReviewQueue = () => {
     }
   };
 
+  const handleBulkApprove = async () => {
+    if (!user || !pendingProperties || pendingProperties.length === 0) return;
+
+    setBulkApproving(true);
+    let approved = 0;
+    let failed = 0;
+
+    for (const property of pendingProperties) {
+      try {
+        // Skip properties missing required fields
+        if (!property.title || !property.city || !property.street || !property.house_number || !property.postal_code || !property.price) {
+          failed++;
+          continue;
+        }
+
+        await approveProperty.mutateAsync({
+          scrapedProperty: property,
+          overrides: {
+            title: property.title,
+            description: property.description || "",
+            price: property.price,
+            city: property.city,
+            street: property.street,
+            house_number: property.house_number,
+            postal_code: property.postal_code,
+            property_type: property.property_type || "appartement",
+            listing_type: property.listing_type || "huur",
+            bedrooms: property.bedrooms,
+            bathrooms: property.bathrooms,
+            surface_area: property.surface_area,
+          },
+          userId: user.id,
+        });
+        approved++;
+      } catch {
+        failed++;
+      }
+    }
+
+    setBulkApproving(false);
+    toast({
+      title: "Bulk goedkeuring voltooid",
+      description: `${approved} goedgekeurd, ${failed} overgeslagen (ontbrekende gegevens).`,
+    });
+  };
+
   if (pendingLoading) {
     return (
       <AdminLayout>
@@ -166,13 +213,29 @@ const AdminReviewQueue = () => {
     <AdminLayout>
       <div className="space-y-6">
         {/* Header */}
-        <div>
-          <h1 className="font-display text-3xl font-bold text-foreground">
-            Review Queue
-          </h1>
-          <p className="mt-1 text-muted-foreground">
-            Beoordeel scraped woningen en keur ze goed voor publicatie
-          </p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="font-display text-3xl font-bold text-foreground">
+              Review Queue
+            </h1>
+            <p className="mt-1 text-muted-foreground">
+              Beoordeel scraped woningen en keur ze goed voor publicatie
+            </p>
+          </div>
+          {activeTab === "pending" && (pendingProperties?.length || 0) > 0 && (
+            <Button
+              onClick={handleBulkApprove}
+              disabled={bulkApproving}
+              className="gap-2"
+            >
+              {bulkApproving ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <CheckCircle2 className="h-4 w-4" />
+              )}
+              {bulkApproving ? "Bezig..." : `Alles goedkeuren (${pendingProperties?.length})`}
+            </Button>
+          )}
         </div>
 
         {/* Stats */}
