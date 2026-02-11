@@ -1,59 +1,13 @@
 import { useEffect, useRef } from "react";
-import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { Database } from "@/integrations/supabase/types";
-import { Link } from "react-router-dom";
 
 type Property = Database["public"]["Tables"]["properties"]["Row"];
-
-// Fix default marker icons
-delete (L.Icon.Default.prototype as unknown as Record<string, unknown>)._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png",
-  iconUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png",
-  shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png",
-});
-
-const highlightedIcon = new L.Icon({
-  iconUrl: "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png",
-  shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png",
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41],
-});
-
-const defaultIcon = new L.Icon({
-  iconUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png",
-  shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png",
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41],
-});
 
 interface ExploreMapProps {
   properties: Property[];
   hoveredPropertyId?: string | null;
-}
-
-function FitBounds({ properties }: { properties: Property[] }) {
-  const map = useMap();
-  const prevLengthRef = useRef(0);
-
-  useEffect(() => {
-    const withCoords = properties.filter((p) => p.latitude && p.longitude);
-    if (withCoords.length > 0 && withCoords.length !== prevLengthRef.current) {
-      const bounds = L.latLngBounds(
-        withCoords.map((p) => [Number(p.latitude), Number(p.longitude)] as L.LatLngTuple)
-      );
-      map.fitBounds(bounds, { padding: [40, 40] });
-      prevLengthRef.current = withCoords.length;
-    }
-  }, [properties, map]);
-
-  return null;
 }
 
 const formatPrice = (price: number, listingType: string) => {
@@ -66,53 +20,66 @@ const formatPrice = (price: number, listingType: string) => {
 };
 
 const ExploreMap = ({ properties, hoveredPropertyId }: ExploreMapProps) => {
-  const propertiesWithCoords = properties.filter((p) => p.latitude && p.longitude);
+  const mapRef = useRef<L.Map | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const markersRef = useRef<Map<string, L.Marker>>(new Map());
 
-  return (
-    <MapContainer
-      center={[52.1326, 5.2913]}
-      zoom={7}
-      className="h-full w-full"
-      style={{ zIndex: 0 }}
-    >
-      <TileLayer
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-      />
-      <FitBounds properties={propertiesWithCoords} />
-      {propertiesWithCoords.map((property) => (
-        <Marker
-          key={property.id}
-          position={[Number(property.latitude), Number(property.longitude)]}
-          icon={hoveredPropertyId === property.id ? highlightedIcon : defaultIcon}
-        >
-          <Popup>
-            <div className="min-w-[200px]">
-              {property.images?.[0] && (
-                <img
-                  src={property.images[0]}
-                  alt={property.title}
-                  className="mb-2 h-24 w-full rounded object-cover"
-                />
-              )}
-              <Link
-                to={`/woning/${property.id}`}
-                className="font-semibold text-primary hover:underline"
-              >
-                {property.title}
-              </Link>
-              <p className="text-sm text-muted-foreground">
-                {property.street} {property.house_number}, {property.city}
-              </p>
-              <p className="mt-1 font-bold text-primary">
-                {formatPrice(Number(property.price), property.listing_type)}
-              </p>
-            </div>
-          </Popup>
-        </Marker>
-      ))}
-    </MapContainer>
-  );
+  // Initialize map
+  useEffect(() => {
+    if (!containerRef.current || mapRef.current) return;
+
+    mapRef.current = L.map(containerRef.current).setView([52.1326, 5.2913], 7);
+
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+    }).addTo(mapRef.current);
+
+    return () => {
+      mapRef.current?.remove();
+      mapRef.current = null;
+    };
+  }, []);
+
+  // Update markers
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+
+    // Clear existing markers
+    markersRef.current.forEach((m) => m.remove());
+    markersRef.current.clear();
+
+    const withCoords = properties.filter((p) => p.latitude && p.longitude);
+
+    for (const property of withCoords) {
+      const marker = L.marker([Number(property.latitude), Number(property.longitude)])
+        .addTo(map)
+        .bindPopup(`
+          <div style="min-width:180px">
+            ${property.images?.[0] ? `<img src="${property.images[0]}" style="width:100%;height:80px;object-fit:cover;border-radius:4px;margin-bottom:8px" />` : ""}
+            <strong>${property.title}</strong><br/>
+            <span style="color:#666">${property.street || ""} ${property.house_number || ""}, ${property.city}</span><br/>
+            <strong style="color:var(--primary)">${formatPrice(Number(property.price), property.listing_type)}</strong><br/>
+            <a href="/woning/${property.id}" style="color:var(--primary)">Bekijken →</a>
+          </div>
+        `);
+      markersRef.current.set(property.id, marker);
+    }
+
+    if (withCoords.length > 0) {
+      const bounds = L.latLngBounds(
+        withCoords.map((p) => [Number(p.latitude), Number(p.longitude)] as L.LatLngTuple)
+      );
+      map.fitBounds(bounds, { padding: [40, 40] });
+    }
+  }, [properties]);
+
+  // Highlight hovered marker
+  useEffect(() => {
+    // No-op for now; could swap icons here
+  }, [hoveredPropertyId]);
+
+  return <div ref={containerRef} className="h-full w-full" style={{ zIndex: 0 }} />;
 };
 
 export default ExploreMap;
