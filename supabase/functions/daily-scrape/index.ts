@@ -99,6 +99,24 @@ Deno.serve(async (req) => {
         listingType = sp.listing_type!;
       }
 
+      // Geocode address
+      let latitude: number | null = null;
+      let longitude: number | null = null;
+      try {
+        const address = `${sp.street} ${sp.house_number}, ${sp.postal_code} ${sp.city}, Netherlands`;
+        const geoRes = await fetch(
+          `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1`,
+          { headers: { "User-Agent": "WoningPlatform/1.0" } }
+        );
+        const geoData = await geoRes.json();
+        if (geoData && geoData.length > 0) {
+          latitude = parseFloat(geoData[0].lat);
+          longitude = parseFloat(geoData[0].lon);
+        }
+      } catch (e) {
+        console.warn(`Geocoding failed for ${sp.title}:`, e);
+      }
+
       // Insert into properties
       const { data: newProp, error: insertError } = await supabase
         .from("properties")
@@ -117,6 +135,8 @@ Deno.serve(async (req) => {
           images: sp.images || [],
           user_id: SYSTEM_USER_ID,
           status: "actief",
+          latitude,
+          longitude,
         })
         .select("id")
         .single();
