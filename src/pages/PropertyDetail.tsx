@@ -8,6 +8,8 @@ import { Separator } from "@/components/ui/separator";
 import { useProperty } from "@/hooks/useProperties";
 import { useToggleFavorite } from "@/hooks/useFavorites";
 import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
 import {
   Heart,
   Share2,
@@ -23,9 +25,21 @@ import {
   Mail,
   Phone,
   ArrowLeft,
+  ExternalLink,
+  Globe,
+  Home,
 } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
+
+const SOURCE_SITE_META: Record<string, { label: string; color: string }> = {
+  wooniezie: { label: "Wooniezie", color: "#FF6B00" },
+  pararius: { label: "Pararius", color: "#00A651" },
+  kamernet: { label: "Kamernet", color: "#1E88E5" },
+  "huurwoningen.nl": { label: "Huurwoningen.nl", color: "#E53935" },
+  directwonen: { label: "DirectWonen", color: "#7B1FA2" },
+  vesteda: { label: "Vesteda", color: "#004D40" },
+};
 
 const PropertyDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -33,6 +47,24 @@ const PropertyDetail = () => {
   const { user } = useAuth();
   const { toggle, isFavorite, isLoading: favoriteLoading } = useToggleFavorite();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
+  const { data: sourceInfo } = useQuery({
+    queryKey: ["property-source", id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("scraped_properties")
+        .select("source_url, source_site")
+        .eq("published_property_id", id!)
+        .limit(1)
+        .maybeSingle();
+      return data;
+    },
+    enabled: !!id,
+  });
+
+  const sourceMeta = sourceInfo?.source_site
+    ? SOURCE_SITE_META[sourceInfo.source_site] || { label: sourceInfo.source_site, color: "hsl(var(--primary))" }
+    : null;
 
   if (isLoading) {
     return (
@@ -219,9 +251,23 @@ const PropertyDetail = () => {
               {/* Description */}
               <div className="mb-6">
                 <h2 className="mb-4 font-display text-xl font-semibold">Beschrijving</h2>
-                <p className="whitespace-pre-wrap text-muted-foreground">
-                  {property.description || "Geen beschrijving beschikbaar."}
-                </p>
+                {property.description ? (
+                  <div className="whitespace-pre-wrap leading-relaxed text-muted-foreground">
+                    {property.description}
+                  </div>
+                ) : (
+                  <div className="rounded-lg border border-dashed p-6 text-center">
+                    <Home className="mx-auto mb-3 h-8 w-8 text-muted-foreground/50" />
+                    <p className="text-sm font-medium text-muted-foreground">
+                      Er is nog geen uitgebreide beschrijving beschikbaar voor deze woning.
+                    </p>
+                    {sourceInfo?.source_url && (
+                      <p className="mt-2 text-xs text-muted-foreground/70">
+                        Bekijk de originele advertentie voor meer informatie bij de aanbieder.
+                      </p>
+                    )}
+                  </div>
+                )}
               </div>
 
               {/* All specifications */}
@@ -314,6 +360,38 @@ const PropertyDetail = () => {
                   </CardContent>
                 </Card>
 
+                {/* Source / aanbieder card */}
+                {sourceInfo && sourceMeta && (
+                  <Card>
+                    <CardHeader className="pb-3">
+                      <CardTitle className="flex items-center gap-2 text-base">
+                        <Globe className="h-4 w-4" />
+                        Aanbieder
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      <div className="flex items-center gap-3">
+                        <div
+                          className="flex h-10 w-10 items-center justify-center rounded-lg text-sm font-bold text-white"
+                          style={{ backgroundColor: sourceMeta.color }}
+                        >
+                          {sourceMeta.label.charAt(0).toUpperCase()}
+                        </div>
+                        <div>
+                          <p className="font-semibold">{sourceMeta.label}</p>
+                          <p className="text-xs text-muted-foreground">Externe aanbieder</p>
+                        </div>
+                      </div>
+                      <Button asChild className="w-full">
+                        <a href={sourceInfo.source_url} target="_blank" rel="noopener noreferrer">
+                          <ExternalLink className="mr-2 h-4 w-4" />
+                          Bekijk bij {sourceMeta.label}
+                        </a>
+                      </Button>
+                    </CardContent>
+                  </Card>
+                )}
+
                 {/* Contact card */}
                 <Card>
                   <CardHeader>
@@ -323,14 +401,25 @@ const PropertyDetail = () => {
                     <p className="text-sm text-muted-foreground">
                       Interesse in deze woning? Neem contact op met de aanbieder.
                     </p>
-                    <Button className="w-full">
-                      <Mail className="mr-2 h-4 w-4" />
-                      Stuur bericht
-                    </Button>
-                    <Button variant="outline" className="w-full">
-                      <Phone className="mr-2 h-4 w-4" />
-                      Bel aanbieder
-                    </Button>
+                    {sourceInfo?.source_url ? (
+                      <Button asChild className="w-full">
+                        <a href={sourceInfo.source_url} target="_blank" rel="noopener noreferrer">
+                          <ExternalLink className="mr-2 h-4 w-4" />
+                          Ga naar aanbieder
+                        </a>
+                      </Button>
+                    ) : (
+                      <>
+                        <Button className="w-full">
+                          <Mail className="mr-2 h-4 w-4" />
+                          Stuur bericht
+                        </Button>
+                        <Button variant="outline" className="w-full">
+                          <Phone className="mr-2 h-4 w-4" />
+                          Bel aanbieder
+                        </Button>
+                      </>
+                    )}
                   </CardContent>
                 </Card>
               </div>
