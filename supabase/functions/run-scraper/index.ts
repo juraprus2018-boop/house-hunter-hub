@@ -198,6 +198,23 @@ async function scrapeWooniezie(): Promise<ScrapedProperty[]> {
 
         const title = [streetName, houseNum, cityName].filter(Boolean).join(" ");
 
+        // Build rich description
+        const descParts: string[] = [];
+        if (d.dwellingType?.label || typeStr) descParts.push(`Type: ${d.dwellingType?.label || typeStr}`);
+        if (d.neighborhood?.name) descParts.push(`Wijk: ${d.neighborhood.name}`);
+        if (surfaceArea) descParts.push(`Oppervlakte: ${surfaceArea} m²`);
+        if (bedrooms) descParts.push(`Slaapkamers: ${bedrooms}`);
+        if (d.energielabel || d.energyLabel) descParts.push(`Energielabel: ${d.energielabel || d.energyLabel}`);
+        if (d.balcony) descParts.push("Balkon aanwezig");
+        if (d.garden) descParts.push("Tuin aanwezig");
+        if (d.parking) descParts.push("Parkeren beschikbaar");
+        if (d.elevator) descParts.push("Lift aanwezig");
+        const descriptionText = d.description || d.omschrijving || descParts.join(" • ") || null;
+
+        // Corporation / aanbieder info
+        const corporationName = d.corporation?.name || d.aanbieder || d.owner?.name || null;
+        const corporationLogo = d.corporation?.logo || d.corporation?.logoUrl || null;
+
         if (!title) continue;
 
         properties.push({
@@ -213,13 +230,21 @@ async function scrapeWooniezie(): Promise<ScrapedProperty[]> {
           bedrooms: typeof bedrooms === "number" ? bedrooms : null,
           property_type: propertyType,
           listing_type: listingType,
-          description: d.neighborhood?.name ? `Wijk: ${d.neighborhood.name}` : null,
+          description: descriptionText,
           images,
           raw_data: {
             wooniezie_id: id,
             energy_label: d.energielabel || d.energyLabel || null,
             neighborhood: d.neighborhood?.name || d.wijk || null,
             dwelling_type: d.dwellingType?.label || typeStr || null,
+            corporation_name: corporationName,
+            corporation_logo: corporationLogo,
+            balcony: d.balcony || false,
+            garden: d.garden || false,
+            parking: d.parking || false,
+            elevator: d.elevator || false,
+            floor: d.floor || null,
+            available_from: d.availableFromDate || d.beschikbaarVanaf || null,
           },
         });
       } catch (itemError) {
