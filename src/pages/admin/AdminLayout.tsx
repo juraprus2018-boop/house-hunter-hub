@@ -8,7 +8,8 @@ import {
   Settings, 
   Activity,
   ArrowLeft,
-  Loader2 
+  Loader2,
+  ClipboardCheck
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -50,6 +51,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
   const navItems = [
     { to: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
     { to: "/admin/woningen", label: "Woningen", icon: HomeIcon },
+    { to: "/admin/review", label: "Review Queue", icon: ClipboardCheck },
     { to: "/admin/scrapers", label: "Scrapers", icon: Activity },
     { to: "/admin/instellingen", label: "Instellingen", icon: Settings },
   ];

@@ -15,6 +15,7 @@ import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminProperties from "./pages/admin/AdminProperties";
 import AdminScrapers from "./pages/admin/AdminScrapers";
 import AdminSettings from "./pages/admin/AdminSettings";
+import AdminReviewQueue from "./pages/admin/AdminReviewQueue";
 import MyProperties from "./pages/MyProperties";
 import CreateProperty from "./pages/CreateProperty";
 
@@ -38,6 +39,7 @@ const App = () => (
             <Route path="/plaatsen" element={<CreateProperty />} />
             <Route path="/admin" element={<AdminDashboard />} />
             <Route path="/admin/woningen" element={<AdminProperties />} />
+            <Route path="/admin/review" element={<AdminReviewQueue />} />
             <Route path="/admin/scrapers" element={<AdminScrapers />} />
             <Route path="/admin/instellingen" element={<AdminSettings />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
