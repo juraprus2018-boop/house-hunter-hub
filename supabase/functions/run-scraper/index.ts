@@ -24,7 +24,8 @@ interface ScrapedProperty {
   raw_data: Record<string, unknown>;
 }
 
-const USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
+const USER_AGENT =
+  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
 
 async function fetchPage(url: string): Promise<string> {
   console.log(`Fetching: ${url}`);
@@ -35,51 +36,213 @@ async function fetchPage(url: string): Promise<string> {
     const response = await fetch(url, {
       headers: {
         "User-Agent": USER_AGENT,
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
-        "Accept-Language": "nl-NL,nl;q=0.9,en-US;q=0.8,en;q=0.7",
-        "Cache-Control": "no-cache",
-        "Pragma": "no-cache",
+        Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "Accept-Language": "nl-NL,nl;q=0.9",
       },
       redirect: "follow",
       signal: controller.signal,
     });
     clearTimeout(timeoutId);
 
-    console.log(`Response status for ${url}: ${response.status}`);
     if (!response.ok) {
       throw new Error(`Failed to fetch ${url}: ${response.status}`);
     }
-    const html = await response.text();
-    console.log(`Fetched ${html.length} characters from ${url}`);
-    return html;
+    const text = await response.text();
+    console.log(`Fetched ${text.length} characters from ${url}`);
+    return text;
   } catch (error) {
     clearTimeout(timeoutId);
     throw error;
   }
 }
 
-function extractPrice(text: string): number | null {
-  const match = text.match(/€\s*([\d.,]+)/);
-  if (match) {
-    const numStr = match[1].replace(/\./g, "").replace(",", ".");
-    const num = parseFloat(numStr);
-    return isNaN(num) ? null : num;
-  }
-  return null;
-}
-
 function deduplicateUrls(properties: ScrapedProperty[]): ScrapedProperty[] {
-  return [...new Map(properties.map(p => [p.source_url, p])).values()];
+  return [...new Map(properties.map((p) => [p.source_url, p])).values()];
 }
 
-// ============ WORKING SCRAPERS ============
+// ============ WOONIEZIE SCRAPER (via JSON API) ============
+
+async function scrapeWooniezie(): Promise<ScrapedProperty[]> {
+  const properties: ScrapedProperty[] = [];
+  try {
+    // Wooniezie uses an AngularJS app that loads data from a JSON API
+    const rawText = await fetchPage(
+      "https://www.wooniezie.nl/portal/object/frontend/getallobjects/format/json"
+    );
+
+    // The response is JSON wrapped in HTML tags sometimes, extract the JSON
+    let jsonStr = rawText;
+    const jsonMatch = rawText.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      jsonStr = jsonMatch[0];
+    }
+
+    const data = JSON.parse(jsonStr);
+
+    // Log ALL top-level keys to understand the structure
+    console.log(`Wooniezie API top-level keys: ${JSON.stringify(Object.keys(data))}`);
+    for (const key of Object.keys(data)) {
+      const val = data[key];
+      const type = Array.isArray(val) ? `array(${val.length})` : typeof val;
+      const preview = typeof val === 'string' ? val.substring(0, 200) : '';
+      console.log(`Key "${key}": type=${type}, preview=${preview}`);
+    }
+
+    // Parse sAngularServiceData
+    let serviceData: unknown[] = [];
+    if (data.sAngularServiceData) {
+      serviceData = JSON.parse(data.sAngularServiceData);
+    }
+
+    // Also check for direct arrays like aObjecten, result, dwellings etc
+    // deno-lint-ignore no-explicit-any
+    let dwellings: any[] = [];
+
+    // Check if data itself has dwelling arrays
+    for (const key of Object.keys(data)) {
+      const val = data[key];
+      if (Array.isArray(val) && val.length > 0 && typeof val[0] === 'object' && val[0] !== null) {
+        console.log(`Direct array "${key}" first item keys: ${JSON.stringify(Object.keys(val[0]).slice(0, 15))}`);
+        if (val[0].street || val[0].straat || val[0].city || val[0].plaats || val[0].id) {
+          dwellings = val;
+          console.log(`Found dwellings in direct key "${key}"`);
+          break;
+        }
+      }
+    }
+
+    // Check service data
+    if (dwellings.length === 0) {
+      for (const service of serviceData) {
+        // deno-lint-ignore no-explicit-any
+        const s = service as any;
+        if (s.data?.objecten) {
+          dwellings = s.data.objecten;
+          break;
+        }
+        if (s.data?.dwellings) {
+          dwellings = s.data.dwellings;
+          break;
+        }
+      }
+    }
+
+    console.log(`Wooniezie API: found ${serviceData.length} service entries`);
+    console.log(`Wooniezie: found ${dwellings.length} dwellings in API response`);
+
+    // Log first service data structure for debugging
+    if (serviceData.length > 0) {
+      for (let i = 0; i < Math.min(serviceData.length, 5); i++) {
+        // deno-lint-ignore no-explicit-any
+        const s = serviceData[i] as any;
+        const keys = s.data ? Object.keys(s.data).slice(0, 10) : [];
+        console.log(`Service ${i}: url=${s.url}, data keys: ${JSON.stringify(keys)}, isArray: ${Array.isArray(s.data)}, length: ${Array.isArray(s.data) ? s.data.length : 'N/A'}`);
+        if (Array.isArray(s.data) && s.data.length > 0) {
+          console.log(`Service ${i} first item keys: ${JSON.stringify(Object.keys(s.data[0]).slice(0, 20))}`);
+        }
+      }
+    }
+
+    // deno-lint-ignore no-explicit-any
+    for (const dwelling of dwellings) {
+      try {
+        const d = dwelling as Record<string, any>;
+
+        const id = d.id || d.dwellingId || "";
+        const streetName = d.street || d.straat || "";
+        const houseNum = d.houseNumber || d.huisnummer || d.houseNumberAddition
+          ? `${d.houseNumber || ""}${d.houseNumberAddition || ""}`.trim()
+          : null;
+        const cityName = d.city?.name || d.city || d.plaats || "";
+        const postalCode = d.postalcode || d.postcode || null;
+
+        // Build detail URL
+        const slug = `${streetName}-${houseNum || ""}-${cityName}`.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
+        const detailUrl = `https://www.wooniezie.nl/aanbod/nu-te-huur/te-huur/details/${id}-${slug}`;
+
+        // Images
+        const images: string[] = [];
+        if (d.pictures && Array.isArray(d.pictures)) {
+          for (const pic of d.pictures) {
+            const picUrl = typeof pic === "string"
+              ? pic
+              : pic.uri || pic.url || pic.path || "";
+            if (picUrl) {
+              const fullPicUrl = picUrl.startsWith("http")
+                ? picUrl
+                : `https://www.wooniezie.nl${picUrl}`;
+              images.push(fullPicUrl);
+            }
+          }
+        }
+
+        // Price
+        const price = d.totalRent || d.netRent || d.kaleHuur || d.totalPrice || d.price || null;
+
+        // Surface area
+        const surfaceArea = d.areaDwelling || d.oppervlakteWoning || d.surface || null;
+
+        // Bedrooms
+        const bedrooms = d.sleepingRoom?.amountOfRooms || d.aantalSlaapkamers || d.bedrooms || null;
+
+        // Property type mapping
+        let propertyType: string | null = null;
+        const typeStr = (d.dwellingType?.categorie || d.woningtype || d.type || "").toLowerCase();
+        if (typeStr.includes("appartement")) propertyType = "appartement";
+        else if (typeStr.includes("studio")) propertyType = "studio";
+        else if (typeStr.includes("kamer")) propertyType = "kamer";
+        else if (typeStr.includes("woning") || typeStr.includes("huis") || typeStr.includes("eengezins")) propertyType = "huis";
+
+        // Listing type
+        const listingType = (d.rentBuy || "").toLowerCase() === "koop" ? "koop" : "huur";
+
+        const title = [streetName, houseNum, cityName].filter(Boolean).join(" ");
+
+        if (!title) continue;
+
+        properties.push({
+          source_url: detailUrl,
+          source_site: "wooniezie",
+          title,
+          price: typeof price === "number" ? price : null,
+          city: cityName || null,
+          postal_code: postalCode,
+          street: streetName || null,
+          house_number: houseNum,
+          surface_area: typeof surfaceArea === "number" ? surfaceArea : null,
+          bedrooms: typeof bedrooms === "number" ? bedrooms : null,
+          property_type: propertyType,
+          listing_type: listingType,
+          description: d.neighborhood?.name ? `Wijk: ${d.neighborhood.name}` : null,
+          images,
+          raw_data: {
+            wooniezie_id: id,
+            energy_label: d.energielabel || d.energyLabel || null,
+            neighborhood: d.neighborhood?.name || d.wijk || null,
+            dwelling_type: d.dwellingType?.label || typeStr || null,
+          },
+        });
+      } catch (itemError) {
+        console.error("Error parsing Wooniezie dwelling:", itemError);
+      }
+    }
+
+    console.log(`Wooniezie: parsed ${properties.length} listings with full data`);
+  } catch (e) {
+    console.error("Error scraping Wooniezie:", e);
+  }
+  return deduplicateUrls(properties);
+}
+
+// ============ OTHER SCRAPERS ============
 
 async function scrapePararius(): Promise<ScrapedProperty[]> {
   const properties: ScrapedProperty[] = [];
   try {
     const html = await fetchPage("https://www.pararius.nl/huurwoningen/nederland");
-
-    const listingMatches = html.matchAll(/href="(\/(?:huis|appartement|studio|kamer)-te-huur\/[^"]+\/[a-f0-9-]+\/[^"]+)"/gi);
+    const listingMatches = html.matchAll(
+      /href="(\/(?:huis|appartement|studio|kamer)-te-huur\/[^"]+\/[a-f0-9-]+\/[^"]+)"/gi
+    );
 
     for (const match of listingMatches) {
       const url = match[1];
@@ -109,7 +272,6 @@ async function scrapePararius(): Promise<ScrapedProperty[]> {
         raw_data: { url },
       });
     }
-
     console.log(`Pararius: found ${properties.length} listings`);
   } catch (e) {
     console.error("Error scraping Pararius:", e);
@@ -121,19 +283,15 @@ async function scrapeKamernet(): Promise<ScrapedProperty[]> {
   const properties: ScrapedProperty[] = [];
   try {
     const html = await fetchPage("https://kamernet.nl/huren/kamers-nederland");
-
     const patterns = [
       /href="(\/huren\/kamer-[^"]+)"/gi,
       /href="(\/en\/for-rent\/room-[^"]+)"/gi,
-      /href="(https:\/\/kamernet\.nl\/huren\/kamer-[^"]+)"/gi,
     ];
 
     for (const pattern of patterns) {
-      const matches = html.matchAll(pattern);
-      for (const match of matches) {
+      for (const match of html.matchAll(pattern)) {
         let url = match[1];
         if (!url.startsWith("http")) url = `https://kamernet.nl${url}`;
-
         properties.push({
           source_url: url,
           source_site: "kamernet",
@@ -148,7 +306,6 @@ async function scrapeKamernet(): Promise<ScrapedProperty[]> {
         });
       }
     }
-
     console.log(`Kamernet: found ${properties.length} listings`);
   } catch (e) {
     console.error("Error scraping Kamernet:", e);
@@ -160,46 +317,27 @@ async function scrapeHuurwoningen(): Promise<ScrapedProperty[]> {
   const properties: ScrapedProperty[] = [];
   try {
     const html = await fetchPage("https://www.huurwoningen.nl/aanbod-huurwoningen/");
-
-    // Pattern: href="https://www.huurwoningen.nl/huren/amsterdam/98dec08b/haarlemmerweg/"
-    const listingMatches = html.matchAll(/href="(https:\/\/www\.huurwoningen\.nl\/huren\/([^\/]+)\/([^\/]+)\/([^\/]+)\/)"/gi);
+    const listingMatches = html.matchAll(
+      /href="(https:\/\/www\.huurwoningen\.nl\/huren\/([^\/]+)\/([^\/]+)\/([^\/]+)\/)"/gi
+    );
 
     for (const match of listingMatches) {
-      const fullUrl = match[1];
-      const city = match[2];
-      const listingId = match[3];
-      const street = match[4];
-
-      // Skip duplicates from images + title links
       properties.push({
-        source_url: fullUrl,
+        source_url: match[1],
         source_site: "huurwoningen",
-        title: `${street.replace(/-/g, " ")} - ${city}`,
+        title: `${match[4].replace(/-/g, " ")} - ${match[2]}`,
         price: null,
-        city: city.charAt(0).toUpperCase() + city.slice(1),
+        city: match[2].charAt(0).toUpperCase() + match[2].slice(1),
         postal_code: null,
-        street: street.replace(/-/g, " "),
+        street: match[4].replace(/-/g, " "),
         house_number: null,
         surface_area: null, bedrooms: null,
         property_type: null,
         listing_type: "huur",
         description: null, images: [],
-        raw_data: { listingId },
+        raw_data: {},
       });
     }
-
-    // Try to extract prices from listing cards
-    const priceMatches = html.matchAll(/listing-search-item__price-main[^>]*>([^<]+)</gi);
-    const prices: number[] = [];
-    for (const pm of priceMatches) {
-      const price = extractPrice(pm[1]);
-      if (price) prices.push(price);
-    }
-    // Assign prices to properties in order
-    for (let i = 0; i < Math.min(prices.length, properties.length); i++) {
-      properties[i].price = prices[i];
-    }
-
     console.log(`Huurwoningen.nl: found ${properties.length} listings`);
   } catch (e) {
     console.error("Error scraping Huurwoningen.nl:", e);
@@ -210,23 +348,13 @@ async function scrapeHuurwoningen(): Promise<ScrapedProperty[]> {
 async function scrapeDirectWonen(): Promise<ScrapedProperty[]> {
   const properties: ScrapedProperty[] = [];
   try {
-    // Correct URL: /huurwoningen-huren/nederland (not /huurwoningen which is homepage)
     const html = await fetchPage("https://directwonen.nl/huurwoningen-huren/nederland");
-
-    // Pattern: href="https://directwonen.nl/huurwoningen-huren/amsterdam/ruysdaelkade/appartement-509773"
-    const listingMatches = html.matchAll(/href="(https:\/\/directwonen\.nl\/huurwoningen-huren\/([^\/]+)\/([^\/]+)\/([\w]+-\d+))"/gi);
+    const listingMatches = html.matchAll(
+      /href="(https:\/\/directwonen\.nl\/huurwoningen-huren\/([^\/]+)\/([^\/]+)\/([\w]+-\d+))"/gi
+    );
 
     for (const match of listingMatches) {
-      const fullUrl = match[1];
-      const city = match[2];
-      const street = match[3];
-      const typeId = match[4];
-
-      // Skip city-only links (like /huurwoningen-huren/amsterdam)
-      if (!street || !typeId) continue;
-
-      // Extract property type from typeId (e.g. "appartement-509773")
-      const typePart = typeId.split("-")[0];
+      const typePart = match[4].split("-")[0];
       let propertyType = null;
       if (typePart === "appartement") propertyType = "appartement";
       else if (typePart === "woning" || typePart === "huis") propertyType = "huis";
@@ -234,33 +362,21 @@ async function scrapeDirectWonen(): Promise<ScrapedProperty[]> {
       else if (typePart === "kamer") propertyType = "kamer";
 
       properties.push({
-        source_url: fullUrl,
+        source_url: match[1],
         source_site: "directwonen",
-        title: `${street.replace(/-/g, " ")}, ${city}`,
+        title: `${match[3].replace(/-/g, " ")}, ${match[2]}`,
         price: null,
-        city: city.charAt(0).toUpperCase() + city.slice(1).replace(/-/g, " "),
+        city: match[2].charAt(0).toUpperCase() + match[2].slice(1).replace(/-/g, " "),
         postal_code: null,
-        street: street.replace(/-/g, " "),
+        street: match[3].replace(/-/g, " "),
         house_number: null,
         surface_area: null, bedrooms: null,
         property_type: propertyType,
         listing_type: "huur",
         description: null, images: [],
-        raw_data: { typeId },
+        raw_data: { typeId: match[4] },
       });
     }
-
-    // Extract prices from listing cards: class="advert-location-price"> € 3700
-    const priceMatches = html.matchAll(/advert-location-price[^>]*>\s*([^<]+)/gi);
-    const prices: number[] = [];
-    for (const pm of priceMatches) {
-      const price = extractPrice(pm[1]);
-      if (price) prices.push(price);
-    }
-    for (let i = 0; i < Math.min(prices.length, properties.length); i++) {
-      properties[i].price = prices[i];
-    }
-
     console.log(`DirectWonen: found ${properties.length} listings`);
   } catch (e) {
     console.error("Error scraping DirectWonen:", e);
@@ -271,15 +387,13 @@ async function scrapeDirectWonen(): Promise<ScrapedProperty[]> {
 async function scrapeVesteda(): Promise<ScrapedProperty[]> {
   const properties: ScrapedProperty[] = [];
   try {
-    // Vesteda SSR search page
     const html = await fetchPage("https://www.vesteda.com/nl/huurwoningen");
-
-    // Pattern: href="https://www.vesteda.com/nl/huurwoningen-huizen/huizermaat/herik-6-huizen-1163"
-    const listingMatches = html.matchAll(/href="(https:\/\/www\.vesteda\.com\/nl\/huurwoningen-[^"]+\/[^"]+\/[^"]+)"/gi);
+    const listingMatches = html.matchAll(
+      /href="(https:\/\/www\.vesteda\.com\/nl\/huurwoningen-[^"]+\/[^"]+\/[^"]+)"/gi
+    );
 
     for (const match of listingMatches) {
       const fullUrl = match[1];
-      // Skip non-listing links
       if (fullUrl.includes("?") || fullUrl.endsWith("/huurwoningen")) continue;
 
       properties.push({
@@ -295,35 +409,6 @@ async function scrapeVesteda(): Promise<ScrapedProperty[]> {
         raw_data: {},
       });
     }
-
-    // Extract rich data from listing cards
-    // Title: <span class="js--map__summary">Herik 6</span>
-    const titles = [...html.matchAll(/js--map__summary[^>]*>([^<]+)</gi)].map(m => m[1].trim());
-    // Price: <span class="h5 u-bold js--map__price">€ 1430</span>
-    const prices = [...html.matchAll(/js--map__price[^>]*>([^<]+)</gi)].map(m => extractPrice(m[1]));
-    // City: <span class="...js--map__location">Huizen</span>
-    const cities = [...html.matchAll(/js--map__location[^>]*>\s*([^<]+)/gi)].map(m => m[1].trim());
-    // Surface: <span class="u-bold js--map__size">96</span>
-    const surfaces = [...html.matchAll(/js--map__size[^>]*>(\d+)</gi)].map(m => parseInt(m[1]));
-    // Bedrooms: <span class="u-bold js--map__rooms">3</span>
-    const bedrooms = [...html.matchAll(/js--map__rooms[^>]*>(\d+)</gi)].map(m => parseInt(m[1]));
-    // Type: <span class="js--map__type">Eengezinswoning</span>
-    const types = [...html.matchAll(/js--map__type[^>]*>([^<]+)</gi)].map(m => m[1].trim());
-
-    for (let i = 0; i < properties.length; i++) {
-      if (titles[i]) properties[i].title = titles[i];
-      if (prices[i]) properties[i].price = prices[i];
-      if (cities[i]) properties[i].city = cities[i];
-      if (surfaces[i]) properties[i].surface_area = surfaces[i];
-      if (bedrooms[i]) properties[i].bedrooms = bedrooms[i];
-      if (types[i]) {
-        const t = types[i].toLowerCase();
-        if (t.includes("appartement")) properties[i].property_type = "appartement";
-        else if (t.includes("woning") || t.includes("huis")) properties[i].property_type = "huis";
-        else if (t.includes("studio")) properties[i].property_type = "studio";
-      }
-    }
-
     console.log(`Vesteda: found ${properties.length} listings`);
   } catch (e) {
     console.error("Error scraping Vesteda:", e);
@@ -331,76 +416,31 @@ async function scrapeVesteda(): Promise<ScrapedProperty[]> {
   return deduplicateUrls(properties);
 }
 
-// ============ BLOCKED SCRAPERS (need headless browser) ============
-
-async function scrapeFunda(): Promise<ScrapedProperty[]> {
-  console.log("Funda: Cloudflare-beschermd, kan niet worden gescraped zonder headless browser");
-  return [];
-}
-
-async function scrapeJaap(): Promise<ScrapedProperty[]> {
-  console.log("Jaap.nl: Cloudflare-beschermd, kan niet worden gescraped zonder headless browser");
-  return [];
-}
-
-async function scrapeHousingAnywhere(): Promise<ScrapedProperty[]> {
-  console.log("HousingAnywhere: SPA/JavaScript-gerenderd, kan niet worden gescraped zonder headless browser");
-  return [];
-}
-
-async function scrape123Wonen(): Promise<ScrapedProperty[]> {
-  console.log("123Wonen: Listings worden via JavaScript geladen, kan niet worden gescraped zonder headless browser");
-  return [];
-}
-
-async function scrapeDeKey(): Promise<ScrapedProperty[]> {
-  console.log("De Key: Website geblokkeerd voor scraping");
-  return [];
-}
-
-async function scrapeNederwoon(): Promise<ScrapedProperty[]> {
-  console.log("Nederwoon: Website geeft 404 op alle aanbodpagina's");
-  return [];
-}
-
-async function scrapeRochdale(): Promise<ScrapedProperty[]> {
-  console.log("Rochdale: Woningaanbod pagina geeft 404");
-  return [];
-}
-
-async function scrapeWoonbron(): Promise<ScrapedProperty[]> {
-  console.log("Woonbron: Woningzoeken portaal is JavaScript-gerenderd");
-  return [];
-}
-
-async function scrapeWoonstadRotterdam(): Promise<ScrapedProperty[]> {
-  console.log("Woonstad Rotterdam: Website is JavaScript-gerenderd");
-  return [];
-}
-
-async function scrapeWooniezie(): Promise<ScrapedProperty[]> {
-  console.log("Wooniezie: Website geeft 404 op aanbodpagina's");
-  return [];
+function blockedScraper(name: string, reason: string) {
+  return async (): Promise<ScrapedProperty[]> => {
+    console.log(`${name}: ${reason}`);
+    return [];
+  };
 }
 
 // ============ MAIN HANDLER ============
 
 const scraperMap: Record<string, () => Promise<ScrapedProperty[]>> = {
-  "wooniezie": scrapeWooniezie,
-  "funda": scrapeFunda,
-  "pararius": scrapePararius,
-  "jaap.nl": scrapeJaap,
-  "kamernet": scrapeKamernet,
-  "123wonen": scrape123Wonen,
-  "directwonen": scrapeDirectWonen,
+  wooniezie: scrapeWooniezie,
+  pararius: scrapePararius,
+  kamernet: scrapeKamernet,
   "huurwoningen.nl": scrapeHuurwoningen,
-  "housinganywhere": scrapeHousingAnywhere,
-  "nederwoon": scrapeNederwoon,
-  "vesteda": scrapeVesteda,
-  "de key": scrapeDeKey,
-  "rochdale": scrapeRochdale,
-  "woonbron": scrapeWoonbron,
-  "woonstad rotterdam": scrapeWoonstadRotterdam,
+  directwonen: scrapeDirectWonen,
+  vesteda: scrapeVesteda,
+  funda: blockedScraper("Funda", "Cloudflare-beschermd"),
+  "jaap.nl": blockedScraper("Jaap.nl", "Cloudflare-beschermd"),
+  housinganywhere: blockedScraper("HousingAnywhere", "SPA/JavaScript-gerenderd"),
+  "123wonen": blockedScraper("123Wonen", "JavaScript-gerenderd"),
+  "de key": blockedScraper("De Key", "Geblokkeerd"),
+  nederwoon: blockedScraper("Nederwoon", "404"),
+  rochdale: blockedScraper("Rochdale", "404"),
+  woonbron: blockedScraper("Woonbron", "JavaScript-gerenderd"),
+  "woonstad rotterdam": blockedScraper("Woonstad Rotterdam", "JavaScript-gerenderd"),
 };
 
 Deno.serve(async (req) => {
@@ -422,10 +462,7 @@ Deno.serve(async (req) => {
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-
-    if (!supabaseUrl || !supabaseKey) {
-      throw new Error("Missing Supabase configuration");
-    }
+    if (!supabaseUrl || !supabaseKey) throw new Error("Missing Supabase configuration");
 
     const supabase = createClient(supabaseUrl, supabaseKey);
 
@@ -454,13 +491,11 @@ Deno.serve(async (req) => {
       if (scraperFn) {
         properties = await scraperFn();
         console.log(`Scraped ${properties.length} properties from ${scraper.name}`);
-
         if (properties.length === 0) {
-          errorMessage = `Geen woningen gevonden voor ${scraper.name} - mogelijk geblokkeerd, JS-gerenderd, of website structuur gewijzigd`;
+          errorMessage = `Geen woningen gevonden voor ${scraper.name}`;
         }
       } else {
-        console.log(`No implementation for scraper: ${scraper.name}`);
-        errorMessage = `Geen implementatie gevonden voor: ${scraper.name}`;
+        errorMessage = `Geen implementatie voor: ${scraper.name}`;
       }
     } catch (scrapeError) {
       errorMessage = scrapeError instanceof Error ? scrapeError.message : "Unknown scrape error";
@@ -472,12 +507,7 @@ Deno.serve(async (req) => {
     if (properties.length > 0) {
       const { error: insertError } = await supabase
         .from("scraped_properties")
-        .insert(
-          properties.map((p) => ({
-            ...p,
-            scraper_id,
-          }))
-        );
+        .insert(properties.map((p) => ({ ...p, scraper_id })));
 
       if (insertError) {
         console.error("Error inserting scraped properties:", insertError);
@@ -485,7 +515,7 @@ Deno.serve(async (req) => {
       }
     }
 
-    const logStatus = errorMessage ? "error" : (properties.length === 0 ? "warning" : "success");
+    const logStatus = errorMessage ? "error" : properties.length === 0 ? "warning" : "success";
     await supabase.from("scraper_logs").insert({
       scraper_id,
       status: logStatus,
@@ -514,9 +544,11 @@ Deno.serve(async (req) => {
     );
   } catch (error) {
     console.error("Error in run-scraper:", error);
-    const errorMessage = error instanceof Error ? error.message : "Unknown error";
     return new Response(
-      JSON.stringify({ success: false, error: errorMessage }),
+      JSON.stringify({
+        success: false,
+        error: error instanceof Error ? error.message : "Unknown error",
+      }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
