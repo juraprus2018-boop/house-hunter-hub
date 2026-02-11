@@ -167,6 +167,7 @@ export type Database = {
           house_number: string | null
           id: string
           images: string[] | null
+          last_seen_at: string | null
           listing_type: string | null
           postal_code: string | null
           price: number | null
@@ -193,6 +194,7 @@ export type Database = {
           house_number?: string | null
           id?: string
           images?: string[] | null
+          last_seen_at?: string | null
           listing_type?: string | null
           postal_code?: string | null
           price?: number | null
@@ -219,6 +221,7 @@ export type Database = {
           house_number?: string | null
           id?: string
           images?: string[] | null
+          last_seen_at?: string | null
           listing_type?: string | null
           postal_code?: string | null
           price?: number | null
