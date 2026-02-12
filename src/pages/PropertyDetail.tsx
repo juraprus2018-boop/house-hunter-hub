@@ -43,24 +43,25 @@ const SOURCE_SITE_META: Record<string, { label: string; color: string }> = {
 };
 
 const PropertyDetail = () => {
-  const { id } = useParams<{ id: string }>();
-  const { data: property, isLoading } = useProperty(id || "");
+  const { slug } = useParams<{ slug: string }>();
+  const { data: property, isLoading } = useProperty(slug || "");
   const { user } = useAuth();
   const { toggle, isFavorite, isLoading: favoriteLoading } = useToggleFavorite();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
+  const propertyId = property?.id;
   const { data: sourceInfo } = useQuery({
-    queryKey: ["property-source", id],
+    queryKey: ["property-source", propertyId],
     queryFn: async () => {
       const { data } = await supabase
         .from("scraped_properties")
         .select("source_url, source_site")
-        .eq("published_property_id", id!)
+        .eq("published_property_id", propertyId!)
         .limit(1)
         .maybeSingle();
       return data;
     },
-    enabled: !!id,
+    enabled: !!propertyId,
   });
 
   const sourceMeta = sourceInfo?.source_site

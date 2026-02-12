@@ -40,7 +40,7 @@ const PropertyCard = ({ property }: PropertyCardProps) => {
   const isNew = new Date(property.created_at).getTime() > Date.now() - 7 * 24 * 60 * 60 * 1000;
 
   return (
-    <Link to={`/woning/${property.id}`}>
+    <Link to={`/woning/${property.slug || property.id}`}>
       <Card className="group overflow-hidden transition-all hover:shadow-lg">
         <div className="relative aspect-[4/3] overflow-hidden">
           <img

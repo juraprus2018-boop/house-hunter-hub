@@ -62,21 +62,32 @@ export const useProperties = (filters?: PropertyFilters) => {
   });
 };
 
-export const useProperty = (id: string) => {
+export const useProperty = (slugOrId: string) => {
   return useQuery({
-    queryKey: ["property", id],
+    queryKey: ["property", slugOrId],
     queryFn: async () => {
+      // Try slug first, fall back to id (for backwards compatibility)
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(slugOrId);
+      
       const { data, error } = await supabase
         .from("properties")
         .select("*")
-        .eq("id", id)
+        .eq(isUuid ? "id" : "slug", slugOrId)
         .maybeSingle();
 
       if (error) throw error;
       return data as Property | null;
     },
-    enabled: !!id,
+    enabled: !!slugOrId,
   });
+};
+
+export const generatePropertySlug = (property: { street: string; house_number: string; city: string }) => {
+  return `${property.street}-${property.house_number}-${property.city}`
+    .toLowerCase()
+    .replace(/[^a-z0-9-]/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '');
 };
 
 export const useUserProperties = () => {
