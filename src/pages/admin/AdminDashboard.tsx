@@ -1,10 +1,12 @@
+import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import AdminLayout from "./AdminLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { useScrapers, useAllProperties, useScrapedProperties, useScraperLogs, useRunScraper } from "@/hooks/useAdmin";
 import {
   Home, Activity, Loader2, ClipboardCheck, Clock, CheckCircle, XCircle,
-  TrendingUp, Building2, Eye, Zap, RefreshCw, ExternalLink, BarChart3
+  TrendingUp, Building2, Eye, Zap, RefreshCw, ExternalLink, BarChart3, Trash2
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -13,6 +15,18 @@ import { format, formatDistanceToNow } from "date-fns";
 import { nl } from "date-fns/locale";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 const AdminDashboard = () => {
   const { data: scrapers, isLoading: scrapersLoading } = useScrapers();
@@ -20,6 +34,8 @@ const AdminDashboard = () => {
   const { data: scrapedProperties } = useScrapedProperties("pending");
   const { data: allLogs } = useScraperLogs();
   const runScraper = useRunScraper();
+  const [resetting, setResetting] = useState(false);
+  const queryClient = useQueryClient();
 
   const activeScrapers = scrapers?.filter((s) => s.is_active).length || 0;
   const totalScrapers = scrapers?.length || 0;
@@ -89,6 +105,24 @@ const AdminDashboard = () => {
     toast.success("Alle scrapers zijn uitgevoerd");
   };
 
+  const handleReset = async () => {
+    setResetting(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("admin-reset");
+      if (error) throw error;
+      toast.success(`Reset voltooid: ${data.inactive_deleted || 0} inactieve woningen verwijderd`);
+      queryClient.invalidateQueries({ queryKey: ["all-properties"] });
+      queryClient.invalidateQueries({ queryKey: ["properties"] });
+      queryClient.invalidateQueries({ queryKey: ["scrapers"] });
+      queryClient.invalidateQueries({ queryKey: ["scraper-logs"] });
+      queryClient.invalidateQueries({ queryKey: ["scraped-properties"] });
+    } catch (e) {
+      toast.error("Reset mislukt: " + (e instanceof Error ? e.message : "onbekend"));
+    } finally {
+      setResetting(false);
+    }
+  };
+
   if (scrapersLoading || propertiesLoading) {
     return (
       <AdminLayout>
@@ -122,6 +156,33 @@ const AdminDashboard = () => {
               <RefreshCw className={cn("h-4 w-4", runScraper.isPending && "animate-spin")} />
               Alle scrapers draaien
             </Button>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  className="gap-2"
+                  disabled={resetting}
+                >
+                  <Trash2 className={cn("h-4 w-4", resetting && "animate-spin")} />
+                  Reset
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Alles resetten?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Dit verwijdert alle inactieve woningen, scraped data, logs en reset de scraper-tellers. Actieve woningen blijven behouden. Dit kan niet ongedaan worden.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Annuleren</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleReset}>
+                    Ja, reset alles
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </div>
         </div>
 
