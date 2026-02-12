@@ -256,8 +256,16 @@ async function scrapeWooniezie(): Promise<ScrapedProperty[]> {
         // Build year
         const buildYear = d.constructionYear || d.bouwjaar || d.buildYear || null;
 
-        // Energy label
-        const energyLabel = d.energielabel || d.energyLabel || d.energyIndex || null;
+        // Energy label - safely extract string value
+        let energyLabel: string | null = null;
+        const rawEnergy = d.energielabel || d.energyLabel || d.energyIndex || null;
+        if (rawEnergy) {
+          if (typeof rawEnergy === "string") {
+            energyLabel = rawEnergy;
+          } else if (typeof rawEnergy === "object" && rawEnergy !== null) {
+            energyLabel = rawEnergy.label || rawEnergy.name || rawEnergy.value || null;
+          }
+        }
 
         // Property type mapping
         let propertyType: string | null = null;
@@ -279,44 +287,55 @@ async function scrapeWooniezie(): Promise<ScrapedProperty[]> {
         const targetGroup = d.targetGroup || d.doelgroep || d.dwellingType?.targetGroup || null;
         if (targetGroup) descParts.push(`Doelgroep: ${targetGroup}`);
         
-        // Dwelling type
-        if (d.dwellingType?.label || typeStr) descParts.push(`Woningtype: ${d.dwellingType?.label || typeStr}`);
+        // Dwelling type - filter garbage values
+        const knownTypes = ["appartement", "huis", "woning", "studio", "kamer", "eengezinswoning", "bovenwoning", "benedenwoning", "maisonnette", "penthouse", "flat"];
+        const dwellingLabel = d.dwellingType?.label || typeStr || "";
+        if (dwellingLabel && knownTypes.some(t => dwellingLabel.toLowerCase().includes(t))) {
+          descParts.push(`Woningtype: ${dwellingLabel}`);
+        }
         
         // Build year
-        if (buildYear) descParts.push(`Bouwjaar: ${buildYear}`);
+        if (buildYear && typeof buildYear === "number" && buildYear > 1800) descParts.push(`Bouwjaar: ${buildYear}`);
         
-        // Energy label
-        if (energyLabel) descParts.push(`Energielabel: ${energyLabel}`);
+        // Energy label - only show clean string values
+        if (energyLabel && typeof energyLabel === "string") descParts.push(`Energielabel: ${energyLabel}`);
         
         // Heating
-        const heating = d.heating || d.verwarming || d.heatingType || null;
+        const rawHeating = d.heating || d.verwarming || d.heatingType || null;
+        const heating = (rawHeating && typeof rawHeating === "string") ? rawHeating : null;
         if (heating) descParts.push(`Verwarming: ${heating}`);
         
         // Solar panels
         if (d.solarPanels || d.zonnepanelen) descParts.push("Zonnepanelen: Ja");
         
         // Surface
-        if (surfaceArea) descParts.push(`Oppervlakte woning: ${surfaceArea} m²`);
+        if (surfaceArea && typeof surfaceArea === "number") descParts.push(`Oppervlakte woning: ${surfaceArea} m²`);
         
         // Living room area
         const livingRoomArea = d.areaLivingRoom || d.oppervlakteWoonkamer || null;
-        if (livingRoomArea) descParts.push(`Oppervlakte woonkamer: ${livingRoomArea} m²`);
+        if (livingRoomArea && typeof livingRoomArea === "number") descParts.push(`Oppervlakte woonkamer: ${livingRoomArea} m²`);
         
         // Bedrooms
         if (bedrooms) descParts.push(`Slaapkamers: ${bedrooms}`);
         
         // Bedroom areas
         const bedroomAreas = d.sleepingRoom?.areas || d.oppervlakteSlaapkamers || null;
-        if (bedroomAreas) descParts.push(`Oppervlakte slaapkamer(s): ${bedroomAreas}`);
+        if (bedroomAreas && typeof bedroomAreas !== "object") descParts.push(`Oppervlakte slaapkamer(s): ${bedroomAreas}`);
         
-        // Kitchen
+        // Kitchen - safely handle objects
         const kitchen = d.kitchen || d.keuken || null;
-        if (kitchen) descParts.push(`Keuken: ${typeof kitchen === 'string' ? kitchen : kitchen.type || 'Ja'}`);
+        if (kitchen) {
+          if (typeof kitchen === "string") descParts.push(`Keuken: ${kitchen}`);
+          else if (typeof kitchen === "object" && kitchen.type && typeof kitchen.type === "string") descParts.push(`Keuken: ${kitchen.type}`);
+          else if (kitchen === true || (typeof kitchen === "object" && kitchen.id)) descParts.push("Keuken: Ja");
+        }
         
-        // Attic
+        // Attic - safely handle objects
         const attic = d.attic || d.zolder || null;
-        if (attic) descParts.push(`Zolder: ${typeof attic === 'string' ? attic : 'Ja'}`);
-        
+        if (attic) {
+          if (typeof attic === "string") descParts.push(`Zolder: ${attic}`);
+          else if (attic === true) descParts.push("Zolder: Ja");
+        }
         // Garden, balcony, storage
         if (d.garden) descParts.push("Tuin: Ja");
         if (d.balcony) descParts.push("Balkon: Ja");
