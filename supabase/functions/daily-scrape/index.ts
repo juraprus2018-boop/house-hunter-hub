@@ -127,7 +127,7 @@ Deno.serve(async (req) => {
 
     for (const sp of pending || []) {
       // Skip if missing required fields
-      if (!sp.title || !sp.city || !sp.street || !sp.house_number || !sp.postal_code || !sp.price) {
+      if (!sp.title || !sp.city || !sp.price) {
         skipped++;
         continue;
       }
@@ -213,9 +213,9 @@ Deno.serve(async (req) => {
           description: sp.description || null,
           price: sp.price,
           city: sp.city,
-          street: sp.street,
-          house_number: sp.house_number,
-          postal_code: sp.postal_code,
+          street: sp.street || "Onbekend",
+          house_number: sp.house_number || "-",
+          postal_code: sp.postal_code || "0000AA",
           property_type: propertyType,
           listing_type: listingType,
           bedrooms: sp.bedrooms || null,
