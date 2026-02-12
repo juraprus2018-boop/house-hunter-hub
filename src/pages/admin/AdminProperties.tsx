@@ -30,7 +30,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useAllProperties, useUpdatePropertyAdmin, useDeletePropertyAdmin } from "@/hooks/useAdmin";
-import { Search, Pencil, Trash2, Loader2, ExternalLink } from "lucide-react";
+import { Search, Pencil, Trash2, Loader2, ExternalLink, Filter } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { nl } from "date-fns/locale";
@@ -42,15 +42,23 @@ const AdminProperties = () => {
   const { toast } = useToast();
 
   const [searchQuery, setSearchQuery] = useState("");
+  const [sourceFilter, setSourceFilter] = useState<string>("all");
   const [editingProperty, setEditingProperty] = useState<typeof properties extends (infer T)[] ? T : never | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [formData, setFormData] = useState<Record<string, unknown>>({});
 
-  const filteredProperties = properties?.filter((p) =>
-    p.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    p.city.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    p.street.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const availableSources = Array.from(
+    new Set(properties?.map((p) => p.source_site).filter(Boolean) as string[])
+  ).sort();
+
+  const filteredProperties = properties?.filter((p) => {
+    const matchesSearch =
+      p.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      p.city.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      p.street.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSource = sourceFilter === "all" || p.source_site === sourceFilter || (sourceFilter === "user" && !p.source_site);
+    return matchesSearch && matchesSource;
+  });
 
   const formatPrice = (price: number, listingType: string) => {
     const formatted = new Intl.NumberFormat("nl-NL", {
@@ -152,14 +160,31 @@ const AdminProperties = () => {
         {/* Search */}
         <Card>
           <CardContent className="pt-6">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                placeholder="Zoek op titel, stad of straat..."
-                className="pl-10"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
+            <div className="flex flex-col gap-4 sm:flex-row">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  placeholder="Zoek op titel, stad of straat..."
+                  className="pl-10"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
+              <Select value={sourceFilter} onValueChange={setSourceFilter}>
+                <SelectTrigger className="w-full sm:w-[200px]">
+                  <Filter className="mr-2 h-4 w-4" />
+                  <SelectValue placeholder="Alle bronnen" />
+                </SelectTrigger>
+                <SelectContent className="z-50 bg-popover">
+                  <SelectItem value="all">Alle bronnen</SelectItem>
+                  <SelectItem value="user">Gebruikers</SelectItem>
+                  {availableSources.map((source) => (
+                    <SelectItem key={source} value={source} className="capitalize">
+                      {source}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </CardContent>
         </Card>
