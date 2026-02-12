@@ -62,14 +62,14 @@ Deno.serve(async (req) => {
 
     if (e2) console.error("Delete scraped_properties error:", e2.message);
 
-    // 3. Delete inactive properties
-    const { data: deleted, error: e3 } = await supabase
+    // 3. Delete active properties (keep inactive for historical reference)
+    const { data: deletedActive, error: e3 } = await supabase
       .from("properties")
       .delete()
-      .eq("status", "inactief")
+      .in("status", ["actief", "verkocht", "verhuurd"])
       .select("id");
 
-    if (e3) console.error("Delete inactive properties error:", e3.message);
+    if (e3) console.error("Delete active properties error:", e3.message);
 
     // 4. Clear scraper logs
     const { error: e4 } = await supabase
@@ -84,7 +84,7 @@ Deno.serve(async (req) => {
         success: true,
         scrapers_reset: true,
         scraped_properties_cleared: true,
-        inactive_deleted: deleted?.length || 0,
+        active_deleted: deletedActive?.length || 0,
         logs_cleared: true,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
