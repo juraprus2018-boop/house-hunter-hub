@@ -132,10 +132,20 @@ const PropertyDetail = () => {
           </Button>
 
           {/* Inactive banner */}
-          {property.status !== "actief" && (
+          {property.status === "inactief" && (
             <div className="mb-4 rounded-lg border border-amber-300 bg-amber-50 p-4 dark:border-amber-700 dark:bg-amber-950/30">
               <p className="text-sm font-medium text-amber-800 dark:text-amber-200">
-                ⚠️ Deze woning is niet meer actief — mogelijk is het aanbod verlopen of niet meer beschikbaar bij de aanbieder.
+                ⚠️ Deze woning is verlopen — het aanbod is niet meer beschikbaar bij de aanbieder.
+              </p>
+              <p className="mt-1 text-xs text-amber-600 dark:text-amber-400">
+                Verlopen sinds {new Date(property.updated_at).toLocaleDateString("nl-NL", { day: "numeric", month: "long", year: "numeric" })}
+              </p>
+            </div>
+          )}
+          {(property.status === "verkocht" || property.status === "verhuurd") && (
+            <div className="mb-4 rounded-lg border border-amber-300 bg-amber-50 p-4 dark:border-amber-700 dark:bg-amber-950/30">
+              <p className="text-sm font-medium text-amber-800 dark:text-amber-200">
+                ⚠️ Deze woning is {property.status}.
               </p>
             </div>
           )}
@@ -200,7 +210,7 @@ const PropertyDetail = () => {
                   </Badge>
                   {property.status !== "actief" && (
                     <Badge variant="destructive" className="capitalize">
-                      {property.status}
+                      {property.status === "inactief" ? "verlopen" : property.status}
                     </Badge>
                   )}
                 </div>

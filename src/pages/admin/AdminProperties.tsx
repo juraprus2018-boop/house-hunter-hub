@@ -209,7 +209,7 @@ const AdminProperties = () => {
                             : "outline"
                         }
                       >
-                        {property.status}
+                        {property.status === "inactief" ? "verlopen" : property.status}
                       </Badge>
                     </TableCell>
                     <TableCell>
@@ -304,7 +304,7 @@ const AdminProperties = () => {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="actief">Actief</SelectItem>
-                    <SelectItem value="inactief">Inactief</SelectItem>
+                    <SelectItem value="inactief">Verlopen</SelectItem>
                     <SelectItem value="verkocht">Verkocht</SelectItem>
                     <SelectItem value="verhuurd">Verhuurd</SelectItem>
                   </SelectContent>
