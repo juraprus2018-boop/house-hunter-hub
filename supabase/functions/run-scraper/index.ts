@@ -675,7 +675,7 @@ Deno.serve(async (req) => {
             // Extract from raw_data
             const rawData = (sp.raw_data || {}) as Record<string, unknown>;
             let energyLabel: string | null = null;
-            const rawEl = (rawData.energy_label || "") as string;
+            const rawEl = String(rawData.energy_label || "");
             if (rawEl) {
               const cleaned = rawEl.replace(/energielabel\s*/i, "").trim().toUpperCase();
               if (validEnergyLabels.includes(cleaned)) energyLabel = cleaned;
