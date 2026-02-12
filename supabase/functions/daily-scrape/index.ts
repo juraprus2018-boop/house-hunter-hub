@@ -9,6 +9,67 @@ const corsHeaders = {
 const SYSTEM_USER_ID = "0d02a609-fde3-435a-9154-078fdce7ed34";
 const THREE_WEEKS_MS = 21 * 24 * 60 * 60 * 1000;
 
+const USER_AGENT =
+  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
+
+function slugify(text: string): string {
+  return text.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").substring(0, 60);
+}
+
+async function uploadImagesToStorage(
+  supabase: ReturnType<typeof createClient>,
+  supabaseUrl: string,
+  images: string[],
+  city: string,
+  title: string,
+  propertyId: string
+): Promise<string[]> {
+  const storedUrls: string[] = [];
+  const citySlug = slugify(city || "onbekend");
+  const titleSlug = slugify(title || "woning");
+  const basePath = `${citySlug}/${titleSlug}-${propertyId.substring(0, 8)}`;
+
+  for (let i = 0; i < Math.min(images.length, 15); i++) {
+    try {
+      const imgUrl = images[i];
+      if (!imgUrl || !imgUrl.startsWith("http")) continue;
+
+      const res = await fetch(imgUrl, {
+        headers: { "User-Agent": USER_AGENT, Accept: "image/*" },
+        signal: AbortSignal.timeout(10000),
+      });
+      if (!res.ok) continue;
+
+      const contentType = res.headers.get("content-type") || "image/jpeg";
+      const ext = contentType.includes("png") ? "png" : contentType.includes("webp") ? "webp" : "jpg";
+      const filePath = `${basePath}/${i + 1}.${ext}`;
+
+      const blob = await res.blob();
+      const arrayBuffer = await blob.arrayBuffer();
+
+      const { error: uploadError } = await supabase.storage
+        .from("property-images")
+        .upload(filePath, arrayBuffer, {
+          contentType,
+          upsert: true,
+        });
+
+      if (uploadError) {
+        console.warn(`Upload failed for image ${i}: ${uploadError.message}`);
+        storedUrls.push(imgUrl);
+        continue;
+      }
+
+      const publicUrl = `${supabaseUrl}/storage/v1/object/public/property-images/${filePath}`;
+      storedUrls.push(publicUrl);
+    } catch (e) {
+      console.warn(`Failed to download image ${i}:`, e);
+      storedUrls.push(images[i]);
+    }
+  }
+  return storedUrls;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -138,6 +199,12 @@ Deno.serve(async (req) => {
         console.warn(`Geocoding failed for ${sp.title}:`, e);
       }
 
+      // Upload images to own storage
+      const tempId = crypto.randomUUID();
+      const storedImages = (sp.images && sp.images.length > 0)
+        ? await uploadImagesToStorage(supabase, supabaseUrl, sp.images as string[], sp.city!, sp.title, tempId)
+        : [];
+
       // Insert into properties
       const { data: newProp, error: insertError } = await supabase
         .from("properties")
@@ -154,7 +221,7 @@ Deno.serve(async (req) => {
           bedrooms: sp.bedrooms || null,
           bathrooms: bathrooms,
           surface_area: sp.surface_area || null,
-          images: sp.images || [],
+          images: storedImages,
           user_id: SYSTEM_USER_ID,
           status: "actief",
           latitude,
