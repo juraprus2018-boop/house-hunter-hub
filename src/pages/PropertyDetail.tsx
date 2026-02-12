@@ -10,6 +10,7 @@ import { useToggleFavorite } from "@/hooks/useFavorites";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
+import PropertyMap from "@/components/properties/PropertyMap";
 import {
   Heart,
   Share2,
@@ -278,6 +279,27 @@ const PropertyDetail = () => {
                   </div>
                 )}
               </div>
+
+              {/* Map */}
+              {property.latitude && property.longitude && (
+                <Card className="mb-6 overflow-hidden">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <MapPin className="h-5 w-5" />
+                      Locatie
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-0">
+                    <div className="h-[300px]">
+                      <PropertyMap
+                        latitude={Number(property.latitude)}
+                        longitude={Number(property.longitude)}
+                        title={property.title}
+                      />
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
 
               {/* All specifications */}
               <Card>
