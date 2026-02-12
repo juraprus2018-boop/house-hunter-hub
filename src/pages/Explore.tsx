@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useProperties } from "@/hooks/useProperties";
 import { Loader2, MapPin, ChevronRight, SlidersHorizontal, X } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -14,14 +15,14 @@ import { useIsMobile } from "@/hooks/use-mobile";
 
 type ListingType = "huur" | "koop";
 
-const SOURCE_SITES = [
-  { value: "wooniezie", label: "Wooniezie" },
-  { value: "kamernet", label: "Kamernet" },
-  { value: "pararius", label: "Pararius" },
-  { value: "huurwoningen.nl", label: "Huurwoningen.nl" },
-  { value: "directwonen", label: "DirectWonen" },
-  { value: "vesteda", label: "Vesteda" },
-];
+const SOURCE_SITE_LABELS: Record<string, string> = {
+  wooniezie: "Wooniezie",
+  kamernet: "Kamernet",
+  pararius: "Pararius",
+  "huurwoningen.nl": "Huurwoningen.nl",
+  directwonen: "DirectWonen",
+  vesteda: "Vesteda",
+};
 
 const ExplorePage = () => {
   const [selectedCity, setSelectedCity] = useState<string | null>(null);
@@ -55,6 +56,20 @@ const ExplorePage = () => {
       .map(([name, count]) => ({ name, count }));
   }, [citySourceProperties]);
 
+  // Compute active sources with counts
+  const activeSources = useMemo(() => {
+    if (!citySourceProperties) return [];
+    const sourceCount = new Map<string, number>();
+    for (const p of citySourceProperties) {
+      const src = p.source_site;
+      if (src) sourceCount.set(src, (sourceCount.get(src) || 0) + 1);
+    }
+    return Array.from(sourceCount.entries())
+      .filter(([, count]) => count > 0)
+      .sort((a, b) => b[1] - a[1])
+      .map(([value, count]) => ({ value, label: SOURCE_SITE_LABELS[value] || value, count }));
+  }, [citySourceProperties]);
+
   const [hoveredPropertyId, setHoveredPropertyId] = useState<string | null>(null);
 
   const sidebarContent = (
@@ -71,25 +86,6 @@ const ExplorePage = () => {
             <X className="h-5 w-5" />
           </Button>
         )}
-      </div>
-
-      <Separator />
-
-      <div className="p-5">
-        <Label className="mb-2 block text-sm font-medium">Bron</Label>
-        <div className="flex flex-wrap gap-2">
-          {SOURCE_SITES.map(({ value, label }) => (
-            <Button
-              key={value}
-              size="sm"
-              variant={selectedSource === value ? "default" : "outline"}
-              onClick={() => setSelectedSource(selectedSource === value ? null : value)}
-              className="text-xs"
-            >
-              {label}
-            </Button>
-          ))}
-        </div>
       </div>
 
       <Separator />
@@ -195,6 +191,31 @@ const ExplorePage = () => {
           )}
         </div>
       </div>
+
+      {activeSources.length > 0 && (
+        <>
+          <Separator />
+          <div className="p-5">
+            <Label className="mb-2 block text-sm font-medium">Bron</Label>
+            <Select
+              value={selectedSource || "all"}
+              onValueChange={(v) => setSelectedSource(v === "all" ? null : v)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Alle bronnen" />
+              </SelectTrigger>
+              <SelectContent className="z-50 bg-popover">
+                <SelectItem value="all">Alle bronnen</SelectItem>
+                {activeSources.map(({ value, label, count }) => (
+                  <SelectItem key={value} value={value}>
+                    {label} ({count})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </>
+      )}
     </>
   );
 
