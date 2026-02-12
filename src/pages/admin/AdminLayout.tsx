@@ -1,15 +1,17 @@
-import { ReactNode, useEffect } from "react";
+import { ReactNode, useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useIsAdmin } from "@/hooks/useAdmin";
-import { 
-  LayoutDashboard, 
-  Home as HomeIcon, 
-  Settings, 
+import {
+  LayoutDashboard,
+  Home as HomeIcon,
+  Settings,
   Activity,
   ArrowLeft,
   Loader2,
-  ClipboardCheck
+  ClipboardCheck,
+  Menu,
+  X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -23,6 +25,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
   const { data: isAdmin, isLoading: adminLoading } = useIsAdmin();
   const navigate = useNavigate();
   const location = useLocation();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -35,6 +38,11 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
       navigate("/");
     }
   }, [isAdmin, adminLoading, user, navigate]);
+
+  // Close sidebar on route change (mobile)
+  useEffect(() => {
+    setSidebarOpen(false);
+  }, [location.pathname]);
 
   if (authLoading || adminLoading) {
     return (
@@ -63,15 +71,38 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
 
   return (
     <div className="flex min-h-screen bg-muted/30">
+      {/* Mobile overlay */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-foreground/20 backdrop-blur-sm lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
       {/* Sidebar */}
-      <aside className="fixed left-0 top-0 z-40 h-screen w-64 border-r bg-card">
+      <aside
+        className={cn(
+          "fixed left-0 top-0 z-50 h-screen w-64 border-r bg-card transition-transform duration-200 lg:translate-x-0",
+          sidebarOpen ? "translate-x-0" : "-translate-x-full"
+        )}
+      >
         <div className="flex h-full flex-col">
           {/* Logo */}
-          <div className="flex h-16 items-center gap-2 border-b px-6">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
-              <HomeIcon className="h-5 w-5 text-primary-foreground" />
+          <div className="flex h-16 items-center justify-between border-b px-6">
+            <div className="flex items-center gap-2">
+              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
+                <HomeIcon className="h-5 w-5 text-primary-foreground" />
+              </div>
+              <span className="font-display text-lg font-semibold">Admin</span>
             </div>
-            <span className="font-display text-lg font-semibold">Admin</span>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="lg:hidden"
+              onClick={() => setSidebarOpen(false)}
+            >
+              <X className="h-5 w-5" />
+            </Button>
           </div>
 
           {/* Navigation */}
@@ -106,9 +137,23 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
       </aside>
 
       {/* Main content */}
-      <main className="ml-64 flex-1 p-8">
-        {children}
-      </main>
+      <div className="flex flex-1 flex-col lg:ml-64">
+        {/* Mobile header */}
+        <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-card px-4 lg:hidden">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setSidebarOpen(true)}
+          >
+            <Menu className="h-5 w-5" />
+          </Button>
+          <span className="font-display font-semibold">Admin</span>
+        </header>
+
+        <main className="flex-1 p-4 md:p-6 lg:p-8">
+          {children}
+        </main>
+      </div>
     </div>
   );
 };
