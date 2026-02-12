@@ -287,6 +287,48 @@ const AdminDashboard = () => {
           </Card>
         </div>
 
+        {/* Inactive Properties */}
+        {inactiveProperties > 0 && (
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between pb-3">
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Eye className="h-4 w-4 text-muted-foreground" />
+                Inactieve woningen ({inactiveProperties})
+              </CardTitle>
+              <Link to="/admin/woningen">
+                <Button variant="ghost" size="sm" className="text-xs">
+                  Bekijk alle
+                </Button>
+              </Link>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                {properties?.filter(p => p.status === "inactief").slice(0, 6).map((property) => (
+                  <div
+                    key={property.id}
+                    className="flex items-center gap-3 rounded-lg border p-2.5 transition-colors hover:bg-muted/50"
+                  >
+                    <div className="h-10 w-10 flex-shrink-0 overflow-hidden rounded-md bg-muted">
+                      <img
+                        src={property.images?.[0] || "/placeholder.svg"}
+                        alt=""
+                        className="h-full w-full object-cover opacity-60"
+                      />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium">{property.title}</p>
+                      <p className="text-xs text-muted-foreground">{property.city} · €{Number(property.price).toLocaleString("nl-NL")}</p>
+                    </div>
+                    <Badge variant="secondary" className="text-[10px] flex-shrink-0">
+                      inactief
+                    </Badge>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Recent Properties + Recent Logs */}
         <div className="grid gap-4 md:grid-cols-2">
           {/* Recent Properties */}
