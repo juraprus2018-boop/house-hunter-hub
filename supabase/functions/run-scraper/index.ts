@@ -568,7 +568,7 @@ async function scrapeKamernet(): Promise<ScrapedProperty[]> {
             const city = listing.city || listing.cityName || null;
             const street = listing.street || listing.streetName || null;
             const postalCode = listing.postalCode || listing.zipCode || null;
-            const price = listing.rent || listing.price || listing.monthlyRent || null;
+            const price = listing.totalRentalPrice || listing.rent || listing.price || listing.monthlyRent || null;
             const surfaceArea = listing.surfaceArea || listing.size || listing.surface || null;
             const listingUrl = listing.url || (id ? `https://kamernet.nl/huren/kamer-${(city || "").toLowerCase().replace(/\s+/g, "-")}/${(street || "").toLowerCase().replace(/\s+/g, "-")}/kamer-${id}` : null);
 
