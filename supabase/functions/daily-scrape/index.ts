@@ -105,7 +105,7 @@ Deno.serve(async (req) => {
       // Energy label mapping
       const validEnergyLabels = ["A++", "A+", "A", "B", "C", "D", "E", "F", "G"];
       let energyLabel: string | null = null;
-      const rawEnergyLabel = (rawData.energy_label || "") as string;
+      const rawEnergyLabel = String(rawData.energy_label || "");
       if (rawEnergyLabel) {
         // Clean up: "Energielabel A++" -> "A++", "A" -> "A"
         const cleaned = rawEnergyLabel.replace(/energielabel\s*/i, "").trim().toUpperCase();
