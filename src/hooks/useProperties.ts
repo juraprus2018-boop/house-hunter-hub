@@ -17,6 +17,7 @@ interface PropertyFilters {
   maxPrice?: number;
   minSurface?: number;
   minBedrooms?: number;
+  sourceSite?: string;
 }
 
 export const useProperties = (filters?: PropertyFilters) => {
@@ -49,6 +50,9 @@ export const useProperties = (filters?: PropertyFilters) => {
       }
       if (filters?.minBedrooms) {
         query = query.gte("bedrooms", filters.minBedrooms);
+      }
+      if (filters?.sourceSite) {
+        query = query.eq("source_site", filters.sourceSite);
       }
 
       const { data, error } = await query;
