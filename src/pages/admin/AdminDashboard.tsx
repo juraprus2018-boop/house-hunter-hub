@@ -51,6 +51,17 @@ const AdminDashboard = () => {
     .slice(0, 6);
   const maxCityCount = topCities[0]?.[1] || 1;
 
+  // Properties by source
+  const sourceMap = new Map<string, { actief: number; inactief: number }>();
+  properties?.forEach((p) => {
+    const src = p.source_site || "Handmatig";
+    const entry = sourceMap.get(src) || { actief: 0, inactief: 0 };
+    if (p.status === "actief") entry.actief++;
+    else entry.inactief++;
+    sourceMap.set(src, entry);
+  });
+  const sourceEntries = [...sourceMap.entries()].sort((a, b) => (b[1].actief + b[1].inactief) - (a[1].actief + a[1].inactief));
+
   // Properties by type
   const typeMap = new Map<string, number>();
   properties?.filter(p => p.status === "actief").forEach((p) => {
@@ -216,23 +227,30 @@ const AdminDashboard = () => {
             <CardContent className="space-y-3">
               <Progress value={scraperHealthPct} className="h-2" />
               <div className="space-y-2">
-                {scrapers?.filter(s => s.is_active).slice(0, 6).map((scraper) => (
-                  <div key={scraper.id} className="flex items-center justify-between text-sm">
-                    <div className="flex items-center gap-2">
-                      {scraper.last_run_status === "success" ? (
-                        <div className="h-2 w-2 rounded-full bg-green-500" />
-                      ) : scraper.last_run_status === "error" ? (
-                        <div className="h-2 w-2 rounded-full bg-destructive" />
-                      ) : (
-                        <div className="h-2 w-2 rounded-full bg-muted-foreground/30" />
-                      )}
-                      <span className="truncate">{scraper.name}</span>
+                {scrapers?.filter(s => s.is_active).slice(0, 6).map((scraper) => {
+                  const srcData = sourceMap.get(scraper.name.toLowerCase()) || sourceMap.get(
+                    // try to match scraper name to source_site
+                    [...sourceMap.keys()].find(k => scraper.name.toLowerCase().includes(k)) || ""
+                  );
+                  const activeCount = srcData?.actief || 0;
+                  return (
+                    <div key={scraper.id} className="flex items-center justify-between text-sm">
+                      <div className="flex items-center gap-2">
+                        {scraper.last_run_status === "success" ? (
+                          <div className="h-2 w-2 rounded-full bg-green-500" />
+                        ) : scraper.last_run_status === "error" ? (
+                          <div className="h-2 w-2 rounded-full bg-destructive" />
+                        ) : (
+                          <div className="h-2 w-2 rounded-full bg-muted-foreground/30" />
+                        )}
+                        <span className="truncate">{scraper.name}</span>
+                      </div>
+                      <span className="text-xs text-muted-foreground">
+                        {activeCount} actief
+                      </span>
                     </div>
-                    <span className="text-xs text-muted-foreground">
-                      {scraper.properties_found || 0}
-                    </span>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
               <Link to="/admin/scrapers" className="block">
                 <Button variant="ghost" size="sm" className="w-full gap-2 text-xs">
@@ -243,34 +261,63 @@ const AdminDashboard = () => {
             </CardContent>
           </Card>
 
-          {/* City Distribution */}
+          {/* Source Distribution */}
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-base">
                 <BarChart3 className="h-4 w-4 text-muted-foreground" />
-                Woningen per stad
+                Woningen per bron
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              {topCities.length > 0 ? (
-                topCities.map(([city, count]) => (
-                  <div key={city} className="space-y-1">
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="truncate font-medium">{city}</span>
-                      <span className="text-muted-foreground">{count}</span>
+              {sourceEntries.length > 0 ? (
+                sourceEntries.map(([source, counts]) => {
+                  const total = counts.actief + counts.inactief;
+                  const maxTotal = sourceEntries[0] ? sourceEntries[0][1].actief + sourceEntries[0][1].inactief : 1;
+                  return (
+                    <div key={source} className="space-y-1">
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="truncate font-medium capitalize">{source}</span>
+                        <span className="text-xs text-muted-foreground">
+                          <span className="font-semibold text-foreground">{counts.actief}</span> actief
+                          {counts.inactief > 0 && (
+                            <span className="ml-1 text-muted-foreground">· {counts.inactief} inactief</span>
+                          )}
+                        </span>
+                      </div>
+                      <div className="flex h-1.5 rounded-full bg-muted overflow-hidden">
+                        <div
+                          className="h-1.5 bg-primary transition-all"
+                          style={{ width: `${(counts.actief / maxTotal) * 100}%` }}
+                        />
+                        {counts.inactief > 0 && (
+                          <div
+                            className="h-1.5 bg-muted-foreground/30 transition-all"
+                            style={{ width: `${(counts.inactief / maxTotal) * 100}%` }}
+                          />
+                        )}
+                      </div>
                     </div>
-                    <div className="h-1.5 rounded-full bg-muted">
-                      <div
-                        className="h-1.5 rounded-full bg-primary transition-all"
-                        style={{ width: `${(count / maxCityCount) * 100}%` }}
-                      />
-                    </div>
-                  </div>
-                ))
+                  );
+                })
               ) : (
                 <p className="py-6 text-center text-sm text-muted-foreground">
                   Nog geen woningen
                 </p>
+              )}
+
+              {/* City overview */}
+              {topCities.length > 0 && (
+                <div className="border-t pt-3">
+                  <p className="mb-2 text-xs font-medium text-muted-foreground">Top steden</p>
+                  <div className="flex flex-wrap gap-2">
+                    {topCities.slice(0, 5).map(([city, count]) => (
+                      <Badge key={city} variant="secondary" className="text-xs">
+                        {city}: {count}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
               )}
 
               {/* Property types mini-overview */}
