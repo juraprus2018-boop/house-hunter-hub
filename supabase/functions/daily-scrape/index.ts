@@ -99,6 +99,27 @@ Deno.serve(async (req) => {
         listingType = sp.listing_type!;
       }
 
+      // Extract extra fields from raw_data
+      const rawData = (sp.raw_data || {}) as Record<string, unknown>;
+      
+      // Energy label mapping
+      const validEnergyLabels = ["A++", "A+", "A", "B", "C", "D", "E", "F", "G"];
+      let energyLabel: string | null = null;
+      const rawEnergyLabel = (rawData.energy_label || "") as string;
+      if (rawEnergyLabel) {
+        // Clean up: "Energielabel A++" -> "A++", "A" -> "A"
+        const cleaned = rawEnergyLabel.replace(/energielabel\s*/i, "").trim().toUpperCase();
+        if (validEnergyLabels.includes(cleaned)) {
+          energyLabel = cleaned;
+        }
+      }
+      
+      // Build year
+      const buildYear = rawData.build_year ? Number(rawData.build_year) : null;
+      
+      // Bathrooms from raw_data or scraped_properties
+      const bathrooms = sp.bathrooms || (rawData.bathrooms ? Number(rawData.bathrooms) : null);
+
       // Geocode address
       let latitude: number | null = null;
       let longitude: number | null = null;
@@ -131,12 +152,15 @@ Deno.serve(async (req) => {
           property_type: propertyType,
           listing_type: listingType,
           bedrooms: sp.bedrooms || null,
+          bathrooms: bathrooms,
           surface_area: sp.surface_area || null,
           images: sp.images || [],
           user_id: SYSTEM_USER_ID,
           status: "actief",
           latitude,
           longitude,
+          energy_label: energyLabel,
+          build_year: buildYear && buildYear > 1800 && buildYear < 2030 ? buildYear : null,
         })
         .select("id")
         .single();

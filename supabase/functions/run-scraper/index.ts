@@ -185,6 +185,15 @@ async function scrapeWooniezie(): Promise<ScrapedProperty[]> {
         // Bedrooms
         const bedrooms = d.sleepingRoom?.amountOfRooms || d.aantalSlaapkamers || d.bedrooms || null;
 
+        // Bathrooms
+        const bathrooms = d.bathRoom?.amountOfRooms || d.aantalBadkamers || d.bathrooms || null;
+
+        // Build year
+        const buildYear = d.constructionYear || d.bouwjaar || d.buildYear || null;
+
+        // Energy label
+        const energyLabel = d.energielabel || d.energyLabel || d.energyIndex || null;
+
         // Property type mapping
         let propertyType: string | null = null;
         const typeStr = (d.dwellingType?.categorie || d.woningtype || d.type || "").toLowerCase();
@@ -198,18 +207,79 @@ async function scrapeWooniezie(): Promise<ScrapedProperty[]> {
 
         const title = [streetName, houseNum, cityName].filter(Boolean).join(" ");
 
-        // Build rich description
+        // Build rich description from all available fields
         const descParts: string[] = [];
-        if (d.dwellingType?.label || typeStr) descParts.push(`Type: ${d.dwellingType?.label || typeStr}`);
-        if (d.neighborhood?.name) descParts.push(`Wijk: ${d.neighborhood.name}`);
-        if (surfaceArea) descParts.push(`Oppervlakte: ${surfaceArea} m²`);
+        
+        // Doelgroep / target group
+        const targetGroup = d.targetGroup || d.doelgroep || d.dwellingType?.targetGroup || null;
+        if (targetGroup) descParts.push(`Doelgroep: ${targetGroup}`);
+        
+        // Dwelling type
+        if (d.dwellingType?.label || typeStr) descParts.push(`Woningtype: ${d.dwellingType?.label || typeStr}`);
+        
+        // Build year
+        if (buildYear) descParts.push(`Bouwjaar: ${buildYear}`);
+        
+        // Energy label
+        if (energyLabel) descParts.push(`Energielabel: ${energyLabel}`);
+        
+        // Heating
+        const heating = d.heating || d.verwarming || d.heatingType || null;
+        if (heating) descParts.push(`Verwarming: ${heating}`);
+        
+        // Solar panels
+        if (d.solarPanels || d.zonnepanelen) descParts.push("Zonnepanelen: Ja");
+        
+        // Surface
+        if (surfaceArea) descParts.push(`Oppervlakte woning: ${surfaceArea} m²`);
+        
+        // Living room area
+        const livingRoomArea = d.areaLivingRoom || d.oppervlakteWoonkamer || null;
+        if (livingRoomArea) descParts.push(`Oppervlakte woonkamer: ${livingRoomArea} m²`);
+        
+        // Bedrooms
         if (bedrooms) descParts.push(`Slaapkamers: ${bedrooms}`);
-        if (d.energielabel || d.energyLabel) descParts.push(`Energielabel: ${d.energielabel || d.energyLabel}`);
-        if (d.balcony) descParts.push("Balkon aanwezig");
-        if (d.garden) descParts.push("Tuin aanwezig");
-        if (d.parking) descParts.push("Parkeren beschikbaar");
-        if (d.elevator) descParts.push("Lift aanwezig");
-        const descriptionText = d.description || d.omschrijving || descParts.join(" • ") || null;
+        
+        // Bedroom areas
+        const bedroomAreas = d.sleepingRoom?.areas || d.oppervlakteSlaapkamers || null;
+        if (bedroomAreas) descParts.push(`Oppervlakte slaapkamer(s): ${bedroomAreas}`);
+        
+        // Kitchen
+        const kitchen = d.kitchen || d.keuken || null;
+        if (kitchen) descParts.push(`Keuken: ${typeof kitchen === 'string' ? kitchen : kitchen.type || 'Ja'}`);
+        
+        // Attic
+        const attic = d.attic || d.zolder || null;
+        if (attic) descParts.push(`Zolder: ${typeof attic === 'string' ? attic : 'Ja'}`);
+        
+        // Garden, balcony, storage
+        if (d.garden) descParts.push("Tuin: Ja");
+        if (d.balcony) descParts.push("Balkon: Ja");
+        if (d.storage || d.berging) descParts.push("Berging: Ja");
+        if (d.elevator) descParts.push("Lift: Ja");
+        if (d.parking) descParts.push("Parkeren: Ja");
+        
+        // Zero-step / nultreden
+        if (d.zeroStep || d.nultreden || d.accessible) descParts.push("Nultreden woning");
+        
+        // Neighborhood
+        if (d.neighborhood?.name) descParts.push(`Wijk: ${d.neighborhood.name}`);
+        
+        // Available from
+        const availableFrom = d.availableFromDate || d.beschikbaarVanaf || null;
+        if (availableFrom) descParts.push(`Beschikbaar vanaf: ${availableFrom}`);
+        
+        // Costs breakdown
+        const netRent = d.netRent || d.kaleHuur || null;
+        const serviceCosts = d.serviceCosts || d.servicekosten || null;
+        if (netRent) descParts.push(`Kale huurprijs: €${netRent}`);
+        if (serviceCosts) descParts.push(`Servicekosten: €${serviceCosts}`);
+
+        // Use full description text if available, otherwise use built parts
+        const fullDescription = d.description || d.omschrijving || null;
+        const descriptionText = fullDescription 
+          ? `${descParts.join(" • ")}\n\n${fullDescription}`
+          : descParts.length > 0 ? descParts.join(" • ") : null;
 
         // Corporation / aanbieder info
         const corporationName = d.corporation?.name || d.aanbieder || d.owner?.name || null;
@@ -234,17 +304,30 @@ async function scrapeWooniezie(): Promise<ScrapedProperty[]> {
           images,
           raw_data: {
             wooniezie_id: id,
-            energy_label: d.energielabel || d.energyLabel || null,
+            energy_label: energyLabel,
+            build_year: buildYear,
+            bathrooms: typeof bathrooms === "number" ? bathrooms : null,
             neighborhood: d.neighborhood?.name || d.wijk || null,
             dwelling_type: d.dwellingType?.label || typeStr || null,
             corporation_name: corporationName,
             corporation_logo: corporationLogo,
+            target_group: targetGroup,
+            heating: heating,
+            solar_panels: d.solarPanels || d.zonnepanelen || false,
             balcony: d.balcony || false,
             garden: d.garden || false,
             parking: d.parking || false,
             elevator: d.elevator || false,
+            storage: d.storage || d.berging || false,
+            accessible: d.zeroStep || d.nultreden || d.accessible || false,
             floor: d.floor || null,
-            available_from: d.availableFromDate || d.beschikbaarVanaf || null,
+            living_room_area: livingRoomArea,
+            kitchen: kitchen,
+            attic: attic,
+            available_from: availableFrom,
+            net_rent: netRent,
+            service_costs: serviceCosts,
+            floorplans: d.floorplans || d.plattegronden || null,
           },
         });
       } catch (itemError) {
