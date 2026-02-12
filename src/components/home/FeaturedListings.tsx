@@ -100,7 +100,7 @@ const FeaturedListings = () => {
           <CarouselContent className="-ml-4">
             {properties.map((property) => (
               <CarouselItem key={property.id} className="pl-4 md:basis-1/2 lg:basis-1/3">
-                <Link to={`/woning/${property.id}`}>
+                <Link to={`/woning/${property.slug || property.id}`}>
                   <Card className="group overflow-hidden border-0 shadow-md transition-shadow hover:shadow-xl">
                     <div className="relative aspect-[4/3] overflow-hidden">
                       <img

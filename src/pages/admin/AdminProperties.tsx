@@ -245,7 +245,7 @@ const AdminProperties = () => {
                         <Button
                           variant="ghost"
                           size="icon"
-                          onClick={() => window.open(`/woning/${property.id}`, "_blank")}
+                          onClick={() => window.open(`/woning/${property.slug || property.id}`, "_blank")}
                         >
                           <ExternalLink className="h-4 w-4" />
                         </Button>

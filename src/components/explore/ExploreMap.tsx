@@ -154,7 +154,7 @@ const ExploreMap = ({ properties, hoveredPropertyId }: ExploreMapProps) => {
           <div style="font-weight:600;font-size:14px;margin-bottom:4px">${property.title}</div>
           <div style="color:#666;font-size:12px;margin-bottom:6px">${property.street || ""} ${property.house_number || ""}, ${property.city}</div>
           <div style="font-weight:700;font-size:15px;color:hsl(var(--primary));margin-bottom:8px">${formatPrice(Number(property.price), property.listing_type)}</div>
-          <a href="/woning/${property.id}" style="display:inline-block;padding:6px 12px;background:hsl(var(--primary));color:white;border-radius:6px;text-decoration:none;font-size:12px;font-weight:600">Bekijken →</a>
+          <a href="/woning/${property.slug || property.id}" style="display:inline-block;padding:6px 12px;background:hsl(var(--primary));color:white;border-radius:6px;text-decoration:none;font-size:12px;font-weight:600">Bekijken →</a>
         </div>
       `, { maxWidth: 250, className: "custom-popup" });
 

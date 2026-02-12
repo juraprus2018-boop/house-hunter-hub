@@ -35,7 +35,7 @@ const App = () => (
             <Route path="/registreren" element={<Register />} />
             <Route path="/zoeken" element={<Search />} />
             <Route path="/verkennen" element={<Explore />} />
-            <Route path="/woning/:id" element={<PropertyDetail />} />
+            <Route path="/woning/:slug" element={<PropertyDetail />} />
             <Route path="/favorieten" element={<Favorites />} />
             <Route path="/mijn-woningen" element={<MyProperties />} />
             <Route path="/plaatsen" element={<CreateProperty />} />
