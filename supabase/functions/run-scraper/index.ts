@@ -87,10 +87,10 @@ async function uploadImagesToStorage(
   return storedUrls;
 }
 
-async function fetchPage(url: string): Promise<string> {
+async function fetchPage(url: string, timeoutMs = 25000): Promise<string> {
   console.log(`Fetching: ${url}`);
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 25000);
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
   try {
     const response = await fetch(url, {
@@ -475,10 +475,12 @@ async function scrapeKamernet(): Promise<ScrapedProperty[]> {
   const properties: ScrapedProperty[] = [];
   try {
     // Kamernet is a Next.js app - try multiple pages
+    // Only fetch 1 page to stay within timeout
     const pages = [
       "https://kamernet.nl/huren/kamers-nederland?pageNo=1&sort=1",
-      "https://kamernet.nl/huren/kamers-nederland?pageNo=2&sort=1",
     ];
+    let detailFetchCount = 0;
+    const MAX_DETAIL_FETCHES = 8;
 
     for (const pageUrl of pages) {
       try {
@@ -560,36 +562,139 @@ async function scrapeKamernet(): Promise<ScrapedProperty[]> {
           console.log(`Kamernet first listing sample: ${JSON.stringify(listings[0]).substring(0, 500)}`);
         }
 
+        // deno-lint-ignore no-explicit-any (detailFetchCount declared above)
         // deno-lint-ignore no-explicit-any
         for (const listing of listings as any[]) {
           try {
             const id = listing.id || listing.listingId || "";
-            const title = listing.dutchTitle || listing.englishTitle || listing.title || `Kamer ${listing.city || ""}`;
             const city = listing.city || listing.cityName || null;
             const street = listing.street || listing.streetName || null;
-            const postalCode = listing.postalCode || listing.zipCode || null;
-            const price = listing.totalRentalPrice || listing.rent || listing.price || listing.monthlyRent || null;
-            const surfaceArea = listing.surfaceArea || listing.size || listing.surface || null;
-            const listingUrl = listing.url || (id ? `https://kamernet.nl/huren/kamer-${(city || "").toLowerCase().replace(/\s+/g, "-")}/${(street || "").toLowerCase().replace(/\s+/g, "-")}/kamer-${id}` : null);
+            const citySlug = listing.citySlug || (city || "").toLowerCase().replace(/\s+/g, "-");
+            const streetSlug = listing.streetSlug || (street || "").toLowerCase().replace(/\s+/g, "-");
+            const listingUrl = listing.url || (id ? `https://kamernet.nl/huren/kamer-${citySlug}/${streetSlug}/kamer-${id}` : null);
 
             if (!listingUrl) continue;
             const fullUrl = listingUrl.startsWith("http") ? listingUrl : `https://kamernet.nl${listingUrl}`;
 
-            // Images
-            const images: string[] = [];
-            if (listing.image && Array.isArray(listing.image)) {
-              for (const img of listing.image) {
-                const imgUrl = typeof img === "string" ? img : (img.url || img.src || img.path || "");
-                if (imgUrl) images.push(imgUrl.startsWith("http") ? imgUrl : `https://resources.kamernet.nl${imgUrl}`);
+            // Fetch detail page for rich data
+            let detailTitle = `Kamer aan ${street || "onbekend"}, ${city || ""}`;
+            let description: string | null = null;
+            let postalCode: string | null = null;
+            let houseNumber: string | null = null;
+            const detailImages: string[] = [];
+            let detailBathrooms: number | null = null;
+            let detailBedrooms: number | null = null;
+            let detailSurface: number | null = listing.surfaceArea || null;
+            let availableFrom: string | null = listing.availabilityStartDate || null;
+            let availableUntil: string | null = listing.availabilityEndDate || null;
+            let furnished: string | null = null;
+            let deposit: number | null = null;
+            let landlordName: string | null = null;
+
+            if (detailFetchCount < MAX_DETAIL_FETCHES) {
+            try {
+              detailFetchCount++;
+              const detailHtml = await fetchPage(fullUrl, 8000);
+              const detailNextData = detailHtml.match(/<script id="__NEXT_DATA__"[^>]*>([\s\S]*?)<\/script>/);
+              if (detailNextData) {
+                const detailJson = JSON.parse(detailNextData[1]);
+                const detailProps = detailJson?.props?.pageProps?.targetPageProps || detailJson?.props?.pageProps || {};
+                
+                // Search for listing detail data recursively
+                const findDetail = (obj: Record<string, unknown>, depth = 0): Record<string, unknown> | null => {
+                  if (depth > 4) return null;
+                  for (const key of Object.keys(obj)) {
+                    const val = obj[key];
+                    if (val && typeof val === "object" && !Array.isArray(val)) {
+                      const o = val as Record<string, unknown>;
+                      // Look for an object that has description or postalCode
+                      if (o.description || o.dutchDescription || o.postalCode || o.zipCode) {
+                        return o;
+                      }
+                      const found = findDetail(o, depth + 1);
+                      if (found) return found;
+                    }
+                  }
+                  return null;
+                };
+
+                const detail = findDetail(detailProps) || detailProps;
+                
+                // Title from detail
+                const dTitle = detail.dutchTitle || detail.englishTitle || detail.title;
+                if (dTitle && typeof dTitle === "string") {
+                  detailTitle = dTitle;
+                } else {
+                  // Build descriptive title from page info
+                  const furnished_str = listing.furnishingId === 4 ? "Gemeubileerde " : "";
+                  detailTitle = `${furnished_str}Kamer aan ${street}, ${city}`;
+                }
+
+                // Description
+                description = (detail.dutchDescription || detail.englishDescription || detail.description || null) as string | null;
+
+                // Address details
+                postalCode = (detail.postalCode || detail.zipCode || null) as string | null;
+                houseNumber = (detail.houseNumber || detail.houseNr || null) as string | null;
+
+                // Images from detail - Kamernet uses imageList with UUIDs
+                const detailImgList = detail.imageList || detail.images || detail.photos || detail.media;
+                if (Array.isArray(detailImgList)) {
+                  for (const img of detailImgList) {
+                    if (typeof img === "string") {
+                      // UUID format -> build full URL
+                      if (img.match(/^[0-9a-f-]{36}$/i)) {
+                        detailImages.push(`https://resources.kamernet.nl/image/${img}`);
+                      } else if (img.startsWith("http")) {
+                        detailImages.push(img);
+                      } else {
+                        detailImages.push(`https://resources.kamernet.nl/image/${img}`);
+                      }
+                    } else if (img && typeof img === "object") {
+                      const imgUrl = (img as Record<string, unknown>)?.url || (img as Record<string, unknown>)?.src || "";
+                      if (imgUrl) detailImages.push(String(imgUrl).startsWith("http") ? String(imgUrl) : `https://resources.kamernet.nl/image/${imgUrl}`);
+                    }
+                  }
+                }
+
+                // Extra details
+                if (detail.surfaceArea) detailSurface = Number(detail.surfaceArea);
+                if (detail.numOfBedrooms || detail.numberOfBedrooms) detailBedrooms = Number(detail.numOfBedrooms || detail.numberOfBedrooms);
+                if (detail.deposit) deposit = Number(detail.deposit);
+                if (detail.landlordDisplayName) landlordName = String(detail.landlordDisplayName);
+                if (detail.availabilityStartDate) availableFrom = String(detail.availabilityStartDate);
+                if (detail.availabilityEndDate) availableUntil = String(detail.availabilityEndDate);
+                
+                // Coordinates from detail
+                if (detail.postalCodeLat && detail.postalCodeLong) {
+                  // Store in raw_data for later use
+                  (listing as Record<string, unknown>)._detailLat = Number(detail.postalCodeLat);
+                  (listing as Record<string, unknown>)._detailLon = Number(detail.postalCodeLong);
+                }
+                
+                // Furnished mapping
+                const furnId = detail.furnishingId || listing.furnishingId;
+                if (furnId === 4 || furnId === "4") furnished = "gemeubileerd";
+                else if (furnId === 3 || furnId === "3") furnished = "gestoffeerd";
+                else if (furnId === 2 || furnId === "2") furnished = "kaal";
+
+                console.log(`Detail fetched for ${street}, ${city}: description=${!!description}, images=${detailImages.length}, postal=${postalCode}`);
               }
-            } else if (listing.image && typeof listing.image === "string") {
-              images.push(listing.image.startsWith("http") ? listing.image : `https://resources.kamernet.nl${listing.image}`);
-            } else if (listing.thumbnail) {
-              const thumb = typeof listing.thumbnail === "string" ? listing.thumbnail : (listing.thumbnail.url || "");
-              if (thumb) images.push(thumb.startsWith("http") ? thumb : `https://resources.kamernet.nl${thumb}`);
-            } else if (listing.thumbnailUrl) {
-              images.push(listing.thumbnailUrl.startsWith("http") ? listing.thumbnailUrl : `https://resources.kamernet.nl${listing.thumbnailUrl}`);
+            } catch (detailError) {
+              console.warn(`Failed to fetch detail for ${fullUrl}:`, detailError);
             }
+            } // end detail fetch limit
+
+            // Fallback images from overview listing
+            if (detailImages.length === 0) {
+              if (listing.fullPreviewImageUrl) {
+                detailImages.push(listing.fullPreviewImageUrl.startsWith("http") ? listing.fullPreviewImageUrl : `https://resources.kamernet.nl/image/${listing.fullPreviewImageUrl}`);
+              } else if (listing.thumbnailUrl) {
+                detailImages.push(listing.thumbnailUrl.startsWith("http") ? listing.thumbnailUrl : `https://resources.kamernet.nl/image/${listing.thumbnailUrl}`);
+              }
+            }
+
+            const price = listing.totalRentalPrice || listing.rent || listing.price || null;
 
             // Property type
             let propertyType: string | null = "kamer";
@@ -598,30 +703,33 @@ async function scrapeKamernet(): Promise<ScrapedProperty[]> {
             else if (typeStr.includes("studio") || typeStr === "3") propertyType = "studio";
             else if (typeStr.includes("huis") || typeStr.includes("house") || typeStr === "4") propertyType = "huis";
 
-            const description = listing.dutchDescription || listing.englishDescription || listing.description || null;
-
             properties.push({
               source_url: fullUrl,
               source_site: "kamernet",
-              title,
+              title: detailTitle,
               price: typeof price === "number" ? price : (price ? parseFloat(String(price)) : null),
               city,
               postal_code: postalCode,
               street,
-              house_number: listing.houseNumber || listing.houseNr || null,
-              surface_area: typeof surfaceArea === "number" ? surfaceArea : null,
-              bedrooms: listing.bedrooms || 1,
+              house_number: houseNumber,
+              surface_area: typeof detailSurface === "number" ? detailSurface : null,
+              bedrooms: detailBedrooms || listing.bedrooms || 1,
               property_type: propertyType,
               listing_type: "huur",
               description,
-              images,
+              images: detailImages,
               raw_data: {
                 kamernet_id: id,
-                available_from: listing.availableFrom || listing.moveInDate || null,
-                landlord: listing.landlordDisplayName || listing.landlordName || listing.landlord || null,
-                furnished: listing.furnished ?? listing.isFurnished ?? null,
+                available_from: availableFrom,
+                available_until: availableUntil,
+                landlord: landlordName,
+                furnished,
+                deposit,
                 roommates: listing.currentResidents || listing.roommates || null,
                 gender_preference: listing.genderPreference || listing.preferredGender || null,
+                utilities_included: listing.utilitiesIncluded ?? null,
+                latitude: (listing as Record<string, unknown>)._detailLat || null,
+                longitude: (listing as Record<string, unknown>)._detailLon || null,
               },
             });
           } catch (itemError) {
@@ -989,21 +1097,23 @@ Deno.serve(async (req) => {
             const buildYear = rawData.build_year ? Number(rawData.build_year) : null;
             const bathrooms = sp.bathrooms || (rawData.bathrooms ? Number(rawData.bathrooms) : null);
 
-            // Geocode
-            let latitude: number | null = null;
-            let longitude: number | null = null;
-            try {
-              const address = `${sp.street} ${sp.house_number}, ${sp.postal_code} ${sp.city}, Netherlands`;
-              const geoRes = await fetch(
-                `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1`,
-                { headers: { "User-Agent": "WoningPlatform/1.0" } }
-              );
-              const geoData = await geoRes.json();
-              if (geoData && geoData.length > 0) {
-                latitude = parseFloat(geoData[0].lat);
-                longitude = parseFloat(geoData[0].lon);
-              }
-            } catch (_e) { /* skip geocoding errors */ }
+            // Geocode - use raw_data lat/lon if available, otherwise Nominatim
+            let latitude: number | null = rawData.latitude ? Number(rawData.latitude) : null;
+            let longitude: number | null = rawData.longitude ? Number(rawData.longitude) : null;
+            if (!latitude || !longitude) {
+              try {
+                const address = `${sp.street} ${sp.house_number}, ${sp.postal_code} ${sp.city}, Netherlands`;
+                const geoRes = await fetch(
+                  `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1`,
+                  { headers: { "User-Agent": "WoningPlatform/1.0" } }
+                );
+                const geoData = await geoRes.json();
+                if (geoData && geoData.length > 0) {
+                  latitude = parseFloat(geoData[0].lat);
+                  longitude = parseFloat(geoData[0].lon);
+                }
+              } catch (_e) { /* skip geocoding errors */ }
+            }
 
             // Upload images to own storage
             const tempId = crypto.randomUUID();
