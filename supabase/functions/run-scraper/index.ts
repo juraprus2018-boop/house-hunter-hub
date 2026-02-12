@@ -474,92 +474,169 @@ async function scrapePararius(): Promise<ScrapedProperty[]> {
 async function scrapeKamernet(): Promise<ScrapedProperty[]> {
   const properties: ScrapedProperty[] = [];
   try {
-    // Kamernet is a Next.js app - __NEXT_DATA__ contains listing data
-    const html = await fetchPage("https://kamernet.nl/huren/kamers-nederland?pageNo=1&sort=1");
+    // Kamernet is a Next.js app - try multiple pages
+    const pages = [
+      "https://kamernet.nl/huren/kamers-nederland?pageNo=1&sort=1",
+      "https://kamernet.nl/huren/kamers-nederland?pageNo=2&sort=1",
+    ];
 
-    // Extract __NEXT_DATA__ JSON
-    const nextDataMatch = html.match(/<script id="__NEXT_DATA__"[^>]*>([\s\S]*?)<\/script>/);
-    if (nextDataMatch) {
-      const nextData = JSON.parse(nextDataMatch[1]);
-      const pageProps = nextData?.props?.pageProps;
-      // Try multiple paths to find listings
-      const listings = pageProps?.listings || pageProps?.searchResults?.listings || pageProps?.data?.listings || pageProps?.initialListings || [];
+    for (const pageUrl of pages) {
+      try {
+        const html = await fetchPage(pageUrl);
 
-      console.log(`Kamernet __NEXT_DATA__: found ${listings.length} listings, pageProps keys: ${JSON.stringify(Object.keys(pageProps || {}))}`);
-      if (listings.length > 0) {
-        console.log(`Kamernet first listing keys: ${JSON.stringify(Object.keys(listings[0]))}`);
-        console.log(`Kamernet first listing sample: ${JSON.stringify(listings[0]).substring(0, 500)}`);
-      }
-
-      // deno-lint-ignore no-explicit-any
-      for (const listing of listings as any[]) {
-        try {
-          const id = listing.id || listing.listingId || "";
-          const title = listing.dutchTitle || listing.englishTitle || listing.title || `Kamer ${listing.city || ""}`;
-          const city = listing.city || listing.cityName || null;
-          const street = listing.street || listing.streetName || null;
-          const postalCode = listing.postalCode || listing.zipCode || null;
-          const price = listing.rent || listing.price || listing.monthlyRent || null;
-          const surfaceArea = listing.surfaceArea || listing.size || listing.surface || null;
-          const listingUrl = listing.url || (id ? `https://kamernet.nl/huren/kamer-${(city || "").toLowerCase().replace(/\s+/g, "-")}/${(street || "").toLowerCase().replace(/\s+/g, "-")}/kamer-${id}` : null);
-
-          if (!listingUrl) continue;
-          const fullUrl = listingUrl.startsWith("http") ? listingUrl : `https://kamernet.nl${listingUrl}`;
-
-          // Images
-          const images: string[] = [];
-          if (listing.image && Array.isArray(listing.image)) {
-            for (const img of listing.image) {
-              const imgUrl = typeof img === "string" ? img : (img.url || img.src || img.path || "");
-              if (imgUrl) images.push(imgUrl.startsWith("http") ? imgUrl : `https://resources.kamernet.nl${imgUrl}`);
-            }
-          } else if (listing.image && typeof listing.image === "string") {
-            images.push(listing.image.startsWith("http") ? listing.image : `https://resources.kamernet.nl${listing.image}`);
-          } else if (listing.thumbnail) {
-            const thumb = typeof listing.thumbnail === "string" ? listing.thumbnail : (listing.thumbnail.url || "");
-            if (thumb) images.push(thumb.startsWith("http") ? thumb : `https://resources.kamernet.nl${thumb}`);
-          }
-
-          // Property type
-          let propertyType: string | null = "kamer";
-          const typeStr = String(listing.listingType || listing.propertyType || listing.type || "").toLowerCase();
-          if (typeStr.includes("appartement") || typeStr.includes("apartment")) propertyType = "appartement";
-          else if (typeStr.includes("studio")) propertyType = "studio";
-          else if (typeStr.includes("huis") || typeStr.includes("house")) propertyType = "huis";
-
-          const description = listing.dutchDescription || listing.englishDescription || listing.description || null;
-
-          properties.push({
-            source_url: fullUrl,
-            source_site: "kamernet",
-            title,
-            price: typeof price === "number" ? price : (price ? parseFloat(String(price)) : null),
-            city,
-            postal_code: postalCode,
-            street,
-            house_number: listing.houseNumber || listing.houseNr || null,
-            surface_area: typeof surfaceArea === "number" ? surfaceArea : null,
-            bedrooms: listing.bedrooms || 1,
-            property_type: propertyType,
-            listing_type: "huur",
-            description,
-            images,
-            raw_data: {
-              kamernet_id: id,
-              available_from: listing.availableFrom || listing.moveInDate || null,
-              landlord: listing.landlordName || listing.landlord || null,
-              furnished: listing.furnished ?? listing.isFurnished ?? null,
-              roommates: listing.currentResidents || listing.roommates || null,
-              gender_preference: listing.genderPreference || listing.preferredGender || null,
-            },
-          });
-        } catch (itemError) {
-          console.error("Error parsing Kamernet listing:", itemError);
+        // Extract __NEXT_DATA__ JSON
+        const nextDataMatch = html.match(/<script id="__NEXT_DATA__"[^>]*>([\s\S]*?)<\/script>/);
+        if (!nextDataMatch) {
+          console.log("Kamernet: __NEXT_DATA__ not found on page");
+          continue;
         }
+
+        const nextData = JSON.parse(nextDataMatch[1]);
+        const pageProps = nextData?.props?.pageProps;
+        const targetPageProps = pageProps?.targetPageProps;
+
+        console.log(`Kamernet pageProps keys: ${JSON.stringify(Object.keys(pageProps || {}))}`);
+        if (targetPageProps) {
+          console.log(`Kamernet targetPageProps keys: ${JSON.stringify(Object.keys(targetPageProps))}`);
+        }
+
+        // Try multiple paths to find listings
+        const listings =
+          targetPageProps?.listings ||
+          targetPageProps?.searchResults?.listings ||
+          targetPageProps?.data?.listings ||
+          targetPageProps?.items ||
+          targetPageProps?.results ||
+          pageProps?.listings ||
+          pageProps?.searchResults?.listings ||
+          pageProps?.data?.listings ||
+          [];
+
+        // If still empty, search all keys of targetPageProps for arrays
+        if (listings.length === 0 && targetPageProps) {
+          for (const key of Object.keys(targetPageProps)) {
+            const val = targetPageProps[key];
+            if (Array.isArray(val) && val.length > 0 && typeof val[0] === "object" && val[0] !== null) {
+              const itemKeys = Object.keys(val[0]);
+              console.log(`Kamernet targetPageProps["${key}"] is array(${val.length}), first item keys: ${JSON.stringify(itemKeys.slice(0, 15))}`);
+              // Check if it looks like listings
+              if (itemKeys.some(k => ["id", "city", "rent", "price", "street", "url", "dutchTitle", "englishTitle", "title"].includes(k))) {
+                console.log(`Found listings in targetPageProps["${key}"]`);
+                listings.push(...val);
+              }
+            }
+          }
+        }
+
+        // Also try deeply nested search result structures
+        if (listings.length === 0 && targetPageProps) {
+          const deepSearch = (obj: Record<string, unknown>, depth = 0): unknown[] => {
+            if (depth > 3) return [];
+            for (const key of Object.keys(obj)) {
+              const val = obj[key];
+              if (Array.isArray(val) && val.length > 0 && typeof val[0] === "object") {
+                const firstKeys = Object.keys(val[0] as Record<string, unknown>);
+                if (firstKeys.some(k => ["id", "city", "rent", "price", "url", "dutchTitle"].includes(k))) {
+                  return val;
+                }
+              }
+              if (val && typeof val === "object" && !Array.isArray(val)) {
+                const found = deepSearch(val as Record<string, unknown>, depth + 1);
+                if (found.length > 0) return found;
+              }
+            }
+            return [];
+          };
+          const deepResults = deepSearch(targetPageProps);
+          if (deepResults.length > 0) {
+            console.log(`Found ${deepResults.length} listings via deep search`);
+            listings.push(...deepResults);
+          }
+        }
+
+        console.log(`Kamernet: found ${listings.length} listings on ${pageUrl}`);
+        if (listings.length > 0) {
+          console.log(`Kamernet first listing keys: ${JSON.stringify(Object.keys(listings[0]))}`);
+          console.log(`Kamernet first listing sample: ${JSON.stringify(listings[0]).substring(0, 500)}`);
+        }
+
+        // deno-lint-ignore no-explicit-any
+        for (const listing of listings as any[]) {
+          try {
+            const id = listing.id || listing.listingId || "";
+            const title = listing.dutchTitle || listing.englishTitle || listing.title || `Kamer ${listing.city || ""}`;
+            const city = listing.city || listing.cityName || null;
+            const street = listing.street || listing.streetName || null;
+            const postalCode = listing.postalCode || listing.zipCode || null;
+            const price = listing.rent || listing.price || listing.monthlyRent || null;
+            const surfaceArea = listing.surfaceArea || listing.size || listing.surface || null;
+            const listingUrl = listing.url || (id ? `https://kamernet.nl/huren/kamer-${(city || "").toLowerCase().replace(/\s+/g, "-")}/${(street || "").toLowerCase().replace(/\s+/g, "-")}/kamer-${id}` : null);
+
+            if (!listingUrl) continue;
+            const fullUrl = listingUrl.startsWith("http") ? listingUrl : `https://kamernet.nl${listingUrl}`;
+
+            // Images
+            const images: string[] = [];
+            if (listing.image && Array.isArray(listing.image)) {
+              for (const img of listing.image) {
+                const imgUrl = typeof img === "string" ? img : (img.url || img.src || img.path || "");
+                if (imgUrl) images.push(imgUrl.startsWith("http") ? imgUrl : `https://resources.kamernet.nl${imgUrl}`);
+              }
+            } else if (listing.image && typeof listing.image === "string") {
+              images.push(listing.image.startsWith("http") ? listing.image : `https://resources.kamernet.nl${listing.image}`);
+            } else if (listing.thumbnail) {
+              const thumb = typeof listing.thumbnail === "string" ? listing.thumbnail : (listing.thumbnail.url || "");
+              if (thumb) images.push(thumb.startsWith("http") ? thumb : `https://resources.kamernet.nl${thumb}`);
+            } else if (listing.thumbnailUrl) {
+              images.push(listing.thumbnailUrl.startsWith("http") ? listing.thumbnailUrl : `https://resources.kamernet.nl${listing.thumbnailUrl}`);
+            }
+
+            // Property type
+            let propertyType: string | null = "kamer";
+            const typeStr = String(listing.listingType || listing.propertyType || listing.type || listing.listingTypeId || "").toLowerCase();
+            if (typeStr.includes("appartement") || typeStr.includes("apartment") || typeStr === "2") propertyType = "appartement";
+            else if (typeStr.includes("studio") || typeStr === "3") propertyType = "studio";
+            else if (typeStr.includes("huis") || typeStr.includes("house") || typeStr === "4") propertyType = "huis";
+
+            const description = listing.dutchDescription || listing.englishDescription || listing.description || null;
+
+            properties.push({
+              source_url: fullUrl,
+              source_site: "kamernet",
+              title,
+              price: typeof price === "number" ? price : (price ? parseFloat(String(price)) : null),
+              city,
+              postal_code: postalCode,
+              street,
+              house_number: listing.houseNumber || listing.houseNr || null,
+              surface_area: typeof surfaceArea === "number" ? surfaceArea : null,
+              bedrooms: listing.bedrooms || 1,
+              property_type: propertyType,
+              listing_type: "huur",
+              description,
+              images,
+              raw_data: {
+                kamernet_id: id,
+                available_from: listing.availableFrom || listing.moveInDate || null,
+                landlord: listing.landlordDisplayName || listing.landlordName || listing.landlord || null,
+                furnished: listing.furnished ?? listing.isFurnished ?? null,
+                roommates: listing.currentResidents || listing.roommates || null,
+                gender_preference: listing.genderPreference || listing.preferredGender || null,
+              },
+            });
+          } catch (itemError) {
+            console.error("Error parsing Kamernet listing:", itemError);
+          }
+        }
+      } catch (pageError) {
+        console.error(`Error fetching Kamernet page ${pageUrl}:`, pageError);
       }
-    } else {
-      console.log("Kamernet: __NEXT_DATA__ not found, falling back to URL extraction");
-      // Fallback
+    }
+
+    // Fallback: URL extraction if no listings found
+    if (properties.length === 0) {
+      console.log("Kamernet: No listings found via JSON, trying URL extraction fallback");
+      const html = await fetchPage("https://kamernet.nl/huren/kamers-nederland?pageNo=1&sort=1");
       const cardMatches = html.matchAll(/href="(\/huren\/kamer-[^"]+\/kamer-(\d+))"/gi);
       for (const match of cardMatches) {
         properties.push({
@@ -575,7 +652,7 @@ async function scrapeKamernet(): Promise<ScrapedProperty[]> {
       }
     }
 
-    console.log(`Kamernet: found ${properties.length} listings`);
+    console.log(`Kamernet: found ${properties.length} total listings`);
   } catch (e) {
     console.error("Error scraping Kamernet:", e);
   }
