@@ -228,6 +228,7 @@ Deno.serve(async (req) => {
           longitude,
           energy_label: energyLabel,
           build_year: buildYear && buildYear > 1800 && buildYear < 2030 ? buildYear : null,
+          source_site: sp.source_site || null,
         })
         .select("id")
         .single();

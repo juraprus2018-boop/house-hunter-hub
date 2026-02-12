@@ -14,9 +14,19 @@ import { useIsMobile } from "@/hooks/use-mobile";
 
 type ListingType = "huur" | "koop";
 
+const SOURCE_SITES = [
+  { value: "wooniezie", label: "Wooniezie" },
+  { value: "kamernet", label: "Kamernet" },
+  { value: "pararius", label: "Pararius" },
+  { value: "huurwoningen.nl", label: "Huurwoningen.nl" },
+  { value: "directwonen", label: "DirectWonen" },
+  { value: "vesteda", label: "Vesteda" },
+];
+
 const ExplorePage = () => {
   const [selectedCity, setSelectedCity] = useState<string | null>(null);
   const [listingType, setListingType] = useState<ListingType | null>(null);
+  const [selectedSource, setSelectedSource] = useState<string | null>(null);
   const [maxPrice, setMaxPrice] = useState<number>(5000);
   const [priceActive, setPriceActive] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -26,10 +36,12 @@ const ExplorePage = () => {
     city: selectedCity || undefined,
     listingType: listingType || undefined,
     maxPrice: priceActive ? maxPrice : undefined,
+    sourceSite: selectedSource || undefined,
   });
 
   const { data: citySourceProperties } = useProperties({
     listingType: listingType || undefined,
+    sourceSite: selectedSource || undefined,
   });
   const cities = useMemo(() => {
     if (!citySourceProperties) return [];
@@ -59,6 +71,25 @@ const ExplorePage = () => {
             <X className="h-5 w-5" />
           </Button>
         )}
+      </div>
+
+      <Separator />
+
+      <div className="p-5">
+        <Label className="mb-2 block text-sm font-medium">Bron</Label>
+        <div className="flex flex-wrap gap-2">
+          {SOURCE_SITES.map(({ value, label }) => (
+            <Button
+              key={value}
+              size="sm"
+              variant={selectedSource === value ? "default" : "outline"}
+              onClick={() => setSelectedSource(selectedSource === value ? null : value)}
+              className="text-xs"
+            >
+              {label}
+            </Button>
+          ))}
+        </div>
       </div>
 
       <Separator />

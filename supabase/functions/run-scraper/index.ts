@@ -786,7 +786,7 @@ Deno.serve(async (req) => {
         const { data: inserted, error: insertError } = await supabase
           .from("scraped_properties")
           .insert(newProperties.map((p) => ({ ...p, scraper_id, status: "approved", reviewed_at: new Date().toISOString(), reviewed_by: SYSTEM_USER_ID, last_seen_at: new Date().toISOString() })))
-          .select("id, title, description, price, city, street, house_number, postal_code, property_type, listing_type, bedrooms, bathrooms, surface_area, images, raw_data, source_url");
+          .select("id, title, description, price, city, street, house_number, postal_code, property_type, listing_type, bedrooms, bathrooms, surface_area, images, raw_data, source_url, source_site");
 
         if (insertError) {
           console.error("Error inserting scraped properties:", insertError);
@@ -867,6 +867,7 @@ Deno.serve(async (req) => {
                 longitude,
                 energy_label: energyLabel,
                 build_year: buildYear && buildYear > 1800 && buildYear < 2030 ? buildYear : null,
+                source_site: sp.source_site || null,
               })
               .select("id")
               .single();
