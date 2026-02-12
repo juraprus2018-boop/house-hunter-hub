@@ -618,35 +618,105 @@ async function scrapeDirectWonen(): Promise<ScrapedProperty[]> {
   const properties: ScrapedProperty[] = [];
   try {
     const html = await fetchPage("https://directwonen.nl/huurwoningen-huren/nederland");
-    const listingMatches = html.matchAll(
-      /href="(https:\/\/directwonen\.nl\/huurwoningen-huren\/([^\/]+)\/([^\/]+)\/([\w]+-\d+))"/gi
-    );
 
-    for (const match of listingMatches) {
-      const typePart = match[4].split("-")[0];
-      let propertyType = null;
-      if (typePart === "appartement") propertyType = "appartement";
-      else if (typePart === "woning" || typePart === "huis") propertyType = "huis";
-      else if (typePart === "studio") propertyType = "studio";
-      else if (typePart === "kamer") propertyType = "kamer";
+    // Split HTML into tile blocks
+    const tiles = html.split('<div class="tile">').slice(1);
+    console.log(`DirectWonen: found ${tiles.length} tile blocks`);
+    const seenUrls = new Set<string>();
 
-      properties.push({
-        source_url: match[1],
-        source_site: "directwonen",
-        title: `${match[3].replace(/-/g, " ")}, ${match[2]}`,
-        price: null,
-        city: match[2].charAt(0).toUpperCase() + match[2].slice(1).replace(/-/g, " "),
-        postal_code: null,
-        street: match[3].replace(/-/g, " "),
-        house_number: null,
-        surface_area: null, bedrooms: null,
-        property_type: propertyType,
-        listing_type: "huur",
-        description: null, images: [],
-        raw_data: { typeId: match[4] },
-      });
+    for (const tile of tiles) {
+      try {
+        // Extract URL
+        const urlMatch = tile.match(/href="(https:\/\/directwonen\.nl\/huurwoningen-huren\/([^\/]+)\/([^\/]+)\/([\w]+-(\d+)))"/);
+        if (!urlMatch) continue;
+
+        const fullUrl = urlMatch[1];
+        if (seenUrls.has(fullUrl)) continue;
+        seenUrls.add(fullUrl);
+
+        const citySlug = urlMatch[2];
+        const streetSlug = urlMatch[3];
+        const typePart = urlMatch[4].split("-")[0];
+        const adId = urlMatch[5];
+
+        let propertyType: string | null = null;
+        if (typePart === "appartement") propertyType = "appartement";
+        else if (typePart === "woning" || typePart === "huis") propertyType = "huis";
+        else if (typePart === "studio") propertyType = "studio";
+        else if (typePart === "kamer") propertyType = "kamer";
+
+        const city = citySlug.charAt(0).toUpperCase() + citySlug.slice(1).replace(/-/g, " ");
+        const street = streetSlug.replace(/-/g, " ");
+
+        // Price from header or details table (€ or &euro;)
+        let price: number | null = null;
+        const priceMatch = tile.match(/advert-location-price[^>]*>\s*(?:€|&euro;)\s*([\d.,\s]+)/);
+        if (priceMatch) {
+          price = parseFloat(priceMatch[1].replace(/\s/g, "").replace(".", "").replace(",", "."));
+        }
+        if (!price) {
+          const huurMatch = tile.match(/Huurprijs:\s*<\/td>\s*<td[^>]*>\s*(?:€|&euro;)\s*([\d.,\s]+)/);
+          if (huurMatch) price = parseFloat(huurMatch[1].replace(/\s/g, "").replace(".", "").replace(",", "."));
+        }
+        // Also try generic price pattern
+        if (!price) {
+          const genericPrice = tile.match(/(?:€|&euro;)\s*([\d]{3,})/);
+          if (genericPrice) price = parseFloat(genericPrice[1]);
+        }
+
+        // Rooms
+        let bedrooms: number | null = null;
+        const roomsMatch = tile.match(/small-banner rooms[^>]*>\s*<p[^>]*>(\d+)/);
+        if (roomsMatch) bedrooms = parseInt(roomsMatch[1]);
+
+        // Surface
+        let surfaceArea: number | null = null;
+        const surfaceMatch = tile.match(/small-banner surface[^>]*>\s*<p[^>]*>(\d+)/);
+        if (surfaceMatch) surfaceArea = parseInt(surfaceMatch[1]);
+
+        // Image
+        const images: string[] = [];
+        const imgMatch = tile.match(/advert-thumbnail[^>]*>\s*<img[^>]+src="([^"]+)"/);
+        if (imgMatch && imgMatch[1]) images.push(imgMatch[1]);
+
+        // Available from
+        let availableFrom: string | null = null;
+        const availMatch = tile.match(/Beschikbaar per:\s*<\/td>\s*<td>([^<]+)/);
+        if (availMatch) availableFrom = availMatch[1].trim();
+
+        const title = `${street.charAt(0).toUpperCase() + street.slice(1)}, ${city}`;
+
+        properties.push({
+          source_url: fullUrl,
+          source_site: "directwonen",
+          title,
+          price,
+          city,
+          postal_code: null,
+          street,
+          house_number: null,
+          surface_area: surfaceArea,
+          bedrooms,
+          property_type: propertyType,
+          listing_type: "huur",
+          description: [
+            propertyType ? `Woningtype: ${propertyType}` : null,
+            surfaceArea ? `Oppervlakte: ${surfaceArea} m²` : null,
+            bedrooms ? `Kamers: ${bedrooms}` : null,
+            availableFrom ? `Beschikbaar per: ${availableFrom}` : null,
+          ].filter(Boolean).join(" • ") || null,
+          images,
+          raw_data: {
+            directwonen_id: adId,
+            available_from: availableFrom,
+          },
+        });
+      } catch (tileError) {
+        console.error("Error parsing DirectWonen tile:", tileError);
+      }
     }
-    console.log(`DirectWonen: found ${properties.length} listings`);
+
+    console.log(`DirectWonen: parsed ${properties.length} listings with details`);
   } catch (e) {
     console.error("Error scraping DirectWonen:", e);
   }
@@ -817,7 +887,7 @@ Deno.serve(async (req) => {
           const validEnergyLabels = ["A++", "A+", "A", "B", "C", "D", "E", "F", "G"];
 
           for (const sp of inserted) {
-            if (!sp.title || !sp.city || !sp.street || !sp.house_number || !sp.postal_code || !sp.price) {
+            if (!sp.title || !sp.city || !sp.price) {
               continue;
             }
 
@@ -871,9 +941,9 @@ Deno.serve(async (req) => {
                 description: sp.description || null,
                 price: sp.price,
                 city: sp.city,
-                street: sp.street,
-                house_number: sp.house_number,
-                postal_code: sp.postal_code,
+                street: sp.street || "Onbekend",
+                house_number: sp.house_number || "-",
+                postal_code: sp.postal_code || "0000AA",
                 property_type: propertyType,
                 listing_type: listingType,
                 bedrooms: sp.bedrooms || null,
