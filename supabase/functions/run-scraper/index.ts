@@ -159,8 +159,11 @@ async function scrapeWooniezie(): Promise<ScrapedProperty[]> {
         const postalCode = d.postalcode || d.postcode || null;
 
         // Build detail URL
+        const isKoop = (d.rentBuy || "").toLowerCase() === "koop";
         const slug = `${streetName}-${houseNum || ""}-${cityName}`.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
-        const detailUrl = `https://www.wooniezie.nl/aanbod/nu-te-huur/te-huur/details/${id}-${slug}`;
+        const detailUrl = isKoop
+          ? `https://www.wooniezie.nl/aanbod/nu-te-koop/te-koop/details/${id}-${slug}`
+          : `https://www.wooniezie.nl/aanbod/nu-te-huur/te-huur/details/${id}-${slug}`;
 
         // Images
         const images: string[] = [];
@@ -179,7 +182,9 @@ async function scrapeWooniezie(): Promise<ScrapedProperty[]> {
         }
 
         // Price
-        const price = d.totalRent || d.netRent || d.kaleHuur || d.totalPrice || d.price || null;
+        const price = isKoop
+          ? (d.sellingPrice || d.koopprijs || d.price || d.totalPrice || null)
+          : (d.totalRent || d.netRent || d.kaleHuur || d.totalPrice || d.price || null);
 
         // Surface area
         const surfaceArea = d.areaDwelling || d.oppervlakteWoning || d.surface || null;
@@ -205,7 +210,7 @@ async function scrapeWooniezie(): Promise<ScrapedProperty[]> {
         else if (typeStr.includes("woning") || typeStr.includes("huis") || typeStr.includes("eengezins")) propertyType = "huis";
 
         // Listing type
-        const listingType = (d.rentBuy || "").toLowerCase() === "koop" ? "koop" : "huur";
+        const listingType = isKoop ? "koop" : "huur";
 
         const title = [streetName, houseNum, cityName].filter(Boolean).join(" ");
 
@@ -392,30 +397,107 @@ async function scrapePararius(): Promise<ScrapedProperty[]> {
 async function scrapeKamernet(): Promise<ScrapedProperty[]> {
   const properties: ScrapedProperty[] = [];
   try {
-    const html = await fetchPage("https://kamernet.nl/huren/kamers-nederland");
-    const patterns = [
-      /href="(\/huren\/kamer-[^"]+)"/gi,
-      /href="(\/en\/for-rent\/room-[^"]+)"/gi,
-    ];
+    // Kamernet is a Next.js app - __NEXT_DATA__ contains listing data
+    const html = await fetchPage("https://kamernet.nl/huren/kamers-nederland?pageNo=1&sort=1");
 
-    for (const pattern of patterns) {
-      for (const match of html.matchAll(pattern)) {
-        let url = match[1];
-        if (!url.startsWith("http")) url = `https://kamernet.nl${url}`;
+    // Extract __NEXT_DATA__ JSON
+    const nextDataMatch = html.match(/<script id="__NEXT_DATA__"[^>]*>([\s\S]*?)<\/script>/);
+    if (nextDataMatch) {
+      const nextData = JSON.parse(nextDataMatch[1]);
+      const pageProps = nextData?.props?.pageProps;
+      // Try multiple paths to find listings
+      const listings = pageProps?.listings || pageProps?.searchResults?.listings || pageProps?.data?.listings || pageProps?.initialListings || [];
+
+      console.log(`Kamernet __NEXT_DATA__: found ${listings.length} listings, pageProps keys: ${JSON.stringify(Object.keys(pageProps || {}))}`);
+      if (listings.length > 0) {
+        console.log(`Kamernet first listing keys: ${JSON.stringify(Object.keys(listings[0]))}`);
+        console.log(`Kamernet first listing sample: ${JSON.stringify(listings[0]).substring(0, 500)}`);
+      }
+
+      // deno-lint-ignore no-explicit-any
+      for (const listing of listings as any[]) {
+        try {
+          const id = listing.id || listing.listingId || "";
+          const title = listing.dutchTitle || listing.englishTitle || listing.title || `Kamer ${listing.city || ""}`;
+          const city = listing.city || listing.cityName || null;
+          const street = listing.street || listing.streetName || null;
+          const postalCode = listing.postalCode || listing.zipCode || null;
+          const price = listing.rent || listing.price || listing.monthlyRent || null;
+          const surfaceArea = listing.surfaceArea || listing.size || listing.surface || null;
+          const listingUrl = listing.url || (id ? `https://kamernet.nl/huren/kamer-${(city || "").toLowerCase().replace(/\s+/g, "-")}/${(street || "").toLowerCase().replace(/\s+/g, "-")}/kamer-${id}` : null);
+
+          if (!listingUrl) continue;
+          const fullUrl = listingUrl.startsWith("http") ? listingUrl : `https://kamernet.nl${listingUrl}`;
+
+          // Images
+          const images: string[] = [];
+          if (listing.image && Array.isArray(listing.image)) {
+            for (const img of listing.image) {
+              const imgUrl = typeof img === "string" ? img : (img.url || img.src || img.path || "");
+              if (imgUrl) images.push(imgUrl.startsWith("http") ? imgUrl : `https://resources.kamernet.nl${imgUrl}`);
+            }
+          } else if (listing.image && typeof listing.image === "string") {
+            images.push(listing.image.startsWith("http") ? listing.image : `https://resources.kamernet.nl${listing.image}`);
+          } else if (listing.thumbnail) {
+            const thumb = typeof listing.thumbnail === "string" ? listing.thumbnail : (listing.thumbnail.url || "");
+            if (thumb) images.push(thumb.startsWith("http") ? thumb : `https://resources.kamernet.nl${thumb}`);
+          }
+
+          // Property type
+          let propertyType: string | null = "kamer";
+          const typeStr = String(listing.listingType || listing.propertyType || listing.type || "").toLowerCase();
+          if (typeStr.includes("appartement") || typeStr.includes("apartment")) propertyType = "appartement";
+          else if (typeStr.includes("studio")) propertyType = "studio";
+          else if (typeStr.includes("huis") || typeStr.includes("house")) propertyType = "huis";
+
+          const description = listing.dutchDescription || listing.englishDescription || listing.description || null;
+
+          properties.push({
+            source_url: fullUrl,
+            source_site: "kamernet",
+            title,
+            price: typeof price === "number" ? price : (price ? parseFloat(String(price)) : null),
+            city,
+            postal_code: postalCode,
+            street,
+            house_number: listing.houseNumber || listing.houseNr || null,
+            surface_area: typeof surfaceArea === "number" ? surfaceArea : null,
+            bedrooms: listing.bedrooms || 1,
+            property_type: propertyType,
+            listing_type: "huur",
+            description,
+            images,
+            raw_data: {
+              kamernet_id: id,
+              available_from: listing.availableFrom || listing.moveInDate || null,
+              landlord: listing.landlordName || listing.landlord || null,
+              furnished: listing.furnished ?? listing.isFurnished ?? null,
+              roommates: listing.currentResidents || listing.roommates || null,
+              gender_preference: listing.genderPreference || listing.preferredGender || null,
+            },
+          });
+        } catch (itemError) {
+          console.error("Error parsing Kamernet listing:", itemError);
+        }
+      }
+    } else {
+      console.log("Kamernet: __NEXT_DATA__ not found, falling back to URL extraction");
+      // Fallback
+      const cardMatches = html.matchAll(/href="(\/huren\/kamer-[^"]+\/kamer-(\d+))"/gi);
+      for (const match of cardMatches) {
         properties.push({
-          source_url: url,
+          source_url: `https://kamernet.nl${match[1]}`,
           source_site: "kamernet",
           title: "Kamer Kamernet",
-          price: null,
-          city: null, postal_code: null, street: null, house_number: null,
+          price: null, city: null, postal_code: null, street: null, house_number: null,
           surface_area: null, bedrooms: 1,
-          property_type: "kamer",
-          listing_type: "huur",
+          property_type: "kamer", listing_type: "huur",
           description: null, images: [],
-          raw_data: {},
+          raw_data: { kamernet_id: match[2] },
         });
       }
     }
+
     console.log(`Kamernet: found ${properties.length} listings`);
   } catch (e) {
     console.error("Error scraping Kamernet:", e);
