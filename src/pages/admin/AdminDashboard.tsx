@@ -27,6 +27,13 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const AdminDashboard = () => {
   const { data: scrapers, isLoading: scrapersLoading } = useScrapers();
@@ -35,6 +42,7 @@ const AdminDashboard = () => {
   const { data: allLogs } = useScraperLogs();
   const runScraper = useRunScraper();
   const [resetting, setResetting] = useState(false);
+  const [resetSource, setResetSource] = useState<string>("all");
   const queryClient = useQueryClient();
 
   const activeScrapers = scrapers?.filter((s) => s.is_active).length || 0;
@@ -105,12 +113,19 @@ const AdminDashboard = () => {
     toast.success("Alle scrapers zijn uitgevoerd");
   };
 
+  // Unique sources for reset dropdown
+  const availableSources = Array.from(
+    new Set(properties?.map((p) => p.source_site).filter(Boolean) as string[])
+  ).sort();
+
   const handleReset = async () => {
     setResetting(true);
     try {
-      const { data, error } = await supabase.functions.invoke("admin-reset");
+      const body = resetSource !== "all" ? { source_site: resetSource } : {};
+      const { data, error } = await supabase.functions.invoke("admin-reset", { body });
       if (error) throw error;
-      toast.success(`Reset voltooid: ${data.inactive_deleted || 0} inactieve woningen verwijderd`);
+      const label = resetSource === "all" ? "Alles" : resetSource;
+      toast.success(`Reset voltooid (${label}): ${data.active_deleted || 0} woningen verwijderd`);
       queryClient.invalidateQueries({ queryKey: ["all-properties"] });
       queryClient.invalidateQueries({ queryKey: ["properties"] });
       queryClient.invalidateQueries({ queryKey: ["scrapers"] });
@@ -170,15 +185,30 @@ const AdminDashboard = () => {
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
-                  <AlertDialogTitle>Alles resetten?</AlertDialogTitle>
+                  <AlertDialogTitle>Data resetten</AlertDialogTitle>
                   <AlertDialogDescription>
-                    Dit verwijdert alle inactieve woningen, scraped data, logs en reset de scraper-tellers. Actieve woningen blijven behouden. Dit kan niet ongedaan worden.
+                    Selecteer welke bron je wilt resetten. Dit verwijdert actieve woningen van die bron, bijbehorende scraped data en logs. Verlopen woningen blijven behouden.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
+                <div className="py-4">
+                  <Select value={resetSource} onValueChange={setResetSource}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecteer bron" />
+                    </SelectTrigger>
+                    <SelectContent className="z-50 bg-popover">
+                      <SelectItem value="all">Alle bronnen</SelectItem>
+                      {availableSources.map((source) => (
+                        <SelectItem key={source} value={source} className="capitalize">
+                          {source}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
                 <AlertDialogFooter>
                   <AlertDialogCancel>Annuleren</AlertDialogCancel>
                   <AlertDialogAction onClick={handleReset}>
-                    Ja, reset alles
+                    {resetSource === "all" ? "Ja, reset alles" : `Reset ${resetSource}`}
                   </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
