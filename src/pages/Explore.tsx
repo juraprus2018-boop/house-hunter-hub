@@ -28,18 +28,20 @@ const ExplorePage = () => {
     maxPrice: priceActive ? maxPrice : undefined,
   });
 
-  const { data: unfilteredProperties } = useProperties();
+  const { data: citySourceProperties } = useProperties({
+    listingType: listingType || undefined,
+  });
   const cities = useMemo(() => {
-    if (!unfilteredProperties) return [];
+    if (!citySourceProperties) return [];
     const cityCount = new Map<string, number>();
-    for (const p of unfilteredProperties) {
+    for (const p of citySourceProperties) {
       const city = p.city;
       if (city) cityCount.set(city, (cityCount.get(city) || 0) + 1);
     }
     return Array.from(cityCount.entries())
       .sort((a, b) => b[1] - a[1])
       .map(([name, count]) => ({ name, count }));
-  }, [unfilteredProperties]);
+  }, [citySourceProperties]);
 
   const [hoveredPropertyId, setHoveredPropertyId] = useState<string | null>(null);
 
