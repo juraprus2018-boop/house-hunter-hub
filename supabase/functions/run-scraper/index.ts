@@ -24,6 +24,8 @@ interface ScrapedProperty {
   raw_data: Record<string, unknown>;
 }
 
+const SYSTEM_USER_ID = "0d02a609-fde3-435a-9154-078fdce7ed34";
+
 const USER_AGENT =
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
 
@@ -612,14 +614,127 @@ Deno.serve(async (req) => {
 
     const durationMs = Date.now() - startTime;
 
-    if (properties.length > 0) {
-      const { error: insertError } = await supabase
-        .from("scraped_properties")
-        .insert(properties.map((p) => ({ ...p, scraper_id })));
+    let published = 0;
+    let skippedDuplicates = 0;
 
-      if (insertError) {
-        console.error("Error inserting scraped properties:", insertError);
-        errorMessage = insertError.message;
+    if (properties.length > 0) {
+      // Get all existing source_urls for this site to deduplicate
+      const sourceUrls = properties.map((p) => p.source_url);
+      const { data: existingUrls } = await supabase
+        .from("scraped_properties")
+        .select("source_url")
+        .in("source_url", sourceUrls);
+
+      const existingSet = new Set((existingUrls || []).map((e) => e.source_url));
+
+      // Update last_seen_at for existing approved ones
+      if (existingSet.size > 0) {
+        await supabase
+          .from("scraped_properties")
+          .update({ last_seen_at: new Date().toISOString() })
+          .in("source_url", [...existingSet])
+          .eq("status", "approved");
+        skippedDuplicates = existingSet.size;
+      }
+
+      // Filter to only new properties
+      const newProperties = properties.filter((p) => !existingSet.has(p.source_url));
+      console.log(`${newProperties.length} new, ${skippedDuplicates} duplicates skipped`);
+
+      if (newProperties.length > 0) {
+        // Insert into scraped_properties as approved
+        const { data: inserted, error: insertError } = await supabase
+          .from("scraped_properties")
+          .insert(newProperties.map((p) => ({ ...p, scraper_id, status: "approved", reviewed_at: new Date().toISOString(), reviewed_by: SYSTEM_USER_ID, last_seen_at: new Date().toISOString() })))
+          .select("id, title, description, price, city, street, house_number, postal_code, property_type, listing_type, bedrooms, bathrooms, surface_area, images, raw_data, source_url");
+
+        if (insertError) {
+          console.error("Error inserting scraped properties:", insertError);
+          errorMessage = insertError.message;
+        }
+
+        // Auto-publish each new property to properties table
+        if (inserted) {
+          const validEnergyLabels = ["A++", "A+", "A", "B", "C", "D", "E", "F", "G"];
+
+          for (const sp of inserted) {
+            if (!sp.title || !sp.city || !sp.street || !sp.house_number || !sp.postal_code || !sp.price) {
+              continue;
+            }
+
+            let propertyType = "appartement";
+            if (["appartement", "huis", "studio", "kamer"].includes(sp.property_type || "")) {
+              propertyType = sp.property_type!;
+            }
+
+            let listingType = "huur";
+            if (["huur", "koop"].includes(sp.listing_type || "")) {
+              listingType = sp.listing_type!;
+            }
+
+            // Extract from raw_data
+            const rawData = (sp.raw_data || {}) as Record<string, unknown>;
+            let energyLabel: string | null = null;
+            const rawEl = (rawData.energy_label || "") as string;
+            if (rawEl) {
+              const cleaned = rawEl.replace(/energielabel\s*/i, "").trim().toUpperCase();
+              if (validEnergyLabels.includes(cleaned)) energyLabel = cleaned;
+            }
+            const buildYear = rawData.build_year ? Number(rawData.build_year) : null;
+            const bathrooms = sp.bathrooms || (rawData.bathrooms ? Number(rawData.bathrooms) : null);
+
+            // Geocode
+            let latitude: number | null = null;
+            let longitude: number | null = null;
+            try {
+              const address = `${sp.street} ${sp.house_number}, ${sp.postal_code} ${sp.city}, Netherlands`;
+              const geoRes = await fetch(
+                `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1`,
+                { headers: { "User-Agent": "WoningPlatform/1.0" } }
+              );
+              const geoData = await geoRes.json();
+              if (geoData && geoData.length > 0) {
+                latitude = parseFloat(geoData[0].lat);
+                longitude = parseFloat(geoData[0].lon);
+              }
+            } catch (_e) { /* skip geocoding errors */ }
+
+            const { data: newProp, error: pubError } = await supabase
+              .from("properties")
+              .insert({
+                title: sp.title,
+                description: sp.description || null,
+                price: sp.price,
+                city: sp.city,
+                street: sp.street,
+                house_number: sp.house_number,
+                postal_code: sp.postal_code,
+                property_type: propertyType,
+                listing_type: listingType,
+                bedrooms: sp.bedrooms || null,
+                bathrooms,
+                surface_area: sp.surface_area || null,
+                images: sp.images || [],
+                user_id: SYSTEM_USER_ID,
+                status: "actief",
+                latitude,
+                longitude,
+                energy_label: energyLabel,
+                build_year: buildYear && buildYear > 1800 && buildYear < 2030 ? buildYear : null,
+              })
+              .select("id")
+              .single();
+
+            if (!pubError && newProp) {
+              await supabase
+                .from("scraped_properties")
+                .update({ published_property_id: newProp.id })
+                .eq("id", sp.id);
+              published++;
+            }
+          }
+          console.log(`Auto-published ${published} properties`);
+        }
       }
     }
 
@@ -627,8 +742,8 @@ Deno.serve(async (req) => {
     await supabase.from("scraper_logs").insert({
       scraper_id,
       status: logStatus,
-      message: errorMessage || `Scraped ${properties.length} properties`,
-      properties_scraped: properties.length,
+      message: errorMessage || `Scraped ${properties.length}, published ${published}, dupes ${skippedDuplicates}`,
+      properties_scraped: published,
       duration_ms: durationMs,
     });
 
@@ -637,7 +752,7 @@ Deno.serve(async (req) => {
       .update({
         last_run_at: new Date().toISOString(),
         last_run_status: logStatus,
-        properties_found: (scraper.properties_found || 0) + properties.length,
+        properties_found: (scraper.properties_found || 0) + published,
       })
       .eq("id", scraper_id);
 
@@ -645,6 +760,8 @@ Deno.serve(async (req) => {
       JSON.stringify({
         success: !errorMessage && properties.length > 0,
         properties_scraped: properties.length,
+        published,
+        duplicates_skipped: skippedDuplicates,
         duration_ms: durationMs,
         error: errorMessage,
       }),
