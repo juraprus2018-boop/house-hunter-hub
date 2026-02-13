@@ -16,7 +16,7 @@ const CTASection = () => {
               Heb je een woning te huur of te koop?
             </h2>
             <p className="mx-auto mt-4 max-w-2xl text-lg text-primary-foreground/80">
-              Plaats je woning gratis op ons platform en bereik duizenden woningzoekers.
+              Plaats je woning gratis op WoonPeek en bereik duizenden woningzoekers.
               Geen makelaarskosten, direct contact met geïnteresseerden.
             </p>
             <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">

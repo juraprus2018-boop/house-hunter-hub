@@ -12,10 +12,10 @@ const Footer = () => {
               <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
                 <Home className="h-5 w-5 text-primary-foreground" />
               </div>
-              <span className="font-display text-xl font-semibold">WoningZoeker</span>
+              <span className="font-display text-xl font-semibold">WoonPeek</span>
             </Link>
             <p className="text-sm text-muted-foreground">
-              Vind jouw droomwoning of plaats je eigen woning op ons platform. 
+              Vind jouw droomwoning of plaats je eigen woning op WoonPeek. 
               Eenvoudig, snel en betrouwbaar.
             </p>
           </div>
@@ -67,6 +67,11 @@ const Footer = () => {
                 </Link>
               </li>
               <li>
+                <Link to="/disclaimer" className="text-muted-foreground transition-colors hover:text-foreground">
+                  Disclaimer
+                </Link>
+              </li>
+              <li>
                 <Link to="/contact" className="text-muted-foreground transition-colors hover:text-foreground">
                   Contact
                 </Link>
@@ -80,7 +85,7 @@ const Footer = () => {
             <ul className="space-y-3 text-sm">
               <li className="flex items-center gap-2 text-muted-foreground">
                 <Mail className="h-4 w-4" />
-                info@woningzoeker.nl
+                info@woonpeek.nl
               </li>
               <li className="flex items-center gap-2 text-muted-foreground">
                 <Phone className="h-4 w-4" />
@@ -96,7 +101,7 @@ const Footer = () => {
 
         <div className="mt-12 border-t pt-6">
           <p className="text-center text-sm text-muted-foreground">
-            © {new Date().getFullYear()} WoningZoeker. Alle rechten voorbehouden.
+            © {new Date().getFullYear()} WoonPeek. Alle rechten voorbehouden.
           </p>
         </div>
       </div>
