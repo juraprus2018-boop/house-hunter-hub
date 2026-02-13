@@ -20,6 +20,9 @@ import AdminSettings from "./pages/admin/AdminSettings";
 import AdminReviewQueue from "./pages/admin/AdminReviewQueue";
 import MyProperties from "./pages/MyProperties";
 import CreateProperty from "./pages/CreateProperty";
+import TermsAndConditions from "./pages/TermsAndConditions";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import Disclaimer from "./pages/Disclaimer";
 
 const queryClient = new QueryClient();
 
@@ -46,6 +49,9 @@ const App = () => (
             <Route path="/admin/review" element={<AdminReviewQueue />} />
             <Route path="/admin/scrapers" element={<AdminScrapers />} />
             <Route path="/admin/instellingen" element={<AdminSettings />} />
+            <Route path="/voorwaarden" element={<TermsAndConditions />} />
+            <Route path="/privacy" element={<PrivacyPolicy />} />
+            <Route path="/disclaimer" element={<Disclaimer />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

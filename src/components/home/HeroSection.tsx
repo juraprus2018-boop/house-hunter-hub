@@ -40,7 +40,7 @@ const HeroSection = () => {
             <span className="text-primary">droomwoning</span>
           </h1>
           <p className="mt-4 text-lg text-muted-foreground md:text-xl">
-            Zoek tussen duizenden woningen of plaats je eigen woning gratis op ons platform.
+            Zoek tussen duizenden woningen of plaats je eigen woning gratis op WoonPeek.
             Direct contact met aanbieders, geen tussenpartijen.
           </p>
 
