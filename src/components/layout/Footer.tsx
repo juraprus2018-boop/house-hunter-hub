@@ -1,20 +1,19 @@
 import { Link } from "react-router-dom";
-import { Home, Mail, Phone, MapPin } from "lucide-react";
+import { Mail, Phone, MapPin } from "lucide-react";
 
 const Footer = () => {
   return (
-    <footer className="border-t bg-muted/30">
-      <div className="container py-12">
-        <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
+    <footer className="border-t border-border/60 bg-secondary/40">
+      <div className="container py-16">
+        <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-4">
           {/* Brand */}
           <div className="space-y-4">
-            <Link to="/" className="flex items-center gap-2">
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
-                <Home className="h-5 w-5 text-primary-foreground" />
-              </div>
-              <span className="font-display text-xl font-semibold">WoonPeek</span>
+            <Link to="/" className="inline-block">
+              <span className="font-display text-2xl font-semibold text-foreground">
+                Woon<span className="text-accent">Peek</span>
+              </span>
             </Link>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-muted-foreground leading-relaxed">
               Vind jouw droomwoning of plaats je eigen woning op WoonPeek. 
               Eenvoudig, snel en betrouwbaar.
             </p>
@@ -22,8 +21,8 @@ const Footer = () => {
 
           {/* Quick Links */}
           <div className="space-y-4">
-            <h4 className="font-display text-sm font-semibold">Snelle links</h4>
-            <ul className="space-y-2 text-sm">
+            <h4 className="text-xs font-medium uppercase tracking-[0.15em] text-foreground">Snelle links</h4>
+            <ul className="space-y-2.5 text-sm">
               <li>
                 <Link to="/zoeken" className="text-muted-foreground transition-colors hover:text-foreground">
                   Woningen zoeken
@@ -49,8 +48,8 @@ const Footer = () => {
 
           {/* Support */}
           <div className="space-y-4">
-            <h4 className="font-display text-sm font-semibold">Ondersteuning</h4>
-            <ul className="space-y-2 text-sm">
+            <h4 className="text-xs font-medium uppercase tracking-[0.15em] text-foreground">Ondersteuning</h4>
+            <ul className="space-y-2.5 text-sm">
               <li>
                 <Link to="/help" className="text-muted-foreground transition-colors hover:text-foreground">
                   Help & FAQ
@@ -81,17 +80,17 @@ const Footer = () => {
 
           {/* Contact */}
           <div className="space-y-4">
-            <h4 className="font-display text-sm font-semibold">Contact</h4>
+            <h4 className="text-xs font-medium uppercase tracking-[0.15em] text-foreground">Contact</h4>
             <ul className="space-y-3 text-sm">
-              <li className="flex items-center gap-2 text-muted-foreground">
-                <Mail className="h-4 w-4" />
+              <li className="flex items-center gap-2.5 text-muted-foreground">
+                <Mail className="h-4 w-4 shrink-0" />
                 info@woonpeek.nl
               </li>
-              <li className="flex items-center gap-2 text-muted-foreground">
-                <Phone className="h-4 w-4" />
+              <li className="flex items-center gap-2.5 text-muted-foreground">
+                <Phone className="h-4 w-4 shrink-0" />
                 020 - 123 4567
               </li>
-              <li className="flex items-start gap-2 text-muted-foreground">
+              <li className="flex items-start gap-2.5 text-muted-foreground">
                 <MapPin className="mt-0.5 h-4 w-4 shrink-0" />
                 <span>Herengracht 100<br />1015 BS Amsterdam</span>
               </li>
@@ -99,8 +98,8 @@ const Footer = () => {
           </div>
         </div>
 
-        <div className="mt-12 border-t pt-6">
-          <p className="text-center text-sm text-muted-foreground">
+        <div className="mt-14 border-t border-border/60 pt-6">
+          <p className="text-center text-xs text-muted-foreground tracking-wide">
             © {new Date().getFullYear()} WoonPeek. Alle rechten voorbehouden.
           </p>
         </div>
