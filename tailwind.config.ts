@@ -19,8 +19,8 @@ export default {
     },
     extend: {
       fontFamily: {
-        sans: ["DM Sans", "system-ui", "sans-serif"],
-        display: ["Cormorant Garamond", "Georgia", "serif"],
+        sans: ["General Sans", "system-ui", "sans-serif"],
+        display: ["Clash Display", "sans-serif"],
       },
       colors: {
         border: "hsl(var(--border))",
@@ -107,8 +107,8 @@ export default {
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
-        "fade-in": "fade-in 0.4s ease-out",
-        "slide-in": "slide-in 0.4s ease-out",
+        "fade-in": "fade-in 0.3s ease-out",
+        "slide-in": "slide-in 0.3s ease-out",
       },
     },
   },

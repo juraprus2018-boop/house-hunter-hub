@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Search, Heart, PlusCircle, User, Menu, LogOut, Shield, Map } from "lucide-react";
+import { Home, Search, Heart, PlusCircle, User, Menu, LogOut, Shield, Map } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -37,12 +37,15 @@ const Header = () => {
   };
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border/60 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
+    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center justify-between">
         {/* Logo */}
-        <Link to="/" className="flex items-center gap-2.5 transition-opacity hover:opacity-70">
-          <span className="font-display text-2xl font-semibold text-foreground">
-            Woon<span className="text-accent">Peek</span>
+        <Link to="/" className="flex items-center gap-2 transition-opacity hover:opacity-80">
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
+            <Home className="h-5 w-5 text-primary-foreground" />
+          </div>
+          <span className="font-display text-xl font-semibold text-foreground">
+            WoonPeek
           </span>
         </Link>
 
@@ -50,7 +53,7 @@ const Header = () => {
         <nav className="hidden items-center gap-1 md:flex">
           {navLinks.map((link) => (
             <Link key={link.to} to={link.to}>
-              <Button variant="ghost" size="sm" className="gap-2 text-sm font-normal text-muted-foreground hover:text-foreground">
+              <Button variant="ghost" className="gap-2">
                 <link.icon className="h-4 w-4" />
                 {link.label}
               </Button>
@@ -63,15 +66,15 @@ const Header = () => {
           {user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm" className="gap-2">
-                  <Avatar className="h-7 w-7">
+                <Button variant="ghost" className="gap-2">
+                  <Avatar className="h-8 w-8">
                     <AvatarFallback className="bg-primary text-primary-foreground text-xs">
                       {getInitials(user.email || "U")}
                     </AvatarFallback>
                   </Avatar>
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48 bg-popover">
+              <DropdownMenuContent align="end" className="w-48">
                 <DropdownMenuItem className="text-muted-foreground text-sm">
                   {user.email}
                 </DropdownMenuItem>
@@ -103,12 +106,13 @@ const Header = () => {
           ) : (
             <>
               <Link to="/inloggen">
-                <Button variant="ghost" size="sm" className="text-sm font-normal text-muted-foreground hover:text-foreground">
+                <Button variant="ghost" className="gap-2">
+                  <User className="h-4 w-4" />
                   Inloggen
                 </Button>
               </Link>
               <Link to="/registreren">
-                <Button size="sm" className="text-sm">
+                <Button className="bg-accent text-accent-foreground hover:bg-accent/90">
                   Registreren
                 </Button>
               </Link>
@@ -172,7 +176,7 @@ const Header = () => {
                     Inloggen
                   </Link>
                   <Link to="/registreren" onClick={() => setIsOpen(false)}>
-                    <Button className="w-full">
+                    <Button className="w-full bg-accent text-accent-foreground hover:bg-accent/90">
                       Registreren
                     </Button>
                   </Link>
