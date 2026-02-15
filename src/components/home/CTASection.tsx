@@ -4,9 +4,9 @@ import { Link } from "react-router-dom";
 
 const CTASection = () => {
   return (
-    <section className="py-20">
+    <section className="py-8">
       <div className="container">
-        <div className="relative overflow-hidden rounded-2xl bg-primary px-8 py-20 text-center md:px-16">
+        <div className="relative overflow-hidden rounded-2xl bg-primary px-6 py-12 text-center md:px-12">
           {/* Subtle decorative circles */}
           <div className="absolute -right-24 -top-24 h-72 w-72 rounded-full border border-primary-foreground/10" />
           <div className="absolute -bottom-16 -left-16 h-48 w-48 rounded-full border border-primary-foreground/5" />
@@ -24,7 +24,7 @@ const CTASection = () => {
               Plaats je woning gratis op WoonPeek en bereik duizenden woningzoekers.
               Geen makelaarskosten.
             </p>
-            <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
+            <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row">
               <Link to="/plaatsen">
                 <Button 
                   size="lg" 
