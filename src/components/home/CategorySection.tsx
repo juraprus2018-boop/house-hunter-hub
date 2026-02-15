@@ -30,9 +30,9 @@ const categories = [
 
 const CategorySection = () => {
   return (
-    <section className="py-20">
+    <section className="py-8">
       <div className="container">
-        <div className="mb-12 text-center">
+        <div className="mb-6 text-center">
           <p className="text-xs font-medium uppercase tracking-[0.2em] text-muted-foreground">
             Categorieën
           </p>
@@ -48,8 +48,8 @@ const CategorySection = () => {
               to={`/zoeken?type=${category.slug}`}
               className="group"
             >
-              <div className="flex flex-col items-center rounded-lg border border-border bg-card p-8 text-center transition-all duration-300 hover:border-accent/30 hover:shadow-lg">
-                <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-full bg-secondary text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
+              <div className="flex flex-col items-center rounded-lg border border-border bg-card p-5 text-center transition-all duration-300 hover:border-accent/30 hover:shadow-lg">
+                <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-secondary text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
                   <category.icon className="h-6 w-6" />
                 </div>
                 <h3 className="font-display text-xl font-semibold text-foreground">

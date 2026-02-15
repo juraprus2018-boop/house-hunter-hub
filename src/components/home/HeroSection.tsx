@@ -29,7 +29,7 @@ const HeroSection = () => {
   };
 
   return (
-    <section className="relative py-24 md:py-32 lg:py-40">
+    <section className="relative py-12 md:py-16 lg:py-20">
       {/* Subtle warm gradient */}
       <div className="absolute inset-0 bg-gradient-to-b from-secondary/60 via-background to-background" />
       
@@ -43,13 +43,13 @@ const HeroSection = () => {
             <br />
             <span className="italic text-accent">droomwoning</span>
           </h1>
-          <p className="mx-auto mt-6 max-w-lg text-base text-muted-foreground leading-relaxed">
+          <p className="mx-auto mt-3 max-w-lg text-base text-muted-foreground leading-relaxed">
             Zoek tussen duizenden woningen of plaats je eigen woning gratis op WoonPeek.
             Direct contact met aanbieders.
           </p>
 
           {/* Search Form */}
-          <form onSubmit={handleSearch} className="mt-12">
+          <form onSubmit={handleSearch} className="mt-8">
             <div className="flex flex-col gap-3 rounded-xl border border-border bg-card p-3 shadow-lg md:flex-row md:items-center md:gap-2 md:p-2">
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -111,7 +111,7 @@ const HeroSection = () => {
           </form>
 
           {/* Quick stats */}
-          <div className="mt-16 flex flex-wrap items-center justify-center gap-12 text-sm text-muted-foreground">
+          <div className="mt-8 flex flex-wrap items-center justify-center gap-8 text-sm text-muted-foreground">
             <div className="text-center">
               <span className="block font-display text-3xl font-semibold text-foreground">-</span>
               <span className="mt-1 block text-xs uppercase tracking-widest">woningen</span>

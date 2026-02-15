@@ -81,7 +81,7 @@ const PopularCities = () => {
 
   if (isLoading) {
     return (
-      <section className="py-16 bg-muted/30">
+      <section className="py-8 bg-muted/30">
         <div className="container">
           <div className="flex items-center justify-center py-12">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -94,9 +94,9 @@ const PopularCities = () => {
   if (!cities || cities.length === 0) return null;
 
   return (
-    <section className="py-16 bg-muted/30">
+    <section className="py-8 bg-muted/30">
       <div className="container">
-        <div className="mb-10 text-center">
+        <div className="mb-6 text-center">
           <h2 className="font-display text-3xl font-bold text-foreground">
             Populaire steden
           </h2>
@@ -105,7 +105,7 @@ const PopularCities = () => {
           </p>
         </div>
 
-        <div className="space-y-12">
+        <div className="space-y-8">
           {cities.map(({ city, count, properties }) => (
             <div key={city}>
               <div className="mb-4 flex items-center justify-between">

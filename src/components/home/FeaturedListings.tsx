@@ -36,7 +36,7 @@ const FeaturedListings = () => {
 
   if (isLoading) {
     return (
-      <section className="py-16">
+      <section className="py-8">
         <div className="container">
           <div className="flex items-center justify-center py-12">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -48,7 +48,7 @@ const FeaturedListings = () => {
 
   if (!properties || properties.length === 0) {
     return (
-      <section className="py-16">
+      <section className="py-8">
         <div className="container">
           <div className="mb-8">
             <h2 className="font-display text-3xl font-bold text-foreground">
@@ -71,9 +71,9 @@ const FeaturedListings = () => {
   }
 
   return (
-    <section className="py-16">
+    <section className="py-8">
       <div className="container">
-        <div className="mb-8 flex items-end justify-between">
+        <div className="mb-4 flex items-end justify-between">
           <div>
             <h2 className="font-display text-3xl font-bold text-foreground">
               Uitgelichte woningen
