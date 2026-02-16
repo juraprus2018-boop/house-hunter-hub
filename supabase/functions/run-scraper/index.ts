@@ -1166,32 +1166,34 @@ Deno.serve(async (req) => {
         }
       }
       // === INACTIVE DETECTION ===
-      // Mark properties as "inactief" if they haven't been seen in scrapes for 3 weeks
+      // Mark properties as "inactief" immediately if not found in this scrape run
       const scraperName = scraper.name.toLowerCase();
-      const threeWeeksAgo = new Date(Date.now() - 21 * 24 * 60 * 60 * 1000).toISOString();
+      const currentSourceUrls = new Set(properties.map((p) => p.source_url));
       
-      const { data: staleProps } = await supabase
+      // Get all approved scraped properties for this source that have a published property
+      const { data: allApproved } = await supabase
         .from("scraped_properties")
-        .select("published_property_id")
+        .select("published_property_id, source_url")
         .eq("source_site", scraperName)
         .eq("status", "approved")
-        .lt("last_seen_at", threeWeeksAgo)
         .not("published_property_id", "is", null);
 
-      if (staleProps && staleProps.length > 0) {
-        const staleIds = staleProps
-          .map((s) => s.published_property_id)
+      if (allApproved && allApproved.length > 0) {
+        // Find ones NOT in current scrape results = no longer on the website
+        const missingIds = allApproved
+          .filter((sp) => !currentSourceUrls.has(sp.source_url))
+          .map((sp) => sp.published_property_id)
           .filter((id): id is string => !!id);
         
-        if (staleIds.length > 0) {
+        if (missingIds.length > 0) {
           const { error: inactiveError } = await supabase
             .from("properties")
             .update({ status: "inactief" })
-            .in("id", staleIds)
+            .in("id", missingIds)
             .eq("status", "actief");
           
           if (!inactiveError) {
-            console.log(`Marked ${staleIds.length} properties as inactief (not seen for 3+ weeks)`);
+            console.log(`Marked ${missingIds.length} properties as inactief (not found in current scrape)`);
           } else {
             console.error("Error marking properties inactive:", inactiveError);
           }
