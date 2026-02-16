@@ -18,6 +18,7 @@ interface PropertyFilters {
   minSurface?: number;
   minBedrooms?: number;
   sourceSite?: string;
+  includeInactive?: boolean;
 }
 
 export const useProperties = (filters?: PropertyFilters) => {
@@ -27,8 +28,13 @@ export const useProperties = (filters?: PropertyFilters) => {
       let query = supabase
         .from("properties")
         .select("*")
-        .eq("status", "actief")
         .order("created_at", { ascending: false });
+
+      if (!filters?.includeInactive) {
+        query = query.eq("status", "actief");
+      } else {
+        query = query.in("status", ["actief", "inactief", "verhuurd", "verkocht"]);
+      }
 
       if (filters?.city) {
         query = query.ilike("city", `%${filters.city}%`);
