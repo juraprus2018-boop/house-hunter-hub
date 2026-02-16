@@ -41,7 +41,7 @@ const PropertyCard = ({ property }: PropertyCardProps) => {
 
   return (
     <Link to={`/woning/${property.slug || property.id}`}>
-      <Card className="group overflow-hidden transition-all hover:shadow-lg">
+      <Card className={cn("group overflow-hidden transition-all hover:shadow-lg", property.status !== "actief" && "opacity-75")}>
         <div className="relative aspect-[4/3] overflow-hidden">
           <img
             src={property.images?.[0] || "/placeholder.svg"}
@@ -49,7 +49,16 @@ const PropertyCard = ({ property }: PropertyCardProps) => {
             className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
           />
           <div className="absolute left-3 top-3 flex gap-2">
-            {isNew && (
+            {property.status === "inactief" && (
+              <Badge variant="destructive">Inactief</Badge>
+            )}
+            {property.status === "verhuurd" && (
+              <Badge variant="destructive">Verhuurd</Badge>
+            )}
+            {property.status === "verkocht" && (
+              <Badge variant="destructive">Verkocht</Badge>
+            )}
+            {isNew && property.status === "actief" && (
               <Badge className="bg-accent text-accent-foreground">Nieuw</Badge>
             )}
             <Badge variant="secondary" className="capitalize">

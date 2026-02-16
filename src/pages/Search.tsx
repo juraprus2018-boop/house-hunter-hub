@@ -16,6 +16,7 @@ import {
 import { Slider } from "@/components/ui/slider";
 import { useProperties } from "@/hooks/useProperties";
 import { Search, SlidersHorizontal, X, Loader2, MapPin, List, Map } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import {
   Sheet,
   SheetContent,
@@ -39,6 +40,7 @@ const SearchPage = () => {
     maxPrice: number | undefined;
     minBedrooms: number | undefined;
     minSurface: number | undefined;
+    includeInactive: boolean;
   }>({
     city: searchParams.get("locatie") || "",
     propertyType: (searchParams.get("type") as PropertyType) || "",
@@ -46,6 +48,7 @@ const SearchPage = () => {
     maxPrice: searchParams.get("maxPrijs") ? Number(searchParams.get("maxPrijs")) : undefined,
     minBedrooms: undefined,
     minSurface: undefined,
+    includeInactive: false,
   });
 
   const [tempFilters, setTempFilters] = useState(filters);
@@ -57,6 +60,7 @@ const SearchPage = () => {
     maxPrice: filters.maxPrice,
     minBedrooms: filters.minBedrooms,
     minSurface: filters.minSurface,
+    includeInactive: filters.includeInactive,
   });
 
   const applyFilters = () => {
@@ -78,6 +82,7 @@ const SearchPage = () => {
       maxPrice: undefined,
       minBedrooms: undefined,
       minSurface: undefined,
+      includeInactive: false,
     };
     setFilters(cleared);
     setTempFilters(cleared);
@@ -162,6 +167,15 @@ const SearchPage = () => {
             <SelectItem value="4">4+</SelectItem>
           </SelectContent>
         </Select>
+      </div>
+
+      <div className="flex items-center justify-between">
+        <Label htmlFor="include-inactive">Toon inactieve woningen</Label>
+        <Switch
+          id="include-inactive"
+          checked={tempFilters.includeInactive}
+          onCheckedChange={(checked) => setTempFilters({ ...tempFilters, includeInactive: checked })}
+        />
       </div>
 
       <div className="flex gap-2">
