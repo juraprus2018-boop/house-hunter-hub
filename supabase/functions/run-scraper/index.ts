@@ -1115,11 +1115,17 @@ Deno.serve(async (req) => {
               } catch (_e) { /* skip geocoding errors */ }
             }
 
-            // Upload images to own storage
+            // Upload images to own storage, fall back to original URLs
             const tempId = crypto.randomUUID();
-            const storedImages = (sp.images && sp.images.length > 0)
-              ? await uploadImagesToStorage(supabase, supabaseUrl!, sp.images as string[], sp.city!, sp.title, tempId)
-              : [];
+            const originalImages = (sp.images && (sp.images as string[]).length > 0) ? sp.images as string[] : [];
+            let storedImages: string[] = [];
+            if (originalImages.length > 0) {
+              storedImages = await uploadImagesToStorage(supabase, supabaseUrl!, originalImages, sp.city!, sp.title, tempId);
+              // If upload returned nothing, use originals as fallback
+              if (storedImages.length === 0) {
+                storedImages = originalImages.filter(u => u && u.startsWith("http"));
+              }
+            }
 
             const { data: newProp, error: pubError } = await supabase
               .from("properties")
@@ -1157,6 +1163,38 @@ Deno.serve(async (req) => {
             }
           }
           console.log(`Auto-published ${published} properties`);
+        }
+      }
+      // === INACTIVE DETECTION ===
+      // Mark properties as "inactief" if they haven't been seen in scrapes for 3 weeks
+      const scraperName = scraper.name.toLowerCase();
+      const threeWeeksAgo = new Date(Date.now() - 21 * 24 * 60 * 60 * 1000).toISOString();
+      
+      const { data: staleProps } = await supabase
+        .from("scraped_properties")
+        .select("published_property_id")
+        .eq("source_site", scraperName)
+        .eq("status", "approved")
+        .lt("last_seen_at", threeWeeksAgo)
+        .not("published_property_id", "is", null);
+
+      if (staleProps && staleProps.length > 0) {
+        const staleIds = staleProps
+          .map((s) => s.published_property_id)
+          .filter((id): id is string => !!id);
+        
+        if (staleIds.length > 0) {
+          const { error: inactiveError } = await supabase
+            .from("properties")
+            .update({ status: "inactief" })
+            .in("id", staleIds)
+            .eq("status", "actief");
+          
+          if (!inactiveError) {
+            console.log(`Marked ${staleIds.length} properties as inactief (not seen for 3+ weeks)`);
+          } else {
+            console.error("Error marking properties inactive:", inactiveError);
+          }
         }
       }
     }
