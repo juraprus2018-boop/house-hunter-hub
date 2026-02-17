@@ -8,8 +8,6 @@ import { Separator } from "@/components/ui/separator";
 import { useProperty } from "@/hooks/useProperties";
 import { useToggleFavorite } from "@/hooks/useFavorites";
 import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
-import { useQuery } from "@tanstack/react-query";
 import PropertyMap from "@/components/properties/PropertyMap";
 import {
   Heart,
@@ -49,20 +47,7 @@ const PropertyDetail = () => {
   const { toggle, isFavorite, isLoading: favoriteLoading } = useToggleFavorite();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
-  const propertyId = property?.id;
-  const { data: sourceInfo } = useQuery({
-    queryKey: ["property-source", propertyId],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("scraped_properties")
-        .select("source_url, source_site")
-        .eq("published_property_id", propertyId!)
-        .limit(1)
-        .maybeSingle();
-      return data;
-    },
-    enabled: !!propertyId,
-  });
+  const sourceInfo = property ? { source_url: property.source_url, source_site: property.source_site } : null;
 
   const sourceMeta = sourceInfo?.source_site
     ? SOURCE_SITE_META[sourceInfo.source_site] || { label: sourceInfo.source_site, color: "hsl(var(--primary))" }

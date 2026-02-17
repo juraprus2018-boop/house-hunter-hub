@@ -97,6 +97,7 @@ export type Database = {
           property_type: Database["public"]["Enums"]["property_type"]
           slug: string | null
           source_site: string | null
+          source_url: string | null
           status: Database["public"]["Enums"]["property_status"]
           street: string
           surface_area: number | null
@@ -125,6 +126,7 @@ export type Database = {
           property_type: Database["public"]["Enums"]["property_type"]
           slug?: string | null
           source_site?: string | null
+          source_url?: string | null
           status?: Database["public"]["Enums"]["property_status"]
           street: string
           surface_area?: number | null
@@ -153,6 +155,7 @@ export type Database = {
           property_type?: Database["public"]["Enums"]["property_type"]
           slug?: string | null
           source_site?: string | null
+          source_url?: string | null
           status?: Database["public"]["Enums"]["property_status"]
           street?: string
           surface_area?: number | null
