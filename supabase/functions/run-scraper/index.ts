@@ -1167,22 +1167,29 @@ Deno.serve(async (req) => {
         }
       }
       // === INACTIVE DETECTION via last_seen_at ===
-      // Update last_seen_at for properties found in this scrape run
       const scraperName = scraper.name.toLowerCase();
       const currentSourceUrls = new Set(properties.map((p) => p.source_url));
+      const isCompleteData = scraper.config && (scraper.config as Record<string, unknown>).complete_data === true;
       
       if (currentSourceUrls.size > 0) {
         // Update last_seen_at for all scraped_properties that were seen
         const { data: matchingScraped } = await supabase
           .from("scraped_properties")
-          .select("id, source_url")
+          .select("id, source_url, published_property_id")
           .eq("source_site", scraperName)
           .eq("status", "approved");
 
         if (matchingScraped) {
-          const seenIds = matchingScraped
-            .filter((sp) => currentSourceUrls.has(sp.source_url))
-            .map((sp) => sp.id);
+          const seenIds: string[] = [];
+          const notSeenPropertyIds: string[] = [];
+          
+          for (const sp of matchingScraped) {
+            if (currentSourceUrls.has(sp.source_url)) {
+              seenIds.push(sp.id);
+            } else if (sp.published_property_id) {
+              notSeenPropertyIds.push(sp.published_property_id);
+            }
+          }
           
           if (seenIds.length > 0) {
             await supabase
@@ -1191,34 +1198,51 @@ Deno.serve(async (req) => {
               .in("id", seenIds);
             console.log(`Updated last_seen_at for ${seenIds.length} scraped properties`);
           }
-        }
 
-        // Mark properties as inactive if last_seen_at > 7 days ago
-        const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
-        const { data: staleProperties } = await supabase
-          .from("scraped_properties")
-          .select("published_property_id")
-          .eq("source_site", scraperName)
-          .eq("status", "approved")
-          .not("published_property_id", "is", null)
-          .lt("last_seen_at", sevenDaysAgo);
-
-        if (staleProperties && staleProperties.length > 0) {
-          const staleIds = staleProperties
-            .map((sp) => sp.published_property_id)
-            .filter((id): id is string => !!id);
-
-          if (staleIds.length > 0) {
+          // For complete_data scrapers (API-based): immediately mark unseen properties as inactive
+          if (isCompleteData && notSeenPropertyIds.length > 0) {
             const { error: inactiveError } = await supabase
               .from("properties")
               .update({ status: "inactief" })
-              .in("id", staleIds)
+              .in("id", notSeenPropertyIds)
               .eq("status", "actief");
 
             if (!inactiveError) {
-              console.log(`Marked ${staleIds.length} properties as inactief (not seen for 7+ days)`);
+              console.log(`[complete_data] Marked ${notSeenPropertyIds.length} properties as inactief (not in current run)`);
             } else {
               console.error("Error marking properties inactive:", inactiveError);
+            }
+          }
+        }
+
+        // For partial scrapers: mark inactive only after 7 days not seen
+        if (!isCompleteData) {
+          const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+          const { data: staleProperties } = await supabase
+            .from("scraped_properties")
+            .select("published_property_id")
+            .eq("source_site", scraperName)
+            .eq("status", "approved")
+            .not("published_property_id", "is", null)
+            .lt("last_seen_at", sevenDaysAgo);
+
+          if (staleProperties && staleProperties.length > 0) {
+            const staleIds = staleProperties
+              .map((sp) => sp.published_property_id)
+              .filter((id): id is string => !!id);
+
+            if (staleIds.length > 0) {
+              const { error: inactiveError } = await supabase
+                .from("properties")
+                .update({ status: "inactief" })
+                .in("id", staleIds)
+                .eq("status", "actief");
+
+              if (!inactiveError) {
+                console.log(`Marked ${staleIds.length} properties as inactief (not seen for 7+ days)`);
+              } else {
+                console.error("Error marking properties inactive:", inactiveError);
+              }
             }
           }
         }
