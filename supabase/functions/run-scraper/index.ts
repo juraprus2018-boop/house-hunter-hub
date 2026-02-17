@@ -1150,6 +1150,7 @@ Deno.serve(async (req) => {
                 energy_label: energyLabel,
                 build_year: buildYear && buildYear > 1800 && buildYear < 2030 ? buildYear : null,
                 source_site: sp.source_site || null,
+                source_url: sp.source_url || null,
               })
               .select("id")
               .single();
@@ -1165,37 +1166,60 @@ Deno.serve(async (req) => {
           console.log(`Auto-published ${published} properties`);
         }
       }
-      // === INACTIVE DETECTION ===
-      // Mark properties as "inactief" immediately if not found in this scrape run
+      // === INACTIVE DETECTION via last_seen_at ===
+      // Update last_seen_at for properties found in this scrape run
       const scraperName = scraper.name.toLowerCase();
       const currentSourceUrls = new Set(properties.map((p) => p.source_url));
       
-      // Get all approved scraped properties for this source that have a published property
-      const { data: allApproved } = await supabase
-        .from("scraped_properties")
-        .select("published_property_id, source_url")
-        .eq("source_site", scraperName)
-        .eq("status", "approved")
-        .not("published_property_id", "is", null);
+      if (currentSourceUrls.size > 0) {
+        // Update last_seen_at for all scraped_properties that were seen
+        const { data: matchingScraped } = await supabase
+          .from("scraped_properties")
+          .select("id, source_url")
+          .eq("source_site", scraperName)
+          .eq("status", "approved");
 
-      if (allApproved && allApproved.length > 0) {
-        // Find ones NOT in current scrape results = no longer on the website
-        const missingIds = allApproved
-          .filter((sp) => !currentSourceUrls.has(sp.source_url))
-          .map((sp) => sp.published_property_id)
-          .filter((id): id is string => !!id);
-        
-        if (missingIds.length > 0) {
-          const { error: inactiveError } = await supabase
-            .from("properties")
-            .update({ status: "inactief" })
-            .in("id", missingIds)
-            .eq("status", "actief");
+        if (matchingScraped) {
+          const seenIds = matchingScraped
+            .filter((sp) => currentSourceUrls.has(sp.source_url))
+            .map((sp) => sp.id);
           
-          if (!inactiveError) {
-            console.log(`Marked ${missingIds.length} properties as inactief (not found in current scrape)`);
-          } else {
-            console.error("Error marking properties inactive:", inactiveError);
+          if (seenIds.length > 0) {
+            await supabase
+              .from("scraped_properties")
+              .update({ last_seen_at: new Date().toISOString() })
+              .in("id", seenIds);
+            console.log(`Updated last_seen_at for ${seenIds.length} scraped properties`);
+          }
+        }
+
+        // Mark properties as inactive if last_seen_at > 7 days ago
+        const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+        const { data: staleProperties } = await supabase
+          .from("scraped_properties")
+          .select("published_property_id")
+          .eq("source_site", scraperName)
+          .eq("status", "approved")
+          .not("published_property_id", "is", null)
+          .lt("last_seen_at", sevenDaysAgo);
+
+        if (staleProperties && staleProperties.length > 0) {
+          const staleIds = staleProperties
+            .map((sp) => sp.published_property_id)
+            .filter((id): id is string => !!id);
+
+          if (staleIds.length > 0) {
+            const { error: inactiveError } = await supabase
+              .from("properties")
+              .update({ status: "inactief" })
+              .in("id", staleIds)
+              .eq("status", "actief");
+
+            if (!inactiveError) {
+              console.log(`Marked ${staleIds.length} properties as inactief (not seen for 7+ days)`);
+            } else {
+              console.error("Error marking properties inactive:", inactiveError);
+            }
           }
         }
       }
