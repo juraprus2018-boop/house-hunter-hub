@@ -1,71 +1,31 @@
 
 
-# 🏠 Woningplatform - Plan
+## Alle scrapers voorzien van de juiste `complete_data` configuratie
 
-## Overzicht
-Een moderne woningwebsite waar gebruikers zelf hun woningen kunnen plaatsen en zoeken naar beschikbare huizen, vergelijkbaar met Funda maar dan met user-generated content.
+### Wat gaan we doen?
+Elke scraper krijgt in de database de juiste instelling zodat het systeem weet of een scraper **alle** woningen ophaalt (API-gebaseerd) of slechts een deel (HTML/eerste pagina).
 
----
+### Classificatie van scrapers
 
-## 📱 Kernfunctionaliteit
+| Scraper | Type | Alle woningen? | Instelling |
+|---------|------|---------------|------------|
+| Wooniezie | JSON API | Ja | `complete_data: true` (al ingesteld) |
+| Kamernet | HTML (pagina 1) | Nee | `complete_data: false` |
+| DirectWonen | HTML (pagina 1) | Nee | `complete_data: false` |
+| Pararius | HTML (pagina 1) | Nee | `complete_data: false` |
+| Vesteda | HTML (pagina 1) | Nee | `complete_data: false` |
+| Huurwoningen.nl | HTML (pagina 1) | Nee | `complete_data: false` |
+| Funda | Geblokkeerd | N.v.t. | `complete_data: false` |
+| Jaap.nl | Geblokkeerd | N.v.t. | `complete_data: false` |
+| Overige (123Wonen, De Key, etc.) | Niet geimplementeerd | N.v.t. | `complete_data: false` |
 
-### 1. Homepagina
-- Hero sectie met zoekbalk (locatie, prijs, type woning)
-- Uitgelichte woningen carousel
-- Statistieken (aantal woningen, aantal gebruikers)
-- Categorieën (koop/huur, appartement/huis/studio)
+### Resultaat
+- **Wooniezie** (API): woningen die niet meer in de API staan worden **direct** op inactief gezet
+- **Alle andere scrapers** (HTML): woningen worden pas na **7 dagen** niet gezien op inactief gezet, om foutieve deactivering door paginering te voorkomen
 
-### 2. Woningen Zoeken & Filteren
-- **Filters:** Prijs (min/max), oppervlakte, kamers, type woning, buurt
-- **Sorteeropties:** Nieuwste, prijs laag-hoog, prijs hoog-laag
-- **Kaartweergave:** Interactieve kaart met alle woningen als markers
-- **Lijstweergave:** Grid met woningkaarten (foto, prijs, locatie, kamers)
+### Technische stappen
 
-### 3. Woningdetailpagina
-- Fotogalerij/carousel
-- Alle specificaties (prijs, m², kamers, bouwjaar, energielabel)
-- Beschrijving van de woning
-- Locatie op kaart
-- Contactformulier naar aanbieder
-- "Toevoegen aan favorieten" knop
+1. **Database-update**: Voor alle scrapers behalve Wooniezie de config bijwerken met `complete_data: false` zodat dit expliciet is vastgelegd
+2. Wooniezie heeft al `complete_data: true` -- geen actie nodig
 
-### 4. Woning Plaatsen
-- Stap-voor-stap formulier:
-  1. Type woning & adres
-  2. Details (prijs, kamers, oppervlakte, etc.)
-  3. Beschrijving schrijven
-  4. Foto's uploaden (meerdere)
-  5. Voorvertoning & publiceren
-- Eigen woningen beheren (bewerken, verwijderen, status wijzigen)
-
----
-
-## 👤 Gebruikersfuncties
-
-### 5. Account & Authenticatie
-- Registreren met email
-- Inloggen/uitloggen
-- Profiel bewerken
-
-### 6. Favorieten & Alerts
-- Woningen opslaan als favoriet
-- Favorieten overzichtspagina
-- **Zoekalerts:** Sla zoekcriteria op en ontvang notificaties bij nieuwe matches
-- Email notificaties (optioneel, later toe te voegen)
-
----
-
-## 🗄️ Backend (Lovable Cloud)
-
-- **Database:** Woningen, gebruikers, favorieten, alerts
-- **Opslag:** Foto's van woningen
-- **Authenticatie:** Gebruikersaccounts
-
----
-
-## 🎨 Design
-- Moderne, schone uitstraling
-- Responsief (mobiel-vriendelijk)
-- Duidelijke call-to-actions
-- Vergelijkbaar met Funda/Wooniezie qua UX
-
+Dit is een eenvoudige database-update van de `config` kolom in de `scrapers` tabel voor alle niet-Wooniezie scrapers.
