@@ -1100,17 +1100,25 @@ Deno.serve(async (req) => {
             // Geocode - use raw_data lat/lon if available, otherwise Nominatim
             let latitude: number | null = rawData.latitude ? Number(rawData.latitude) : null;
             let longitude: number | null = rawData.longitude ? Number(rawData.longitude) : null;
+            let geoPostalCode: string | null = null;
+            let geoHouseNumber: string | null = null;
             if (!latitude || !longitude) {
               try {
-                const address = `${sp.street} ${sp.house_number}, ${sp.postal_code} ${sp.city}, Netherlands`;
+                const address = `${sp.street} ${sp.house_number || ""}, ${sp.postal_code || ""} ${sp.city}, Netherlands`;
                 const geoRes = await fetch(
-                  `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1`,
+                  `https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&q=${encodeURIComponent(address)}&limit=1`,
                   { headers: { "User-Agent": "WoningPlatform/1.0" } }
                 );
                 const geoData = await geoRes.json();
                 if (geoData && geoData.length > 0) {
                   latitude = parseFloat(geoData[0].lat);
                   longitude = parseFloat(geoData[0].lon);
+                  // Extract postal code and house number from Nominatim if missing
+                  const addr = geoData[0].address;
+                  if (addr) {
+                    if (addr.postcode) geoPostalCode = addr.postcode;
+                    if (addr.house_number) geoHouseNumber = addr.house_number;
+                  }
                 }
               } catch (_e) { /* skip geocoding errors */ }
             }
@@ -1135,8 +1143,8 @@ Deno.serve(async (req) => {
                 price: sp.price,
                 city: sp.city,
                 street: sp.street || "Onbekend",
-                house_number: sp.house_number || "-",
-                postal_code: sp.postal_code || "0000AA",
+                house_number: sp.house_number || geoHouseNumber || "-",
+                postal_code: sp.postal_code || geoPostalCode || "0000AA",
                 property_type: propertyType,
                 listing_type: listingType,
                 bedrooms: sp.bedrooms || null,
