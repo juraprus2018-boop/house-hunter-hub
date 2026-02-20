@@ -1223,12 +1223,76 @@ Deno.serve(async (req) => {
           }
         }
 
-        // For partial scrapers (HTML-based): do NOT auto-deactivate
-        // These scrapers only see a random subset of listings each run,
-        // so we cannot reliably determine if a property is truly gone.
-        // Only complete_data scrapers (API-based) can reliably deactivate.
+        // For partial scrapers (HTML-based): verify source URLs individually
+        // Since these scrapers only see a subset per run, we check each active property's
+        // source URL to determine if it's still available on the source site.
         if (!isCompleteData) {
-          console.log(`[partial_scraper] Skipping deactivation for ${scraperName} - only a subset of listings is visible per run`);
+          console.log(`[partial_scraper] Verifying source URLs for ${scraperName}...`);
+          
+          // Get all active properties from this scraper that weren't seen in this run
+          const { data: unseenProperties } = await supabase
+            .from("scraped_properties")
+            .select("id, source_url, published_property_id")
+            .eq("source_site", scraperName)
+            .eq("status", "approved")
+            .not("published_property_id", "is", null);
+
+          const unseenToCheck = (unseenProperties || []).filter(
+            (sp) => !currentSourceUrls.has(sp.source_url)
+          );
+
+          console.log(`[partial_scraper] ${unseenToCheck.length} active properties to verify for ${scraperName}`);
+
+          let deactivatedCount = 0;
+          // Verify up to 30 URLs per run to avoid timeouts
+          const toVerify = unseenToCheck.slice(0, 30);
+
+          for (const sp of toVerify) {
+            try {
+              const checkRes = await fetch(sp.source_url, {
+                method: "HEAD",
+                headers: {
+                  "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+                  "Accept": "text/html,application/xhtml+xml",
+                },
+                redirect: "follow",
+                signal: AbortSignal.timeout(8000),
+              });
+
+              // Check if page is truly gone (404, 410) or redirects to homepage/search
+              const finalUrl = checkRes.url || sp.source_url;
+              const isGone = checkRes.status === 404 || checkRes.status === 410;
+              const isRedirectedAway = checkRes.status === 200 && !finalUrl.includes(sp.source_url.split("/").pop() || "xxx");
+
+              if (isGone || isRedirectedAway) {
+                // Property no longer exists on source - mark inactive
+                if (sp.published_property_id) {
+                  await supabase
+                    .from("properties")
+                    .update({ status: "inactief" })
+                    .eq("id", sp.published_property_id)
+                    .eq("status", "actief");
+                }
+                await supabase
+                  .from("scraped_properties")
+                  .update({ status: "expired" })
+                  .eq("id", sp.id);
+                deactivatedCount++;
+                console.log(`[partial_scraper] Deactivated: ${sp.source_url} (status: ${checkRes.status})`);
+              } else {
+                // Still exists - update last_seen_at
+                await supabase
+                  .from("scraped_properties")
+                  .update({ last_seen_at: new Date().toISOString() })
+                  .eq("id", sp.id);
+              }
+            } catch (e) {
+              // Network error / timeout - don't deactivate, might be temporary
+              console.warn(`[partial_scraper] Could not verify ${sp.source_url}:`, e instanceof Error ? e.message : e);
+            }
+          }
+
+          console.log(`[partial_scraper] Deactivated ${deactivatedCount} properties for ${scraperName}`);
         }
       }
     }
