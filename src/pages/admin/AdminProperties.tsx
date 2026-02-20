@@ -43,6 +43,7 @@ const AdminProperties = () => {
 
   const [searchQuery, setSearchQuery] = useState("");
   const [sourceFilter, setSourceFilter] = useState<string>("all");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
   const [editingProperty, setEditingProperty] = useState<typeof properties extends (infer T)[] ? T : never | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [formData, setFormData] = useState<Record<string, unknown>>({});
@@ -57,7 +58,8 @@ const AdminProperties = () => {
       p.city.toLowerCase().includes(searchQuery.toLowerCase()) ||
       p.street.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesSource = sourceFilter === "all" || p.source_site === sourceFilter || (sourceFilter === "user" && !p.source_site);
-    return matchesSearch && matchesSource;
+    const matchesStatus = statusFilter === "all" || p.status === statusFilter;
+    return matchesSearch && matchesSource && matchesStatus;
   });
 
   const formatPrice = (price: number, listingType: string) => {
@@ -183,6 +185,19 @@ const AdminProperties = () => {
                       {source}
                     </SelectItem>
                   ))}
+                </SelectContent>
+              </Select>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-full sm:w-[200px]">
+                  <Filter className="mr-2 h-4 w-4" />
+                  <SelectValue placeholder="Alle statussen" />
+                </SelectTrigger>
+                <SelectContent className="z-50 bg-popover">
+                  <SelectItem value="all">Alle statussen</SelectItem>
+                  <SelectItem value="actief">Actief</SelectItem>
+                  <SelectItem value="inactief">Verlopen</SelectItem>
+                  <SelectItem value="verhuurd">Verhuurd</SelectItem>
+                  <SelectItem value="verkocht">Verkocht</SelectItem>
                 </SelectContent>
               </Select>
             </div>
