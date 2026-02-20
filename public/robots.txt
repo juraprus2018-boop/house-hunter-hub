@@ -13,4 +13,4 @@ Allow: /
 User-agent: *
 Allow: /
 
-Sitemap: https://www.woonpeek.nl/sitemap.xml
+Sitemap: https://uszlfqgxjvceugrpavde.supabase.co/functions/v1/generate-sitemap
