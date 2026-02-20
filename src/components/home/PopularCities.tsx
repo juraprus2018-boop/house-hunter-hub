@@ -122,7 +122,7 @@ const PopularCities = () => {
                     </p>
                   </div>
                 </div>
-                <Link to={`/zoeken?locatie=${encodeURIComponent(city)}`}>
+                <Link to={`/${city.toLowerCase().replace(/\s+/g, "-")}`}>
                   <Button variant="ghost" size="sm" className="gap-1">
                     Bekijk alle
                     <ArrowRight className="h-4 w-4" />
