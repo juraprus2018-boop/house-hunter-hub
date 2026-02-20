@@ -12,3 +12,5 @@ Allow: /
 
 User-agent: *
 Allow: /
+
+Sitemap: https://uszlfqgxjvceugrpavde.supabase.co/storage/v1/object/public/property-images/sitemap.xml
