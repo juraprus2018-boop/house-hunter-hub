@@ -262,8 +262,21 @@ Deno.serve(async (req) => {
     const deactivated = 0;
     console.log("Deactivation handled per-scraper in run-scraper function");
 
-    // 5. Update last_seen_at for properties that ARE still in the current scrape
-    // (already handled during insert - new ones get current timestamp)
+    // 6. Regenerate sitemap
+    try {
+      console.log("Regenerating sitemap...");
+      const sitemapRes = await fetch(`${supabaseUrl}/functions/v1/generate-sitemap`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${supabaseKey}`,
+        },
+      });
+      const sitemapResult = await sitemapRes.json();
+      console.log("Sitemap result:", JSON.stringify(sitemapResult));
+    } catch (e) {
+      console.warn("Sitemap generation failed:", e);
+    }
 
     return new Response(
       JSON.stringify({
@@ -272,6 +285,7 @@ Deno.serve(async (req) => {
         auto_published: published,
         skipped,
         deactivated,
+        sitemap_regenerated: true,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
