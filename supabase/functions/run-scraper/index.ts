@@ -1223,36 +1223,12 @@ Deno.serve(async (req) => {
           }
         }
 
-        // For partial scrapers: mark inactive only after 7 days not seen
+        // For partial scrapers (HTML-based): do NOT auto-deactivate
+        // These scrapers only see a random subset of listings each run,
+        // so we cannot reliably determine if a property is truly gone.
+        // Only complete_data scrapers (API-based) can reliably deactivate.
         if (!isCompleteData) {
-          const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
-          const { data: staleProperties } = await supabase
-            .from("scraped_properties")
-            .select("published_property_id")
-            .eq("source_site", scraperName)
-            .eq("status", "approved")
-            .not("published_property_id", "is", null)
-            .lt("last_seen_at", sevenDaysAgo);
-
-          if (staleProperties && staleProperties.length > 0) {
-            const staleIds = staleProperties
-              .map((sp) => sp.published_property_id)
-              .filter((id): id is string => !!id);
-
-            if (staleIds.length > 0) {
-              const { error: inactiveError } = await supabase
-                .from("properties")
-                .update({ status: "inactief" })
-                .in("id", staleIds)
-                .eq("status", "actief");
-
-              if (!inactiveError) {
-                console.log(`Marked ${staleIds.length} properties as inactief (not seen for 7+ days)`);
-              } else {
-                console.error("Error marking properties inactive:", inactiveError);
-              }
-            }
-          }
+          console.log(`[partial_scraper] Skipping deactivation for ${scraperName} - only a subset of listings is visible per run`);
         }
       }
     }
