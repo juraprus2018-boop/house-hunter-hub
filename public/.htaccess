@@ -9,6 +9,9 @@ RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule ^(.*)/$ /$1 [L,R=301]
 
+# Sitemap proxy to edge function
+RewriteRule ^sitemap\.xml$ https://uszlfqgxjvceugrpavde.supabase.co/functions/v1/generate-sitemap [P,L]
+
 # SPA fallback - send all requests to index.html
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
