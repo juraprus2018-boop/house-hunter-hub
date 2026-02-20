@@ -218,7 +218,8 @@ async function scrapeWooniezie(): Promise<ScrapedProperty[]> {
 
         // Build detail URL
         const isKoop = (d.rentBuy || "").toLowerCase() === "koop";
-        const slug = `${streetName}-${houseNum || ""}-${cityName}`.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
+        const citySlugPart = cityName.toLowerCase().replace(/\s+/g, "");
+        const slug = `${streetName}-${houseNum || ""}-${citySlugPart}`.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
         const detailUrl = isKoop
           ? `https://www.wooniezie.nl/aanbod/nu-te-koop/te-koop/details/${id}-${slug}`
           : `https://www.wooniezie.nl/aanbod/nu-te-huur/te-huur/details/${id}-${slug}`;
