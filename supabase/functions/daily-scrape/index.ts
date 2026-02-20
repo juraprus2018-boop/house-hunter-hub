@@ -7,7 +7,7 @@ const corsHeaders = {
 };
 
 const SYSTEM_USER_ID = "0d02a609-fde3-435a-9154-078fdce7ed34";
-const THREE_WEEKS_MS = 21 * 24 * 60 * 60 * 1000;
+// Deactivation is handled per-scraper in run-scraper function
 
 const USER_AGENT =
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
@@ -256,36 +256,11 @@ Deno.serve(async (req) => {
 
     console.log(`Auto-publish: ${published} published, ${skipped} skipped`);
 
-    // 4. Deactivate properties not seen for 3+ weeks
-    const threeWeeksAgo = new Date(Date.now() - THREE_WEEKS_MS).toISOString();
-
-    // Find scraped properties that haven't been seen for 3 weeks
-    const { data: staleScraped } = await supabase
-      .from("scraped_properties")
-      .select("published_property_id")
-      .eq("status", "approved")
-      .lt("last_seen_at", threeWeeksAgo)
-      .not("published_property_id", "is", null);
-
-    let deactivated = 0;
-    if (staleScraped && staleScraped.length > 0) {
-      const staleIds = staleScraped
-        .map((s) => s.published_property_id)
-        .filter(Boolean) as string[];
-
-      if (staleIds.length > 0) {
-        const { error: deactivateError } = await supabase
-          .from("properties")
-          .update({ status: "inactief" })
-          .in("id", staleIds)
-          .eq("status", "actief");
-
-        if (!deactivateError) {
-          deactivated = staleIds.length;
-        }
-        console.log(`Deactivated ${deactivated} stale properties`);
-      }
-    }
+    // 4. Deactivation is handled per-scraper in run-scraper:
+    // - Complete data scrapers (API-based like Wooniezie): immediate deactivation when not in API response
+    // - Partial scrapers (HTML-based like Kamernet): NO auto-deactivation (only see random subset per run)
+    const deactivated = 0;
+    console.log("Deactivation handled per-scraper in run-scraper function");
 
     // 5. Update last_seen_at for properties that ARE still in the current scrape
     // (already handled during insert - new ones get current timestamp)
