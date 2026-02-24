@@ -62,6 +62,35 @@ export const useToggleScraper = () => {
   });
 };
 
+export const useUpdateScraperSchedule = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      id,
+      schedule_interval,
+      schedule_days,
+    }: {
+      id: string;
+      schedule_interval: string;
+      schedule_days: number[] | null;
+    }) => {
+      const { data, error } = await supabase
+        .from("scrapers")
+        .update({ schedule_interval, schedule_days })
+        .eq("id", id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["scrapers"] });
+    },
+  });
+};
+
 export const useScraperLogs = (scraperId?: string) => {
   return useQuery({
     queryKey: ["scraper-logs", scraperId],

@@ -312,8 +312,11 @@ export type Database = {
           is_active: boolean
           last_run_at: string | null
           last_run_status: string | null
+          last_scheduled_run: string | null
           name: string
           properties_found: number | null
+          schedule_days: number[] | null
+          schedule_interval: string
           updated_at: string
           website_url: string
         }
@@ -325,8 +328,11 @@ export type Database = {
           is_active?: boolean
           last_run_at?: string | null
           last_run_status?: string | null
+          last_scheduled_run?: string | null
           name: string
           properties_found?: number | null
+          schedule_days?: number[] | null
+          schedule_interval?: string
           updated_at?: string
           website_url: string
         }
@@ -338,8 +344,11 @@ export type Database = {
           is_active?: boolean
           last_run_at?: string | null
           last_run_status?: string | null
+          last_scheduled_run?: string | null
           name?: string
           properties_found?: number | null
+          schedule_days?: number[] | null
+          schedule_interval?: string
           updated_at?: string
           website_url?: string
         }

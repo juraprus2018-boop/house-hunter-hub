@@ -12,7 +12,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { useScrapers, useToggleScraper, useScraperLogs, useRunScraper } from "@/hooks/useAdmin";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import { useScrapers, useToggleScraper, useScraperLogs, useRunScraper, useUpdateScraperSchedule } from "@/hooks/useAdmin";
 import { 
   Loader2, 
   Play, 
@@ -20,7 +29,9 @@ import {
   Clock, 
   CheckCircle2, 
   XCircle,
-  Activity 
+  Activity,
+  Settings2,
+  CalendarClock,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
@@ -30,9 +41,37 @@ const AdminScrapers = () => {
   const { data: scrapers, isLoading } = useScrapers();
   const toggleScraper = useToggleScraper();
   const runScraper = useRunScraper();
+  const updateSchedule = useUpdateScraperSchedule();
   const { toast } = useToast();
   const [selectedScraper, setSelectedScraper] = useState<string | null>(null);
   const { data: logs } = useScraperLogs(selectedScraper || undefined);
+  const [scheduleScraper, setScheduleScraper] = useState<{ id: string; interval: string; days: number[] } | null>(null);
+
+  const DAY_NAMES = ["Zo", "Ma", "Di", "Wo", "Do", "Vr", "Za"];
+
+  const getScheduleLabel = (interval: string, days?: number[] | null) => {
+    if (interval === "manual") return "Handmatig";
+    if (interval === "weekly") {
+      const dayLabels = (days || []).map(d => DAY_NAMES[d]).join(", ");
+      return dayLabels ? `Wekelijks (${dayLabels})` : "Wekelijks";
+    }
+    return "Dagelijks";
+  };
+
+  const handleSaveSchedule = async () => {
+    if (!scheduleScraper) return;
+    try {
+      await updateSchedule.mutateAsync({
+        id: scheduleScraper.id,
+        schedule_interval: scheduleScraper.interval,
+        schedule_days: scheduleScraper.interval === "weekly" ? scheduleScraper.days : null,
+      });
+      toast({ title: "Planning opgeslagen", description: "De scraper planning is bijgewerkt." });
+      setScheduleScraper(null);
+    } catch {
+      toast({ title: "Fout", description: "Kon de planning niet opslaan.", variant: "destructive" });
+    }
+  };
 
   const handleToggle = async (id: string, currentState: boolean) => {
     try {
@@ -187,28 +226,45 @@ const AdminScrapers = () => {
                   )}
                 </div>
 
-                {scraper.last_run_status && (
-                  <Badge
-                    variant={scraper.last_run_status === "success" ? "default" : "destructive"}
-                    className="gap-1"
-                  >
-                    {scraper.last_run_status === "success" ? (
-                      <CheckCircle2 className="h-3 w-3" />
-                    ) : (
-                      <XCircle className="h-3 w-3" />
-                    )}
-                    {scraper.last_run_status}
+                <div className="flex items-center gap-2 flex-wrap">
+                  {scraper.last_run_status && (
+                    <Badge
+                      variant={scraper.last_run_status === "success" ? "default" : "destructive"}
+                      className="gap-1"
+                    >
+                      {scraper.last_run_status === "success" ? (
+                        <CheckCircle2 className="h-3 w-3" />
+                      ) : (
+                        <XCircle className="h-3 w-3" />
+                      )}
+                      {scraper.last_run_status}
+                    </Badge>
+                  )}
+                  <Badge variant="outline" className="gap-1">
+                    <CalendarClock className="h-3 w-3" />
+                    {getScheduleLabel(scraper.schedule_interval, scraper.schedule_days)}
                   </Badge>
-                )}
+                </div>
 
                 <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setScheduleScraper({
+                      id: scraper.id,
+                      interval: scraper.schedule_interval || "daily",
+                      days: scraper.schedule_days || [],
+                    })}
+                  >
+                    <Settings2 className="h-4 w-4" />
+                  </Button>
                   <Button
                     size="sm"
                     variant="outline"
                     className="flex-1"
                     onClick={() => setSelectedScraper(scraper.id)}
                   >
-                    Logs bekijken
+                    Logs
                   </Button>
                   <Button
                     size="sm"
@@ -217,16 +273,11 @@ const AdminScrapers = () => {
                     onClick={() => handleRunScraper(scraper.id, scraper.name)}
                   >
                     {runScraper.isPending ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Bezig...
-                      </>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     ) : (
-                      <>
-                        <Play className="mr-2 h-4 w-4" />
-                        Nu uitvoeren
-                      </>
+                      <Play className="mr-2 h-4 w-4" />
                     )}
+                    {runScraper.isPending ? "Bezig..." : "Run"}
                   </Button>
                 </div>
               </CardContent>
@@ -296,6 +347,75 @@ const AdminScrapers = () => {
           <DialogFooter>
             <Button variant="outline" onClick={() => setSelectedScraper(null)}>
               Sluiten
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Schedule Dialog */}
+      <Dialog open={!!scheduleScraper} onOpenChange={() => setScheduleScraper(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Scraper Planning</DialogTitle>
+            <DialogDescription>
+              Bepaal hoe vaak deze scraper automatisch moet draaien
+            </DialogDescription>
+          </DialogHeader>
+          {scheduleScraper && (
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label>Frequentie</Label>
+                <Select
+                  value={scheduleScraper.interval}
+                  onValueChange={(val) => setScheduleScraper({ ...scheduleScraper, interval: val, days: val === "weekly" ? scheduleScraper.days : [] })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="daily">Dagelijks</SelectItem>
+                    <SelectItem value="weekly">Wekelijks</SelectItem>
+                    <SelectItem value="manual">Alleen handmatig</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {scheduleScraper.interval === "weekly" && (
+                <div className="space-y-2">
+                  <Label>Op welke dagen?</Label>
+                  <div className="flex flex-wrap gap-2">
+                    {DAY_NAMES.map((name, idx) => (
+                      <label key={idx} className="flex items-center gap-1.5 cursor-pointer">
+                        <Checkbox
+                          checked={scheduleScraper.days.includes(idx)}
+                          onCheckedChange={(checked) => {
+                            const newDays = checked
+                              ? [...scheduleScraper.days, idx].sort()
+                              : scheduleScraper.days.filter(d => d !== idx);
+                            setScheduleScraper({ ...scheduleScraper, days: newDays });
+                          }}
+                        />
+                        <span className="text-sm">{name}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {scheduleScraper.interval === "manual" && (
+                <p className="text-sm text-muted-foreground">
+                  Deze scraper draait alleen als je handmatig op &quot;Run&quot; klikt.
+                </p>
+              )}
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setScheduleScraper(null)}>
+              Annuleren
+            </Button>
+            <Button onClick={handleSaveSchedule} disabled={updateSchedule.isPending}>
+              {updateSchedule.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Opslaan
             </Button>
           </DialogFooter>
         </DialogContent>

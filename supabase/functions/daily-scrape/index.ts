@@ -92,8 +92,40 @@ Deno.serve(async (req) => {
 
     console.log(`Found ${scrapers?.length || 0} active scrapers`);
 
-    // 2. Run each scraper via the run-scraper function
+    const today = new Date();
+    const todayDay = today.getUTCDay(); // 0=Sun, 1=Mon, ..., 6=Sat
+    const todayDate = today.toISOString().split("T")[0]; // YYYY-MM-DD
+
+    // 2. Run each scraper based on its schedule
     for (const scraper of scrapers || []) {
+      const interval = scraper.schedule_interval || "daily";
+      const scheduleDays: number[] = scraper.schedule_days || [];
+      const lastScheduledRun: string | null = scraper.last_scheduled_run;
+
+      // Check if scraper should run today
+      let shouldRun = false;
+
+      if (interval === "daily") {
+        shouldRun = true;
+      } else if (interval === "weekly") {
+        // Run only on specified days of the week
+        shouldRun = scheduleDays.length === 0 || scheduleDays.includes(todayDay);
+      } else if (interval === "manual") {
+        // Never run automatically
+        shouldRun = false;
+      }
+
+      // Skip if already ran today (prevent double runs)
+      if (lastScheduledRun === todayDate) {
+        console.log(`${scraper.name}: already ran today, skipping`);
+        shouldRun = false;
+      }
+
+      if (!shouldRun) {
+        console.log(`${scraper.name}: skipped (interval=${interval}, today=${todayDay}, days=${JSON.stringify(scheduleDays)})`);
+        results[scraper.name] = "skipped (not scheduled)";
+        continue;
+      }
       try {
         console.log(`Running scraper: ${scraper.name}`);
         const response = await fetch(`${supabaseUrl}/functions/v1/run-scraper`, {
@@ -108,6 +140,12 @@ Deno.serve(async (req) => {
         const result = await response.json();
         results[scraper.name] = `${result.properties_scraped || 0} scraped`;
         console.log(`${scraper.name}: ${JSON.stringify(result)}`);
+
+        // Mark today as last scheduled run
+        await supabase
+          .from("scrapers")
+          .update({ last_scheduled_run: todayDate })
+          .eq("id", scraper.id);
       } catch (e) {
         results[scraper.name] = `error: ${e instanceof Error ? e.message : "unknown"}`;
         console.error(`Error running ${scraper.name}:`, e);
