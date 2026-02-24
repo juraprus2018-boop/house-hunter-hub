@@ -796,9 +796,10 @@ async function scrapeHuurwoningen(): Promise<ScrapedProperty[]> {
         const citySlug = urlMatch[2];
         const streetSlug = urlMatch[4];
 
-        // Title
-        const titleMatch = section.match(/listing-search-item__link--title[^>]*>\s*([\s\S]*?)<\/a>/i);
-        const streetName = titleMatch ? titleMatch[1].replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim() : streetSlug.replace(/-/g, " ");
+        // Title: extract only the visible text content after the last ">"
+        const titleMatch = section.match(/listing-search-item__link--title[^>]*>(?:[^<]*<[^>]*>)*\s*([^<]+)<\/a>/i);
+        const rawTitle = titleMatch ? titleMatch[1].trim() : null;
+        const streetName = rawTitle || streetSlug.replace(/-/g, " ");
 
         // Subtitle: postal code, city, neighborhood
         const subTitleMatch = section.match(/listing-search-item__sub-title[^>]*>\s*([^<]+)/i);
