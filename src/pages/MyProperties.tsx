@@ -7,7 +7,7 @@ import { useUserProperties } from "@/hooks/useProperties";
 import PropertyCard from "@/components/properties/PropertyCard";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, PlusCircle } from "lucide-react";
+import { Loader2, PlusCircle, Pencil } from "lucide-react";
 
 const MyProperties = () => {
   const { user, loading: authLoading } = useAuth();
@@ -50,7 +50,19 @@ const MyProperties = () => {
           ) : properties && properties.length > 0 ? (
             <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {properties.map((property) => (
-                <PropertyCard key={property.id} property={property} />
+                <div key={property.id} className="relative">
+                  <PropertyCard property={property} />
+                  <Link
+                    to={`/woning/${property.id}/bewerken`}
+                    className="absolute bottom-4 right-4 z-10"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <Button size="sm" variant="secondary" className="gap-1.5 shadow-md">
+                      <Pencil className="h-3.5 w-3.5" />
+                      Bewerken
+                    </Button>
+                  </Link>
+                </div>
               ))}
             </div>
           ) : (

@@ -20,6 +20,7 @@ import AdminSettings from "./pages/admin/AdminSettings";
 import AdminReviewQueue from "./pages/admin/AdminReviewQueue";
 import MyProperties from "./pages/MyProperties";
 import CreateProperty from "./pages/CreateProperty";
+import EditProperty from "./pages/EditProperty";
 import TermsAndConditions from "./pages/TermsAndConditions";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import Disclaimer from "./pages/Disclaimer";
@@ -45,6 +46,7 @@ const App = () => (
             <Route path="/favorieten" element={<Favorites />} />
             <Route path="/mijn-woningen" element={<MyProperties />} />
             <Route path="/plaatsen" element={<CreateProperty />} />
+            <Route path="/woning/:id/bewerken" element={<EditProperty />} />
             <Route path="/admin" element={<AdminDashboard />} />
             <Route path="/admin/woningen" element={<AdminProperties />} />
             <Route path="/admin/review" element={<AdminReviewQueue />} />
