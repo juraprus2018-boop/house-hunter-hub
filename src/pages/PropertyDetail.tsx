@@ -154,6 +154,8 @@ const PropertyDetail = () => {
             title={seoTitle}
             description={`${property.property_type} te ${property.listing_type} aan ${property.street} ${property.house_number}, ${property.postal_code} ${property.city}. ${property.surface_area ? property.surface_area + ' m²' : ''} ${property.bedrooms ? property.bedrooms + ' slaapkamers' : ''} voor ${formatPrice(Number(property.price), property.listing_type)}.`}
             canonical={`https://www.woonpeek.nl/woning/${property.slug}`}
+            ogImage={property.images?.length ? property.images[0] : undefined}
+            ogType="article"
           />
           <script
             type="application/ld+json"
