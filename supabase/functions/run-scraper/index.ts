@@ -946,7 +946,7 @@ async function scrapeVesteda(): Promise<ScrapedProperty[]> {
 async function scrape123Wonen(): Promise<ScrapedProperty[]> {
   const properties: ScrapedProperty[] = [];
   let detailFetchCount = 0;
-  const MAX_DETAIL_FETCHES = 10;
+  const MAX_DETAIL_FETCHES = 50;
 
   try {
     // Fetch first 3 pages for more coverage
@@ -1056,15 +1056,23 @@ async function scrape123Wonen(): Promise<ScrapedProperty[]> {
               const beschikbaarheidMatch = detailHtml.match(/Beschikbaarheid[\s\S]*?((?:Vanaf|Per direct|In overleg)[^<]*)/i);
               if (beschikbaarheidMatch) beschikbaarheid = beschikbaarheidMatch[1].trim();
 
-              // Images from detail page
-              const imgMatches = detailHtml.matchAll(
-                /src="(https:\/\/www\.static\.123wonen\.nl\/files\/object_data\/[^"]+)"/gi
-              );
-              for (const imgMatch of imgMatches) {
-                const imgUrl = imgMatch[1]
-                  .replace(/\/cache\/s\d+\d+\//, "/") // Get full size image
-                  .replace(/\/cache\/s320240\//, "/");
-                if (!images.includes(imgUrl)) images.push(imgUrl);
+              // Images from detail page - multiple patterns
+              const imgPatterns = [
+                /src="(https:\/\/www\.static\.123wonen\.nl\/files\/object_data\/[^"]+)"/gi,
+                /src="(https:\/\/static\.123wonen\.nl\/files\/object_data\/[^"]+)"/gi,
+                /data-src="(https?:\/\/[^"]*123wonen[^"]*\/files\/object_data\/[^"]+)"/gi,
+                /src="(https?:\/\/[^"]*123wonen[^"]*\.(?:jpg|jpeg|png|webp)[^"]*)"/gi,
+              ];
+              for (const pattern of imgPatterns) {
+                const imgMatches = detailHtml.matchAll(pattern);
+                for (const imgMatch of imgMatches) {
+                  let imgUrl = imgMatch[1]
+                    .replace(/\/cache\/s\d+x?\d*\//, "/")
+                    .replace(/\/cache\/s320240\//, "/");
+                  if (!images.includes(imgUrl) && !imgUrl.includes("logo") && !imgUrl.includes("icon")) {
+                    images.push(imgUrl);
+                  }
+                }
               }
 
               // Description - extract from omschrijving section
