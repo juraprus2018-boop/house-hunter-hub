@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import propertyPlaceholder from "@/assets/property-placeholder.jpg";
 import { supabase } from "@/integrations/supabase/client";
 import { MapPin, Bed, Square, ArrowRight, Loader2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
@@ -139,9 +140,10 @@ const PopularCities = () => {
                     <Card className="group overflow-hidden border-0 shadow-md transition-shadow hover:shadow-xl">
                       <div className="relative aspect-[4/3] overflow-hidden">
                         <img
-                          src={property.images?.[0] || "/placeholder.svg"}
-                          alt={property.title}
-                          className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                           src={property.images?.[0] || propertyPlaceholder}
+                           alt={property.title}
+                           className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                           onError={(e) => { e.currentTarget.src = propertyPlaceholder; }}
                           loading="lazy"
                         />
                         <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-3">
