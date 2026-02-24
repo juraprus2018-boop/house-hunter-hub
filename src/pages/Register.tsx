@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -40,6 +41,18 @@ const Register = () => {
         description: error.message,
       });
     } else {
+      // Send admin notification (fire-and-forget)
+      supabase.functions.invoke("send-email", {
+        body: {
+          to: "info@woonpeek.nl",
+          subject: `Nieuwe registratie: ${displayName || email}`,
+          html: `<h2>Nieuwe gebruiker geregistreerd</h2>
+            <p><strong>Naam:</strong> ${displayName || "Niet opgegeven"}</p>
+            <p><strong>E-mail:</strong> ${email}</p>
+            <p><strong>Tijdstip:</strong> ${new Date().toLocaleString("nl-NL")}</p>`,
+        },
+      }).catch(() => {});
+
       toast({
         title: "Registratie succesvol!",
         description: "Controleer je e-mail om je account te bevestigen.",
