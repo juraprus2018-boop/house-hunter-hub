@@ -109,14 +109,57 @@ const PropertyDetail = () => {
     ? `${property.property_type.charAt(0).toUpperCase() + property.property_type.slice(1)} te ${property.listing_type}: ${property.street} ${property.house_number} ${property.postal_code} ${property.city} | WoonPeek`
     : "Woning | WoonPeek";
 
+  const jsonLd = property ? {
+    "@context": "https://schema.org",
+    "@type": "RealEstateListing",
+    "name": property.title,
+    "description": property.description || `${property.property_type} te ${property.listing_type} in ${property.city}`,
+    "url": `https://www.woonpeek.nl/woning/${property.slug}`,
+    "datePosted": property.created_at,
+    "image": property.images?.length ? property.images : undefined,
+    "offers": {
+      "@type": "Offer",
+      "price": property.price,
+      "priceCurrency": "EUR",
+      "availability": property.status === "actief" ? "https://schema.org/InStock" : "https://schema.org/SoldOut",
+    },
+    "address": {
+      "@type": "PostalAddress",
+      "streetAddress": `${property.street} ${property.house_number}`,
+      "postalCode": property.postal_code,
+      "addressLocality": property.city,
+      "addressCountry": "NL",
+    },
+    ...(property.latitude && property.longitude ? {
+      "geo": {
+        "@type": "GeoCoordinates",
+        "latitude": Number(property.latitude),
+        "longitude": Number(property.longitude),
+      }
+    } : {}),
+    "additionalProperty": [
+      ...(property.surface_area ? [{ "@type": "PropertyValue", "name": "Oppervlakte", "value": `${property.surface_area} m²` }] : []),
+      ...(property.bedrooms ? [{ "@type": "PropertyValue", "name": "Slaapkamers", "value": property.bedrooms }] : []),
+      ...(property.bathrooms ? [{ "@type": "PropertyValue", "name": "Badkamers", "value": property.bathrooms }] : []),
+      ...(property.build_year ? [{ "@type": "PropertyValue", "name": "Bouwjaar", "value": property.build_year }] : []),
+      ...(property.energy_label ? [{ "@type": "PropertyValue", "name": "Energielabel", "value": property.energy_label }] : []),
+    ],
+  } : null;
+
   return (
     <div className="flex min-h-screen flex-col">
       {property && (
-        <SEOHead
-          title={seoTitle}
-          description={`${property.property_type} te ${property.listing_type} aan ${property.street} ${property.house_number}, ${property.postal_code} ${property.city}. ${property.surface_area ? property.surface_area + ' m²' : ''} ${property.bedrooms ? property.bedrooms + ' slaapkamers' : ''} voor ${formatPrice(Number(property.price), property.listing_type)}.`}
-          canonical={`https://www.woonpeek.nl/woning/${property.slug}`}
-        />
+        <>
+          <SEOHead
+            title={seoTitle}
+            description={`${property.property_type} te ${property.listing_type} aan ${property.street} ${property.house_number}, ${property.postal_code} ${property.city}. ${property.surface_area ? property.surface_area + ' m²' : ''} ${property.bedrooms ? property.bedrooms + ' slaapkamers' : ''} voor ${formatPrice(Number(property.price), property.listing_type)}.`}
+            canonical={`https://www.woonpeek.nl/woning/${property.slug}`}
+          />
+          <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+          />
+        </>
       )}
       <Header />
       <main className="flex-1">
