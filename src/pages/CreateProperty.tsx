@@ -173,6 +173,20 @@ const CreateProperty = () => {
         }
       }
 
+      // Send admin notification (fire-and-forget)
+      supabase.functions.invoke("send-email", {
+        body: {
+          to: "info@woonpeek.nl",
+          subject: `Nieuwe woning geplaatst: ${title}`,
+          html: `<h2>Nieuwe woning geplaatst</h2>
+            <p><strong>Titel:</strong> ${title}</p>
+            <p><strong>Adres:</strong> ${street} ${houseNumber}, ${postalCode} ${city}</p>
+            <p><strong>Type:</strong> ${propertyType} (${listingType})</p>
+            <p><strong>Prijs:</strong> €${numericPrice.toLocaleString("nl-NL")}</p>
+            <p><strong>Geplaatst door:</strong> ${user.email}</p>`,
+        },
+      }).catch(() => {});
+
       toast({ title: "Woning geplaatst", description: "Je woning is succesvol opgeslagen." });
       navigate("/mijn-woningen");
     } catch (error: unknown) {
