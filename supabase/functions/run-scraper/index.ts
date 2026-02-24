@@ -796,14 +796,16 @@ async function scrapeHuurwoningen(): Promise<ScrapedProperty[]> {
         const citySlug = urlMatch[2];
         const streetSlug = urlMatch[4];
 
-        // Title: extract visible text just before </a> closing tag
-        const titleBlock = section.match(/listing-search-item__link--title[\s\S]*?<\/a>/i);
+        // Title: extract from aria-label on the depiction link, or element_text in data-analytics
         let streetName = streetSlug.replace(/-/g, " ");
-        if (titleBlock) {
-          // Get the last text node before </a> — the actual visible title
-          const textParts = titleBlock[0].replace(/<[^>]+>/g, "\n").split("\n").map(s => s.trim()).filter(Boolean);
-          if (textParts.length > 0) {
-            streetName = textParts[textParts.length - 1];
+        const ariaMatch = section.match(/listing-search-item__link--depiction[^>]*aria-label="([^"]+)"/i);
+        if (ariaMatch) {
+          streetName = ariaMatch[1].trim();
+        } else {
+          // Fallback: element_text from title link's data-analytics
+          const elementTextMatch = section.match(/listing-search-item__link--title[^>]*element_text&quot;:&quot;([^&]+)&quot;/i);
+          if (elementTextMatch) {
+            streetName = elementTextMatch[1].trim();
           }
         }
 
