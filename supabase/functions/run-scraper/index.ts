@@ -46,7 +46,7 @@ async function uploadImagesToStorage(
   const titleSlug = slugify(title || "woning");
   const basePath = `${citySlug}/${titleSlug}-${propertyId.substring(0, 8)}`;
 
-  for (let i = 0; i < Math.min(images.length, 15); i++) {
+  for (let i = 0; i < Math.min(images.length, 10); i++) {
     try {
       const imgUrl = images[i];
       if (!imgUrl || !imgUrl.startsWith("http")) continue;
@@ -386,7 +386,7 @@ async function scrapeWooniezie(): Promise<ScrapedProperty[]> {
           property_type: propertyType,
           listing_type: listingType,
           description: descriptionText,
-          images,
+          images: images.slice(0, 10),
           raw_data: {
             wooniezie_id: id,
             energy_label: energyLabel,
@@ -770,30 +770,207 @@ async function scrapeKamernet(): Promise<ScrapedProperty[]> {
 
 async function scrapeHuurwoningen(): Promise<ScrapedProperty[]> {
   const properties: ScrapedProperty[] = [];
+  const seenUrls = new Set<string>();
+  let detailFetchCount = 0;
+  const MAX_DETAIL_FETCHES = 15;
+  const MAX_IMAGES_PER_PROPERTY = 10;
+
   try {
-    const html = await fetchPage("https://www.huurwoningen.nl/aanbod-huurwoningen/");
-    const listingMatches = html.matchAll(
-      /href="(https:\/\/www\.huurwoningen\.nl\/huren\/([^\/]+)\/([^\/]+)\/([^\/]+)\/)"/gi
+    // Paginate through multiple pages for broad coverage
+    const pages = Array.from({ length: 5 }, (_, i) => 
+      i === 0 
+        ? "https://www.huurwoningen.nl/aanbod-huurwoningen/"
+        : `https://www.huurwoningen.nl/aanbod-huurwoningen/?page=${i + 1}`
     );
 
-    for (const match of listingMatches) {
-      properties.push({
-        source_url: match[1],
-        source_site: "huurwoningen",
-        title: `${match[4].replace(/-/g, " ")} - ${match[2]}`,
-        price: null,
-        city: match[2].charAt(0).toUpperCase() + match[2].slice(1),
-        postal_code: null,
-        street: match[4].replace(/-/g, " "),
-        house_number: null,
-        surface_area: null, bedrooms: null,
-        property_type: null,
-        listing_type: "huur",
-        description: null, images: [],
-        raw_data: {},
-      });
+    for (const pageUrl of pages) {
+      try {
+        const html = await fetchPage(pageUrl, 15000);
+
+        // Split by listing-search-item sections
+        const sections = html.split('class="listing-search-item listing-search-item--list').slice(1);
+        console.log(`Huurwoningen.nl page ${pageUrl}: ${sections.length} listing cards`);
+
+        if (sections.length === 0) {
+          console.log("Huurwoningen.nl: no more listings, stopping pagination");
+          break;
+        }
+
+        for (const section of sections) {
+          try {
+            // Extract URL: href="/huren/city/uuid/street/" or full URL
+            const urlMatch = section.match(/href="(?:https:\/\/www\.huurwoningen\.nl)?(\/huren\/([^\/]+)\/([^\/]+)\/([^\/]+)\/?)"/i);
+            if (!urlMatch) {
+              continue;
+            }
+
+            const path = urlMatch[1];
+            const fullUrl = `https://www.huurwoningen.nl${path.endsWith("/") ? path : path + "/"}`;
+            if (seenUrls.has(fullUrl)) continue;
+            seenUrls.add(fullUrl);
+
+            const citySlug = urlMatch[2];
+            const listingUuid = urlMatch[3];
+            const streetSlug = urlMatch[4];
+
+            // Title: clean text from title link
+            const titleMatch = section.match(/listing-search-item__link--title[^>]*>\s*([\s\S]*?)<\/a>/i);
+            const streetName = titleMatch ? titleMatch[1].replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim() : streetSlug.replace(/-/g, " ");
+
+            // Subtitle: "1052 DG Amsterdam (Staatsliedenbuurt)"
+            const subTitleMatch = section.match(/listing-search-item__sub-title[^>]*>\s*([^<]+)/i);
+            let postalCode: string | null = null;
+            let neighborhood: string | null = null;
+            let cityName = citySlug.charAt(0).toUpperCase() + citySlug.slice(1);
+
+            if (subTitleMatch) {
+              const sub = subTitleMatch[1].trim();
+              const pcMatch = sub.match(/(\d{4}\s*[A-Z]{2})/);
+              if (pcMatch) postalCode = pcMatch[1].replace(/\s+/g, " ");
+              const neighborhoodMatch = sub.match(/\(([^)]+)\)/);
+              if (neighborhoodMatch) neighborhood = neighborhoodMatch[1];
+              // Extract city name from subtitle (after postal code, before neighborhood)
+              const cityMatch = sub.match(/\d{4}\s*[A-Z]{2}\s+([^(]+)/);
+              if (cityMatch) cityName = cityMatch[1].trim();
+            }
+
+            // Price: "€ 2.950 per maand"
+            const priceMatch = section.match(/listing-search-item__price-main[^>]*>([^<]+)/i);
+            let price: number | null = null;
+            if (priceMatch) {
+              const priceStr = priceMatch[1].replace(/[^\d.,]/g, "").replace(/\./g, "").replace(",", ".");
+              const parsed = parseFloat(priceStr);
+              if (!isNaN(parsed)) price = parsed;
+            }
+
+            // Features: surface area, rooms, interior
+            let surfaceArea: number | null = null;
+            let bedrooms: number | null = null;
+            let interior: string | null = null;
+
+            const surfaceMatch = section.match(/illustrated-features__item--surface-area[^>]*>([^<]+)/i);
+            if (surfaceMatch) {
+              const m = surfaceMatch[1].match(/(\d+)/);
+              if (m) surfaceArea = parseInt(m[1], 10);
+            }
+
+            const roomsMatch = section.match(/illustrated-features__item--number-of-rooms[^>]*>([^<]+)/i);
+            if (roomsMatch) {
+              const m = roomsMatch[1].match(/(\d+)/);
+              if (m) bedrooms = parseInt(m[1], 10);
+            }
+
+            const interiorMatch = section.match(/illustrated-features__item--interior[^>]*>([^<]+)/i);
+            if (interiorMatch) interior = interiorMatch[1].trim();
+
+            // Thumbnail from overview card
+            const thumbMatch = section.match(/src="(https:\/\/casco-media-prod[^"]+)"/i);
+            const thumbnailUrl = thumbMatch ? thumbMatch[1].replace(/\?width=\d+/, "?width=800") : null;
+
+            const title = `${streetName}, ${cityName}`;
+            let images: string[] = [];
+            let description: string | null = null;
+            let houseNumber: string | null = null;
+            let energyLabel: string | null = null;
+            let propertyType: string | null = null;
+
+            // Fetch detail page for images and rich data
+            if (detailFetchCount < MAX_DETAIL_FETCHES) {
+              try {
+                detailFetchCount++;
+                const detailHtml = await fetchPage(fullUrl, 10000);
+
+                // Extract all carrousel images from detail page
+                const imgMatches = detailHtml.matchAll(/src="(https:\/\/casco-media-prod[^"]+\.(?:jpg|jpeg|png|webp)[^"]*)"/gi);
+                const imgSet = new Set<string>();
+                for (const imgMatch of imgMatches) {
+                  // Normalize to width=800 for consistent quality
+                  const imgUrl = imgMatch[1].replace(/\?width=\d+/, "?width=800").replace(/&amp;/g, "&");
+                  if (!imgSet.has(imgUrl) && imgSet.size < MAX_IMAGES_PER_PROPERTY) {
+                    imgSet.add(imgUrl);
+                  }
+                }
+                images = [...imgSet];
+
+                // Description from listing-detail-description
+                const descMatch = detailHtml.match(/listing-detail-description__content[^>]*>([\s\S]*?)(?:<\/div>|<\/section>)/i);
+                if (descMatch) {
+                  description = descMatch[1].replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim().substring(0, 2000);
+                }
+
+                // Energy label
+                const energyMatch = detailHtml.match(/Energielabel[\s\S]*?([A-G](?:\+{1,3})?)/i);
+                if (energyMatch) energyLabel = energyMatch[1].toUpperCase();
+
+                // Property type from breadcrumb or features
+                const typeMatch = detailHtml.match(/(?:Soort woning|Woningtype|Type)[^<]*<[^>]*>([^<]+)/i);
+                if (typeMatch) {
+                  const t = typeMatch[1].toLowerCase();
+                  if (t.includes("appartement")) propertyType = "appartement";
+                  else if (t.includes("studio")) propertyType = "studio";
+                  else if (t.includes("kamer")) propertyType = "kamer";
+                  else if (t.includes("huis") || t.includes("woning")) propertyType = "huis";
+                }
+
+                // House number from detail
+                const hnMatch = detailHtml.match(new RegExp(streetName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\s+(\\d+[a-zA-Z]?(?:\\s*-\\s*\\d+)?)', 'i'));
+                if (hnMatch) houseNumber = hnMatch[1].trim();
+
+                console.log(`Huurwoningen detail: ${streetName}, ${cityName}: images=${images.length}, desc=${!!description}`);
+              } catch (detailError) {
+                console.warn(`Huurwoningen detail failed for ${fullUrl}:`, detailError instanceof Error ? detailError.message : detailError);
+              }
+            }
+
+            // Fallback: use thumbnail if no detail images
+            if (images.length === 0 && thumbnailUrl) {
+              images = [thumbnailUrl];
+            }
+
+            // Build description parts
+            const descParts: string[] = [];
+            if (surfaceArea) descParts.push(`Oppervlakte: ${surfaceArea} m²`);
+            if (bedrooms) descParts.push(`Kamers: ${bedrooms}`);
+            if (interior) descParts.push(`Interieur: ${interior}`);
+            if (energyLabel) descParts.push(`Energielabel: ${energyLabel}`);
+            if (neighborhood) descParts.push(`Buurt: ${neighborhood}`);
+
+            const fullDescription = description
+              ? `${descParts.join(" • ")}\n\n${description}`
+              : descParts.length > 0 ? descParts.join(" • ") : null;
+
+            properties.push({
+              source_url: fullUrl,
+              source_site: "huurwoningen",
+              title,
+              price,
+              city: cityName,
+              postal_code: postalCode,
+              street: streetName,
+              house_number: houseNumber,
+              surface_area: surfaceArea,
+              bedrooms,
+              property_type: propertyType || "appartement",
+              listing_type: "huur",
+              description: fullDescription,
+              images: images.slice(0, MAX_IMAGES_PER_PROPERTY),
+              raw_data: {
+                huurwoningen_uuid: listingUuid,
+                neighborhood,
+                interior,
+                energy_label: energyLabel,
+              },
+            });
+          } catch (itemError) {
+            console.error("Error parsing Huurwoningen.nl listing card:", itemError);
+          }
+        }
+      } catch (pageError) {
+        console.warn(`Huurwoningen.nl page failed: ${pageUrl}`, pageError instanceof Error ? pageError.message : pageError);
+      }
     }
-    console.log(`Huurwoningen.nl: found ${properties.length} listings`);
+
+    console.log(`Huurwoningen.nl: parsed ${properties.length} listings total`);
   } catch (e) {
     console.error("Error scraping Huurwoningen.nl:", e);
   }
