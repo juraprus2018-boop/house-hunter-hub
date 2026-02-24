@@ -9,6 +9,7 @@ import { useProperty } from "@/hooks/useProperties";
 import { useToggleFavorite } from "@/hooks/useFavorites";
 import { useAuth } from "@/contexts/AuthContext";
 import PropertyMap from "@/components/properties/PropertyMap";
+import SEOHead from "@/components/seo/SEOHead";
 import {
   Heart,
   Share2,
@@ -104,8 +105,19 @@ const PropertyDetail = () => {
     setCurrentImageIndex((prev) => (prev - 1 + images.length) % images.length);
   };
 
+  const seoTitle = property
+    ? `${property.property_type.charAt(0).toUpperCase() + property.property_type.slice(1)} te ${property.listing_type}: ${property.street} ${property.house_number} ${property.postal_code} ${property.city} | WoonPeek`
+    : "Woning | WoonPeek";
+
   return (
     <div className="flex min-h-screen flex-col">
+      {property && (
+        <SEOHead
+          title={seoTitle}
+          description={`${property.property_type} te ${property.listing_type} aan ${property.street} ${property.house_number}, ${property.postal_code} ${property.city}. ${property.surface_area ? property.surface_area + ' m²' : ''} ${property.bedrooms ? property.bedrooms + ' slaapkamers' : ''} voor ${formatPrice(Number(property.price), property.listing_type)}.`}
+          canonical={`https://www.woonpeek.nl/woning/${property.slug}`}
+        />
+      )}
       <Header />
       <main className="flex-1">
         {/* Back button */}
