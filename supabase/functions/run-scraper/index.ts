@@ -1066,9 +1066,7 @@ async function scrape123Wonen(): Promise<ScrapedProperty[]> {
               for (const pattern of imgPatterns) {
                 const imgMatches = detailHtml.matchAll(pattern);
                 for (const imgMatch of imgMatches) {
-                  let imgUrl = imgMatch[1]
-                    .replace(/\/cache\/s\d+x?\d*\//, "/")
-                    .replace(/\/cache\/s320240\//, "/");
+                  const imgUrl = imgMatch[1]; // Keep original URL including cache path
                   if (!images.includes(imgUrl) && !imgUrl.includes("logo") && !imgUrl.includes("icon") && !imgUrl.includes("/img/general/") && !imgUrl.includes("flag-") && !imgUrl.includes("kerst-") && imgUrl.includes("/files/object_data/")) {
                     images.push(imgUrl);
                   }
