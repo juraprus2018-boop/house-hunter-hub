@@ -188,7 +188,7 @@ export const useFeaturedProperties = () => {
         .from("properties")
         .select("*")
         .eq("status", "actief")
-        .order("views_count", { ascending: false })
+        .order("created_at", { ascending: false })
         .limit(8);
 
       if (error) throw error;
