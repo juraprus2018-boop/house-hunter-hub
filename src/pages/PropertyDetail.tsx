@@ -1,4 +1,5 @@
 import { useParams, Link } from "react-router-dom";
+import propertyPlaceholder from "@/assets/property-placeholder.jpg";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
@@ -84,7 +85,7 @@ const PropertyDetail = () => {
     );
   }
 
-  const images = property.images?.length ? property.images : ["/placeholder.svg"];
+  const images = property.images?.length ? property.images : [propertyPlaceholder];
   const isPropertyFavorite = isFavorite(property.id);
 
   const formatPrice = (price: number, listingType: string) => {

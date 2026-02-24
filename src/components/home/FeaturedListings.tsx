@@ -1,4 +1,5 @@
 import { ArrowRight, MapPin, Bed, Square, Heart, Loader2 } from "lucide-react";
+import propertyPlaceholder from "@/assets/property-placeholder.jpg";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -104,9 +105,10 @@ const FeaturedListings = () => {
                   <Card className="group overflow-hidden border-0 shadow-md transition-shadow hover:shadow-xl">
                     <div className="relative aspect-[4/3] overflow-hidden">
                       <img
-                        src={property.images?.[0] || "/placeholder.svg"}
-                        alt={property.title}
-                        className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                         src={property.images?.[0] || propertyPlaceholder}
+                         alt={property.title}
+                         className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                         onError={(e) => { e.currentTarget.src = propertyPlaceholder; }}
                       />
                       {isNew(property.created_at) && (
                         <Badge className="absolute left-3 top-3 bg-accent text-accent-foreground">

@@ -7,6 +7,7 @@ import { useToggleFavorite } from "@/hooks/useFavorites";
 import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
 import { Database } from "@/integrations/supabase/types";
+import propertyPlaceholder from "@/assets/property-placeholder.jpg";
 
 type Property = Database["public"]["Tables"]["properties"]["Row"];
 
@@ -44,9 +45,10 @@ const PropertyCard = ({ property }: PropertyCardProps) => {
       <Card className={cn("group overflow-hidden transition-all hover:shadow-lg", property.status !== "actief" && "opacity-75")}>
         <div className="relative aspect-[4/3] overflow-hidden">
           <img
-            src={property.images?.[0] || "/placeholder.svg"}
+            src={property.images?.[0] || propertyPlaceholder}
             alt={property.title}
             className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+            onError={(e) => { e.currentTarget.src = propertyPlaceholder; }}
           />
           <div className="absolute left-3 top-3 flex gap-2">
             {property.status === "inactief" && (

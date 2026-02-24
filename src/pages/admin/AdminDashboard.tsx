@@ -1,4 +1,5 @@
 import { useState } from "react";
+import propertyPlaceholder from "@/assets/property-placeholder.jpg";
 import { useQueryClient } from "@tanstack/react-query";
 import AdminLayout from "./AdminLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -448,7 +449,7 @@ const AdminDashboard = () => {
                   >
                     <div className="h-10 w-10 flex-shrink-0 overflow-hidden rounded-md bg-muted">
                       <img
-                        src={property.images?.[0] || "/placeholder.svg"}
+                         src={property.images?.[0] || propertyPlaceholder}
                         alt=""
                         className="h-full w-full object-cover opacity-60"
                       />
@@ -489,7 +490,7 @@ const AdminDashboard = () => {
                     >
                       <div className="h-10 w-10 flex-shrink-0 overflow-hidden rounded-md bg-muted">
                         <img
-                          src={property.images?.[0] || "/placeholder.svg"}
+                          src={property.images?.[0] || propertyPlaceholder}
                           alt=""
                           className="h-full w-full object-cover"
                         />
