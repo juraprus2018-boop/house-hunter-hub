@@ -1,13 +1,24 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import { useAuth } from "@/contexts/AuthContext";
-import { useUserProperties } from "@/hooks/useProperties";
+import { useUserProperties, useDeleteProperty } from "@/hooks/useProperties";
 import PropertyCard from "@/components/properties/PropertyCard";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, PlusCircle, Pencil } from "lucide-react";
+import { Loader2, PlusCircle, Pencil, Trash2 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const MyProperties = () => {
   const { user, loading: authLoading } = useAuth();
@@ -19,8 +30,23 @@ const MyProperties = () => {
       navigate("/inloggen");
     }
   }, [authLoading, user, navigate]);
+  const { toast } = useToast();
+  const deleteProperty = useDeleteProperty();
+  const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const loading = authLoading || isLoading;
+
+  const handleDelete = async () => {
+    if (!deleteId) return;
+    try {
+      await deleteProperty.mutateAsync(deleteId);
+      toast({ title: "Woning verwijderd", description: "De woning is succesvol verwijderd." });
+    } catch {
+      toast({ variant: "destructive", title: "Verwijderen mislukt", description: "Probeer het opnieuw." });
+    } finally {
+      setDeleteId(null);
+    }
+  };
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -52,16 +78,25 @@ const MyProperties = () => {
               {properties.map((property) => (
                 <div key={property.id} className="relative">
                   <PropertyCard property={property} />
-                  <Link
-                    to={`/woning/${property.id}/bewerken`}
-                    className="absolute bottom-4 right-4 z-10"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <Button size="sm" variant="secondary" className="gap-1.5 shadow-md">
-                      <Pencil className="h-3.5 w-3.5" />
-                      Bewerken
+                  <div className="absolute bottom-4 right-4 z-10 flex gap-2">
+                    <Link
+                      to={`/woning/${property.id}/bewerken`}
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <Button size="sm" variant="secondary" className="gap-1.5 shadow-md">
+                        <Pencil className="h-3.5 w-3.5" />
+                        Bewerken
+                      </Button>
+                    </Link>
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      className="gap-1.5 shadow-md"
+                      onClick={(e) => { e.preventDefault(); e.stopPropagation(); setDeleteId(property.id); }}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
                     </Button>
-                  </Link>
+                  </div>
                 </div>
               ))}
             </div>
@@ -88,6 +123,24 @@ const MyProperties = () => {
         </section>
       </main>
       <Footer />
+
+      <AlertDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Woning verwijderen?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Weet je zeker dat je deze woning wilt verwijderen? Dit kan niet ongedaan worden gemaakt.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuleren</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              {deleteProperty.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+              Verwijderen
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
