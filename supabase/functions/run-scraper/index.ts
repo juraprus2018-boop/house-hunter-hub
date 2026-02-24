@@ -941,6 +941,200 @@ async function scrapeVesteda(): Promise<ScrapedProperty[]> {
   return deduplicateUrls(properties);
 }
 
+// ============ 123WONEN SCRAPER ============
+
+async function scrape123Wonen(): Promise<ScrapedProperty[]> {
+  const properties: ScrapedProperty[] = [];
+  let detailFetchCount = 0;
+  const MAX_DETAIL_FETCHES = 10;
+
+  try {
+    // Fetch first 3 pages for more coverage
+    const pages = [
+      "https://www.123wonen.nl/huurwoningen",
+      "https://www.123wonen.nl/huurwoningen/page/2",
+      "https://www.123wonen.nl/huurwoningen/page/3",
+    ];
+
+    for (const pageUrl of pages) {
+      try {
+        const html = await fetchPage(pageUrl);
+
+        // Extract listing URLs: both relative /huur/... and full https://www.123wonen.nl/huur/...
+        const listingMatches = html.matchAll(
+          /href="(?:https?:\/\/www\.123wonen\.nl)?(\/huur\/[^"]+\/[^"]+\/[^"]+\-\d+\-\d+)"/gi
+        );
+
+        const seenUrls = new Set(properties.map(p => p.source_url));
+
+        for (const match of listingMatches) {
+          const path = match[1];
+          const fullUrl = `https://www.123wonen.nl${path}`;
+          if (seenUrls.has(fullUrl)) continue;
+          seenUrls.add(fullUrl);
+
+          // Parse URL structure: /huur/city/type/street-id
+          const urlParts = path.split("/");
+          // urlParts: ["", "huur", "city", "type", "street-id"]
+          const cityFromUrl = urlParts[2] || null;
+          const typeFromUrl = urlParts[3] || null;
+          const streetPart = urlParts[4] || "";
+
+          // Extract street name from last part (before the numeric IDs)
+          const streetMatch = streetPart.match(/^(.+?)-\d+-\d+$/);
+          const streetFromUrl = streetMatch ? streetMatch[1].replace(/\+/g, " ") : streetPart.replace(/\+/g, " ");
+
+          // Map property type from URL
+          let propertyType: string | null = null;
+          if (typeFromUrl) {
+            const t = typeFromUrl.toLowerCase();
+            if (t.includes("appartement")) propertyType = "appartement";
+            else if (t.includes("studio")) propertyType = "studio";
+            else if (t.includes("kamer")) propertyType = "kamer";
+            else propertyType = "huis"; // eengezinswoning, tussenwoning, hoekwoning, etc.
+          }
+
+          const cityCapitalized = cityFromUrl
+            ? cityFromUrl.charAt(0).toUpperCase() + cityFromUrl.slice(1)
+            : null;
+
+          // Try to extract listing card data from HTML near this URL
+          // Pattern: price before the link, location text near the link
+          let price: number | null = null;
+          let title = `Huurwoning ${streetFromUrl}, ${cityCapitalized || ""}`;
+          let surfaceArea: number | null = null;
+          let bedrooms: number | null = null;
+          let energyLabel: string | null = null;
+          let description: string | null = null;
+          let images: string[] = [];
+          let buildYear: number | null = null;
+          let interieur: string | null = null;
+          let maxHuurperiode: string | null = null;
+          let beschikbaarheid: string | null = null;
+
+          // Fetch detail page for rich data
+          if (detailFetchCount < MAX_DETAIL_FETCHES) {
+            try {
+              detailFetchCount++;
+              const detailHtml = await fetchPage(fullUrl, 10000);
+
+              // Title: <h1> tag content
+              const h1Match = detailHtml.match(/<h1[^>]*>([^<]+)<\/h1>/i);
+              if (h1Match) title = h1Match[1].trim();
+
+              // Price: €X.XXX,- or €X,-
+              const priceMatch = detailHtml.match(/€\s*([\d.,]+)\s*,-/);
+              if (priceMatch) {
+                price = parseInt(priceMatch[1].replace(/\./g, "").replace(",", ""), 10);
+              }
+
+              // Surface area
+              const surfaceMatch = detailHtml.match(/Woonoppervlakte[\s\S]*?(\d+)\s*m²/i);
+              if (surfaceMatch) surfaceArea = parseInt(surfaceMatch[1], 10);
+
+              // Bedrooms
+              const bedroomMatch = detailHtml.match(/Slaapkamers[\s\S]*?(\d+)/i);
+              if (bedroomMatch) bedrooms = parseInt(bedroomMatch[1], 10);
+
+              // Energy label
+              const energyMatch = detailHtml.match(/Energielabel[\s\S]*?([A-G](?:\+{1,3})?)/i);
+              if (energyMatch) energyLabel = energyMatch[1].toUpperCase();
+
+              // Build year
+              const buildYearMatch = detailHtml.match(/Bouwjaar[\s\S]*?(\d{4})/i);
+              if (buildYearMatch) buildYear = parseInt(buildYearMatch[1], 10);
+
+              // Interieur
+              const interieurMatch = detailHtml.match(/Interieur[\s\S]*?(Gemeubileerd|Gestoffeerd|Kaal)/i);
+              if (interieurMatch) interieur = interieurMatch[1];
+
+              // Max huurperiode
+              const huurperiodeMatch = detailHtml.match(/Max\.\s*huurperiode[\s\S]*?(\d+\s*(?:maanden|jaar)[^<]*)/i);
+              if (huurperiodeMatch) maxHuurperiode = huurperiodeMatch[1].trim();
+
+              // Beschikbaarheid
+              const beschikbaarheidMatch = detailHtml.match(/Beschikbaarheid[\s\S]*?((?:Vanaf|Per direct|In overleg)[^<]*)/i);
+              if (beschikbaarheidMatch) beschikbaarheid = beschikbaarheidMatch[1].trim();
+
+              // Images from detail page
+              const imgMatches = detailHtml.matchAll(
+                /src="(https:\/\/www\.static\.123wonen\.nl\/files\/object_data\/[^"]+)"/gi
+              );
+              for (const imgMatch of imgMatches) {
+                const imgUrl = imgMatch[1]
+                  .replace(/\/cache\/s\d+\d+\//, "/") // Get full size image
+                  .replace(/\/cache\/s320240\//, "/");
+                if (!images.includes(imgUrl)) images.push(imgUrl);
+              }
+
+              // Description - extract from omschrijving section
+              const descMatch = detailHtml.match(
+                /Omschrijving[\s\S]*?<\/h2>([\s\S]*?)(?:<div class="(?:lees-meer|specificaties)|Specificaties)/i
+              );
+              if (descMatch) {
+                description = descMatch[1]
+                  .replace(/<[^>]+>/g, " ")
+                  .replace(/\s+/g, " ")
+                  .trim()
+                  .substring(0, 2000);
+              }
+            } catch (e) {
+              console.warn(`123Wonen detail fetch failed for ${fullUrl}:`, e instanceof Error ? e.message : e);
+            }
+          }
+
+          // Build rich description from metadata
+          const descParts: string[] = [];
+          if (typeFromUrl) descParts.push(`Type: ${typeFromUrl}`);
+          if (interieur) descParts.push(`Interieur: ${interieur}`);
+          if (surfaceArea) descParts.push(`Oppervlakte: ${surfaceArea} m²`);
+          if (bedrooms) descParts.push(`Slaapkamers: ${bedrooms}`);
+          if (energyLabel) descParts.push(`Energielabel: ${energyLabel}`);
+          if (buildYear) descParts.push(`Bouwjaar: ${buildYear}`);
+          if (maxHuurperiode) descParts.push(`Max. huurperiode: ${maxHuurperiode}`);
+          if (beschikbaarheid) descParts.push(`Beschikbaarheid: ${beschikbaarheid}`);
+
+          const fullDescription = description
+            ? `${descParts.join(" • ")}\n\n${description}`
+            : descParts.length > 0 ? descParts.join(" • ") : null;
+
+          properties.push({
+            source_url: fullUrl,
+            source_site: "123wonen",
+            title,
+            price,
+            city: cityCapitalized,
+            postal_code: null,
+            street: streetFromUrl,
+            house_number: null,
+            surface_area: surfaceArea,
+            bedrooms,
+            property_type: propertyType,
+            listing_type: "huur",
+            description: fullDescription,
+            images,
+            raw_data: {
+              energy_label: energyLabel,
+              build_year: buildYear,
+              interieur,
+              max_huurperiode: maxHuurperiode,
+              beschikbaarheid,
+              property_type_raw: typeFromUrl,
+            },
+          });
+        }
+      } catch (e) {
+        console.warn(`123Wonen page fetch failed for ${pageUrl}:`, e instanceof Error ? e.message : e);
+      }
+    }
+
+    console.log(`123Wonen: parsed ${properties.length} listings`);
+  } catch (e) {
+    console.error("Error scraping 123Wonen:", e);
+  }
+  return deduplicateUrls(properties);
+}
+
 function blockedScraper(name: string, reason: string) {
   return async (): Promise<ScrapedProperty[]> => {
     console.log(`${name}: ${reason}`);
@@ -960,7 +1154,7 @@ const scraperMap: Record<string, () => Promise<ScrapedProperty[]>> = {
   funda: blockedScraper("Funda", "Cloudflare-beschermd"),
   "jaap.nl": blockedScraper("Jaap.nl", "Cloudflare-beschermd"),
   housinganywhere: blockedScraper("HousingAnywhere", "SPA/JavaScript-gerenderd"),
-  "123wonen": blockedScraper("123Wonen", "JavaScript-gerenderd"),
+  "123wonen": scrape123Wonen,
   "de key": blockedScraper("De Key", "Geblokkeerd"),
   nederwoon: blockedScraper("Nederwoon", "404"),
   rochdale: blockedScraper("Rochdale", "404"),
