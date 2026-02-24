@@ -203,6 +203,7 @@ const PropertyDetail = () => {
                 src={images[currentImageIndex]}
                 alt={property.title}
                 className="h-full w-full object-cover"
+                onError={(e) => { e.currentTarget.src = propertyPlaceholder; }}
               />
               {images.length > 1 && (
                 <>
