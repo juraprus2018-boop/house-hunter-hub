@@ -1069,7 +1069,7 @@ async function scrape123Wonen(): Promise<ScrapedProperty[]> {
                   let imgUrl = imgMatch[1]
                     .replace(/\/cache\/s\d+x?\d*\//, "/")
                     .replace(/\/cache\/s320240\//, "/");
-                  if (!images.includes(imgUrl) && !imgUrl.includes("logo") && !imgUrl.includes("icon")) {
+                  if (!images.includes(imgUrl) && !imgUrl.includes("logo") && !imgUrl.includes("icon") && !imgUrl.includes("/img/general/") && !imgUrl.includes("flag-") && !imgUrl.includes("kerst-") && imgUrl.includes("/files/object_data/")) {
                     images.push(imgUrl);
                   }
                 }
