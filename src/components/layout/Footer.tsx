@@ -54,6 +54,8 @@ const Footer = () => {
                   Mijn favorieten
                 </Link>
               </li>
+              <li>
+                <Link to="/zoekalerts" className="text-muted-foreground transition-colors hover:text-foreground">
                   Zoekalerts
                 </Link>
               </li>
