@@ -45,6 +45,11 @@ const Footer = () => {
                 </Link>
               </li>
               <li>
+                <Link to="/steden" className="text-muted-foreground transition-colors hover:text-foreground">
+                  Alle steden
+                </Link>
+              </li>
+              <li>
                 <Link to="/favorieten" className="text-muted-foreground transition-colors hover:text-foreground">
                   Mijn favorieten
                 </Link>
