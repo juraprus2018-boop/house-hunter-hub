@@ -30,7 +30,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useAllProperties, useUpdatePropertyAdmin, useDeletePropertyAdmin, usePostToFacebook } from "@/hooks/useAdmin";
-import { Search, Pencil, Trash2, Loader2, ExternalLink, Filter, Facebook } from "lucide-react";
+import { Search, Pencil, Trash2, Loader2, ExternalLink, Filter, Facebook, CheckCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { nl } from "date-fns/locale";
@@ -57,7 +57,11 @@ const AdminProperties = () => {
       toast({ title: "Geplaatst op Facebook!", description: "De woning is gedeeld op je Facebook-pagina." });
     } catch (error: unknown) {
       const msg = error instanceof Error ? error.message : "Onbekende fout";
-      toast({ title: "Facebook post mislukt", description: msg, variant: "destructive" });
+      if (msg.includes("al op Facebook")) {
+        toast({ title: "Al geplaatst", description: msg, variant: "destructive" });
+      } else {
+        toast({ title: "Facebook post mislukt", description: msg, variant: "destructive" });
+      }
     } finally {
       setPostingToFb(null);
     }
@@ -275,12 +279,14 @@ const AdminProperties = () => {
                         <Button
                           variant="ghost"
                           size="icon"
-                          title="Plaats op Facebook"
-                          disabled={postingToFb === property.id}
+                          title={property.facebook_posted_at ? `Geplaatst op ${format(new Date(property.facebook_posted_at), "d MMM yyyy HH:mm", { locale: nl })}` : "Plaats op Facebook"}
+                          disabled={postingToFb === property.id || !!property.facebook_posted_at}
                           onClick={() => handlePostToFacebook(property.id)}
                         >
                           {postingToFb === property.id ? (
                             <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : property.facebook_posted_at ? (
+                            <CheckCircle className="h-4 w-4 text-emerald-600" />
                           ) : (
                             <Facebook className="h-4 w-4 text-blue-600" />
                           )}
