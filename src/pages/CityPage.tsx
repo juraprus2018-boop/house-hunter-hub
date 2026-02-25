@@ -9,30 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { MapPin, ArrowRight } from "lucide-react";
 
-const CITY_MAP: Record<string, string> = {
-  "amsterdam": "Amsterdam",
-  "rotterdam": "Rotterdam",
-  "eindhoven": "Eindhoven",
-  "utrecht": "Utrecht",
-  "groningen": "Groningen",
-  "den-haag": "Den Haag",
-  "arnhem": "Arnhem",
-  "nijmegen": "Nijmegen",
-  "tilburg": "Tilburg",
-  "breda": "Breda",
-  "almere": "Almere",
-  "helmond": "Helmond",
-  "veldhoven": "Veldhoven",
-  "zoetermeer": "Zoetermeer",
-  "enschede": "Enschede",
-  "purmerend": "Purmerend",
-  "waalre": "Waalre",
-  "bergen-op-zoom": "Bergen op Zoom",
-  "roermond": "Roermond",
-  "best": "Best",
-  "deurne": "Deurne",
-  "asten": "Asten",
-};
+// No hardcoded city map - any city slug works dynamically
 
 const PropertyCardSkeleton = () => (
   <div className="rounded-lg border bg-card overflow-hidden">
@@ -51,7 +28,7 @@ const PropertyCardSkeleton = () => (
 
 const CityPage = () => {
   const { city: citySlug } = useParams<{ city: string }>();
-  const cityName = CITY_MAP[citySlug || ""] || (citySlug || "").replace(/-/g, " ").replace(/\b\w/g, l => l.toUpperCase());
+  const cityName = (citySlug || "").replace(/-/g, " ").replace(/\b\w/g, l => l.toUpperCase());
 
   const { data, isLoading } = useProperties({ city: cityName });
   const properties = data?.properties || [];
