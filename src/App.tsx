@@ -28,6 +28,7 @@ import CityPage from "./pages/CityPage";
 import SearchAlerts from "./pages/SearchAlerts";
 import Profile from "./pages/Profile";
 import FAQ from "./pages/FAQ";
+import Cities from "./pages/Cities";
 import BlogPage from "./pages/Blog";
 import BlogPostPage from "./pages/BlogPost";
 import AdminBlog from "./pages/admin/AdminBlog";
@@ -69,6 +70,7 @@ const App = () => (
             <Route path="/blog/:slug" element={<BlogPostPage />} />
             <Route path="/zoekalerts" element={<SearchAlerts />} />
             <Route path="/profiel" element={<Profile />} />
+            <Route path="/steden" element={<Cities />} />
             <Route path="/:city" element={<CityPage />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
