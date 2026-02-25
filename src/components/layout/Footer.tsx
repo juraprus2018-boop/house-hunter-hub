@@ -30,6 +30,16 @@ const Footer = () => {
                 </Link>
               </li>
               <li>
+                <Link to="/huurwoningen" className="text-muted-foreground transition-colors hover:text-foreground">
+                  Huurwoningen
+                </Link>
+              </li>
+              <li>
+                <Link to="/koopwoningen" className="text-muted-foreground transition-colors hover:text-foreground">
+                  Koopwoningen
+                </Link>
+              </li>
+              <li>
                 <Link to="/plaatsen" className="text-muted-foreground transition-colors hover:text-foreground">
                   Woning plaatsen
                 </Link>

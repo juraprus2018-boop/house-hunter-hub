@@ -47,6 +47,20 @@ const CategorySection = () => {
           <p className="mt-2 text-muted-foreground">
             Kies het type woning dat bij jou past
           </p>
+          <div className="mt-4 flex items-center justify-center gap-4">
+            <Link
+              to="/huurwoningen"
+              className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-4 py-2 text-sm font-medium text-primary transition-colors hover:bg-primary/20"
+            >
+              Alle huurwoningen
+            </Link>
+            <Link
+              to="/koopwoningen"
+              className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-4 py-2 text-sm font-medium text-primary transition-colors hover:bg-primary/20"
+            >
+              Alle koopwoningen
+            </Link>
+          </div>
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
