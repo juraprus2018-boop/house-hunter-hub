@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Home, Mail, Phone, MapPin } from "lucide-react";
+import { Home, Mail } from "lucide-react";
 
 const Footer = () => {
   return (
@@ -106,14 +106,6 @@ const Footer = () => {
               <li className="flex items-center gap-2 text-muted-foreground">
                 <Mail className="h-4 w-4" />
                 info@woonpeek.nl
-              </li>
-              <li className="flex items-center gap-2 text-muted-foreground">
-                <Phone className="h-4 w-4" />
-                020 - 123 4567
-              </li>
-              <li className="flex items-start gap-2 text-muted-foreground">
-                <MapPin className="mt-0.5 h-4 w-4 shrink-0" />
-                <span>Herengracht 100<br />1015 BS Amsterdam</span>
               </li>
             </ul>
           </div>
