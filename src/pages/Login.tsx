@@ -87,6 +87,23 @@ const Login = () => {
           : error.message,
       });
     } else {
+      // Update last_login_at in profile
+      supabase.auth.getUser().then(({ data }) => {
+        if (data.user) {
+          supabase.from("profiles").update({ last_login_at: new Date().toISOString() }).eq("user_id", data.user.id).then(() => {});
+          // Send admin notification (fire-and-forget)
+          supabase.functions.invoke("send-email", {
+            body: {
+              to: "info@woonpeek.nl",
+              subject: `Gebruiker ingelogd: ${data.user.email}`,
+              html: `<h2>Gebruiker ingelogd</h2>
+                <p><strong>E-mail:</strong> ${data.user.email}</p>
+                <p><strong>Tijdstip:</strong> ${new Date().toLocaleString("nl-NL")}</p>`,
+            },
+          }).catch(() => {});
+        }
+      });
+
       toast({
         title: "Welkom terug!",
         description: "Je bent succesvol ingelogd.",
