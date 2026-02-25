@@ -23,6 +23,7 @@ const Header = () => {
   const navLinks = [
     { to: "/zoeken", label: "Zoeken", icon: Search },
     { to: "/verkennen", label: "Kaart", icon: Map },
+    { to: "/steden", label: "Steden", icon: MapPin },
     { to: "/favorieten", label: "Favorieten", icon: Heart },
     { to: "/plaatsen", label: "Woning plaatsen", icon: PlusCircle },
   ];
