@@ -12,6 +12,7 @@ import {
   ClipboardCheck,
   Menu,
   X,
+  FileText,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -61,6 +62,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
     { to: "/admin/woningen", label: "Woningen", icon: HomeIcon },
     { to: "/admin/review", label: "Review Queue", icon: ClipboardCheck },
     { to: "/admin/scrapers", label: "Scrapers", icon: Activity },
+    { to: "/admin/blog", label: "Blog", icon: FileText },
     { to: "/admin/instellingen", label: "Instellingen", icon: Settings },
   ];
 

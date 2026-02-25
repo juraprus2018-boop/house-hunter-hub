@@ -27,6 +27,10 @@ import Disclaimer from "./pages/Disclaimer";
 import CityPage from "./pages/CityPage";
 import SearchAlerts from "./pages/SearchAlerts";
 import Profile from "./pages/Profile";
+import FAQ from "./pages/FAQ";
+import BlogPage from "./pages/Blog";
+import BlogPostPage from "./pages/BlogPost";
+import AdminBlog from "./pages/admin/AdminBlog";
 
 const queryClient = new QueryClient();
 
@@ -54,9 +58,13 @@ const App = () => (
             <Route path="/admin/review" element={<AdminReviewQueue />} />
             <Route path="/admin/scrapers" element={<AdminScrapers />} />
             <Route path="/admin/instellingen" element={<AdminSettings />} />
+            <Route path="/admin/blog" element={<AdminBlog />} />
             <Route path="/voorwaarden" element={<TermsAndConditions />} />
             <Route path="/privacy" element={<PrivacyPolicy />} />
             <Route path="/disclaimer" element={<Disclaimer />} />
+            <Route path="/veelgestelde-vragen" element={<FAQ />} />
+            <Route path="/blog" element={<BlogPage />} />
+            <Route path="/blog/:slug" element={<BlogPostPage />} />
             <Route path="/zoekalerts" element={<SearchAlerts />} />
             <Route path="/profiel" element={<Profile />} />
             <Route path="/:city" element={<CityPage />} />

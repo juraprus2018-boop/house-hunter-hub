@@ -40,8 +40,13 @@ const Footer = () => {
                 </Link>
               </li>
               <li>
-                <Link to="/alerts" className="text-muted-foreground transition-colors hover:text-foreground">
+                <Link to="/zoekalerts" className="text-muted-foreground transition-colors hover:text-foreground">
                   Zoekalerts
+                </Link>
+              </li>
+              <li>
+                <Link to="/blog" className="text-muted-foreground transition-colors hover:text-foreground">
+                  Blog
                 </Link>
               </li>
             </ul>
@@ -52,8 +57,8 @@ const Footer = () => {
             <h4 className="font-display text-sm font-semibold">Ondersteuning</h4>
             <ul className="space-y-2 text-sm">
               <li>
-                <Link to="/help" className="text-muted-foreground transition-colors hover:text-foreground">
-                  Help & FAQ
+                <Link to="/veelgestelde-vragen" className="text-muted-foreground transition-colors hover:text-foreground">
+                  Veelgestelde vragen
                 </Link>
               </li>
               <li>
