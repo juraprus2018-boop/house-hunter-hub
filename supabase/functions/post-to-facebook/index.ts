@@ -140,7 +140,28 @@ serve(async (req) => {
   const siteUrl = "https://id-preview--c307774c-a195-430c-b62f-8d15714b2034.lovable.app";
 
   try {
-    const { property_id, auto_post, count = 5 }: PostRequest = await req.json();
+    const body = await req.json();
+    const { property_id, auto_post, count = 5, debug }: PostRequest & { debug?: boolean } = body;
+
+    // Debug mode: check token permissions
+    if (debug) {
+      const debugRes = await fetch(
+        `${GRAPH_API}/debug_token?input_token=${PAGE_ACCESS_TOKEN}&access_token=${PAGE_ACCESS_TOKEN}`
+      );
+      const debugData = await debugRes.json();
+      
+      const meRes = await fetch(`${GRAPH_API}/me?access_token=${PAGE_ACCESS_TOKEN}`);
+      const meData = await meRes.json();
+      
+      return new Response(JSON.stringify({ 
+        token_info: debugData, 
+        me: meData,
+        page_id_configured: PAGE_ID 
+      }), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     if (auto_post) {
       // Auto-post: get random active properties from the last 24h or most recent
