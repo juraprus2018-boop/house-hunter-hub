@@ -33,17 +33,19 @@ const ExplorePage = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const isMobile = useIsMobile();
 
-  const { data: allProperties, isLoading } = useProperties({
+  const { data: allData, isLoading } = useProperties({
     city: selectedCity || undefined,
     listingType: listingType || undefined,
     maxPrice: priceActive ? maxPrice : undefined,
     sourceSite: selectedSource || undefined,
   });
+  const allProperties = allData?.properties;
 
-  const { data: citySourceProperties } = useProperties({
+  const { data: citySourceData } = useProperties({
     listingType: listingType || undefined,
     sourceSite: selectedSource || undefined,
   });
+  const citySourceProperties = citySourceData?.properties;
   const cities = useMemo(() => {
     if (!citySourceProperties) return [];
     const cityCount = new Map<string, number>();
