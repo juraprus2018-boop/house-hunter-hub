@@ -124,11 +124,32 @@ serve(async (req) => {
   }
 
   const PAGE_ACCESS_TOKEN = Deno.env.get("FACEBOOK_PAGE_ACCESS_TOKEN");
-  const PAGE_ID = Deno.env.get("FACEBOOK_PAGE_ID");
+  let PAGE_ID = Deno.env.get("FACEBOOK_PAGE_ID");
 
-  if (!PAGE_ACCESS_TOKEN || !PAGE_ID) {
+  if (!PAGE_ACCESS_TOKEN) {
     return new Response(
-      JSON.stringify({ error: "Facebook credentials not configured" }),
+      JSON.stringify({ error: "Facebook Page Access Token not configured" }),
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+  }
+
+  // Auto-detect Page ID from token if not set or wrong
+  if (!PAGE_ID) {
+    try {
+      const meRes = await fetch(`${GRAPH_API}/me?access_token=${PAGE_ACCESS_TOKEN}`);
+      const meData = await meRes.json();
+      if (meData.id) {
+        PAGE_ID = meData.id;
+        console.log("Auto-detected Page ID:", PAGE_ID);
+      }
+    } catch (e) {
+      console.error("Failed to auto-detect Page ID:", e);
+    }
+  }
+
+  if (!PAGE_ID) {
+    return new Response(
+      JSON.stringify({ error: "Could not determine Facebook Page ID" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
