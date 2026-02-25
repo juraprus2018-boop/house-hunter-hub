@@ -4,12 +4,23 @@ import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import PropertyCard from "@/components/properties/PropertyCard";
 import Breadcrumbs from "@/components/seo/Breadcrumbs";
+import SEOHead from "@/components/seo/SEOHead";
 import { useProperties } from "@/hooks/useProperties";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { MapPin, ArrowRight } from "lucide-react";
+import type { Database } from "@/integrations/supabase/types";
 
-// No hardcoded city map - any city slug works dynamically
+type ListingType = Database["public"]["Enums"]["listing_type"];
+
+interface ListingTypePageProps {
+  listingType: "huur" | "koop";
+}
+
+const LABELS: Record<string, { plural: string; singular: string; slug: string }> = {
+  huur: { plural: "Huurwoningen", singular: "huurwoning", slug: "huurwoningen" },
+  koop: { plural: "Koopwoningen", singular: "koopwoning", slug: "koopwoningen" },
+};
 
 const PropertyCardSkeleton = () => (
   <div className="rounded-lg border bg-card overflow-hidden">
@@ -26,52 +37,75 @@ const PropertyCardSkeleton = () => (
   </div>
 );
 
-const CityPage = () => {
+const ListingTypePage = ({ listingType }: ListingTypePageProps) => {
   const { city: citySlug } = useParams<{ city: string }>();
-  const cityName = (citySlug || "").replace(/-/g, " ").replace(/\b\w/g, l => l.toUpperCase());
+  const cityName = citySlug
+    ? citySlug.replace(/-/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())
+    : undefined;
 
-  const { data, isLoading } = useProperties({ city: cityName });
+  const label = LABELS[listingType];
+
+  const { data, isLoading } = useProperties({
+    listingType: listingType as ListingType,
+    city: cityName,
+    pageSize: 50,
+  });
+
   const properties = data?.properties || [];
   const totalCount = data?.totalCount || 0;
 
-  const huurCount = properties.filter(p => p.listing_type === "huur").length;
-  const koopCount = properties.filter(p => p.listing_type === "koop").length;
+  const pageTitle = cityName
+    ? `${label.plural} in ${cityName} | WoonPeek`
+    : `${label.plural} in Nederland | WoonPeek`;
 
-  useEffect(() => {
-    document.title = `Huurwoningen & Koophuizen in ${cityName} | WoonPeek`;
-    const metaDesc = document.querySelector('meta[name="description"]');
-    if (metaDesc) {
-      metaDesc.setAttribute("content", `Bekijk ${totalCount} huurwoningen en koophuizen in ${cityName}. Vind jouw droomwoning op WoonPeek.`);
-    }
-  }, [cityName, totalCount]);
+  const pageDesc = cityName
+    ? `Bekijk ${totalCount} ${label.plural.toLowerCase()} in ${cityName}. Vind jouw ${label.singular} op WoonPeek.`
+    : `Bekijk ${totalCount} ${label.plural.toLowerCase()} in heel Nederland. Vind jouw ${label.singular} op WoonPeek.`;
+
+  const canonical = cityName
+    ? `https://woonpeek.nl/${label.slug}/${citySlug}`
+    : `https://woonpeek.nl/${label.slug}`;
+
+  const breadcrumbs = [
+    { label: "Home", href: "/" },
+    ...(cityName
+      ? [
+          { label: label.plural, href: `/${label.slug}` },
+          { label: cityName },
+        ]
+      : [{ label: label.plural }]),
+  ];
 
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "ItemList",
-    "name": `Woningen in ${cityName}`,
-    "description": `Huurwoningen en koophuizen in ${cityName}`,
-    "numberOfItems": totalCount,
-    "itemListElement": properties.slice(0, 10).map((p, i) => ({
+    name: pageTitle,
+    description: pageDesc,
+    numberOfItems: totalCount,
+    itemListElement: properties.slice(0, 10).map((p, i) => ({
       "@type": "ListItem",
-      "position": i + 1,
-      "url": `https://woonpeek.nl/woning/${p.slug || p.id}`,
+      position: i + 1,
+      url: `https://woonpeek.nl/woning/${p.slug || p.id}`,
     })),
   };
 
+  const locationLabel = cityName || "Nederland";
+
   return (
     <div className="flex min-h-screen flex-col">
+      <SEOHead title={pageTitle} description={pageDesc} canonical={canonical} />
       <Header />
       <main className="flex-1">
-        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
 
         {/* Hero */}
         <section className="border-b bg-gradient-to-b from-primary/5 to-background py-12">
           <div className="container">
             <div className="mb-4">
-              <Breadcrumbs items={[
-                { label: "Home", href: "/" },
-                { label: cityName },
-              ]} />
+              <Breadcrumbs items={breadcrumbs} />
             </div>
             <div className="flex items-center gap-3 mb-4">
               <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
@@ -79,30 +113,13 @@ const CityPage = () => {
               </div>
               <div>
                 <h1 className="font-display text-3xl font-bold text-foreground">
-                  Woningen in {cityName}
+                  {label.plural} in {locationLabel}
                 </h1>
                 <p className="text-muted-foreground">
-                  {totalCount} {totalCount === 1 ? "woning" : "woningen"} beschikbaar
+                  {totalCount} {totalCount === 1 ? label.singular : label.plural.toLowerCase()}{" "}
+                  beschikbaar
                 </p>
               </div>
-            </div>
-            <div className="flex flex-wrap gap-3 mt-4">
-              {huurCount > 0 && (
-                <Link to={`/huurwoningen/${citySlug}`}>
-                  <Button variant="outline" size="sm" className="gap-2">
-                    Huurwoningen {cityName}
-                    <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">{huurCount}</span>
-                  </Button>
-                </Link>
-              )}
-              {koopCount > 0 && (
-                <Link to={`/koopwoningen/${citySlug}`}>
-                  <Button variant="outline" size="sm" className="gap-2">
-                    Koopwoningen {cityName}
-                    <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">{koopCount}</span>
-                  </Button>
-                </Link>
-              )}
             </div>
           </div>
         </section>
@@ -123,9 +140,12 @@ const CityPage = () => {
                 ))}
               </div>
               <div className="mt-8 text-center">
-                <Link to={`/zoeken?locatie=${encodeURIComponent(cityName)}`}>
+                <Link
+                  to={`/zoeken?aanbod=${listingType}${cityName ? `&locatie=${encodeURIComponent(cityName)}` : ""}`}
+                >
                   <Button variant="outline" className="gap-2">
-                    Bekijk alle woningen in {cityName}
+                    Bekijk alle {label.plural.toLowerCase()}
+                    {cityName ? ` in ${cityName}` : ""}
                     <ArrowRight className="h-4 w-4" />
                   </Button>
                 </Link>
@@ -134,9 +154,12 @@ const CityPage = () => {
           ) : (
             <div className="text-center py-12">
               <MapPin className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
-              <h2 className="font-display text-xl font-semibold">Geen woningen in {cityName}</h2>
+              <h2 className="font-display text-xl font-semibold">
+                Geen {label.plural.toLowerCase()} in {locationLabel}
+              </h2>
               <p className="mt-2 text-muted-foreground">
-                Er zijn momenteel geen actieve woningen in {cityName}. Probeer later opnieuw.
+                Er zijn momenteel geen {label.plural.toLowerCase()} beschikbaar
+                {cityName ? ` in ${cityName}` : ""}. Probeer later opnieuw.
               </p>
               <Link to="/zoeken">
                 <Button className="mt-4">Alle woningen bekijken</Button>
@@ -149,25 +172,21 @@ const CityPage = () => {
         <section className="border-t bg-muted/30 py-12">
           <div className="container max-w-3xl">
             <h2 className="font-display text-2xl font-bold mb-4">
-              Huurwoningen en koophuizen in {cityName}
+              {label.plural} {cityName ? `in ${cityName}` : "in Nederland"}
             </h2>
             <div className="prose prose-muted text-muted-foreground text-sm space-y-3">
               <p>
-                Op WoonPeek vind je het meest actuele aanbod van huurwoningen en koophuizen in {cityName}. 
-                Of je nu op zoek bent naar een appartement, huis, studio of kamer – wij verzamelen dagelijks 
-                het nieuwste woningaanbod van meerdere bronnen zodat je niets mist.
+                Op WoonPeek vind je het meest actuele aanbod van{" "}
+                {label.plural.toLowerCase()}{" "}
+                {cityName ? `in ${cityName}` : "door heel Nederland"}. We
+                verzamelen dagelijks het nieuwste woningaanbod van meerdere
+                bronnen zodat je niets mist.
               </p>
               <p>
-                Momenteel zijn er {totalCount} woningen beschikbaar in {cityName}
-                {huurCount > 0 && koopCount > 0 
-                  ? `, waarvan ${huurCount} huurwoningen en ${koopCount} koophuizen`
-                  : huurCount > 0 
-                    ? `, waarvan ${huurCount} huurwoningen` 
-                    : koopCount > 0 
-                      ? `, waarvan ${koopCount} koophuizen` 
-                      : ""
-                }.
-                Gebruik de filters op onze zoekpagina om snel de perfecte woning te vinden.
+                Momenteel zijn er {totalCount}{" "}
+                {label.plural.toLowerCase()} beschikbaar
+                {cityName ? ` in ${cityName}` : ""}. Gebruik de filters op onze
+                zoekpagina om snel de perfecte {label.singular} te vinden.
               </p>
             </div>
           </div>
@@ -178,4 +197,4 @@ const CityPage = () => {
   );
 };
 
-export default CityPage;
+export default ListingTypePage;

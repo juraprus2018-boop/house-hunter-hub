@@ -33,6 +33,7 @@ import BlogPage from "./pages/Blog";
 import BlogPostPage from "./pages/BlogPost";
 import AdminBlog from "./pages/admin/AdminBlog";
 import AdminUsers from "./pages/admin/AdminUsers";
+import ListingTypePage from "./pages/ListingTypePage";
 
 const queryClient = new QueryClient();
 
@@ -71,6 +72,8 @@ const App = () => (
             <Route path="/zoekalerts" element={<SearchAlerts />} />
             <Route path="/profiel" element={<Profile />} />
             <Route path="/steden" element={<Cities />} />
+            <Route path="/huurwoningen/:city?" element={<ListingTypePage listingType="huur" />} />
+            <Route path="/koopwoningen/:city?" element={<ListingTypePage listingType="koop" />} />
             <Route path="/:city" element={<CityPage />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
