@@ -158,7 +158,7 @@ serve(async (req) => {
   const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
   const supabase = createClient(supabaseUrl, supabaseKey);
 
-  const siteUrl = "https://id-preview--c307774c-a195-430c-b62f-8d15714b2034.lovable.app";
+  const siteUrl = "https://woonpeek.nl";
 
   try {
     const body = await req.json();
@@ -185,18 +185,19 @@ serve(async (req) => {
     }
 
     if (auto_post) {
-      // Auto-post: get random active properties from the last 24h or most recent
+      // Auto-post: get random active properties that haven't been posted yet
       const { data: properties, error } = await supabase
         .from("properties")
         .select("id, title, price, listing_type, city, street, house_number, surface_area, bedrooms, images, slug, property_type")
         .eq("status", "actief")
+        .is("facebook_posted_at", null)
         .order("created_at", { ascending: false })
         .limit(50);
 
       if (error) throw error;
       if (!properties || properties.length === 0) {
         return new Response(
-          JSON.stringify({ message: "No properties to post" }),
+          JSON.stringify({ message: "No new properties to post" }),
           { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
@@ -208,6 +209,9 @@ serve(async (req) => {
       for (const prop of shuffled) {
         const result = await postPropertyToFacebook(prop, PAGE_ID, PAGE_ACCESS_TOKEN, siteUrl);
         results.push({ property_id: prop.id, title: prop.title, ...result });
+        if (result.success) {
+          await supabase.from("properties").update({ facebook_posted_at: new Date().toISOString() }).eq("id", prop.id);
+        }
         // Small delay between posts
         await new Promise((r) => setTimeout(r, 2000));
       }
@@ -217,10 +221,10 @@ serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     } else if (property_id) {
-      // Manual post: single property
+      // Manual post: single property - check if already posted
       const { data: property, error } = await supabase
         .from("properties")
-        .select("id, title, price, listing_type, city, street, house_number, surface_area, bedrooms, images, slug, property_type")
+        .select("id, title, price, listing_type, city, street, house_number, surface_area, bedrooms, images, slug, property_type, facebook_posted_at")
         .eq("id", property_id)
         .single();
 
@@ -231,7 +235,18 @@ serve(async (req) => {
         );
       }
 
+      if (property.facebook_posted_at) {
+        return new Response(
+          JSON.stringify({ error: "Deze woning is al op Facebook geplaatst", already_posted: true }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
       const result = await postPropertyToFacebook(property, PAGE_ID, PAGE_ACCESS_TOKEN, siteUrl);
+
+      if (result.success) {
+        await supabase.from("properties").update({ facebook_posted_at: new Date().toISOString() }).eq("id", property_id);
+      }
 
       return new Response(JSON.stringify(result), {
         status: result.success ? 200 : 500,
