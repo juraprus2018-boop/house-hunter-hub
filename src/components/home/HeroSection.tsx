@@ -112,11 +112,6 @@ const HeroSection = () => {
             </div>
             <div className="hidden h-8 w-px bg-border md:block" />
             <div className="flex items-center gap-2">
-              <span className="font-display text-2xl font-bold text-foreground">{stats?.users_count ?? "-"}</span>
-              <span>gebruikers</span>
-            </div>
-            <div className="hidden h-8 w-px bg-border md:block" />
-            <div className="flex items-center gap-2">
               <span className="font-display text-2xl font-bold text-foreground">{stats?.cities_count ?? "-"}</span>
               <span>steden</span>
             </div>

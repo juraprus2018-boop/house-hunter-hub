@@ -38,12 +38,14 @@ const ExplorePage = () => {
     listingType: listingType || undefined,
     maxPrice: priceActive ? maxPrice : undefined,
     sourceSite: selectedSource || undefined,
+    pageSize: 1000,
   });
   const allProperties = allData?.properties;
 
   const { data: citySourceData } = useProperties({
     listingType: listingType || undefined,
     sourceSite: selectedSource || undefined,
+    pageSize: 1000,
   });
   const citySourceProperties = citySourceData?.properties;
   const cities = useMemo(() => {
