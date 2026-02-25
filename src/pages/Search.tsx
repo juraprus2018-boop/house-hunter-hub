@@ -1,11 +1,14 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import PropertyCard from "@/components/properties/PropertyCard";
+import Breadcrumbs from "@/components/seo/Breadcrumbs";
+import SEOHead from "@/components/seo/SEOHead";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Select,
   SelectContent,
@@ -197,13 +200,44 @@ const SearchPage = () => {
     </div>
   );
 
+  const seoTitle = useMemo(() => {
+    const parts: string[] = [];
+    if (filters.listingType === "huur") parts.push("Huurwoningen");
+    else if (filters.listingType === "koop") parts.push("Koophuizen");
+    else parts.push("Woningen");
+    if (filters.city) parts.push(`in ${filters.city}`);
+    return `${parts.join(" ")} | WoonPeek`;
+  }, [filters.city, filters.listingType]);
+
+  const seoDescription = useMemo(() => {
+    const type = filters.listingType === "huur" ? "huurwoningen" : filters.listingType === "koop" ? "koophuizen" : "woningen";
+    const location = filters.city ? ` in ${filters.city}` : "";
+    return `Bekijk ${totalCount} ${type}${location} op WoonPeek. Filter op prijs, type en meer.`;
+  }, [filters.city, filters.listingType, totalCount]);
+
+  const canonicalUrl = useMemo(() => {
+    const params = new URLSearchParams();
+    if (filters.city) params.set("locatie", filters.city);
+    if (filters.listingType) params.set("aanbod", filters.listingType);
+    const qs = params.toString();
+    return `https://woonpeek.nl/zoeken${qs ? `?${qs}` : ""}`;
+  }, [filters.city, filters.listingType]);
+
   return (
     <div className="flex min-h-screen flex-col">
+      <SEOHead title={seoTitle} description={seoDescription} canonical={canonicalUrl} />
       <Header />
       <main className="flex-1">
         {/* Search Header */}
         <div className="border-b bg-card">
           <div className="container py-4">
+            <div className="mb-3">
+              <Breadcrumbs items={[
+                { label: "Home", href: "/" },
+                { label: "Zoeken" },
+                ...(filters.city ? [{ label: filters.city }] : []),
+              ]} />
+            </div>
             <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
               <div>
                 <h1 className="font-display text-2xl font-bold">
@@ -277,8 +311,21 @@ const SearchPage = () => {
             {/* Results */}
             <div className="flex-1">
               {isLoading ? (
-                <div className="flex items-center justify-center py-12">
-                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                  {Array.from({ length: 6 }).map((_, i) => (
+                    <div key={i} className="rounded-lg border bg-card overflow-hidden">
+                      <Skeleton className="aspect-[4/3] w-full" />
+                      <div className="p-4 space-y-3">
+                        <Skeleton className="h-5 w-3/4" />
+                        <Skeleton className="h-4 w-1/2" />
+                        <div className="flex gap-4">
+                          <Skeleton className="h-4 w-16" />
+                          <Skeleton className="h-4 w-16" />
+                        </div>
+                        <Skeleton className="h-6 w-1/3" />
+                      </div>
+                    </div>
+                  ))}
                 </div>
               ) : properties && properties.length > 0 ? (
                 viewMode === "list" ? (

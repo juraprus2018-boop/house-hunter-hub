@@ -6,11 +6,13 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { useProperty } from "@/hooks/useProperties";
+import { useProperty, useSimilarProperties } from "@/hooks/useProperties";
 import { useToggleFavorite } from "@/hooks/useFavorites";
 import { useAuth } from "@/contexts/AuthContext";
 import PropertyMap from "@/components/properties/PropertyMap";
 import SEOHead from "@/components/seo/SEOHead";
+import Breadcrumbs from "@/components/seo/Breadcrumbs";
+import PropertyCard from "@/components/properties/PropertyCard";
 import {
   Heart,
   Share2,
@@ -65,6 +67,11 @@ const SOURCE_SITE_META: Record<string, { label: string; color: string }> = {
 const PropertyDetail = () => {
   const { slug } = useParams<{ slug: string }>();
   const { data: property, isLoading } = useProperty(slug || "");
+  const { data: similarProperties } = useSimilarProperties(
+    property?.id || "",
+    property?.city || "",
+    property?.listing_type || ""
+  );
   const { user } = useAuth();
   const { toggle, isFavorite, isLoading: favoriteLoading } = useToggleFavorite();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -231,8 +238,15 @@ const PropertyDetail = () => {
       )}
       <Header />
       <main className="flex-1">
-        {/* Back button */}
+        {/* Breadcrumbs + Back button */}
         <div className="container py-4">
+          <div className="mb-3">
+            <Breadcrumbs items={[
+              { label: "Home", href: "/" },
+              { label: property.city, href: `/stad/${property.city.toLowerCase().replace(/\s+/g, "-")}` },
+              { label: `${property.street} ${property.house_number}` },
+            ]} />
+          </div>
           <Button variant="ghost" asChild className="mb-4">
             <Link to="/zoeken">
               <ArrowLeft className="mr-2 h-4 w-4" />
@@ -636,6 +650,22 @@ const PropertyDetail = () => {
             </div>
           </div>
         </div>
+
+        {/* Similar properties */}
+        {similarProperties && similarProperties.length > 0 && (
+          <section className="border-t bg-muted/30 py-12">
+            <div className="container">
+              <h2 className="font-display text-2xl font-bold mb-6">
+                Vergelijkbare woningen in {property.city}
+              </h2>
+              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+                {similarProperties.map((p) => (
+                  <PropertyCard key={p.id} property={p} />
+                ))}
+              </div>
+            </div>
+          </section>
+        )}
       </main>
       <Footer />
     </div>

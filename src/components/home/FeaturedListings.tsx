@@ -107,6 +107,7 @@ const FeaturedListings = () => {
                       <img
                          src={property.images?.[0] || propertyPlaceholder}
                          alt={property.title}
+                         loading="lazy"
                          className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
                          onError={(e) => { e.currentTarget.src = propertyPlaceholder; }}
                       />

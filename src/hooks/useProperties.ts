@@ -205,3 +205,24 @@ export const useFeaturedProperties = () => {
     },
   });
 };
+
+export const useSimilarProperties = (currentId: string, city: string, listingType: string) => {
+  return useQuery({
+    queryKey: ["similar-properties", currentId, city, listingType],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("properties")
+        .select("*")
+        .eq("status", "actief")
+        .eq("city", city)
+        .eq("listing_type", listingType as ListingType)
+        .neq("id", currentId)
+        .order("created_at", { ascending: false })
+        .limit(4);
+
+      if (error) throw error;
+      return data as Property[];
+    },
+    enabled: !!currentId && !!city && !!listingType,
+  });
+};

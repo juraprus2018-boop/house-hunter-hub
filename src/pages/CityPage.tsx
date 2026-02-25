@@ -1,11 +1,13 @@
 import { useParams, Link } from "react-router-dom";
-import { useEffect, useMemo } from "react";
+import { useEffect } from "react";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import PropertyCard from "@/components/properties/PropertyCard";
+import Breadcrumbs from "@/components/seo/Breadcrumbs";
 import { useProperties } from "@/hooks/useProperties";
 import { Button } from "@/components/ui/button";
-import { Loader2, MapPin, ArrowRight } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { MapPin, ArrowRight } from "lucide-react";
 
 const CITY_MAP: Record<string, string> = {
   "amsterdam": "Amsterdam",
@@ -32,19 +34,28 @@ const CITY_MAP: Record<string, string> = {
   "asten": "Asten",
 };
 
+const PropertyCardSkeleton = () => (
+  <div className="rounded-lg border bg-card overflow-hidden">
+    <Skeleton className="aspect-[4/3] w-full" />
+    <div className="p-4 space-y-3">
+      <Skeleton className="h-5 w-3/4" />
+      <Skeleton className="h-4 w-1/2" />
+      <div className="flex gap-4">
+        <Skeleton className="h-4 w-16" />
+        <Skeleton className="h-4 w-16" />
+      </div>
+      <Skeleton className="h-6 w-1/3" />
+    </div>
+  </div>
+);
+
 const CityPage = () => {
   const { city: citySlug } = useParams<{ city: string }>();
   const cityName = CITY_MAP[citySlug || ""] || (citySlug || "").replace(/-/g, " ").replace(/\b\w/g, l => l.toUpperCase());
 
-  const { data, isLoading } = useProperties({ includeInactive: false });
-  const allProperties = data?.properties;
-
-  const properties = useMemo(() => {
-    if (!allProperties) return [];
-    return allProperties.filter(p => 
-      p.city.toLowerCase() === cityName.toLowerCase() && p.status === "actief"
-    );
-  }, [allProperties, cityName]);
+  const { data, isLoading } = useProperties({ city: cityName });
+  const properties = data?.properties || [];
+  const totalCount = data?.totalCount || 0;
 
   const huurCount = properties.filter(p => p.listing_type === "huur").length;
   const koopCount = properties.filter(p => p.listing_type === "koop").length;
@@ -53,16 +64,16 @@ const CityPage = () => {
     document.title = `Huurwoningen & Koophuizen in ${cityName} | WoonPeek`;
     const metaDesc = document.querySelector('meta[name="description"]');
     if (metaDesc) {
-      metaDesc.setAttribute("content", `Bekijk ${properties.length} huurwoningen en koophuizen in ${cityName}. Vind jouw droomwoning op WoonPeek.`);
+      metaDesc.setAttribute("content", `Bekijk ${totalCount} huurwoningen en koophuizen in ${cityName}. Vind jouw droomwoning op WoonPeek.`);
     }
-  }, [cityName, properties.length]);
+  }, [cityName, totalCount]);
 
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "ItemList",
     "name": `Woningen in ${cityName}`,
     "description": `Huurwoningen en koophuizen in ${cityName}`,
-    "numberOfItems": properties.length,
+    "numberOfItems": totalCount,
     "itemListElement": properties.slice(0, 10).map((p, i) => ({
       "@type": "ListItem",
       "position": i + 1,
@@ -79,13 +90,12 @@ const CityPage = () => {
         {/* Hero */}
         <section className="border-b bg-gradient-to-b from-primary/5 to-background py-12">
           <div className="container">
-            <nav className="mb-4 text-sm text-muted-foreground" aria-label="Breadcrumb">
-              <ol className="flex items-center gap-1">
-                <li><Link to="/" className="hover:text-foreground">Home</Link></li>
-                <li>/</li>
-                <li className="text-foreground">{cityName}</li>
-              </ol>
-            </nav>
+            <div className="mb-4">
+              <Breadcrumbs items={[
+                { label: "Home", href: "/" },
+                { label: cityName },
+              ]} />
+            </div>
             <div className="flex items-center gap-3 mb-4">
               <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
                 <MapPin className="h-6 w-6 text-primary" />
@@ -95,7 +105,7 @@ const CityPage = () => {
                   Woningen in {cityName}
                 </h1>
                 <p className="text-muted-foreground">
-                  {properties.length} {properties.length === 1 ? "woning" : "woningen"} beschikbaar
+                  {totalCount} {totalCount === 1 ? "woning" : "woningen"} beschikbaar
                 </p>
               </div>
             </div>
@@ -123,8 +133,10 @@ const CityPage = () => {
         {/* Properties */}
         <section className="container py-8">
           {isLoading ? (
-            <div className="flex items-center justify-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <PropertyCardSkeleton key={i} />
+              ))}
             </div>
           ) : properties.length > 0 ? (
             <>
@@ -169,7 +181,7 @@ const CityPage = () => {
                 het nieuwste woningaanbod van meerdere bronnen zodat je niets mist.
               </p>
               <p>
-                Momenteel zijn er {properties.length} woningen beschikbaar in {cityName}
+                Momenteel zijn er {totalCount} woningen beschikbaar in {cityName}
                 {huurCount > 0 && koopCount > 0 
                   ? `, waarvan ${huurCount} huurwoningen en ${koopCount} koophuizen`
                   : huurCount > 0 
