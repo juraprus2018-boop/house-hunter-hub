@@ -36,7 +36,8 @@ const CityPage = () => {
   const { city: citySlug } = useParams<{ city: string }>();
   const cityName = CITY_MAP[citySlug || ""] || (citySlug || "").replace(/-/g, " ").replace(/\b\w/g, l => l.toUpperCase());
 
-  const { data: allProperties, isLoading } = useProperties({ includeInactive: false });
+  const { data, isLoading } = useProperties({ includeInactive: false });
+  const allProperties = data?.properties;
 
   const properties = useMemo(() => {
     if (!allProperties) return [];

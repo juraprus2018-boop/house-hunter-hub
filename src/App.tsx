@@ -25,6 +25,8 @@ import TermsAndConditions from "./pages/TermsAndConditions";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import Disclaimer from "./pages/Disclaimer";
 import CityPage from "./pages/CityPage";
+import SearchAlerts from "./pages/SearchAlerts";
+import Profile from "./pages/Profile";
 
 const queryClient = new QueryClient();
 
@@ -55,6 +57,8 @@ const App = () => (
             <Route path="/voorwaarden" element={<TermsAndConditions />} />
             <Route path="/privacy" element={<PrivacyPolicy />} />
             <Route path="/disclaimer" element={<Disclaimer />} />
+            <Route path="/zoekalerts" element={<SearchAlerts />} />
+            <Route path="/profiel" element={<Profile />} />
             <Route path="/:city" element={<CityPage />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />

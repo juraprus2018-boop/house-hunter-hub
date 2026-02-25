@@ -29,9 +29,29 @@ import {
   ExternalLink,
   Globe,
   Home,
+  Copy,
+  MessageCircle,
 } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { toast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 const SOURCE_SITE_META: Record<string, { label: string; color: string }> = {
   wooniezie: { label: "Wooniezie", color: "#FF6B00" },
@@ -48,6 +68,51 @@ const PropertyDetail = () => {
   const { user } = useAuth();
   const { toggle, isFavorite, isLoading: favoriteLoading } = useToggleFavorite();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [contactOpen, setContactOpen] = useState(false);
+  const [contactForm, setContactForm] = useState({ name: "", email: "", phone: "", message: "" });
+  const [sending, setSending] = useState(false);
+
+  const handleShare = async () => {
+    const url = window.location.href;
+    const title = property?.title || "Woning op WoonPeek";
+    if (navigator.share) {
+      try {
+        await navigator.share({ title, url });
+      } catch {}
+    }
+  };
+
+  const copyLink = () => {
+    navigator.clipboard.writeText(window.location.href);
+    toast({ title: "Link gekopieerd!" });
+  };
+
+  const handleContact = async () => {
+    if (!contactForm.name.trim() || !contactForm.email.trim() || !contactForm.message.trim()) {
+      toast({ title: "Vul alle verplichte velden in", variant: "destructive" });
+      return;
+    }
+    setSending(true);
+    try {
+      const { error } = await supabase.functions.invoke("send-contact-email", {
+        body: {
+          property_id: property?.id,
+          sender_name: contactForm.name.trim().substring(0, 100),
+          sender_email: contactForm.email.trim().substring(0, 255),
+          sender_phone: contactForm.phone.trim().substring(0, 20) || null,
+          message: contactForm.message.trim().substring(0, 2000),
+        },
+      });
+      if (error) throw error;
+      toast({ title: "Bericht verzonden!" });
+      setContactOpen(false);
+      setContactForm({ name: "", email: "", phone: "", message: "" });
+    } catch {
+      toast({ title: "Verzenden mislukt", variant: "destructive" });
+    } finally {
+      setSending(false);
+    }
+  };
 
   const sourceInfo = property ? { source_url: property.source_url, source_site: property.source_site } : null;
 
@@ -438,10 +503,41 @@ const PropertyDetail = () => {
                           {isPropertyFavorite ? "Opgeslagen" : "Bewaren"}
                         </Button>
                       )}
-                      <Button variant="outline" className="flex-1">
-                        <Share2 className="mr-2 h-4 w-4" />
-                        Delen
-                      </Button>
+                      {typeof navigator.share === "function" ? (
+                        <Button variant="outline" className="flex-1" onClick={handleShare}>
+                          <Share2 className="mr-2 h-4 w-4" />
+                          Delen
+                        </Button>
+                      ) : (
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <Button variant="outline" className="flex-1">
+                              <Share2 className="mr-2 h-4 w-4" />
+                              Delen
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-48 p-2">
+                            <div className="flex flex-col gap-1">
+                              <Button variant="ghost" size="sm" className="justify-start" onClick={copyLink}>
+                                <Copy className="mr-2 h-4 w-4" />
+                                Link kopiëren
+                              </Button>
+                              <Button variant="ghost" size="sm" className="justify-start" asChild>
+                                <a href={`https://wa.me/?text=${encodeURIComponent(property.title + " " + window.location.href)}`} target="_blank" rel="noopener noreferrer">
+                                  <MessageCircle className="mr-2 h-4 w-4" />
+                                  WhatsApp
+                                </a>
+                              </Button>
+                              <Button variant="ghost" size="sm" className="justify-start" asChild>
+                                <a href={`mailto:?subject=${encodeURIComponent(property.title)}&body=${encodeURIComponent(window.location.href)}`}>
+                                  <Mail className="mr-2 h-4 w-4" />
+                                  E-mail
+                                </a>
+                              </Button>
+                            </div>
+                          </PopoverContent>
+                        </Popover>
+                      )}
                     </div>
                   </CardContent>
                 </Card>
@@ -496,14 +592,42 @@ const PropertyDetail = () => {
                       </Button>
                     ) : (
                       <>
-                        <Button className="w-full">
-                          <Mail className="mr-2 h-4 w-4" />
-                          Stuur bericht
-                        </Button>
-                        <Button variant="outline" className="w-full">
-                          <Phone className="mr-2 h-4 w-4" />
-                          Bel aanbieder
-                        </Button>
+                        <Dialog open={contactOpen} onOpenChange={setContactOpen}>
+                          <DialogTrigger asChild>
+                            <Button className="w-full">
+                              <Mail className="mr-2 h-4 w-4" />
+                              Stuur bericht
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent>
+                            <DialogHeader>
+                              <DialogTitle>Bericht sturen</DialogTitle>
+                              <DialogDescription>Stuur een bericht naar de eigenaar van deze woning.</DialogDescription>
+                            </DialogHeader>
+                            <div className="space-y-4 py-4">
+                              <div className="space-y-2">
+                                <Label>Naam *</Label>
+                                <Input value={contactForm.name} onChange={(e) => setContactForm({ ...contactForm, name: e.target.value })} placeholder="Je naam" />
+                              </div>
+                              <div className="space-y-2">
+                                <Label>E-mailadres *</Label>
+                                <Input type="email" value={contactForm.email} onChange={(e) => setContactForm({ ...contactForm, email: e.target.value })} placeholder="je@email.nl" />
+                              </div>
+                              <div className="space-y-2">
+                                <Label>Telefoonnummer</Label>
+                                <Input value={contactForm.phone} onChange={(e) => setContactForm({ ...contactForm, phone: e.target.value })} placeholder="Optioneel" />
+                              </div>
+                              <div className="space-y-2">
+                                <Label>Bericht *</Label>
+                                <Textarea value={contactForm.message} onChange={(e) => setContactForm({ ...contactForm, message: e.target.value })} placeholder="Schrijf je bericht..." rows={4} />
+                              </div>
+                              <Button onClick={handleContact} className="w-full" disabled={sending}>
+                                {sending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Mail className="mr-2 h-4 w-4" />}
+                                Versturen
+                              </Button>
+                            </div>
+                          </DialogContent>
+                        </Dialog>
                       </>
                     )}
                   </CardContent>

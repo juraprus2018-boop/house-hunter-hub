@@ -29,6 +29,8 @@ import {
 const SearchPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [viewMode, setViewMode] = useState<"list" | "map">("list");
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 12;
   
   type PropertyType = "appartement" | "huis" | "studio" | "kamer";
   type ListingType = "huur" | "koop";
@@ -53,7 +55,7 @@ const SearchPage = () => {
 
   const [tempFilters, setTempFilters] = useState(filters);
 
-  const { data: properties, isLoading } = useProperties({
+  const { data, isLoading } = useProperties({
     city: filters.city || undefined,
     propertyType: filters.propertyType || undefined,
     listingType: filters.listingType || undefined,
@@ -61,10 +63,16 @@ const SearchPage = () => {
     minBedrooms: filters.minBedrooms,
     minSurface: filters.minSurface,
     includeInactive: filters.includeInactive,
+    page: currentPage,
+    pageSize,
   });
+  const properties = data?.properties;
+  const totalCount = data?.totalCount || 0;
+  const totalPages = Math.ceil(totalCount / pageSize);
 
   const applyFilters = () => {
     setFilters(tempFilters);
+    setCurrentPage(1);
     
     const params = new URLSearchParams();
     if (tempFilters.city) params.set("locatie", tempFilters.city);
@@ -202,7 +210,7 @@ const SearchPage = () => {
                   Woningen zoeken
                 </h1>
                 <p className="text-sm text-muted-foreground">
-                  {isLoading ? "Laden..." : `${properties?.length || 0} resultaten gevonden`}
+                  {isLoading ? "Laden..." : `${totalCount} resultaten gevonden`}
                 </p>
               </div>
               <div className="flex items-center gap-2">
@@ -278,33 +286,58 @@ const SearchPage = () => {
                     {properties.map((property) => (
                       <PropertyCard key={property.id} property={property} />
                     ))}
-                  </div>
-                ) : (
-                  <div className="flex h-[500px] items-center justify-center rounded-lg border bg-muted/50">
-                    <div className="text-center">
-                      <Map className="mx-auto mb-2 h-12 w-12 text-muted-foreground" />
-                      <p className="text-muted-foreground">
-                        Kaartweergave komt binnenkort
-                      </p>
-                    </div>
-                  </div>
-                )
-              ) : (
-                <div className="flex flex-col items-center justify-center py-12 text-center">
-                  <Search className="mb-4 h-12 w-12 text-muted-foreground" />
-                  <h3 className="font-display text-lg font-semibold">
-                    Geen woningen gevonden
-                  </h3>
-                  <p className="text-muted-foreground">
-                    Pas je filters aan om meer resultaten te zien
-                  </p>
-                  {hasActiveFilters && (
-                    <Button variant="outline" className="mt-4" onClick={clearFilters}>
-                      Filters wissen
-                    </Button>
-                  )}
-                </div>
-              )}
+                   </div>
+                 ) : (
+                   <div className="flex h-[500px] items-center justify-center rounded-lg border bg-muted/50">
+                     <div className="text-center">
+                       <Map className="mx-auto mb-2 h-12 w-12 text-muted-foreground" />
+                       <p className="text-muted-foreground">
+                         Kaartweergave komt binnenkort
+                       </p>
+                     </div>
+                   </div>
+                 )
+               ) : (
+                 <div className="flex flex-col items-center justify-center py-12 text-center">
+                   <Search className="mb-4 h-12 w-12 text-muted-foreground" />
+                   <h3 className="font-display text-lg font-semibold">
+                     Geen woningen gevonden
+                   </h3>
+                   <p className="text-muted-foreground">
+                     Pas je filters aan om meer resultaten te zien
+                   </p>
+                   {hasActiveFilters && (
+                     <Button variant="outline" className="mt-4" onClick={clearFilters}>
+                       Filters wissen
+                     </Button>
+                   )}
+                 </div>
+               )}
+
+               {/* Pagination */}
+               {totalPages > 1 && (
+                 <div className="mt-8 flex items-center justify-center gap-2">
+                   <Button
+                     variant="outline"
+                     size="sm"
+                     disabled={currentPage <= 1}
+                     onClick={() => setCurrentPage(p => p - 1)}
+                   >
+                     Vorige
+                   </Button>
+                   <span className="px-4 text-sm text-muted-foreground">
+                     Pagina {currentPage} van {totalPages}
+                   </span>
+                   <Button
+                     variant="outline"
+                     size="sm"
+                     disabled={currentPage >= totalPages}
+                     onClick={() => setCurrentPage(p => p + 1)}
+                   >
+                     Volgende
+                   </Button>
+                 </div>
+               )}
             </div>
           </div>
         </div>

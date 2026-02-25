@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Home, Search, Heart, PlusCircle, User, Menu, LogOut, Shield, Map } from "lucide-react";
+import { Home, Search, Heart, PlusCircle, User, Menu, LogOut, Shield, Map, Bell } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -84,6 +84,18 @@ const Header = () => {
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                   <Link to="/favorieten">Mijn favorieten</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/zoekalerts" className="flex items-center gap-2">
+                    <Bell className="h-4 w-4" />
+                    Zoekalerts
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/profiel" className="flex items-center gap-2">
+                    <User className="h-4 w-4" />
+                    Mijn profiel
+                  </Link>
                 </DropdownMenuItem>
                 {isAdmin && (
                   <>
