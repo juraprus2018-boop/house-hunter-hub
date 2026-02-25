@@ -1,115 +1,118 @@
 
 
-# Plan: 6 verbeteringen voor WoonPeek
+# Suggesties voor WoonPeek verbeteringen
 
-## 1. Dynamische Homepage Statistieken
-De "-" placeholders in de HeroSection vervangen door echte aantallen uit de database.
+Hier zijn 6 concrete verbeteringen gericht op snelheid, SEO, gebruikerservaring en conversie.
 
-**Aanpak:**
-- Nieuwe hook `useHomeStats` in `useProperties.ts` die 3 queries uitvoert:
-  - `SELECT COUNT(*) FROM properties WHERE status = 'actief'` (aantal woningen)
-  - `SELECT COUNT(DISTINCT user_id) FROM profiles` (aantal gebruikers)  
-  - `SELECT COUNT(DISTINCT city) FROM properties WHERE status = 'actief'` (aantal steden)
-- Database functie `get_home_stats` aanmaken (via migration) die deze 3 waarden teruggeeft in 1 query (efficienter)
-- `HeroSection.tsx` aanpassen om de hook te gebruiken en de echte aantallen te tonen
+---
 
-## 2. Delen-knop werkend maken
-De "Delen" knop op de woningdetailpagina activeren met Web Share API / fallback opties.
+## 1. Lazy loading van afbeeldingen + Skeleton loading states
+Afbeeldingen op de zoekpagina en homepage laden nu allemaal tegelijk. Door `loading="lazy"` toe te voegen aan alle PropertyCard en FeaturedListings afbeeldingen, en skeleton placeholders te tonen tijdens het laden, wordt de pagina sneller zichtbaar.
 
-**Aanpak:**
-- In `PropertyDetail.tsx` de bestaande "Delen" knop vervangen door een werkende versie:
-  - Op mobiel: Web Share API (native deelscherm)
-  - Op desktop: Dropdown met WhatsApp, E-mail en "Link kopieren" opties
-- Gebruik `navigator.share` met fallback naar een Popover met deelknoppen
-- Geen backend wijzigingen nodig
+**Wat verandert:**
+- `PropertyCard.tsx`: `loading="lazy"` op de `<img>` tag
+- `FeaturedListings.tsx`: `loading="lazy"` op afbeeldingen (PopularCities heeft dit al)
+- Skeleton loading states toevoegen aan de zoekpagina en stadspagina in plaats van alleen een spinner
 
-## 3. Zoekalerts
-Gebruikers kunnen e-mail notificaties instellen voor nieuwe woningen. De `search_alerts` tabel bestaat al.
+---
 
-**Aanpak:**
-- Nieuwe pagina `src/pages/SearchAlerts.tsx` voor het beheren van alerts
-- Route `/zoekalerts` toevoegen in `App.tsx`
-- Link naar zoekalerts in het gebruikersmenu in de Header
-- Formulier om een alert aan te maken (stad, type, prijs, etc.)
-- Lijst van bestaande alerts met aan/uit switch en verwijderknop
-- Nieuwe Edge Function `check-search-alerts` die:
-  - Alle actieve alerts ophaalt
-  - Per alert nieuwe woningen zoekt (created_at > last_notified_at)
-  - Matching woningen e-mailt via de bestaande `send-email` functie
-  - `last_notified_at` bijwerkt
-- Hook `useSearchAlerts` voor CRUD operaties
+## 2. CityPage server-side filtering (performance fix)
+De stadspagina (`CityPage.tsx`) laadt nu ALLE woningen en filtert dan client-side op stad. Dit is traag en onnodig. Door de `city` filter mee te geven aan `useProperties`, worden alleen de relevante woningen opgehaald.
 
-## 4. Paginering op zoekpagina
-Niet alle woningen tegelijk laden, maar per pagina (bv. 12 per pagina).
+**Wat verandert:**
+- `CityPage.tsx`: `useProperties({ city: cityName })` in plaats van alle woningen laden en filteren
 
-**Aanpak:**
-- `useProperties` hook uitbreiden met `page` en `pageSize` parameters
-- Supabase `.range()` gebruiken voor server-side paginering
-- Aparte count-query voor totaal aantal resultaten
-- Pagination component toevoegen onderaan de zoekresultaten in `Search.tsx`
-- URL parameters `pagina` bijwerken bij navigatie
+---
 
-## 5. Gebruikersprofiel beheer
-Pagina waar gebruikers hun naam, telefoon en profielfoto kunnen aanpassen.
+## 3. Vergelijkbare woningen op de detailpagina
+Onderaan de woningdetailpagina een sectie "Vergelijkbare woningen" tonen op basis van dezelfde stad en listing type. Dit houdt bezoekers langer op de site en is goed voor SEO (interne links).
 
-**Aanpak:**
-- Nieuwe pagina `src/pages/Profile.tsx`
-- Route `/profiel` toevoegen in `App.tsx`
-- Link naar profiel in het gebruikersmenu in de Header
-- Formulier met velden: weergavenaam, telefoon, bio
-- Profielfoto upload naar de bestaande `property-images` bucket (of nieuwe `avatars` bucket)
-- Hook `useProfile` voor het ophalen en bijwerken van het profiel uit de `profiles` tabel
-- Profiles tabel heeft al de juiste kolommen (display_name, phone, avatar_url, bio)
+**Wat verandert:**
+- `PropertyDetail.tsx`: Nieuwe sectie onderaan met 3-4 vergelijkbare woningen
+- Nieuwe query in `useProperties.ts`: `useSimilarProperties(propertyId, city, listingType)`
 
-## 6. Contactformulier op woningdetailpagina
-Voor gebruiker-geplaatste woningen (zonder source_url) een werkend contactformulier.
+---
 
-**Aanpak:**
-- In `PropertyDetail.tsx` de bestaande "Stuur bericht" knop vervangen door een Dialog met een formulier
-- Velden: naam, e-mail, telefoonnummer (optioneel), bericht
-- Bij verzenden: de `send-email` Edge Function aanroepen om het bericht naar de eigenaar te sturen
-- De eigenaar's e-mail ophalen via het user_id van de property (query op profiles of auth)
-- Nieuwe Edge Function `send-contact-email` die:
-  - Het bericht ontvangt
-  - De eigenaar's e-mail opzoekt (via service role key)
-  - E-mail stuurt naar eigenaar EN een kopie naar info@woonpeek.nl
+## 4. SEO: Breadcrumbs met structured data op alle pagina's
+Breadcrumbs verbeteren de navigatie en worden door Google als rich result getoond. De stadspagina heeft al visuele breadcrumbs, maar zonder schema markup. De detailpagina en zoekpagina missen breadcrumbs helemaal.
+
+**Wat verandert:**
+- Nieuw component `Breadcrumbs.tsx` met JSON-LD BreadcrumbList schema
+- Toevoegen aan `PropertyDetail.tsx`, `Search.tsx` en `CityPage.tsx`
+
+---
+
+## 5. SEO: Zoekpagina meta tags en canonical URL's met filters
+De zoekpagina heeft geen dynamische SEO-titels op basis van actieve filters. Als iemand zoekt op "huur Amsterdam", zou de titel moeten zijn "Huurwoningen in Amsterdam | WoonPeek".
+
+**Wat verandert:**
+- `Search.tsx`: Dynamische `<SEOHead>` titel en beschrijving op basis van actieve filters
+- Canonical URL met filterparameters
+
+---
+
+## 6. Preconnect en font-display optimalisatie
+De externe font (Fontshare) blokkeert de eerste render. Door `preconnect` hints toe te voegen aan `index.html` en `font-display: swap` te garanderen, wordt de pagina sneller zichtbaar.
+
+**Wat verandert:**
+- `index.html`: `<link rel="preconnect" href="https://api.fontshare.com">` toevoegen
+- `index.html`: `<link rel="preconnect" href="https://cdn.fontshare.com" crossorigin>` toevoegen
+- `index.css`: font-display swap bevestigen (zit al in de URL parameter)
 
 ---
 
 ## Technische details
 
-### Database migratie
-```sql
--- Functie voor homepage statistieken
-CREATE OR REPLACE FUNCTION public.get_home_stats()
-RETURNS json
-LANGUAGE sql
-STABLE
-SECURITY DEFINER
-SET search_path = public
-AS $$
-  SELECT json_build_object(
-    'properties_count', (SELECT COUNT(*) FROM properties WHERE status = 'actief'),
-    'users_count', (SELECT COUNT(*) FROM profiles),
-    'cities_count', (SELECT COUNT(DISTINCT city) FROM properties WHERE status = 'actief')
-  );
-$$;
-```
-
 ### Bestanden die aangemaakt worden
-- `src/pages/SearchAlerts.tsx` - Zoekalerts pagina
-- `src/pages/Profile.tsx` - Profielpagina
-- `src/hooks/useSearchAlerts.ts` - Hook voor search alerts CRUD
-- `src/hooks/useProfile.ts` - Hook voor profiel CRUD
-- `supabase/functions/check-search-alerts/index.ts` - Edge Function voor alert checking
-- `supabase/functions/send-contact-email/index.ts` - Edge Function voor contactformulier
+- `src/components/seo/Breadcrumbs.tsx` - Herbruikbaar breadcrumbs component met JSON-LD
 
 ### Bestanden die gewijzigd worden
-- `src/components/home/HeroSection.tsx` - Dynamische stats
-- `src/pages/PropertyDetail.tsx` - Delen-knop + contactformulier
-- `src/pages/Search.tsx` - Paginering
-- `src/hooks/useProperties.ts` - Paginering support + home stats hook
-- `src/App.tsx` - Nieuwe routes
-- `src/components/layout/Header.tsx` - Menu links voor profiel en zoekalerts
-- `supabase/config.toml` - Nieuwe edge functions config
+- `src/components/properties/PropertyCard.tsx` - lazy loading
+- `src/components/home/FeaturedListings.tsx` - lazy loading
+- `src/pages/CityPage.tsx` - server-side filtering
+- `src/pages/PropertyDetail.tsx` - vergelijkbare woningen + breadcrumbs
+- `src/pages/Search.tsx` - dynamische SEO + breadcrumbs + skeleton loading
+- `src/hooks/useProperties.ts` - nieuwe `useSimilarProperties` hook
+- `index.html` - preconnect hints
+
+### Nieuwe hook: useSimilarProperties
+
+```typescript
+export const useSimilarProperties = (currentId: string, city: string, listingType: string) => {
+  return useQuery({
+    queryKey: ["similar-properties", currentId, city, listingType],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("properties")
+        .select("*")
+        .eq("status", "actief")
+        .eq("city", city)
+        .eq("listing_type", listingType)
+        .neq("id", currentId)
+        .order("created_at", { ascending: false })
+        .limit(4);
+      return data || [];
+    },
+    enabled: !!currentId && !!city,
+  });
+};
+```
+
+### Breadcrumbs component (voorbeeld)
+
+```typescript
+const Breadcrumbs = ({ items }: { items: { label: string; href?: string }[] }) => {
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": items.map((item, i) => ({
+      "@type": "ListItem",
+      "position": i + 1,
+      "name": item.label,
+      ...(item.href ? { "item": `https://woonpeek.nl${item.href}` } : {}),
+    })),
+  };
+  // Renders visual breadcrumbs + JSON-LD script tag
+};
+```
 
