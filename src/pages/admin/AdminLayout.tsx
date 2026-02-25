@@ -11,9 +11,10 @@ import {
   Loader2,
   ClipboardCheck,
   Menu,
-  X,
-  FileText,
-} from "lucide-react";
+    X,
+    FileText,
+    Users,
+  } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
@@ -59,6 +60,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
 
   const navItems = [
     { to: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
+    { to: "/admin/gebruikers", label: "Gebruikers", icon: Users },
     { to: "/admin/woningen", label: "Woningen", icon: HomeIcon },
     { to: "/admin/review", label: "Review Queue", icon: ClipboardCheck },
     { to: "/admin/scrapers", label: "Scrapers", icon: Activity },
