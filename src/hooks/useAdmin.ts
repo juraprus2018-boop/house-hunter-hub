@@ -205,6 +205,19 @@ export const useScrapedProperties = (status?: string) => {
   });
 };
 
+export const usePostToFacebook = () => {
+  return useMutation({
+    mutationFn: async (propertyId: string) => {
+      const { data, error } = await supabase.functions.invoke("post-to-facebook", {
+        body: { property_id: propertyId },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      return data;
+    },
+  });
+};
+
 export const useUpdateScrapedProperty = () => {
   const queryClient = useQueryClient();
 

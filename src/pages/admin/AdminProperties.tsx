@@ -29,8 +29,8 @@ import {
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { useAllProperties, useUpdatePropertyAdmin, useDeletePropertyAdmin } from "@/hooks/useAdmin";
-import { Search, Pencil, Trash2, Loader2, ExternalLink, Filter } from "lucide-react";
+import { useAllProperties, useUpdatePropertyAdmin, useDeletePropertyAdmin, usePostToFacebook } from "@/hooks/useAdmin";
+import { Search, Pencil, Trash2, Loader2, ExternalLink, Filter, Facebook } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { nl } from "date-fns/locale";
@@ -39,6 +39,7 @@ const AdminProperties = () => {
   const { data: properties, isLoading } = useAllProperties();
   const updateProperty = useUpdatePropertyAdmin();
   const deleteProperty = useDeletePropertyAdmin();
+  const postToFacebook = usePostToFacebook();
   const { toast } = useToast();
 
   const [searchQuery, setSearchQuery] = useState("");
@@ -47,6 +48,20 @@ const AdminProperties = () => {
   const [editingProperty, setEditingProperty] = useState<typeof properties extends (infer T)[] ? T : never | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [formData, setFormData] = useState<Record<string, unknown>>({});
+  const [postingToFb, setPostingToFb] = useState<string | null>(null);
+
+  const handlePostToFacebook = async (propertyId: string) => {
+    setPostingToFb(propertyId);
+    try {
+      await postToFacebook.mutateAsync(propertyId);
+      toast({ title: "Geplaatst op Facebook!", description: "De woning is gedeeld op je Facebook-pagina." });
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : "Onbekende fout";
+      toast({ title: "Facebook post mislukt", description: msg, variant: "destructive" });
+    } finally {
+      setPostingToFb(null);
+    }
+  };
 
   const availableSources = Array.from(
     new Set(properties?.map((p) => p.source_site).filter(Boolean) as string[])
@@ -256,7 +271,20 @@ const AdminProperties = () => {
                       {format(new Date(property.created_at), "d MMM yyyy", { locale: nl })}
                     </TableCell>
                     <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-2">
+                      <div className="flex items-center justify-end gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          title="Plaats op Facebook"
+                          disabled={postingToFb === property.id}
+                          onClick={() => handlePostToFacebook(property.id)}
+                        >
+                          {postingToFb === property.id ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Facebook className="h-4 w-4 text-blue-600" />
+                          )}
+                        </Button>
                         <Button
                           variant="ghost"
                           size="icon"
