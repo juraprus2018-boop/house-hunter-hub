@@ -54,51 +54,9 @@ async function postPropertyToFacebook(
   const images = property.images?.filter(Boolean)?.slice(0, 5) || [];
 
   try {
-    if (images.length > 1) {
-      // Multi-photo post: upload photos unpublished, then create post with attached photos
-      const photoIds: string[] = [];
-
-      for (const imageUrl of images) {
-        const photoRes = await fetch(`${GRAPH_API}/${pageId}/photos`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            url: imageUrl,
-            published: false,
-            access_token: accessToken,
-          }),
-        });
-        const photoData = await photoRes.json();
-        if (photoData.id) {
-          photoIds.push(photoData.id);
-        }
-      }
-
-      if (photoIds.length === 0) {
-        // Fallback to text-only post
-        return await postTextOnly(pageId, accessToken, message);
-      }
-
-      const attachedMedia = photoIds.map((id) => ({ media_fbid: id }));
-      const postRes = await fetch(`${GRAPH_API}/${pageId}/feed`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          message,
-          attached_media: attachedMedia,
-          access_token: accessToken,
-        }),
-      });
-      const postData = await postRes.json();
-
-      if (postData.error) {
-        console.error("Facebook post error:", postData.error);
-        return { success: false, error: postData.error.message };
-      }
-
-      return { success: true, postId: postData.id };
-    } else if (images.length === 1) {
-      // Single photo post
+    // First try a simple feed post with link to first image
+    if (images.length > 0) {
+      // Try single photo post first (most reliable)
       const res = await fetch(`${GRAPH_API}/${pageId}/photos`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -109,10 +67,27 @@ async function postPropertyToFacebook(
         }),
       });
       const data = await res.json();
+      console.log("Facebook photo response:", JSON.stringify(data));
 
       if (data.error) {
-        console.error("Facebook photo post error:", data.error);
-        return { success: false, error: data.error.message };
+        console.error("Photo post failed, trying feed post:", data.error);
+        // Fallback: post as link with image
+        const feedRes = await fetch(`${GRAPH_API}/${pageId}/feed`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            message,
+            link: images[0],
+            access_token: accessToken,
+          }),
+        });
+        const feedData = await feedRes.json();
+        console.log("Facebook feed response:", JSON.stringify(feedData));
+
+        if (feedData.error) {
+          return { success: false, error: feedData.error.message };
+        }
+        return { success: true, postId: feedData.id };
       }
 
       return { success: true, postId: data.post_id || data.id };
