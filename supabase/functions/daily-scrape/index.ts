@@ -343,6 +343,27 @@ Deno.serve(async (req) => {
       }
     }
 
+    // 8. Auto-post to Facebook
+    let facebookPosted = 0;
+    if (published > 0) {
+      try {
+        console.log("Auto-posting to Facebook...");
+        const fbRes = await fetch(`${supabaseUrl}/functions/v1/post-to-facebook`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${supabaseKey}`,
+          },
+          body: JSON.stringify({ auto_post: true, count: 5 }),
+        });
+        const fbResult = await fbRes.json();
+        facebookPosted = fbResult.results?.filter((r: { success: boolean }) => r.success).length || 0;
+        console.log(`Facebook auto-post result: ${JSON.stringify(fbResult)}`);
+      } catch (e) {
+        console.warn("Facebook auto-post failed:", e);
+      }
+    }
+
     return new Response(
       JSON.stringify({
         success: true,
@@ -352,6 +373,7 @@ Deno.serve(async (req) => {
         deactivated,
         sitemap_regenerated: true,
         indexnow_submitted: indexNowSubmitted,
+        facebook_posted: facebookPosted,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
