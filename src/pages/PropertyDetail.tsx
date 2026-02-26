@@ -243,7 +243,7 @@ const PropertyDetail = () => {
           <div className="mb-3">
             <Breadcrumbs items={[
               { label: "Home", href: "/" },
-              { label: property.city, href: `/stad/${property.city.toLowerCase().replace(/\s+/g, "-")}` },
+              { label: property.city, href: `/${property.city.toLowerCase().replace(/\s+/g, "-")}` },
               { label: `${property.street} ${property.house_number}` },
             ]} />
           </div>
