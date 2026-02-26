@@ -33,6 +33,7 @@ import BlogPage from "./pages/Blog";
 import BlogPostPage from "./pages/BlogPost";
 import AdminBlog from "./pages/admin/AdminBlog";
 import AdminUsers from "./pages/admin/AdminUsers";
+import AdminDailyActivity from "./pages/admin/AdminDailyActivity";
 import ListingTypePage from "./pages/ListingTypePage";
 
 const queryClient = new QueryClient();
@@ -63,6 +64,7 @@ const App = () => (
             <Route path="/admin/instellingen" element={<AdminSettings />} />
             <Route path="/admin/blog" element={<AdminBlog />} />
             <Route path="/admin/gebruikers" element={<AdminUsers />} />
+            <Route path="/admin/dagoverzicht" element={<AdminDailyActivity />} />
             <Route path="/voorwaarden" element={<TermsAndConditions />} />
             <Route path="/privacy" element={<PrivacyPolicy />} />
             <Route path="/disclaimer" element={<Disclaimer />} />

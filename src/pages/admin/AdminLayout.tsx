@@ -14,6 +14,7 @@ import {
     X,
     FileText,
     Users,
+    CalendarDays,
   } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -60,6 +61,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
 
   const navItems = [
     { to: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
+    { to: "/admin/dagoverzicht", label: "Dagoverzicht", icon: CalendarDays },
     { to: "/admin/gebruikers", label: "Gebruikers", icon: Users },
     { to: "/admin/woningen", label: "Woningen", icon: HomeIcon },
     { to: "/admin/review", label: "Review Queue", icon: ClipboardCheck },
