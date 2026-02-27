@@ -1275,11 +1275,103 @@ async function scrape123Wonen(): Promise<ScrapedProperty[]> {
 
 // ============ HUURZONE SCRAPER ============
 
+async function fetchHuurzoneDetail(sourceUrl: string): Promise<{
+  images: string[];
+  description: string | null;
+  postalCode: string | null;
+  gemeente: string | null;
+  interior: string | null;
+  bathrooms: number | null;
+  bedrooms: number | null;
+}> {
+  const result = { images: [] as string[], description: null as string | null, postalCode: null as string | null, gemeente: null as string | null, interior: null as string | null, bathrooms: null as number | null, bedrooms: null as number | null };
+  try {
+    const html = await fetchPage(sourceUrl, 12000);
+
+    // Extract all images from detail page (cdn.huurzone.nl or other image sources)
+    const imgMatches = html.matchAll(/<img[^>]+src="([^"]+)"[^>]*>/g);
+    for (const m of imgMatches) {
+      const src = m[1].replace(/&amp;/g, "&");
+      if (src.includes("data:image") || src.includes("maps.googleapis") || src.includes("icon") || src.length < 20) continue;
+      // Use large version if available
+      const largeSrc = src.replace("/medium/", "/large/");
+      if (!result.images.includes(largeSrc)) {
+        result.images.push(largeSrc);
+      }
+    }
+
+    // Description from "Samenvatting" section
+    const descMatch = html.match(/data-description-body[^>]*>([\s\S]*?)<\/div>/);
+    if (descMatch) {
+      result.description = descMatch[1].replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
+    }
+
+    // Postcode
+    const postcodeMatch = html.match(/Postcode[\s\S]*?<dd[^>]*>\s*([\dA-Z]{6,7})\s*<\/dd>/i);
+    if (postcodeMatch) {
+      result.postalCode = postcodeMatch[1].trim();
+    }
+
+    // Gemeente
+    const gemeenteMatch = html.match(/Gemeente[\s\S]*?<dd[^>]*>\s*([^<]+)\s*<\/dd>/);
+    if (gemeenteMatch) {
+      result.gemeente = gemeenteMatch[1].trim();
+    }
+
+    // Interior
+    const interiorMatch = html.match(/Interieur[\s\S]*?<dd[^>]*>\s*([^<]+)\s*<\/dd>/);
+    if (interiorMatch) {
+      result.interior = interiorMatch[1].trim();
+    }
+
+    // Slaapkamers
+    const slaapMatch = html.match(/Slaapkamers[\s\S]*?<dd[^>]*>\s*(\d+)\s*<\/dd>/);
+    if (slaapMatch) {
+      result.bedrooms = parseInt(slaapMatch[1]);
+    }
+
+    // Badkamers
+    const badMatch = html.match(/Badkamers[\s\S]*?<dd[^>]*>\s*(\d+)\s*<\/dd>/);
+    if (badMatch) {
+      result.bathrooms = parseInt(badMatch[1]);
+    }
+
+    // Extract extra details for description
+    const descParts: string[] = [];
+    
+    // Type woning
+    const typeMatch = html.match(/Type woning[\s\S]*?<span>\s*([^<]+)\s*<\/span>/);
+    if (typeMatch) descParts.push(`Type: ${typeMatch[1].trim()}`);
+    
+    if (result.interior && result.interior !== "-") descParts.push(`Interieur: ${result.interior}`);
+    
+    // Huurprijs
+    const huurMatch = html.match(/Huurprijs[\s\S]*?<dd[^>]*>\s*([^<]+)\s*<\/dd>/);
+    if (huurMatch) descParts.push(`Huurprijs: ${huurMatch[1].replace(/&nbsp;/g, " ").trim()}`);
+    
+    // Borg
+    const borgMatch = html.match(/Borg[\s\S]*?<dd[^>]*>\s*€[^<]*?(\d[\d.,]*)[^<]*<\/dd>/);
+    if (borgMatch && borgMatch[1] !== "0,00") descParts.push(`Borg: €${borgMatch[1]}`);
+    
+    if (result.description) {
+      result.description = descParts.length > 0
+        ? `${descParts.join(" • ")}\n\n${result.description}`
+        : result.description;
+    } else if (descParts.length > 0) {
+      result.description = descParts.join(" • ");
+    }
+
+  } catch (e) {
+    console.warn(`Failed to fetch Huurzone detail ${sourceUrl}:`, e instanceof Error ? e.message : e);
+  }
+  return result;
+}
+
 async function scrapeHuurzone(): Promise<ScrapedProperty[]> {
   const properties: ScrapedProperty[] = [];
   try {
-    // Scrape first 3 pages to get a good sample
-    for (let page = 1; page <= 3; page++) {
+    // Scrape 10 pages for more listings
+    for (let page = 1; page <= 10; page++) {
       const url = page === 1
         ? "https://www.huurzone.nl/huurwoningen/heel-nederland"
         : `https://www.huurzone.nl/huurwoningen/heel-nederland?page=${page}`;
@@ -1338,12 +1430,9 @@ async function scrapeHuurzone(): Promise<ScrapedProperty[]> {
             if (isNaN(price)) price = null;
           }
 
-          // Image
+          // Image from listing (fallback)
           const imgMatch = listingHtml.match(/<img[^>]+src="([^"]+)"[^>]*>/);
-          const images: string[] = [];
-          if (imgMatch && imgMatch[1]) {
-            images.push(imgMatch[1].replace(/&amp;/g, "&"));
-          }
+          const listingImage = imgMatch ? imgMatch[1].replace(/&amp;/g, "&") : null;
 
           // Property type from title
           let propertyType: string | null = "appartement";
@@ -1366,8 +1455,8 @@ async function scrapeHuurzone(): Promise<ScrapedProperty[]> {
             property_type: propertyType,
             listing_type: "huur",
             description: interior ? `Interieur: ${interior}` : null,
-            images: images.slice(0, 10),
-            raw_data: { interior },
+            images: listingImage ? [listingImage] : [],
+            raw_data: { interior, _needs_detail: true },
           });
 
           pageCount++;
@@ -1380,7 +1469,50 @@ async function scrapeHuurzone(): Promise<ScrapedProperty[]> {
       if (pageCount === 0) break;
     }
 
-    console.log(`Huurzone total: ${properties.length} listings`);
+    console.log(`Huurzone listings from overview: ${properties.length}`);
+
+    // Visit detail pages in batches to enrich with images + description
+    const BATCH_SIZE = 5;
+    const MAX_DETAILS = 40;
+    const toEnrich = properties.slice(0, MAX_DETAILS);
+
+    for (let i = 0; i < toEnrich.length; i += BATCH_SIZE) {
+      const batch = toEnrich.slice(i, i + BATCH_SIZE);
+      const results = await Promise.allSettled(
+        batch.map((p) => fetchHuurzoneDetail(p.source_url))
+      );
+
+      for (let j = 0; j < batch.length; j++) {
+        const r = results[j];
+        if (r.status === "fulfilled" && r.value) {
+          const detail = r.value;
+          const prop = batch[j];
+          if (detail.images.length > 0) {
+            prop.images = detail.images.slice(0, 10);
+          }
+          if (detail.description) {
+            prop.description = detail.description;
+          }
+          if (detail.postalCode) {
+            prop.postal_code = detail.postalCode;
+          }
+          if (detail.gemeente) {
+            // Use gemeente as more specific city if available
+            prop.raw_data = { ...prop.raw_data, gemeente: detail.gemeente };
+          }
+          if (detail.bathrooms) {
+            prop.raw_data = { ...prop.raw_data, bathrooms: detail.bathrooms };
+          }
+          if (detail.bedrooms && !prop.bedrooms) {
+            prop.bedrooms = detail.bedrooms;
+          }
+          // Remove the _needs_detail flag
+          delete (prop.raw_data as Record<string, unknown>)._needs_detail;
+        }
+      }
+    }
+
+    console.log(`Huurzone total after enrichment: ${properties.length} listings`);
   } catch (e) {
     console.error("Error scraping Huurzone:", e);
   }
