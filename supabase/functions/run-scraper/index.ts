@@ -429,43 +429,282 @@ async function scrapeWooniezie(): Promise<ScrapedProperty[]> {
 
 // ============ OTHER SCRAPERS ============
 
+async function fetchParariusDetail(sourceUrl: string): Promise<{
+  images: string[];
+  description: string | null;
+  postalCode: string | null;
+  street: string | null;
+  houseNumber: string | null;
+  city: string | null;
+  bedrooms: number | null;
+  bathrooms: number | null;
+  surfaceArea: number | null;
+  buildYear: number | null;
+  energyLabel: string | null;
+  interior: string | null;
+}> {
+  const result = { images: [] as string[], description: null as string | null, postalCode: null as string | null, street: null as string | null, houseNumber: null as string | null, city: null as string | null, bedrooms: null as number | null, bathrooms: null as number | null, surfaceArea: null as number | null, buildYear: null as number | null, energyLabel: null as string | null, interior: null as string | null };
+  try {
+    const html = await fetchPage(sourceUrl, 12000);
+
+    // Images from casco-media-prod CDN
+    const imgMatches = html.matchAll(/src="(https:\/\/casco-media-prod[^"]+\.(jpg|jpeg|png|webp)[^"]*)"/g);
+    const seen = new Set<string>();
+    for (const m of imgMatches) {
+      // Use 800px width version
+      let src = m[1].replace(/&amp;/g, "&");
+      const baseUrl = src.split("?")[0];
+      if (seen.has(baseUrl)) continue;
+      seen.add(baseUrl);
+      src = `${baseUrl}?width=800&auto=webp`;
+      result.images.push(src);
+    }
+
+    // Also get pararius-office-prod images
+    const officeImgs = html.matchAll(/src="(https:\/\/pararius-office-prod[^"]+\.(jpg|jpeg|png|webp)[^"]*)"/g);
+    for (const m of officeImgs) {
+      let src = m[1].replace(/&amp;/g, "&");
+      if (!seen.has(src.split("?")[0])) {
+        seen.add(src.split("?")[0]);
+        result.images.push(src);
+      }
+    }
+
+    // Description
+    const descMatch = html.match(/class="listing-detail-description__content[^"]*"[^>]*>([\s\S]*?)<\/div>/);
+    if (descMatch) {
+      result.description = descMatch[1].replace(/<[^>]*>/g, " ").replace(/&nbsp;/g, " ").replace(/\s+/g, " ").trim();
+    }
+
+    // Address from subtitle: "5038 SP Tilburg (Binnenstad West)"
+    const addressMatch = html.match(/class="listing-detail-summary__location"[^>]*>([\s\S]*?)<\/div>/);
+    if (addressMatch) {
+      const addrText = addressMatch[1].replace(/<[^>]*>/g, "").trim();
+      const pcMatch = addrText.match(/(\d{4}\s?[A-Z]{2})/);
+      if (pcMatch) result.postalCode = pcMatch[1].replace(/\s/g, "");
+    }
+
+    // Street from title
+    const titleMatch = html.match(/<h1[^>]*class="listing-detail-summary__title"[^>]*>([\s\S]*?)<\/h1>/);
+    if (titleMatch) {
+      const titleText = titleMatch[1].replace(/<[^>]*>/g, "").trim();
+      // Format: "Appartement Nieuwlandstraat" or "Kamer Eckartseweg Noord 42"
+      const streetMatch = titleText.match(/(?:Appartement|Huis|Kamer|Studio|Woning)\s+(.+)/i);
+      if (streetMatch) {
+        const streetFull = streetMatch[1].trim();
+        const numMatch = streetFull.match(/^(.*?)\s+(\d+.*)$/);
+        if (numMatch) {
+          result.street = numMatch[1];
+          result.houseNumber = numMatch[2];
+        } else {
+          result.street = streetFull;
+        }
+      }
+    }
+
+    // Features: bedrooms, bathrooms, surface area, build year, energy label
+    const featureItems = html.matchAll(/class="illustrated-features__item illustrated-features__item--([^"]+)"[^>]*>([\s\S]*?)<\/li>/g);
+    for (const fm of featureItems) {
+      const type = fm[1];
+      const val = fm[2].replace(/<[^>]*>/g, "").trim();
+      if (type === "surface-area") {
+        const num = parseInt(val);
+        if (!isNaN(num)) result.surfaceArea = num;
+      } else if (type === "number-of-rooms") {
+        const num = parseInt(val);
+        if (!isNaN(num)) result.bedrooms = num;
+      } else if (type === "number-of-bathrooms") {
+        const num = parseInt(val);
+        if (!isNaN(num)) result.bathrooms = num;
+      } else if (type === "interior") {
+        result.interior = val;
+      } else if (type === "construction-year") {
+        const num = parseInt(val);
+        if (!isNaN(num) && num > 1800) result.buildYear = num;
+      } else if (type === "energy-label") {
+        result.energyLabel = val.replace(/energielabel\s*/i, "").trim().toUpperCase();
+      }
+    }
+  } catch (e) {
+    console.warn(`Failed to fetch Pararius detail ${sourceUrl}:`, e instanceof Error ? e.message : e);
+  }
+  return result;
+}
+
 async function scrapePararius(): Promise<ScrapedProperty[]> {
   const properties: ScrapedProperty[] = [];
   try {
-    const html = await fetchPage("https://www.pararius.nl/huurwoningen/nederland");
-    const listingMatches = html.matchAll(
-      /href="(\/(?:huis|appartement|studio|kamer)-te-huur\/[^"]+\/[a-f0-9-]+\/[^"]+)"/gi
-    );
+    // Scrape 10 pages
+    for (let page = 1; page <= 5; page++) {
+      const url = page === 1
+        ? "https://www.pararius.nl/huurwoningen/nederland"
+        : `https://www.pararius.nl/huurwoningen/nederland/pagina-${page}`;
 
-    for (const match of listingMatches) {
-      const url = match[1];
-      if (url.includes("/pagina/") || url.includes("?") || url.endsWith("/nederland")) continue;
+      let html: string;
+      try {
+        html = await fetchPage(url);
+      } catch (e) {
+        console.warn(`Pararius page ${page} failed:`, e);
+        break;
+      }
 
-      const fullUrl = `https://www.pararius.nl${url}`;
-      let propertyType = null;
-      if (url.includes("/huis-")) propertyType = "huis";
-      else if (url.includes("/appartement-")) propertyType = "appartement";
-      else if (url.includes("/studio-")) propertyType = "studio";
-      else if (url.includes("/kamer-")) propertyType = "kamer";
+      // Extract listing URLs and basic data using title links
+      // Each listing has a title link like: <a class="listing-search-item__link listing-search-item__link--title" href="/appartement-te-huur/tilburg/3cbe477c/nieuwlandstraat">
+      const titleLinkRegex = /class="listing-search-item__link listing-search-item__link--title"\s+href="([^"]+)"[^>]*>\s*([\s\S]*?)\s*<\/a>/g;
+      
+      // Also extract subtitles (postcode + city), prices, features by finding them near title links
+      // We'll use a simpler approach: split by listing sections and extract from each
+      const listings = html.split('listing-search-item__link--title');
+      let pageCount = 0;
 
-      const pathParts = url.split("/");
-      const city = pathParts.length >= 3 ? pathParts[2] : null;
+      for (let li = 1; li < listings.length; li++) {
+        // Reconstruct the segment around the title link
+        const segment = listings[li - 1].slice(-3000) + 'listing-search-item__link--title' + listings[li].slice(0, 5000);
+        const hrefMatch = segment.match(/listing-search-item__link--title"\s+href="([^"]+)"/);
+        // Extract clean title from data-analytics element_text
+        const titleAnalytics = segment.match(/listing-search-item__link--title"[^"]*"[^"]*"[^"]*"[^"]*element_text&quot;:&quot;([^&]+)&quot;/);
+        // Fallback: extract from between > and </a>
+        const titleFallback = segment.match(/listing-search-item__link--title"[\s\S]*?>\s*\n\s*([\w][^\n<]{2,50})\s*\n/);
+        if (!hrefMatch) continue;
+        const sourceUrl = hrefMatch[1].startsWith("http") ? hrefMatch[1] : `https://www.pararius.nl${hrefMatch[1]}`;
+        const title = titleAnalytics ? titleAnalytics[1] : (titleFallback ? titleFallback[1].trim() : null);
+        if (!title) continue;
+        if (!match) continue;
 
-      properties.push({
-        source_url: fullUrl,
-        source_site: "pararius",
-        title: `Huurwoning ${city || "Pararius"}`,
-        price: null,
-        city: city ? city.charAt(0).toUpperCase() + city.slice(1) : null,
-        postal_code: null, street: null, house_number: null,
-        surface_area: null, bedrooms: null,
-        property_type: propertyType,
-        listing_type: "huur",
-        description: null, images: [],
-        raw_data: { url },
-      });
+        try {
+          const listingHtml = segment;
+
+          // sourceUrl and title already extracted above
+
+          // Subtitle: "5038 SP Tilburg (Binnenstad West)"
+          const subMatch = listingHtml.match(/class="listing-search-item__sub-title"[^>]*>\s*([\s\S]*?)\s*<\/div>/);
+          const subText = subMatch ? subMatch[1].replace(/<[^>]*>/g, "").trim() : "";
+          
+          let postalCode: string | null = null;
+          let city: string | null = null;
+          let neighborhood: string | null = null;
+          const pcCityMatch = subText.match(/(\d{4}\s?[A-Z]{2})\s+([^(]+)(?:\(([^)]+)\))?/);
+          if (pcCityMatch) {
+            postalCode = pcCityMatch[1].replace(/\s/g, "");
+            city = pcCityMatch[2].trim();
+            neighborhood = pcCityMatch[3]?.trim() || null;
+          }
+
+          // Price
+          const priceMatch = listingHtml.match(/class="listing-search-item__price-main"[^>]*>\s*€[&nbsp;\s]*([\d.,]+)/);
+          let price: number | null = null;
+          if (priceMatch) {
+            const priceStr = priceMatch[1].replace(/\./g, "").replace(",", ".");
+            price = parseFloat(priceStr);
+            if (isNaN(price)) price = null;
+          }
+
+          // Features
+          let surfaceArea: number | null = null;
+          let bedrooms: number | null = null;
+          let interior: string | null = null;
+          
+          const featureItems = listingHtml.matchAll(/class="illustrated-features__item illustrated-features__item--([^"]+)"[^>]*>\s*([\s\S]*?)\s*<\/li>/g);
+          for (const fm of featureItems) {
+            const type = fm[1];
+            const val = fm[2].replace(/<[^>]*>/g, "").trim();
+            if (type === "surface-area") { const n = parseInt(val); if (!isNaN(n)) surfaceArea = n; }
+            else if (type === "number-of-rooms") { const n = parseInt(val); if (!isNaN(n)) bedrooms = n; }
+            else if (type === "interior") interior = val;
+          }
+
+          // Image from listing page
+          const imgMatch = listingHtml.match(/class="picture__image"[^>]+src="([^"]+)"/);
+          const listingImage = imgMatch ? imgMatch[1].replace(/&amp;/g, "&") : null;
+
+          // Property type from URL/title
+          let propertyType: string | null = "appartement";
+          const titleLower = title.toLowerCase();
+          if (titleLower.startsWith("kamer") || sourceUrl.includes("/kamer-")) propertyType = "kamer";
+          else if (titleLower.startsWith("studio") || sourceUrl.includes("/studio-")) propertyType = "studio";
+          else if (titleLower.startsWith("huis") || sourceUrl.includes("/huis-")) propertyType = "huis";
+
+          // Extract street from title (format: "Appartement Nieuwlandstraat")
+          let street: string | null = null;
+          let houseNumber: string | null = "-";
+          const streetMatch = title.match(/(?:Appartement|Huis|Kamer|Studio|Woning)\s+(.+)/i);
+          if (streetMatch) {
+            const streetFull = streetMatch[1].trim();
+            const numMatch = streetFull.match(/^(.*?)\s+(\d+.*)$/);
+            if (numMatch) {
+              street = numMatch[1];
+              houseNumber = numMatch[2];
+            } else {
+              street = streetFull;
+            }
+          }
+
+          properties.push({
+            source_url: sourceUrl,
+            source_site: "pararius",
+            title,
+            price,
+            city,
+            postal_code: postalCode,
+            street,
+            house_number: houseNumber,
+            surface_area: surfaceArea,
+            bedrooms,
+            property_type: propertyType,
+            listing_type: "huur",
+            description: interior ? `Interieur: ${interior}` : null,
+            images: listingImage ? [listingImage] : [],
+            raw_data: { interior, neighborhood, _needs_detail: true },
+          });
+
+          pageCount++;
+        } catch (itemError) {
+          console.warn("Error parsing Pararius listing:", itemError);
+        }
+      }
+
+      console.log(`Pararius page ${page}: ${pageCount} listings found`);
+      if (pageCount === 0) break;
     }
-    console.log(`Pararius: found ${properties.length} listings`);
+
+    console.log(`Pararius listings from overview: ${properties.length}`);
+
+    // Visit detail pages in batches for more images + description
+    const BATCH_SIZE = 5;
+    const MAX_DETAILS = 15;
+    const toEnrich = properties.slice(0, MAX_DETAILS);
+
+    for (let i = 0; i < toEnrich.length; i += BATCH_SIZE) {
+      const batch = toEnrich.slice(i, i + BATCH_SIZE);
+      const results = await Promise.allSettled(
+        batch.map((p) => fetchParariusDetail(p.source_url))
+      );
+
+      for (let j = 0; j < batch.length; j++) {
+        const r = results[j];
+        if (r.status === "fulfilled" && r.value) {
+          const detail = r.value;
+          const prop = batch[j];
+          if (detail.images.length > 0) prop.images = detail.images.slice(0, 10);
+          if (detail.description) prop.description = detail.description;
+          if (detail.postalCode && !prop.postal_code) prop.postal_code = detail.postalCode;
+          if (detail.street) prop.street = detail.street;
+          if (detail.houseNumber) prop.house_number = detail.houseNumber;
+          if (detail.bedrooms && !prop.bedrooms) prop.bedrooms = detail.bedrooms;
+          if (detail.surfaceArea && !prop.surface_area) prop.surface_area = detail.surfaceArea;
+          prop.raw_data = {
+            ...prop.raw_data,
+            bathrooms: detail.bathrooms,
+            build_year: detail.buildYear,
+            energy_label: detail.energyLabel,
+            interior: detail.interior || (prop.raw_data as Record<string, unknown>).interior,
+          };
+          delete (prop.raw_data as Record<string, unknown>)._needs_detail;
+        }
+      }
+    }
+
+    console.log(`Pararius total after enrichment: ${properties.length} listings`);
   } catch (e) {
     console.error("Error scraping Pararius:", e);
   }
