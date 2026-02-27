@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 import { useScrapers, useAllProperties, useScrapedProperties, useScraperLogs, useRunScraper } from "@/hooks/useAdmin";
 import {
   Home, Activity, Loader2, ClipboardCheck, Clock, CheckCircle, XCircle,
-  TrendingUp, Building2, Eye, Zap, RefreshCw, ExternalLink, BarChart3, Trash2
+  TrendingUp, Building2, Eye, Zap, RefreshCw, ExternalLink, BarChart3, Trash2, Facebook
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -565,6 +565,69 @@ const AdminDashboard = () => {
             </CardContent>
           </Card>
         </div>
+
+        {/* Facebook Posts Overview */}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-3">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Facebook className="h-4 w-4 text-muted-foreground" />
+              Facebook Posts
+            </CardTitle>
+            <Badge variant="secondary" className="text-xs">
+              {properties?.filter(p => p.facebook_posted_at).length || 0} geplaatst
+            </Badge>
+          </CardHeader>
+          <CardContent>
+            {(() => {
+              const postedProperties = properties
+                ?.filter(p => p.facebook_posted_at)
+                .sort((a, b) => new Date(b.facebook_posted_at!).getTime() - new Date(a.facebook_posted_at!).getTime())
+                .slice(0, 10);
+              
+              if (!postedProperties || postedProperties.length === 0) {
+                return (
+                  <p className="py-8 text-center text-sm text-muted-foreground">
+                    Nog geen woningen op Facebook geplaatst
+                  </p>
+                );
+              }
+
+              return (
+                <div className="space-y-2">
+                  {postedProperties.map((property) => (
+                    <div
+                      key={property.id}
+                      className="flex items-center gap-3 rounded-lg border p-2.5 transition-colors hover:bg-muted/50"
+                    >
+                      <div className="h-10 w-10 flex-shrink-0 overflow-hidden rounded-md bg-muted">
+                        <img
+                          src={property.images?.[0] || propertyPlaceholder}
+                          alt=""
+                          className="h-full w-full object-cover"
+                        />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-medium">{property.title}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {property.city} · €{Number(property.price).toLocaleString("nl-NL")}
+                        </p>
+                      </div>
+                      <div className="flex flex-col items-end flex-shrink-0">
+                        <Badge variant="default" className="text-[10px] mb-0.5">
+                          <Facebook className="h-2.5 w-2.5 mr-1" />
+                          geplaatst
+                        </Badge>
+                        <span className="text-[10px] text-muted-foreground whitespace-nowrap">
+                          {format(new Date(property.facebook_posted_at!), "dd MMM yyyy HH:mm", { locale: nl })}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              );
+            })()}
+          </CardContent>
+        </Card>
       </div>
     </AdminLayout>
   );
