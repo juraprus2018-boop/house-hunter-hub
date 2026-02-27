@@ -436,6 +436,7 @@ async function fetchParariusDetail(sourceUrl: string): Promise<{
   street: string | null;
   houseNumber: string | null;
   city: string | null;
+  price: number | null;
   bedrooms: number | null;
   bathrooms: number | null;
   surfaceArea: number | null;
@@ -443,7 +444,7 @@ async function fetchParariusDetail(sourceUrl: string): Promise<{
   energyLabel: string | null;
   interior: string | null;
 }> {
-  const result = { images: [] as string[], description: null as string | null, postalCode: null as string | null, street: null as string | null, houseNumber: null as string | null, city: null as string | null, bedrooms: null as number | null, bathrooms: null as number | null, surfaceArea: null as number | null, buildYear: null as number | null, energyLabel: null as string | null, interior: null as string | null };
+  const result = { images: [] as string[], description: null as string | null, postalCode: null as string | null, street: null as string | null, houseNumber: null as string | null, city: null as string | null, price: null as number | null, bedrooms: null as number | null, bathrooms: null as number | null, surfaceArea: null as number | null, buildYear: null as number | null, energyLabel: null as string | null, interior: null as string | null };
   try {
     const html = await fetchPage(sourceUrl, 12000);
 
@@ -479,9 +480,11 @@ async function fetchParariusDetail(sourceUrl: string): Promise<{
     // Address from subtitle: "5038 SP Tilburg (Binnenstad West)"
     const addressMatch = html.match(/class="listing-detail-summary__location"[^>]*>([\s\S]*?)<\/div>/);
     if (addressMatch) {
-      const addrText = addressMatch[1].replace(/<[^>]*>/g, "").trim();
+      const addrText = addressMatch[1].replace(/<[^>]*>/g, "").replace(/&nbsp;/g, " ").trim();
       const pcMatch = addrText.match(/(\d{4}\s?[A-Z]{2})/);
       if (pcMatch) result.postalCode = pcMatch[1].replace(/\s/g, "");
+      const cityMatch = addrText.match(/\d{4}\s?[A-Z]{2}\s+([^(]+)/);
+      if (cityMatch) result.city = cityMatch[1].trim();
     }
 
     // Street from title
@@ -525,6 +528,16 @@ async function fetchParariusDetail(sourceUrl: string): Promise<{
         result.energyLabel = val.replace(/energielabel\s*/i, "").trim().toUpperCase();
       }
     }
+
+    // Price from detail page
+    const detailPriceMatch = html.match(/listing-detail-summary__price[^>]*>([^<]*€[^<]*)</);
+    if (detailPriceMatch) {
+      const priceNums = detailPriceMatch[1].replace(/&nbsp;/g, " ").match(/[\d.]+/);
+      if (priceNums) {
+        const p = parseInt(priceNums[0].replace(/\./g, ""));
+        if (!isNaN(p) && p > 0) result.price = p;
+      }
+    }
   } catch (e) {
     console.warn(`Failed to fetch Pararius detail ${sourceUrl}:`, e instanceof Error ? e.message : e);
   }
@@ -554,7 +567,8 @@ async function scrapePararius(): Promise<ScrapedProperty[]> {
       console.log(`Pararius page ${page}: found ${listings.length - 1} listing sections`);
 
       for (let li = 1; li < listings.length; li++) {
-        const section = listings[li].substring(0, 8000);
+        const fullSection = listings[li];
+        const section = fullSection.substring(0, 8000);
 
         // Extract URL and title from aria-label on depiction link
         const depictionMatch = section.match(/listing-search-item__link--depiction"\s+href="([^"]+)"[\s\S]*?aria-label="([^"]+)"/);
@@ -571,9 +585,9 @@ async function scrapePararius(): Promise<ScrapedProperty[]> {
         const imgMatch = section.match(/class="picture__image"[^>]+src="([^"]+)"/);
         const listingImage = imgMatch ? imgMatch[1].replace(/&amp;/g, "&") : null;
 
-        // Sub-title: "5038 SP Tilburg (Binnenstad West)"
-        const subMatch = section.match(/class="listing-search-item__sub-title"[^>]*>\s*([\s\S]*?)\s*<\/div>/);
-        const subText = subMatch ? subMatch[1].replace(/<[^>]*>/g, "").trim() : "";
+        // Sub-title: "5038 SP Tilburg (Binnenstad West)" - search in full section
+        const subMatch = fullSection.match(/class="listing-search-item__sub-title"[^>]*>\s*([\s\S]*?)\s*<\/div>/);
+        const subText = subMatch ? subMatch[1].replace(/<[^>]*>/g, "").replace(/&nbsp;/g, " ").trim() : "";
         
         let postalCode: string | null = null;
         let city: string | null = null;
@@ -584,22 +598,48 @@ async function scrapePararius(): Promise<ScrapedProperty[]> {
           city = pcCityMatch[2].trim();
           neighborhood = pcCityMatch[3]?.trim() || null;
         }
-
-        // Price
-        const priceMatch = section.match(/class="listing-search-item__price-main"[^>]*>\s*€[&nbsp;\s]*([\d.,]+)/);
-        let price: number | null = null;
-        if (priceMatch) {
-          const priceStr = priceMatch[1].replace(/\./g, "").replace(",", ".");
-          price = parseFloat(priceStr);
-          if (isNaN(price)) price = null;
+        // Fallback: extract city from URL like /huurwoningen/amsterdam/
+        if (!city) {
+          const urlCityMatch = sourceUrl.match(/pararius\.nl\/[^/]+-te-huur\/([^/]+)\//);
+          if (urlCityMatch) {
+            city = urlCityMatch[1].split("-").map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
+          }
         }
+        if (li <= 2) {
+          console.log(`Pararius listing debug: title="${title}", subText="${subText}", city="${city}"`);
+          // Log price-related HTML
+          const priceIdx = section.indexOf('price');
+          if (priceIdx > -1) console.log(`Pararius price HTML: ${section.substring(priceIdx, priceIdx + 200)}`);
+          else console.log(`Pararius: no 'price' found in section (length=${section.length})`);
+        }
+
+        // Price - search in full section for price-main span: €&nbsp;2.200 per maand
+        let price: number | null = null;
+        const priceSpan = fullSection.match(/price-main[^>]*>([^<]+)</);
+        if (priceSpan) {
+          const priceText = priceSpan[1].replace(/&nbsp;/g, " ").replace(/\u00a0/g, " ");
+          const nums = priceText.match(/[\d.]+/);
+          if (nums) {
+            price = parseInt(nums[0].replace(/\./g, ""));
+            if (isNaN(price) || price === 0) price = null;
+          }
+        }
+        // Fallback: any € amount in full section
+        if (!price) {
+          const euroMatch = fullSection.match(/€[^<\d]{0,10}([\d.]+)/);
+          if (euroMatch) {
+            price = parseInt(euroMatch[1].replace(/\./g, ""));
+            if (isNaN(price) || price === 0) price = null;
+          }
+        }
+        if (li <= 2) console.log(`Pararius price result: price=${price}`);
 
         // Features
         let surfaceArea: number | null = null;
         let bedrooms: number | null = null;
         let interior: string | null = null;
         
-        const featureItems = section.matchAll(/class="illustrated-features__item illustrated-features__item--([^"]+)"[^>]*>\s*([\s\S]*?)\s*<\/li>/g);
+        const featureItems = fullSection.matchAll(/class="illustrated-features__item illustrated-features__item--([^"]+)"[^>]*>\s*([\s\S]*?)\s*<\/li>/g);
         for (const fm of featureItems) {
           const type = fm[1];
           const val = fm[2].replace(/<[^>]*>/g, "").trim();
@@ -658,8 +698,8 @@ async function scrapePararius(): Promise<ScrapedProperty[]> {
     console.log(`Pararius listings from overview: ${properties.length}`);
 
     // Visit detail pages in batches for more images + description
-    const BATCH_SIZE = 5;
-    const MAX_DETAILS = 40;
+    const BATCH_SIZE = 8;
+    const MAX_DETAILS = 80;
     const toEnrich = properties.slice(0, MAX_DETAILS);
 
     for (let i = 0; i < toEnrich.length; i += BATCH_SIZE) {
@@ -679,6 +719,8 @@ async function scrapePararius(): Promise<ScrapedProperty[]> {
           if (detail.street) prop.street = detail.street;
           if (detail.houseNumber) prop.house_number = detail.houseNumber;
           if (detail.bedrooms && !prop.bedrooms) prop.bedrooms = detail.bedrooms;
+          if (detail.city && !prop.city) prop.city = detail.city;
+          if (detail.price && !prop.price) prop.price = detail.price;
           if (detail.surfaceArea && !prop.surface_area) prop.surface_area = detail.surfaceArea;
           prop.raw_data = {
             ...prop.raw_data,
