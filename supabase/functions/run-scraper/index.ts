@@ -1273,6 +1273,120 @@ async function scrape123Wonen(): Promise<ScrapedProperty[]> {
   return deduplicateUrls(properties);
 }
 
+// ============ HUURZONE SCRAPER ============
+
+async function scrapeHuurzone(): Promise<ScrapedProperty[]> {
+  const properties: ScrapedProperty[] = [];
+  try {
+    // Scrape first 3 pages to get a good sample
+    for (let page = 1; page <= 3; page++) {
+      const url = page === 1
+        ? "https://www.huurzone.nl/huurwoningen/heel-nederland"
+        : `https://www.huurzone.nl/huurwoningen/heel-nederland?page=${page}`;
+      
+      let html: string;
+      try {
+        html = await fetchPage(url);
+      } catch (e) {
+        console.warn(`Huurzone page ${page} failed:`, e);
+        break;
+      }
+
+      // Each listing is an <a> tag with href pattern /huurwoningen/province/city/id
+      const listingRegex = /<a\s+href="(https:\/\/www\.huurzone\.nl\/huurwoningen\/[^"]+\/(\d+))"\s+class="[^"]*group[^"]*"[^>]*>([\s\S]*?)<\/a>/g;
+      let match;
+      let pageCount = 0;
+
+      while ((match = listingRegex.exec(html)) !== null) {
+        try {
+          const sourceUrl = match[1];
+          const listingHtml = match[3];
+
+          // Title from h2
+          const titleMatch = listingHtml.match(/<h2[^>]*>([\s\S]*?)<\/h2>/);
+          const title = titleMatch ? titleMatch[1].replace(/<[^>]*>/g, "").trim() : "";
+          if (!title) continue;
+
+          // City from location paragraph (format: "City, Province")
+          const locationMatch = listingHtml.match(/#icon-marker[\s\S]*?<p[^>]*>\s*(.*?)\s*<\/p>/);
+          const locationText = locationMatch ? locationMatch[1].trim() : "";
+          const city = locationText.split(",")[0]?.trim() || null;
+
+          // Surface area
+          const areaMatch = listingHtml.match(/#icon-size[\s\S]*?<p[^>]*>\s*([\s\S]*?)\s*<\/p>/);
+          let surfaceArea: number | null = null;
+          if (areaMatch) {
+            const areaText = areaMatch[1].replace(/<[^>]*>/g, "").trim();
+            const areaNum = parseInt(areaText);
+            if (!isNaN(areaNum)) surfaceArea = areaNum;
+          }
+
+          // Bedrooms
+          const bedroomsMatch = listingHtml.match(/#icon-bed[\s\S]*?<p[^>]*>\s*(\d+)\s*<\/p>/);
+          const bedrooms = bedroomsMatch ? parseInt(bedroomsMatch[1]) : null;
+
+          // Interior
+          const interiorMatch = listingHtml.match(/#icon-chair[\s\S]*?<p[^>]*>\s*(.*?)\s*<\/p>/);
+          const interior = interiorMatch ? interiorMatch[1].trim() : null;
+
+          // Price - extract from "€ 103,00" format
+          const priceMatch = listingHtml.match(/<span[^>]*class="text-xl font-bold[^"]*"[^>]*>\s*€[&nbsp;\s]*([\d.,]+)\s*<\/span>/);
+          let price: number | null = null;
+          if (priceMatch) {
+            const priceStr = priceMatch[1].replace(/\./g, "").replace(",", ".");
+            price = parseFloat(priceStr);
+            if (isNaN(price)) price = null;
+          }
+
+          // Image
+          const imgMatch = listingHtml.match(/<img[^>]+src="([^"]+)"[^>]*>/);
+          const images: string[] = [];
+          if (imgMatch && imgMatch[1]) {
+            images.push(imgMatch[1].replace(/&amp;/g, "&"));
+          }
+
+          // Property type from title
+          let propertyType: string | null = "appartement";
+          const titleLower = title.toLowerCase();
+          if (titleLower.includes("kamer")) propertyType = "kamer";
+          else if (titleLower.includes("studio")) propertyType = "studio";
+          else if (titleLower.includes("woonhuis") || titleLower.includes("huis")) propertyType = "huis";
+
+          properties.push({
+            source_url: sourceUrl,
+            source_site: "huurzone",
+            title,
+            price,
+            city,
+            postal_code: null,
+            street: null,
+            house_number: "-",
+            surface_area: surfaceArea,
+            bedrooms,
+            property_type: propertyType,
+            listing_type: "huur",
+            description: interior ? `Interieur: ${interior}` : null,
+            images: images.slice(0, 10),
+            raw_data: { interior },
+          });
+
+          pageCount++;
+        } catch (itemError) {
+          console.warn("Error parsing Huurzone listing:", itemError);
+        }
+      }
+
+      console.log(`Huurzone page ${page}: ${pageCount} listings found`);
+      if (pageCount === 0) break;
+    }
+
+    console.log(`Huurzone total: ${properties.length} listings`);
+  } catch (e) {
+    console.error("Error scraping Huurzone:", e);
+  }
+  return deduplicateUrls(properties);
+}
+
 function blockedScraper(name: string, reason: string) {
   return async (): Promise<ScrapedProperty[]> => {
     console.log(`${name}: ${reason}`);
@@ -1298,6 +1412,7 @@ const scraperMap: Record<string, () => Promise<ScrapedProperty[]>> = {
   rochdale: blockedScraper("Rochdale", "404"),
   woonbron: blockedScraper("Woonbron", "JavaScript-gerenderd"),
   "woonstad rotterdam": blockedScraper("Woonstad Rotterdam", "JavaScript-gerenderd"),
+  huurzone: scrapeHuurzone,
 };
 
 Deno.serve(async (req) => {
