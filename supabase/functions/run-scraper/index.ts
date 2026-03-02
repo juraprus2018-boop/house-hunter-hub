@@ -1037,12 +1037,56 @@ async function scrapeKamernet(): Promise<ScrapedProperty[]> {
   return deduplicateUrls(properties);
 }
 
+async function fetchHuurwoningenPage(url: string): Promise<string> {
+  console.log(`HW Fetching: ${url}`);
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 15000);
+
+  try {
+    const response = await fetch(url, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
+        "Accept-Language": "nl-NL,nl;q=0.9,en-US;q=0.8,en;q=0.7",
+        "Accept-Encoding": "gzip, deflate, br",
+        "Cache-Control": "no-cache",
+        "Pragma": "no-cache",
+        "Sec-Ch-Ua": '"Chromium";v="131", "Not_A_Brand";v="24"',
+        "Sec-Ch-Ua-Mobile": "?0",
+        "Sec-Ch-Ua-Platform": '"macOS"',
+        "Sec-Fetch-Dest": "document",
+        "Sec-Fetch-Mode": "navigate",
+        "Sec-Fetch-Site": "none",
+        "Sec-Fetch-User": "?1",
+        "Upgrade-Insecure-Requests": "1",
+        "Referer": "https://www.huurwoningen.nl/",
+      },
+      redirect: "follow",
+      signal: controller.signal,
+    });
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      throw new Error(`HW fetch failed ${url}: ${response.status}`);
+    }
+    const text = await response.text();
+    console.log(`HW Fetched ${text.length} chars from ${url}`);
+    return text;
+  } catch (error) {
+    clearTimeout(timeoutId);
+    throw error;
+  }
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 async function scrapeHuurwoningen(): Promise<ScrapedProperty[]> {
   const properties: ScrapedProperty[] = [];
   const seenUrls = new Set<string>();
   const MAX_IMAGES_PER_PROPERTY = 10;
-  const MAX_PAGES = 66;
-  const BATCH_SIZE = 5; // Fetch 5 pages concurrently
+  const MAX_PAGES = 40;
 
   function parseHuurwoningenPage(html: string, pageNum: number): ScrapedProperty[] {
     const pageProperties: ScrapedProperty[] = [];
@@ -1054,6 +1098,7 @@ async function scrapeHuurwoningen(): Promise<ScrapedProperty[]> {
 
     for (const section of sections) {
       try {
+        // Updated URL pattern: /huren/{city}/{uuid}/{street}/
         const urlMatch = section.match(/href="(?:https:\/\/www\.huurwoningen\.nl)?(\/huren\/([^\/]+)\/([^\/]+)\/([^\/]+)\/?)"/i);
         if (!urlMatch) continue;
 
@@ -1156,41 +1201,43 @@ async function scrapeHuurwoningen(): Promise<ScrapedProperty[]> {
   }
 
   try {
-    // Fetch pages in parallel batches for speed
-    for (let batch = 0; batch < MAX_PAGES; batch += BATCH_SIZE) {
-      const batchUrls = [];
-      for (let i = batch; i < Math.min(batch + BATCH_SIZE, MAX_PAGES); i++) {
-        const pageNum = i + 1;
-        batchUrls.push(
-          pageNum === 1
-            ? "https://www.huurwoningen.nl/aanbod-huurwoningen/"
-            : `https://www.huurwoningen.nl/aanbod-huurwoningen/?page=${pageNum}`
-        );
-      }
+    // Fetch pages SEQUENTIALLY with delays to avoid 403 bot detection
+    let consecutiveEmpty = 0;
+    for (let pageNum = 1; pageNum <= MAX_PAGES; pageNum++) {
+      try {
+        const url = pageNum === 1
+          ? "https://www.huurwoningen.nl/aanbod-huurwoningen/"
+          : `https://www.huurwoningen.nl/aanbod-huurwoningen/?page=${pageNum}`;
 
-      const results = await Promise.allSettled(
-        batchUrls.map((url) => fetchPage(url, 10000))
-      );
+        const html = await fetchHuurwoningenPage(url);
+        const pageProps = parseHuurwoningenPage(html, pageNum);
 
-      let emptyPages = 0;
-      for (let j = 0; j < results.length; j++) {
-        const result = results[j];
-        if (result.status === "fulfilled") {
-          const pageProps = parseHuurwoningenPage(result.value, batch + j + 1);
-          if (pageProps.length === 0) emptyPages++;
-          properties.push(...pageProps);
+        if (pageProps.length === 0) {
+          consecutiveEmpty++;
+          if (consecutiveEmpty >= 2) {
+            console.log("Huurwoningen: 2 consecutive empty pages, stopping");
+            break;
+          }
         } else {
-          console.warn(`Huurwoningen page ${batch + j + 1} failed:`, result.reason);
-          emptyPages++;
+          consecutiveEmpty = 0;
+          properties.push(...pageProps);
         }
-      }
 
-      console.log(`Huurwoningen batch ${Math.floor(batch / BATCH_SIZE) + 1}: ${properties.length} total listings so far`);
+        console.log(`Huurwoningen page ${pageNum}: ${pageProps.length} listings (total: ${properties.length})`);
 
-      // If all pages in batch were empty, we've reached the end
-      if (emptyPages === results.length) {
-        console.log("Huurwoningen: no more pages with listings, stopping");
-        break;
+        // Delay between requests to avoid bot detection (800-1500ms)
+        if (pageNum < MAX_PAGES) {
+          await sleep(800 + Math.floor(Math.random() * 700));
+        }
+      } catch (pageError) {
+        console.warn(`Huurwoningen page ${pageNum} failed:`, pageError);
+        consecutiveEmpty++;
+        if (consecutiveEmpty >= 3) {
+          console.log("Huurwoningen: 3 consecutive failures, stopping");
+          break;
+        }
+        // Longer delay after failure
+        await sleep(2000 + Math.floor(Math.random() * 1000));
       }
     }
 
