@@ -224,13 +224,13 @@ export const useDailyAlertSubscribers = () => {
   return useQuery({
     queryKey: ["daily-alert-subscribers"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("daily_alert_subscribers")
         .select("*")
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      return data;
+      return data as any[];
     },
   });
 };

@@ -62,48 +62,6 @@ export type Database = {
         }
         Relationships: []
       }
-      daily_alert_subscribers: {
-        Row: {
-          created_at: string
-          email: string
-          id: string
-          is_active: boolean
-          last_notified_at: string | null
-          source: string
-          subscribed_at: string
-          unsubscribed_at: string | null
-          unsubscribe_token: string
-          updated_at: string
-          user_id: string | null
-        }
-        Insert: {
-          created_at?: string
-          email: string
-          id?: string
-          is_active?: boolean
-          last_notified_at?: string | null
-          source?: string
-          subscribed_at?: string
-          unsubscribed_at?: string | null
-          unsubscribe_token?: string
-          updated_at?: string
-          user_id?: string | null
-        }
-        Update: {
-          created_at?: string
-          email?: string
-          id?: string
-          is_active?: boolean
-          last_notified_at?: string | null
-          source?: string
-          subscribed_at?: string
-          unsubscribed_at?: string | null
-          unsubscribe_token?: string
-          updated_at?: string
-          user_id?: string | null
-        }
-        Relationships: []
-      }
       favorites: {
         Row: {
           created_at: string
