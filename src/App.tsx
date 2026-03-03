@@ -38,6 +38,7 @@ import ListingTypePage from "./pages/ListingTypePage";
 import NewListings from "./pages/NewListings";
 import PostPropertyStart from "./pages/PostPropertyStart";
 import AlertUnsubscribe from "./pages/AlertUnsubscribe";
+import DailyAlert from "./pages/DailyAlert";
 
 const queryClient = new QueryClient();
 
@@ -79,6 +80,7 @@ const App = () => (
             <Route path="/profiel" element={<Profile />} />
             <Route path="/steden" element={<Cities />} />
             <Route path="/nieuw-aanbod" element={<NewListings />} />
+            <Route path="/dagelijkse-alert" element={<DailyAlert />} />
             <Route path="/alerts/afmelden/:token" element={<AlertUnsubscribe />} />
             <Route path="/huurwoningen/:city?" element={<ListingTypePage listingType="huur" />} />
             <Route path="/koopwoningen/:city?" element={<ListingTypePage listingType="koop" />} />

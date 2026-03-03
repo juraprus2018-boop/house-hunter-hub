@@ -14,10 +14,10 @@ const Index = () => {
       <main className="flex-1">
         <HeroSection />
         <FeaturedListings />
-        <DailyAlertSection />
         <PopularCities />
         <CategorySection />
         <CTASection />
+        <DailyAlertSection />
       </main>
       <Footer />
     </div>
