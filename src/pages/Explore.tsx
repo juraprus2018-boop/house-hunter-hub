@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import Header from "@/components/layout/Header";
 import PropertyCard from "@/components/properties/PropertyCard";
 import { Button } from "@/components/ui/button";
@@ -6,9 +6,10 @@ import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useProperties } from "@/hooks/useProperties";
-import { Loader2, MapPin, ChevronRight, SlidersHorizontal, X } from "lucide-react";
+import { Loader2, MapPin, ChevronRight, SlidersHorizontal, X, Navigation } from "lucide-react";
 import { cn } from "@/lib/utils";
 import ExploreMap from "@/components/explore/ExploreMap";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -24,23 +25,91 @@ const SOURCE_SITE_LABELS: Record<string, string> = {
   vesteda: "Vesteda",
 };
 
+const DISTANCE_OPTIONS = [5, 10, 15, 25, 50];
+
+// Haversine distance in km
+const haversineKm = (lat1: number, lon1: number, lat2: number, lon2: number) => {
+  const R = 6371;
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLon / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+};
+
 const ExplorePage = () => {
   const [selectedCity, setSelectedCity] = useState<string | null>(null);
   const [listingType, setListingType] = useState<ListingType | null>(null);
   const [selectedSource, setSelectedSource] = useState<string | null>(null);
-  const [maxPrice, setMaxPrice] = useState<number>(5000);
-  const [priceActive, setPriceActive] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const isMobile = useIsMobile();
+
+  // Postcode + distance state
+  const [postcode, setPostcode] = useState("");
+  const [debouncedPostcode, setDebouncedPostcode] = useState("");
+  const [distanceKm, setDistanceKm] = useState(10);
+  const [postcodeCoords, setPostcodeCoords] = useState<{ lat: number; lng: number } | null>(null);
+  const [geocoding, setGeocoding] = useState(false);
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>();
+
+  // Debounce postcode input
+  useEffect(() => {
+    debounceRef.current = setTimeout(() => {
+      setDebouncedPostcode(postcode.trim());
+    }, 600);
+    return () => clearTimeout(debounceRef.current);
+  }, [postcode]);
+
+  // Geocode postcode via Nominatim
+  useEffect(() => {
+    if (!debouncedPostcode || debouncedPostcode.length < 4) {
+      setPostcodeCoords(null);
+      return;
+    }
+    let cancelled = false;
+    setGeocoding(true);
+    fetch(
+      `https://nominatim.openstreetmap.org/search?postalcode=${encodeURIComponent(debouncedPostcode)}&country=Netherlands&format=json&limit=1`,
+      { headers: { "Accept-Language": "nl" } }
+    )
+      .then((r) => r.json())
+      .then((results) => {
+        if (cancelled) return;
+        if (results?.[0]) {
+          setPostcodeCoords({ lat: parseFloat(results[0].lat), lng: parseFloat(results[0].lon) });
+          // Clear city filter when using postcode
+          setSelectedCity(null);
+        } else {
+          setPostcodeCoords(null);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setPostcodeCoords(null);
+      })
+      .finally(() => {
+        if (!cancelled) setGeocoding(false);
+      });
+    return () => { cancelled = true; };
+  }, [debouncedPostcode]);
 
   const { data: allData, isLoading } = useProperties({
     city: selectedCity || undefined,
     listingType: listingType || undefined,
-    maxPrice: priceActive ? maxPrice : undefined,
     sourceSite: selectedSource || undefined,
     pageSize: 1000,
   });
   const allProperties = allData?.properties;
+
+  // Filter by distance from postcode
+  const filteredProperties = useMemo(() => {
+    if (!allProperties) return [];
+    if (!postcodeCoords) return allProperties;
+    return allProperties.filter((p) => {
+      if (!p.latitude || !p.longitude) return false;
+      return haversineKm(postcodeCoords.lat, postcodeCoords.lng, Number(p.latitude), Number(p.longitude)) <= distanceKm;
+    });
+  }, [allProperties, postcodeCoords, distanceKm]);
 
   const { data: citySourceData } = useProperties({
     listingType: listingType || undefined,
@@ -60,7 +129,6 @@ const ExplorePage = () => {
       .map(([name, count]) => ({ name, count }));
   }, [citySourceProperties]);
 
-  // Compute active sources with counts
   const activeSources = useMemo(() => {
     if (!citySourceProperties) return [];
     const sourceCount = new Map<string, number>();
@@ -76,13 +144,19 @@ const ExplorePage = () => {
 
   const [hoveredPropertyId, setHoveredPropertyId] = useState<string | null>(null);
 
+  const clearPostcode = useCallback(() => {
+    setPostcode("");
+    setDebouncedPostcode("");
+    setPostcodeCoords(null);
+  }, []);
+
   const sidebarContent = (
     <>
       <div className="p-5 flex items-center justify-between">
         <div>
           <h2 className="font-display text-lg font-bold">Verkennen</h2>
           <p className="text-sm text-muted-foreground">
-            {isLoading ? "Laden..." : `${allProperties?.length || 0} woningen`}
+            {isLoading ? "Laden..." : `${filteredProperties.length} woningen`}
           </p>
         </div>
         {isMobile && (
@@ -118,33 +192,64 @@ const ExplorePage = () => {
 
       <Separator />
 
-      <div className="p-5">
-        <div className="mb-2 flex items-center justify-between">
-          <Label className="text-sm font-medium">Max. prijs</Label>
-          <button
-            className={cn(
-              "text-xs underline-offset-2",
-              priceActive ? "text-primary underline" : "text-muted-foreground hover:underline"
+      {/* Postcode + distance filter */}
+      <div className="p-5 space-y-4">
+        <div className="space-y-2">
+          <Label className="text-sm font-medium">Postcode</Label>
+          <div className="relative">
+            <Navigation className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              placeholder="bijv. 1012AB"
+              value={postcode}
+              onChange={(e) => setPostcode(e.target.value)}
+              className="pl-10 pr-8"
+            />
+            {postcode && (
+              <button
+                onClick={clearPostcode}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              >
+                <X className="h-4 w-4" />
+              </button>
             )}
-            onClick={() => setPriceActive(!priceActive)}
-          >
-            {priceActive ? "Actief" : "Inactief"}
-          </button>
+          </div>
+          {geocoding && <p className="text-xs text-muted-foreground">Zoeken...</p>}
+          {debouncedPostcode && !geocoding && !postcodeCoords && debouncedPostcode.length >= 4 && (
+            <p className="text-xs text-destructive">Postcode niet gevonden</p>
+          )}
+          {postcodeCoords && (
+            <p className="text-xs text-primary">✓ Postcode gevonden</p>
+          )}
         </div>
-        <p className="mb-3 text-sm font-semibold">
-          {priceActive ? `€${maxPrice.toLocaleString("nl-NL")}` : "Geen limiet"}
-        </p>
-        <Slider
-          value={[maxPrice]}
-          onValueChange={([v]) => {
-            setMaxPrice(v);
-            if (!priceActive) setPriceActive(true);
-          }}
-          max={5000}
-          min={200}
-          step={50}
-          disabled={!priceActive}
-        />
+
+        <div className="space-y-2">
+          <Label className="text-sm font-medium">
+            Afstand: {postcodeCoords ? `${distanceKm} km` : "Vul postcode in"}
+          </Label>
+          <Slider
+            value={[distanceKm]}
+            onValueChange={([v]) => setDistanceKm(v)}
+            max={50}
+            min={1}
+            step={1}
+            disabled={!postcodeCoords}
+          />
+          <div className="flex justify-between text-xs text-muted-foreground">
+            {DISTANCE_OPTIONS.map((d) => (
+              <button
+                key={d}
+                onClick={() => postcodeCoords && setDistanceKm(d)}
+                className={cn(
+                  "rounded px-1.5 py-0.5 transition-colors",
+                  postcodeCoords ? "hover:bg-muted cursor-pointer" : "opacity-50 cursor-not-allowed",
+                  distanceKm === d && postcodeCoords && "bg-primary/10 text-primary font-medium"
+                )}
+              >
+                {d}km
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
 
       <Separator />
@@ -167,6 +272,7 @@ const ExplorePage = () => {
               key={name}
               onClick={() => {
                 setSelectedCity(selectedCity === name ? null : name);
+                if (name) clearPostcode(); // Clear postcode when selecting city
                 if (isMobile) setSidebarOpen(false);
               }}
               className={cn(
@@ -228,7 +334,6 @@ const ExplorePage = () => {
       <Header />
       <main className="flex-1">
         <div className="flex h-[calc(100vh-4rem)] flex-col md:flex-row">
-          {/* Mobile filter button */}
           {isMobile && (
             <div className="flex items-center gap-2 border-b bg-card px-4 py-2">
               <Button
@@ -241,12 +346,11 @@ const ExplorePage = () => {
                 Filters
               </Button>
               <span className="text-sm text-muted-foreground">
-                {isLoading ? "Laden..." : `${allProperties?.length || 0} woningen`}
+                {isLoading ? "Laden..." : `${filteredProperties.length} woningen`}
               </span>
             </div>
           )}
 
-          {/* Mobile sidebar overlay */}
           {isMobile && sidebarOpen && (
             <div className="fixed inset-0 z-50 flex">
               <div className="absolute inset-0 bg-black/40" onClick={() => setSidebarOpen(false)} />
@@ -256,16 +360,13 @@ const ExplorePage = () => {
             </div>
           )}
 
-          {/* Desktop sidebar */}
           {!isMobile && (
             <aside className="w-80 shrink-0 overflow-y-auto border-r bg-card">
               {sidebarContent}
             </aside>
           )}
 
-          {/* Map + results area */}
           <div className="flex flex-1 flex-col overflow-hidden">
-            {/* Map */}
             <div className="relative h-48 min-h-[200px] border-b md:h-1/2 md:min-h-[300px]">
               {isLoading ? (
                 <div className="flex h-full items-center justify-center bg-muted/50">
@@ -273,21 +374,20 @@ const ExplorePage = () => {
                 </div>
               ) : (
                 <ExploreMap
-                  properties={allProperties || []}
+                  properties={filteredProperties}
                   hoveredPropertyId={hoveredPropertyId}
                 />
               )}
             </div>
 
-            {/* Property cards grid */}
             <div className="flex-1 overflow-y-auto p-4 md:p-6">
               {isLoading ? (
                 <div className="flex items-center justify-center py-12">
                   <Loader2 className="h-8 w-8 animate-spin text-primary" />
                 </div>
-              ) : allProperties && allProperties.length > 0 ? (
+              ) : filteredProperties.length > 0 ? (
                 <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 xl:grid-cols-3">
-                  {allProperties.map((property) => (
+                  {filteredProperties.map((property) => (
                     <div
                       key={property.id}
                       onMouseEnter={() => setHoveredPropertyId(property.id)}
