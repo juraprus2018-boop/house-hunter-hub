@@ -52,8 +52,11 @@ const HeroSection = () => {
       <div className="container relative">
         <div className="mx-auto max-w-3xl text-center">
           <h1 className="font-display text-4xl font-bold tracking-tight text-foreground md:text-5xl lg:text-6xl">
-            Zoek <span className="text-primary">huurwoningen</span> en{" "}
-            <span className="text-primary">koopwoningen</span>
+            Dagelijks nieuw <span className="text-primary">woningaanbod</span>
+            <br className="hidden sm:block" />
+            <span className="text-lg md:text-2xl lg:text-3xl font-semibold text-muted-foreground mt-2 block">
+              Huurwoningen & koopwoningen op WoonPeek
+            </span>
           </h1>
           <p className="mt-4 text-lg text-muted-foreground md:text-xl">
             Zoek tussen duizenden woningen of plaats je eigen woning gratis op WoonPeek.
