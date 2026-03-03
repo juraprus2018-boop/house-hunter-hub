@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
@@ -6,20 +6,9 @@ import PropertyCard from "@/components/properties/PropertyCard";
 import Breadcrumbs from "@/components/seo/Breadcrumbs";
 import SEOHead from "@/components/seo/SEOHead";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Slider } from "@/components/ui/slider";
 import { useProperties } from "@/hooks/useProperties";
-import { Search, SlidersHorizontal, X, Loader2, MapPin, List, Map } from "lucide-react";
-import { Switch } from "@/components/ui/switch";
+import { Search, SlidersHorizontal, List, Map } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -28,38 +17,55 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import SearchFilters, { type SearchFilterValues } from "@/components/search/SearchFilters";
+
+const EMPTY_FILTERS: SearchFilterValues = {
+  city: "",
+  propertyType: "",
+  listingType: "",
+  maxPrice: undefined,
+  minBedrooms: undefined,
+  minSurface: undefined,
+  includeInactive: false,
+};
 
 const SearchPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [viewMode, setViewMode] = useState<"list" | "map">("list");
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 12;
-  
-  type PropertyType = "appartement" | "huis" | "studio" | "kamer";
-  type ListingType = "huur" | "koop";
 
-  const [filters, setFilters] = useState<{
-    city: string;
-    propertyType: PropertyType | "";
-    listingType: ListingType | "";
-    maxPrice: number | undefined;
-    minBedrooms: number | undefined;
-    minSurface: number | undefined;
-    includeInactive: boolean;
-  }>({
+  const [filters, setFilters] = useState<SearchFilterValues>({
+    ...EMPTY_FILTERS,
     city: searchParams.get("locatie") || "",
-    propertyType: (searchParams.get("type") as PropertyType) || "",
-    listingType: (searchParams.get("aanbod") as ListingType) || "",
+    propertyType: (searchParams.get("type") as SearchFilterValues["propertyType"]) || "",
+    listingType: (searchParams.get("aanbod") as SearchFilterValues["listingType"]) || "",
     maxPrice: searchParams.get("maxPrijs") ? Number(searchParams.get("maxPrijs")) : undefined,
-    minBedrooms: undefined,
-    minSurface: undefined,
-    includeInactive: false,
   });
 
-  const [tempFilters, setTempFilters] = useState(filters);
+  // Debounced city value for the actual query
+  const [debouncedCity, setDebouncedCity] = useState(filters.city);
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>();
+
+  useEffect(() => {
+    debounceRef.current = setTimeout(() => {
+      setDebouncedCity(filters.city);
+    }, 400);
+    return () => clearTimeout(debounceRef.current);
+  }, [filters.city]);
+
+  // Sync URL params when filters change (use debounced city)
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (debouncedCity) params.set("locatie", debouncedCity);
+    if (filters.propertyType) params.set("type", filters.propertyType);
+    if (filters.listingType) params.set("aanbod", filters.listingType);
+    if (filters.maxPrice) params.set("maxPrijs", String(filters.maxPrice));
+    setSearchParams(params, { replace: true });
+  }, [debouncedCity, filters.propertyType, filters.listingType, filters.maxPrice, setSearchParams]);
 
   const { data, isLoading } = useProperties({
-    city: filters.city || undefined,
+    city: debouncedCity || undefined,
     propertyType: filters.propertyType || undefined,
     listingType: filters.listingType || undefined,
     maxPrice: filters.maxPrice,
@@ -73,155 +79,42 @@ const SearchPage = () => {
   const totalCount = data?.totalCount || 0;
   const totalPages = Math.ceil(totalCount / pageSize);
 
-  const applyFilters = () => {
-    setFilters(tempFilters);
+  const handleFilterChange = useCallback((newFilters: SearchFilterValues) => {
+    setFilters(newFilters);
     setCurrentPage(1);
-    
-    const params = new URLSearchParams();
-    if (tempFilters.city) params.set("locatie", tempFilters.city);
-    if (tempFilters.propertyType) params.set("type", tempFilters.propertyType);
-    if (tempFilters.listingType) params.set("aanbod", tempFilters.listingType);
-    if (tempFilters.maxPrice) params.set("maxPrijs", String(tempFilters.maxPrice));
-    setSearchParams(params);
-  };
+  }, []);
 
-  const clearFilters = () => {
-    const cleared: typeof filters = {
-      city: "",
-      propertyType: "",
-      listingType: "",
-      maxPrice: undefined,
-      minBedrooms: undefined,
-      minSurface: undefined,
-      includeInactive: false,
-    };
-    setFilters(cleared);
-    setTempFilters(cleared);
+  const clearFilters = useCallback(() => {
+    setFilters(EMPTY_FILTERS);
+    setDebouncedCity("");
+    setCurrentPage(1);
     setSearchParams(new URLSearchParams());
-  };
+  }, [setSearchParams]);
 
   const hasActiveFilters = filters.city || filters.propertyType || filters.listingType || filters.maxPrice;
-
-  const FilterContent = () => (
-    <div className="space-y-6">
-      <div className="space-y-2">
-        <Label>Locatie</Label>
-        <div className="relative">
-          <MapPin className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            placeholder="Stad of postcode"
-            value={tempFilters.city}
-            onChange={(e) => setTempFilters({ ...tempFilters, city: e.target.value })}
-            className="pl-10"
-          />
-        </div>
-      </div>
-
-      <div className="space-y-2">
-        <Label>Type woning</Label>
-        <Select
-          value={tempFilters.propertyType}
-          onValueChange={(value: PropertyType | "") => setTempFilters({ ...tempFilters, propertyType: value })}
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="Alle types" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="appartement">Appartement</SelectItem>
-            <SelectItem value="huis">Huis</SelectItem>
-            <SelectItem value="studio">Studio</SelectItem>
-            <SelectItem value="kamer">Kamer</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
-      <div className="space-y-2">
-        <Label>Aanbod</Label>
-        <Select
-          value={tempFilters.listingType}
-          onValueChange={(value: ListingType | "") => setTempFilters({ ...tempFilters, listingType: value })}
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="Koop & Huur" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="huur">Te huur</SelectItem>
-            <SelectItem value="koop">Te koop</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
-      <div className="space-y-2">
-        <Label>Max. prijs: {tempFilters.maxPrice ? `€${tempFilters.maxPrice.toLocaleString("nl-NL")}` : "Geen limiet"}</Label>
-        <Slider
-          value={[tempFilters.maxPrice || 5000]}
-          onValueChange={([value]) => setTempFilters({ ...tempFilters, maxPrice: value })}
-          max={5000}
-          min={200}
-          step={50}
-        />
-      </div>
-
-      <div className="space-y-2">
-        <Label>Min. slaapkamers</Label>
-        <Select
-          value={tempFilters.minBedrooms?.toString() || ""}
-          onValueChange={(value) => setTempFilters({ ...tempFilters, minBedrooms: value ? Number(value) : undefined })}
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="Geen minimum" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="1">1+</SelectItem>
-            <SelectItem value="2">2+</SelectItem>
-            <SelectItem value="3">3+</SelectItem>
-            <SelectItem value="4">4+</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
-      <div className="flex items-center justify-between">
-        <Label htmlFor="include-inactive">Toon inactieve woningen</Label>
-        <Switch
-          id="include-inactive"
-          checked={tempFilters.includeInactive}
-          onCheckedChange={(checked) => setTempFilters({ ...tempFilters, includeInactive: checked })}
-        />
-      </div>
-
-      <div className="flex gap-2">
-        <Button onClick={applyFilters} className="flex-1">
-          Toepassen
-        </Button>
-        <Button variant="outline" onClick={clearFilters}>
-          <X className="h-4 w-4" />
-        </Button>
-      </div>
-    </div>
-  );
 
   const seoTitle = useMemo(() => {
     const parts: string[] = [];
     if (filters.listingType === "huur") parts.push("Huurwoningen");
     else if (filters.listingType === "koop") parts.push("Koophuizen");
     else parts.push("Woningen");
-    if (filters.city) parts.push(`in ${filters.city}`);
+    if (debouncedCity) parts.push(`in ${debouncedCity}`);
     return `${parts.join(" ")} | WoonPeek`;
-  }, [filters.city, filters.listingType]);
+  }, [debouncedCity, filters.listingType]);
 
   const seoDescription = useMemo(() => {
     const type = filters.listingType === "huur" ? "huurwoningen" : filters.listingType === "koop" ? "koophuizen" : "woningen";
-    const location = filters.city ? ` in ${filters.city}` : "";
+    const location = debouncedCity ? ` in ${debouncedCity}` : "";
     return `Bekijk ${totalCount} ${type}${location} op WoonPeek. Filter op prijs, type en meer.`;
-  }, [filters.city, filters.listingType, totalCount]);
+  }, [debouncedCity, filters.listingType, totalCount]);
 
   const canonicalUrl = useMemo(() => {
     const params = new URLSearchParams();
-    if (filters.city) params.set("locatie", filters.city);
+    if (debouncedCity) params.set("locatie", debouncedCity);
     if (filters.listingType) params.set("aanbod", filters.listingType);
     const qs = params.toString();
     return `https://woonpeek.nl/zoeken${qs ? `?${qs}` : ""}`;
-  }, [filters.city, filters.listingType]);
+  }, [debouncedCity, filters.listingType]);
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -235,7 +128,7 @@ const SearchPage = () => {
               <Breadcrumbs items={[
                 { label: "Home", href: "/" },
                 { label: "Zoeken" },
-                ...(filters.city ? [{ label: filters.city }] : []),
+                ...(debouncedCity ? [{ label: debouncedCity }] : []),
               ]} />
             </div>
             <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
@@ -264,12 +157,10 @@ const SearchPage = () => {
                   <SheetContent side="left">
                     <SheetHeader>
                       <SheetTitle>Filters</SheetTitle>
-                      <SheetDescription>
-                        Verfijn je zoekopdracht
-                      </SheetDescription>
+                      <SheetDescription>Verfijn je zoekopdracht</SheetDescription>
                     </SheetHeader>
                     <div className="mt-6">
-                      <FilterContent />
+                      <SearchFilters filters={filters} onChange={handleFilterChange} onClear={clearFilters} />
                     </div>
                   </SheetContent>
                 </Sheet>
@@ -304,7 +195,7 @@ const SearchPage = () => {
             <aside className="hidden w-72 shrink-0 md:block">
               <div className="sticky top-24 rounded-lg border bg-card p-6">
                 <h2 className="mb-4 font-display text-lg font-semibold">Filters</h2>
-                <FilterContent />
+                <SearchFilters filters={filters} onChange={handleFilterChange} onClear={clearFilters} />
               </div>
             </aside>
 
@@ -333,58 +224,42 @@ const SearchPage = () => {
                     {properties.map((property) => (
                       <PropertyCard key={property.id} property={property} />
                     ))}
-                   </div>
-                 ) : (
-                   <div className="flex h-[500px] items-center justify-center rounded-lg border bg-muted/50">
-                     <div className="text-center">
-                       <Map className="mx-auto mb-2 h-12 w-12 text-muted-foreground" />
-                       <p className="text-muted-foreground">
-                         Kaartweergave komt binnenkort
-                       </p>
-                     </div>
-                   </div>
-                 )
-               ) : (
-                 <div className="flex flex-col items-center justify-center py-12 text-center">
-                   <Search className="mb-4 h-12 w-12 text-muted-foreground" />
-                   <h3 className="font-display text-lg font-semibold">
-                     Geen woningen gevonden
-                   </h3>
-                   <p className="text-muted-foreground">
-                     Pas je filters aan om meer resultaten te zien
-                   </p>
-                   {hasActiveFilters && (
-                     <Button variant="outline" className="mt-4" onClick={clearFilters}>
-                       Filters wissen
-                     </Button>
-                   )}
-                 </div>
-               )}
+                  </div>
+                ) : (
+                  <div className="flex h-[500px] items-center justify-center rounded-lg border bg-muted/50">
+                    <div className="text-center">
+                      <Map className="mx-auto mb-2 h-12 w-12 text-muted-foreground" />
+                      <p className="text-muted-foreground">Kaartweergave komt binnenkort</p>
+                    </div>
+                  </div>
+                )
+              ) : (
+                <div className="flex flex-col items-center justify-center py-12 text-center">
+                  <Search className="mb-4 h-12 w-12 text-muted-foreground" />
+                  <h3 className="font-display text-lg font-semibold">Geen woningen gevonden</h3>
+                  <p className="text-muted-foreground">Pas je filters aan om meer resultaten te zien</p>
+                  {hasActiveFilters && (
+                    <Button variant="outline" className="mt-4" onClick={clearFilters}>
+                      Filters wissen
+                    </Button>
+                  )}
+                </div>
+              )}
 
-               {/* Pagination */}
-               {totalPages > 1 && (
-                 <div className="mt-8 flex items-center justify-center gap-2">
-                   <Button
-                     variant="outline"
-                     size="sm"
-                     disabled={currentPage <= 1}
-                     onClick={() => setCurrentPage(p => p - 1)}
-                   >
-                     Vorige
-                   </Button>
-                   <span className="px-4 text-sm text-muted-foreground">
-                     Pagina {currentPage} van {totalPages}
-                   </span>
-                   <Button
-                     variant="outline"
-                     size="sm"
-                     disabled={currentPage >= totalPages}
-                     onClick={() => setCurrentPage(p => p + 1)}
-                   >
-                     Volgende
-                   </Button>
-                 </div>
-               )}
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="mt-8 flex items-center justify-center gap-2">
+                  <Button variant="outline" size="sm" disabled={currentPage <= 1} onClick={() => setCurrentPage(p => p - 1)}>
+                    Vorige
+                  </Button>
+                  <span className="px-4 text-sm text-muted-foreground">
+                    Pagina {currentPage} van {totalPages}
+                  </span>
+                  <Button variant="outline" size="sm" disabled={currentPage >= totalPages} onClick={() => setCurrentPage(p => p + 1)}>
+                    Volgende
+                  </Button>
+                </div>
+              )}
             </div>
           </div>
         </div>
