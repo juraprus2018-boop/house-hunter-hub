@@ -35,6 +35,7 @@ import AdminBlog from "./pages/admin/AdminBlog";
 import AdminUsers from "./pages/admin/AdminUsers";
 import AdminDailyActivity from "./pages/admin/AdminDailyActivity";
 import ListingTypePage from "./pages/ListingTypePage";
+import NewListings from "./pages/NewListings";
 
 const queryClient = new QueryClient();
 
@@ -74,6 +75,7 @@ const App = () => (
             <Route path="/zoekalerts" element={<SearchAlerts />} />
             <Route path="/profiel" element={<Profile />} />
             <Route path="/steden" element={<Cities />} />
+            <Route path="/nieuw-aanbod" element={<NewListings />} />
             <Route path="/huurwoningen/:city?" element={<ListingTypePage listingType="huur" />} />
             <Route path="/koopwoningen/:city?" element={<ListingTypePage listingType="koop" />} />
             <Route path="/:city" element={<CityPage />} />

@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Home, Search, Heart, PlusCircle, User, Menu, LogOut, Shield, Map, Bell, MapPin } from "lucide-react";
+import { Home, Search, Heart, PlusCircle, User, Menu, LogOut, Shield, Map, Bell, MapPin, CalendarDays } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -22,6 +22,7 @@ const Header = () => {
 
   const navLinks = [
     { to: "/zoeken", label: "Zoeken", icon: Search },
+    { to: "/nieuw-aanbod", label: "Nieuw aanbod", icon: CalendarDays },
     { to: "/verkennen", label: "Kaart", icon: Map },
     { to: "/steden", label: "Steden", icon: MapPin },
     { to: "/favorieten", label: "Favorieten", icon: Heart },

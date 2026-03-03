@@ -51,6 +51,7 @@ const AdminDashboard = () => {
   const totalProperties = properties?.length || 0;
   const activeProperties = properties?.filter((p) => p.status === "actief").length || 0;
   const inactiveProperties = properties?.filter((p) => p.status === "inactief").length || 0;
+  const otherStatusesProperties = Math.max(totalProperties - activeProperties - inactiveProperties, 0);
   const pendingReviews = scrapedProperties?.length || 0;
 
   // Last scrape run info
@@ -223,11 +224,16 @@ const AdminDashboard = () => {
             <CardContent className="p-4 md:p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs font-medium text-muted-foreground md:text-sm">Actieve woningen</p>
-                  <p className="mt-1 text-2xl font-bold md:text-3xl">{activeProperties}</p>
+                  <p className="text-xs font-medium text-muted-foreground md:text-sm">Woningen overzicht</p>
+                  <p className="mt-1 text-2xl font-bold md:text-3xl">{totalProperties}</p>
                   <p className="mt-0.5 text-xs text-muted-foreground">
-                    {inactiveProperties} inactief
+                    {activeProperties} actief · {inactiveProperties} inactief
                   </p>
+                  {otherStatusesProperties > 0 && (
+                    <p className="mt-0.5 text-xs text-muted-foreground">
+                      {otherStatusesProperties} verhuurd/verkocht
+                    </p>
+                  )}
                 </div>
                 <div className="rounded-xl bg-primary/10 p-2.5 md:p-3">
                   <Building2 className="h-5 w-5 text-primary md:h-6 md:w-6" />

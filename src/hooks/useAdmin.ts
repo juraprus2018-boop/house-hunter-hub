@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { Database } from "@/integrations/supabase/types";
 import { useAuth } from "@/contexts/AuthContext";
 
 export const useIsAdmin = () => {
@@ -117,13 +118,27 @@ export const useAllProperties = () => {
   return useQuery({
     queryKey: ["all-properties"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("properties")
-        .select("*")
-        .order("created_at", { ascending: false });
+      const pageSize = 1000;
+      let from = 0;
+      const allProperties: Database["public"]["Tables"]["properties"]["Row"][] = [];
 
-      if (error) throw error;
-      return data;
+      while (true) {
+        const { data, error } = await supabase
+          .from("properties")
+          .select("*")
+          .order("created_at", { ascending: false })
+          .range(from, from + pageSize - 1);
+
+        if (error) throw error;
+        if (!data || data.length === 0) break;
+
+        allProperties.push(...data);
+
+        if (data.length < pageSize) break;
+        from += pageSize;
+      }
+
+      return allProperties;
     },
   });
 };

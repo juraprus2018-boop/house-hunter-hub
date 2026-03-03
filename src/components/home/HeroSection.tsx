@@ -20,9 +20,12 @@ const HeroSection = () => {
   const { data: activePropertiesCount } = useQuery({
     queryKey: ["home-active-properties-count"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("properties").select("status");
+      const { count, error } = await supabase
+        .from("properties")
+        .select("id", { count: "exact", head: true })
+        .eq("status", "actief");
       if (error) throw error;
-      return (data ?? []).filter((property) => property.status === "actief").length;
+      return count ?? 0;
     },
     staleTime: 5 * 60 * 1000,
   });
