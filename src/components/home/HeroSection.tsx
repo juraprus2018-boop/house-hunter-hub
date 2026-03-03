@@ -64,7 +64,7 @@ const HeroSection = () => {
                 value={searchParams.type}
                 onValueChange={(value) => setSearchParams({ ...searchParams, type: value })}
               >
-                <SelectTrigger className="h-12 w-full border-0 bg-muted/50 md:w-40">
+                <SelectTrigger className="h-12 w-full border-0 bg-muted/50 md:w-40" style={{ minWidth: '10rem' }}>
                   <SelectValue placeholder="Type woning" />
                 </SelectTrigger>
                 <SelectContent>
@@ -79,7 +79,7 @@ const HeroSection = () => {
                 value={searchParams.maxPrice}
                 onValueChange={(value) => setSearchParams({ ...searchParams, maxPrice: value })}
               >
-                <SelectTrigger className="h-12 w-full border-0 bg-muted/50 md:w-40">
+                <SelectTrigger className="h-12 w-full border-0 bg-muted/50 md:w-40" style={{ minWidth: '10rem' }}>
                   <SelectValue placeholder="Max prijs" />
                 </SelectTrigger>
                 <SelectContent>
