@@ -39,7 +39,13 @@ export const useProperties = (filters?: PropertyFilters) => {
       }
 
       if (filters?.city) {
-        query = query.ilike("city", `%${filters.city}%`);
+        // Check if it looks like a postal code (starts with digits)
+        const isPostalCode = /^\d/.test(filters.city.trim());
+        if (isPostalCode) {
+          query = query.ilike("postal_code", `%${filters.city.trim()}%`);
+        } else {
+          query = query.ilike("city", `%${filters.city}%`);
+        }
       }
       if (filters?.propertyType) {
         query = query.eq("property_type", filters.propertyType);
