@@ -17,7 +17,7 @@ function slugify(text: string): string {
 }
 
 async function uploadImagesToStorage(
-  supabase: ReturnType<typeof createClient>,
+  supabase: any,
   supabaseUrl: string,
   images: string[],
   city: string,
