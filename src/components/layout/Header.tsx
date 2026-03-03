@@ -51,7 +51,7 @@ const Header = () => {
         </Link>
 
         {/* Desktop Navigation */}
-        <nav className="hidden items-center gap-1 md:flex">
+        <nav className="hidden items-center gap-1 md:flex" style={{ minHeight: '40px' }}>
           {navLinks.map((link) => (
             <Link key={link.to} to={link.to}>
               <Button variant="ghost" className="gap-2">
@@ -63,7 +63,7 @@ const Header = () => {
         </nav>
 
         {/* Desktop Auth Buttons */}
-        <div className="hidden items-center gap-2 md:flex">
+        <div className="hidden items-center gap-2 md:flex" style={{ minHeight: '40px' }}>
           {user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
