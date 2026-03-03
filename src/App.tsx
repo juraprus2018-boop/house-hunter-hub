@@ -36,6 +36,8 @@ import AdminUsers from "./pages/admin/AdminUsers";
 import AdminDailyActivity from "./pages/admin/AdminDailyActivity";
 import ListingTypePage from "./pages/ListingTypePage";
 import NewListings from "./pages/NewListings";
+import PostPropertyStart from "./pages/PostPropertyStart";
+import AlertUnsubscribe from "./pages/AlertUnsubscribe";
 
 const queryClient = new QueryClient();
 
@@ -56,6 +58,7 @@ const App = () => (
             <Route path="/woning/:slug" element={<PropertyDetail />} />
             <Route path="/favorieten" element={<Favorites />} />
             <Route path="/mijn-woningen" element={<MyProperties />} />
+            <Route path="/woning-plaatsen" element={<PostPropertyStart />} />
             <Route path="/plaatsen" element={<CreateProperty />} />
             <Route path="/woning/:id/bewerken" element={<EditProperty />} />
             <Route path="/admin" element={<AdminDashboard />} />
@@ -76,6 +79,7 @@ const App = () => (
             <Route path="/profiel" element={<Profile />} />
             <Route path="/steden" element={<Cities />} />
             <Route path="/nieuw-aanbod" element={<NewListings />} />
+            <Route path="/alerts/afmelden/:token" element={<AlertUnsubscribe />} />
             <Route path="/huurwoningen/:city?" element={<ListingTypePage listingType="huur" />} />
             <Route path="/koopwoningen/:city?" element={<ListingTypePage listingType="koop" />} />
             <Route path="/:city" element={<CityPage />} />

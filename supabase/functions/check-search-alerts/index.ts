@@ -18,7 +18,7 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    // Get all active alerts with email notifications
+    // Get all active search alerts with email notifications
     const { data: alerts, error: alertsError } = await supabase
       .from("search_alerts")
       .select("*")
@@ -26,11 +26,6 @@ serve(async (req) => {
       .eq("email_notifications", true);
 
     if (alertsError) throw alertsError;
-    if (!alerts || alerts.length === 0) {
-      return new Response(JSON.stringify({ message: "No active alerts" }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
 
     const smtpClient = new SMTPClient({
       connection: {
@@ -44,76 +39,171 @@ serve(async (req) => {
       },
     });
 
-    let notificationsSent = 0;
+    let searchAlertNotificationsSent = 0;
+    let dailySubscriberNotificationsSent = 0;
 
-    for (const alert of alerts) {
-      const sinceDate = alert.last_notified_at || alert.created_at;
+    if (alerts && alerts.length > 0) {
+      for (const alert of alerts) {
+        const sinceDate = alert.last_notified_at || alert.created_at;
 
-      // Find matching properties
-      let query = supabase
+        // Find matching properties
+        let query = supabase
+          .from("properties")
+          .select("id, title, city, price, listing_type, property_type, slug, street, house_number")
+          .eq("status", "actief")
+          .gt("created_at", sinceDate)
+          .order("created_at", { ascending: false })
+          .limit(10);
+
+        if (alert.city) query = query.ilike("city", `%${alert.city}%`);
+        if (alert.property_type) query = query.eq("property_type", alert.property_type);
+        if (alert.listing_type) query = query.eq("listing_type", alert.listing_type);
+        if (alert.min_price) query = query.gte("price", alert.min_price);
+        if (alert.max_price) query = query.lte("price", alert.max_price);
+
+        const { data: properties } = await query;
+
+        if (!properties || properties.length === 0) continue;
+
+        // Get user email
+        const { data: userData } = await supabase.auth.admin.getUserById(alert.user_id);
+        if (!userData?.user?.email) continue;
+
+        const propertyListHtml = properties
+          .map((p) => {
+            const priceFormatted = new Intl.NumberFormat("nl-NL", { style: "currency", currency: "EUR", minimumFractionDigits: 0 }).format(p.price);
+            const url = `https://www.woonpeek.nl/woning/${p.slug || p.id}`;
+            return `<li style="margin-bottom:12px;"><a href="${url}" style="color:#2563eb;text-decoration:none;font-weight:600;">${p.title}</a><br/><span style="color:#666;">${p.street} ${p.house_number}, ${p.city} — ${priceFormatted}${p.listing_type === 'huur' ? '/mnd' : ''}</span></li>`;
+          })
+          .join("");
+
+        const html = `
+          <div style="font-family:sans-serif;max-width:600px;margin:0 auto;">
+            <h2 style="color:#1a1a1a;">Nieuwe woningen voor "${alert.name}"</h2>
+            <p style="color:#666;">Er ${properties.length === 1 ? 'is' : 'zijn'} ${properties.length} nieuwe ${properties.length === 1 ? 'woning' : 'woningen'} gevonden:</p>
+            <ul style="list-style:none;padding:0;">${propertyListHtml}</ul>
+            <hr style="border:none;border-top:1px solid #eee;margin:24px 0;"/>
+            <p style="color:#999;font-size:12px;">Je ontvangt dit bericht omdat je een zoekalert hebt ingesteld op WoonPeek. Je kunt alerts beheren op <a href="https://www.woonpeek.nl/zoekalerts">woonpeek.nl/zoekalerts</a>.</p>
+          </div>
+        `;
+
+        try {
+          await smtpClient.send({
+            from: "WoonPeek <info@woonpeek.nl>",
+            to: userData.user.email,
+            subject: `${properties.length} nieuwe ${properties.length === 1 ? 'woning' : 'woningen'} voor "${alert.name}"`,
+            content: "text/html",
+            html,
+          });
+
+          await supabase
+            .from("search_alerts")
+            .update({ last_notified_at: new Date().toISOString() })
+            .eq("id", alert.id);
+
+          searchAlertNotificationsSent++;
+        } catch (emailError) {
+          console.error(`Failed to send email for alert ${alert.id}:`, emailError);
+        }
+      }
+    }
+
+    // Daily "new listings" subscribers (guest + account users)
+    const { data: dailySubscribers, error: subscribersError } = await supabase
+      .from("daily_alert_subscribers")
+      .select("*")
+      .eq("is_active", true);
+
+    if (subscribersError) throw subscribersError;
+
+    for (const subscriber of dailySubscribers || []) {
+      const sinceDate = subscriber.last_notified_at || subscriber.subscribed_at || subscriber.created_at;
+
+      const { count: newCount, error: countError } = await supabase
         .from("properties")
-        .select("id, title, city, price, listing_type, property_type, slug, street, house_number")
+        .select("id", { count: "exact", head: true })
+        .eq("status", "actief")
+        .gt("created_at", sinceDate);
+
+      if (countError) {
+        console.error("Count error for daily subscriber:", subscriber.email, countError);
+        continue;
+      }
+
+      if (!newCount || newCount === 0) continue;
+
+      const { data: latestProperties, error: propsError } = await supabase
+        .from("properties")
+        .select("id, title, city, price, listing_type, slug, street, house_number")
         .eq("status", "actief")
         .gt("created_at", sinceDate)
         .order("created_at", { ascending: false })
-        .limit(10);
+        .limit(5);
 
-      if (alert.city) query = query.ilike("city", `%${alert.city}%`);
-      if (alert.property_type) query = query.eq("property_type", alert.property_type);
-      if (alert.listing_type) query = query.eq("listing_type", alert.listing_type);
-      if (alert.min_price) query = query.gte("price", alert.min_price);
-      if (alert.max_price) query = query.lte("price", alert.max_price);
+      if (propsError) {
+        console.error("Properties error for daily subscriber:", subscriber.email, propsError);
+        continue;
+      }
 
-      const { data: properties } = await query;
-
-      if (!properties || properties.length === 0) continue;
-
-      // Get user email
-      const { data: userData } = await supabase.auth.admin.getUserById(alert.user_id);
-      if (!userData?.user?.email) continue;
-
-      const propertyListHtml = properties
+      const propertyListHtml = (latestProperties || [])
         .map((p) => {
-          const priceFormatted = new Intl.NumberFormat("nl-NL", { style: "currency", currency: "EUR", minimumFractionDigits: 0 }).format(p.price);
+          const priceFormatted = new Intl.NumberFormat("nl-NL", {
+            style: "currency",
+            currency: "EUR",
+            minimumFractionDigits: 0,
+          }).format(p.price);
           const url = `https://www.woonpeek.nl/woning/${p.slug || p.id}`;
-          return `<li style="margin-bottom:12px;"><a href="${url}" style="color:#2563eb;text-decoration:none;font-weight:600;">${p.title}</a><br/><span style="color:#666;">${p.street} ${p.house_number}, ${p.city} — ${priceFormatted}${p.listing_type === 'huur' ? '/mnd' : ''}</span></li>`;
+          return `<li style="margin-bottom:10px;"><a href="${url}" style="color:#2563eb;text-decoration:none;font-weight:600;">${p.title}</a><br/><span style="color:#666;">${p.street} ${p.house_number}, ${p.city} — ${priceFormatted}${p.listing_type === "huur" ? "/mnd" : ""}</span></li>`;
         })
         .join("");
 
+      const unsubscribeUrl = `https://www.woonpeek.nl/alerts/afmelden/${subscriber.unsubscribe_token}`;
       const html = `
         <div style="font-family:sans-serif;max-width:600px;margin:0 auto;">
-          <h2 style="color:#1a1a1a;">Nieuwe woningen voor "${alert.name}"</h2>
-          <p style="color:#666;">Er ${properties.length === 1 ? 'is' : 'zijn'} ${properties.length} nieuwe ${properties.length === 1 ? 'woning' : 'woningen'} gevonden:</p>
-          <ul style="list-style:none;padding:0;">${propertyListHtml}</ul>
-          <hr style="border:none;border-top:1px solid #eee;margin:24px 0;"/>
-          <p style="color:#999;font-size:12px;">Je ontvangt dit bericht omdat je een zoekalert hebt ingesteld op WoonPeek. Je kunt alerts beheren op <a href="https://www.woonpeek.nl/zoekalerts">woonpeek.nl/zoekalerts</a>.</p>
+          <h2 style="color:#1a1a1a;">${newCount} nieuwe woningen op WoonPeek</h2>
+          <p style="color:#666;">Er staan nieuwe woningen voor je klaar sinds je laatste update.</p>
+          ${propertyListHtml ? `<ul style="list-style:none;padding:0;">${propertyListHtml}</ul>` : ""}
+          <p style="margin:20px 0;">
+            <a href="https://www.woonpeek.nl/nieuw-aanbod" style="display:inline-block;background:#0f766e;color:#fff;text-decoration:none;padding:10px 14px;border-radius:8px;font-weight:600;">
+              Bekijk al het nieuwe aanbod
+            </a>
+          </p>
+          <hr style="border:none;border-top:1px solid #eee;margin:24px 0;" />
+          <p style="color:#999;font-size:12px;">
+            Je ontvangt deze e-mail omdat je je hebt aangemeld voor dagelijkse nieuwe-aanbod alerts.
+            <a href="${unsubscribeUrl}">Meld je hier af</a>.
+          </p>
         </div>
       `;
 
       try {
         await smtpClient.send({
           from: "WoonPeek <info@woonpeek.nl>",
-          to: userData.user.email,
-          subject: `${properties.length} nieuwe ${properties.length === 1 ? 'woning' : 'woningen'} voor "${alert.name}"`,
+          to: subscriber.email,
+          subject: `${newCount} nieuwe woningen vandaag op WoonPeek`,
           content: "text/html",
           html,
         });
 
         await supabase
-          .from("search_alerts")
+          .from("daily_alert_subscribers")
           .update({ last_notified_at: new Date().toISOString() })
-          .eq("id", alert.id);
+          .eq("id", subscriber.id);
 
-        notificationsSent++;
+        dailySubscriberNotificationsSent++;
       } catch (emailError) {
-        console.error(`Failed to send email for alert ${alert.id}:`, emailError);
+        console.error(`Failed to send daily alert email to ${subscriber.email}:`, emailError);
       }
     }
 
     await smtpClient.close();
 
     return new Response(
-      JSON.stringify({ message: `Sent ${notificationsSent} notifications` }),
+      JSON.stringify({
+        success: true,
+        search_alert_notifications_sent: searchAlertNotificationsSent,
+        daily_alert_notifications_sent: dailySubscriberNotificationsSent,
+      }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {

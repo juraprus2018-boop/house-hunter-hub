@@ -4,7 +4,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import AdminLayout from "./AdminLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { useScrapers, useAllProperties, useScrapedProperties, useScraperLogs, useRunScraper } from "@/hooks/useAdmin";
+import { useScrapers, useAllProperties, useScrapedProperties, useScraperLogs, useRunScraper, useDailyAlertSubscribers } from "@/hooks/useAdmin";
 import {
   Home, Activity, Loader2, ClipboardCheck, Clock, CheckCircle, XCircle,
   TrendingUp, Building2, Eye, Zap, RefreshCw, ExternalLink, BarChart3, Trash2, Facebook
@@ -41,6 +41,7 @@ const AdminDashboard = () => {
   const { data: properties, isLoading: propertiesLoading } = useAllProperties();
   const { data: scrapedProperties } = useScrapedProperties("pending");
   const { data: allLogs } = useScraperLogs();
+  const { data: dailyAlertSubscribers } = useDailyAlertSubscribers();
   const runScraper = useRunScraper();
   const [resetting, setResetting] = useState(false);
   const [resetSource, setResetSource] = useState<string>("all");
@@ -53,6 +54,8 @@ const AdminDashboard = () => {
   const inactiveProperties = properties?.filter((p) => p.status === "inactief").length || 0;
   const otherStatusesProperties = Math.max(totalProperties - activeProperties - inactiveProperties, 0);
   const pendingReviews = scrapedProperties?.length || 0;
+  const activeAlertSubscribers = dailyAlertSubscribers?.filter((s) => s.is_active).length || 0;
+  const unsubscribedAlertSubscribers = dailyAlertSubscribers?.filter((s) => !s.is_active).length || 0;
 
   // Last scrape run info
   const lastLog = allLogs?.[0];
@@ -431,6 +434,44 @@ const AdminDashboard = () => {
             </CardContent>
           </Card>
         </div>
+
+        {/* Daily Alert Subscribers */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Dagelijkse alerts (nieuw aanbod)</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="mb-4 flex flex-wrap gap-4 text-sm">
+              <Badge variant="default">{activeAlertSubscribers} actief</Badge>
+              <Badge variant="secondary">{unsubscribedAlertSubscribers} afgemeld</Badge>
+              <Badge variant="outline">{dailyAlertSubscribers?.length || 0} totaal</Badge>
+            </div>
+            {dailyAlertSubscribers && dailyAlertSubscribers.length > 0 ? (
+              <div className="space-y-2">
+                {dailyAlertSubscribers.slice(0, 12).map((subscriber) => (
+                  <div key={subscriber.id} className="flex flex-col justify-between gap-2 rounded-lg border p-3 sm:flex-row sm:items-center">
+                    <div>
+                      <p className="text-sm font-medium">{subscriber.email}</p>
+                      <p className="text-xs text-muted-foreground">
+                        Ingeschreven: {format(new Date(subscriber.subscribed_at), "d MMM yyyy HH:mm", { locale: nl })}
+                      </p>
+                      {subscriber.unsubscribed_at ? (
+                        <p className="text-xs text-muted-foreground">
+                          Afgemeld: {format(new Date(subscriber.unsubscribed_at), "d MMM yyyy HH:mm", { locale: nl })}
+                        </p>
+                      ) : null}
+                    </div>
+                    <Badge variant={subscriber.is_active ? "default" : "secondary"}>
+                      {subscriber.is_active ? "Actief" : "Afgemeld"}
+                    </Badge>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">Nog geen aanmeldingen voor dagelijkse alerts.</p>
+            )}
+          </CardContent>
+        </Card>
 
         {/* Inactive Properties */}
         {inactiveProperties > 0 && (

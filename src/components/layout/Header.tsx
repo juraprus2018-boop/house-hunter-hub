@@ -26,7 +26,7 @@ const Header = () => {
     { to: "/verkennen", label: "Kaart", icon: Map },
     { to: "/steden", label: "Steden", icon: MapPin },
     { to: "/favorieten", label: "Favorieten", icon: Heart },
-    { to: "/plaatsen", label: "Woning plaatsen", icon: PlusCircle },
+    { to: "/woning-plaatsen", label: "Woning plaatsen", icon: PlusCircle },
   ];
 
   const handleSignOut = async () => {
@@ -55,7 +55,10 @@ const Header = () => {
         <nav className="hidden items-center gap-1 md:flex" style={{ minHeight: '40px' }}>
           {navLinks.map((link) => (
             <Link key={link.to} to={link.to}>
-              <Button variant="ghost" className="gap-2">
+              <Button
+                variant={link.label === "Woning plaatsen" && !user ? "default" : "ghost"}
+                className={link.label === "Woning plaatsen" && !user ? "gap-2 bg-accent text-accent-foreground hover:bg-accent/90" : "gap-2"}
+              >
                 <link.icon className="h-4 w-4" />
                 {link.label}
               </Button>
@@ -149,7 +152,11 @@ const Header = () => {
                   key={link.to}
                   to={link.to}
                   onClick={() => setIsOpen(false)}
-                  className="flex items-center gap-3 rounded-lg px-3 py-2 text-foreground transition-colors hover:bg-muted"
+                  className={
+                    link.label === "Woning plaatsen" && !user
+                      ? "flex items-center gap-3 rounded-lg bg-accent px-3 py-2 font-medium text-accent-foreground transition-colors hover:bg-accent/90"
+                      : "flex items-center gap-3 rounded-lg px-3 py-2 text-foreground transition-colors hover:bg-muted"
+                  }
                 >
                   <link.icon className="h-5 w-5" />
                   {link.label}

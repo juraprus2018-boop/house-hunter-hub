@@ -220,6 +220,21 @@ export const useScrapedProperties = (status?: string) => {
   });
 };
 
+export const useDailyAlertSubscribers = () => {
+  return useQuery({
+    queryKey: ["daily-alert-subscribers"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("daily_alert_subscribers")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      return data;
+    },
+  });
+};
+
 export const usePostToFacebook = () => {
   return useMutation({
     mutationFn: async (propertyId: string) => {

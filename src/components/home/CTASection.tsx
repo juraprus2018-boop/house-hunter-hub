@@ -20,10 +20,10 @@ const CTASection = () => {
               Geen makelaarskosten, direct contact met geïnteresseerden.
             </p>
             <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
-              <Link to="/plaatsen">
+              <Link to="/woning-plaatsen">
                 <Button 
                   size="lg" 
-                  className="gap-2 bg-accent text-accent-foreground hover:bg-accent/90"
+                  className="gap-2 bg-accent text-accent-foreground shadow-lg hover:scale-[1.02] hover:bg-accent/90"
                 >
                   <PlusCircle className="h-5 w-5" />
                   Plaats je woning

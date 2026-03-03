@@ -48,6 +48,12 @@ function buildSitemapXml(properties: Array<{ slug: string | null; id: string; ci
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
+  <url>
+    <loc>${SITE_URL}/woning-plaatsen</loc>
+    <lastmod>${now}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
 `;
 
   for (const [citySlug, info] of cityMap) {

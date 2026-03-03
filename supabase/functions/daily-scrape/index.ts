@@ -362,6 +362,30 @@ Deno.serve(async (req) => {
       console.warn("Facebook auto-post failed:", e);
     }
 
+    // 9. Send search alerts + daily new-listings alerts
+    let alertNotifications = {
+      search_alert_notifications_sent: 0,
+      daily_alert_notifications_sent: 0,
+    };
+    try {
+      console.log("Sending alert notifications...");
+      const alertsRes = await fetch(`${supabaseUrl}/functions/v1/check-search-alerts`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${supabaseKey}`,
+        },
+      });
+      const alertsResult = await alertsRes.json();
+      alertNotifications = {
+        search_alert_notifications_sent: alertsResult.search_alert_notifications_sent || 0,
+        daily_alert_notifications_sent: alertsResult.daily_alert_notifications_sent || 0,
+      };
+      console.log(`Alert notifications: ${JSON.stringify(alertNotifications)}`);
+    } catch (e) {
+      console.warn("Alert notifications failed:", e);
+    }
+
     return new Response(
       JSON.stringify({
         success: true,
@@ -372,6 +396,7 @@ Deno.serve(async (req) => {
         sitemap_regenerated: true,
         indexnow_submitted: indexNowSubmitted,
         facebook_posted: facebookPosted,
+        ...alertNotifications,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );

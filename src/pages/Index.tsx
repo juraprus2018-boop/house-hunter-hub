@@ -5,6 +5,7 @@ import FeaturedListings from "@/components/home/FeaturedListings";
 import PopularCities from "@/components/home/PopularCities";
 import CategorySection from "@/components/home/CategorySection";
 import CTASection from "@/components/home/CTASection";
+import DailyAlertSection from "@/components/home/DailyAlertSection";
 
 const Index = () => {
   return (
@@ -13,6 +14,7 @@ const Index = () => {
       <main className="flex-1">
         <HeroSection />
         <FeaturedListings />
+        <DailyAlertSection />
         <PopularCities />
         <CategorySection />
         <CTASection />

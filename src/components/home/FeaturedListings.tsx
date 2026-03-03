@@ -60,7 +60,7 @@ const FeaturedListings = () => {
             </p>
           </div>
           <div className="text-center">
-            <Link to="/plaatsen">
+            <Link to="/woning-plaatsen">
               <Button className="bg-accent text-accent-foreground hover:bg-accent/90">
                 Plaats je eerste woning
               </Button>
