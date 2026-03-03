@@ -6,6 +6,7 @@ import PopularCities from "@/components/home/PopularCities";
 import CategorySection from "@/components/home/CategorySection";
 import CTASection from "@/components/home/CTASection";
 import DailyAlertSection from "@/components/home/DailyAlertSection";
+import SEOContentSection from "@/components/home/SEOContentSection";
 import SEOHead from "@/components/seo/SEOHead";
 
 const Index = () => {
@@ -24,6 +25,7 @@ const Index = () => {
         <CategorySection />
         <CTASection />
         <DailyAlertSection />
+        <SEOContentSection />
       </main>
       <Footer />
     </div>

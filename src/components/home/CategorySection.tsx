@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 const categories = [
   {
     title: "Appartement",
-    description: "Ruime appartementen in de stad",
+    description: "Ruime appartementen in de stad. Van compacte stadsappartementen tot luxe penthouses met uitzicht.",
     icon: Building2,
     slug: "appartement",
     gradient: "from-blue-500/10 to-cyan-500/10",
@@ -12,7 +12,7 @@ const categories = [
   },
   {
     title: "Huis",
-    description: "Eengezinswoningen met tuin",
+    description: "Eengezinswoningen met tuin. Ideaal voor gezinnen die ruimte en privacy zoeken.",
     icon: Home,
     slug: "huis",
     gradient: "from-green-500/10 to-emerald-500/10",
@@ -20,7 +20,7 @@ const categories = [
   },
   {
     title: "Studio",
-    description: "Compacte woonruimtes",
+    description: "Compacte, zelfstandige woonruimtes. Perfect voor starters en alleenstaanden.",
     icon: Building,
     slug: "studio",
     gradient: "from-purple-500/10 to-pink-500/10",
@@ -28,7 +28,7 @@ const categories = [
   },
   {
     title: "Kamer",
-    description: "Kamers in gedeelde woningen",
+    description: "Kamers in gedeelde woningen. Betaalbare optie voor studenten en young professionals.",
     icon: DoorOpen,
     slug: "kamer",
     gradient: "from-orange-500/10 to-amber-500/10",

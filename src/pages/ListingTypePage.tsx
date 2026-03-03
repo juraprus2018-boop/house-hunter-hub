@@ -174,7 +174,7 @@ const ListingTypePage = ({ listingType }: ListingTypePageProps) => {
             <h2 className="font-display text-2xl font-bold mb-4">
               {label.plural} {cityName ? `in ${cityName}` : "in Nederland"}
             </h2>
-            <div className="prose prose-muted text-muted-foreground text-sm space-y-3">
+            <div className="prose prose-muted text-muted-foreground text-sm space-y-3 leading-relaxed">
               <p>
                 Op WoonPeek vind je het meest actuele aanbod van{" "}
                 {label.plural.toLowerCase()}{" "}
@@ -188,6 +188,38 @@ const ListingTypePage = ({ listingType }: ListingTypePageProps) => {
                 {cityName ? ` in ${cityName}` : ""}. Gebruik de filters op onze
                 zoekpagina om snel de perfecte {label.singular} te vinden.
               </p>
+              {listingType === "huur" ? (
+                <>
+                  <p>
+                    De huurwoningmarkt {cityName ? `in ${cityName}` : "in Nederland"} is competitief. 
+                    Veel huurwoningen zijn binnen enkele dagen verhuurd. Daarom is het belangrijk om snel 
+                    te reageren op nieuwe advertenties. Met WoonPeek heb je een voorsprong: onze scrapers 
+                    doorzoeken dagelijks meerdere woningplatforms en tonen het nieuwste aanbod direct op 
+                    onze website.
+                  </p>
+                  <p>
+                    Tip: stel een gratis dagelijkse alert in en ontvang elke dag een overzicht van nieuwe 
+                    huurwoningen{cityName ? ` in ${cityName}` : ""}. Zo mis je nooit meer een kans op 
+                    jouw ideale huurwoning. Je kunt ook filteren op maximale huurprijs, aantal slaapkamers 
+                    en woningtype om nog gerichter te zoeken.
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p>
+                    De koopwoningmarkt {cityName ? `in ${cityName}` : "in Nederland"} biedt kansen voor 
+                    zowel starters als doorstromers. Of je nu op zoek bent naar een betaalbaar appartement 
+                    of een ruime gezinswoning — op WoonPeek vind je dagelijks nieuwe koopwoningen uit 
+                    meerdere bronnen.
+                  </p>
+                  <p>
+                    Vergelijk koopwoningen op prijs, oppervlakte en locatie. Sla interessante woningen op 
+                    in je favorieten en ontvang alerts wanneer er nieuwe koopwoningen 
+                    {cityName ? ` in ${cityName}` : ""} beschikbaar komen. Zo ben je altijd als eerste 
+                    op de hoogte van het nieuwste aanbod.
+                  </p>
+                </>
+              )}
             </div>
           </div>
         </section>

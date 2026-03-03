@@ -173,14 +173,22 @@ const NewListings = () => {
         <section className="border-t bg-muted/30 py-12">
           <div className="container max-w-3xl">
             <h2 className="mb-4 font-display text-2xl font-bold">Nieuw woningaanbod per dag</h2>
-            <div className="space-y-3 text-sm text-muted-foreground">
+            <div className="space-y-3 text-sm text-muted-foreground leading-relaxed">
               <p>
-                Op deze pagina vind je alleen het nieuwe actieve woningaanbod dat vandaag is toegevoegd op WoonPeek.
-                Zo zie je direct welke woningen als eerste online zijn gekomen.
+                Op deze pagina vind je uitsluitend het nieuwe actieve woningaanbod dat vandaag is toegevoegd 
+                op WoonPeek. Zo zie je direct welke huurwoningen en koopwoningen als eerste online zijn 
+                gekomen en kun je snel reageren.
               </p>
               <p>
-                We verversen het aanbod doorlopend. Gebruik ook de zoekpagina om verder te filteren op stad, prijs,
-                type woning en huur of koop.
+                WoonPeek scant dagelijks meerdere woningplatforms en makelaarswebsites in heel Nederland. 
+                Nieuwe woningen worden automatisch verwerkt en verschijnen op deze pagina zodra ze 
+                beschikbaar zijn. Het aanbod wordt doorlopend ververst gedurende de dag.
+              </p>
+              <p>
+                Wil je geen dag missen? Stel een gratis dagelijkse alert in en ontvang elke dag een 
+                e-mail met een samenvatting van het nieuwe aanbod. Of gebruik de zoekpagina om verder 
+                te filteren op stad, prijs, woningtype en meer. Bekijk ook onze interactieve kaart 
+                op de verkenningspagina om woningen in jouw directe omgeving te ontdekken.
               </p>
             </div>
           </div>
