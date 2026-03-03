@@ -26,6 +26,7 @@ const Header = () => {
     { to: "/verkennen", label: "Kaart", icon: Map },
     { to: "/steden", label: "Steden", icon: MapPin },
     { to: "/favorieten", label: "Favorieten", icon: Heart },
+    { to: "/dagelijkse-alert", label: "Alert", icon: Bell },
     { to: "/woning-plaatsen", label: "Woning plaatsen", icon: PlusCircle },
   ];
 
