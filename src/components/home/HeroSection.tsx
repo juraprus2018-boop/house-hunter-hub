@@ -1,8 +1,9 @@
 import { Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useHomeStats } from "@/hooks/useHomeStats";
-import { useProperties } from "@/hooks/useProperties";
 import { Input } from "@/components/ui/input";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import {
   Select,
   SelectContent,
@@ -16,7 +17,15 @@ import { useNavigate } from "react-router-dom";
 const HeroSection = () => {
   const navigate = useNavigate();
   const { data: stats } = useHomeStats();
-  const { data: activePropertiesData } = useProperties({ includeInactive: false, page: 1, pageSize: 1 });
+  const { data: activePropertiesCount } = useQuery({
+    queryKey: ["home-active-properties-count"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("properties").select("status");
+      if (error) throw error;
+      return (data ?? []).filter((property) => property.status === "actief").length;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
   const [searchParams, setSearchParams] = useState({
     location: "",
     type: "",
@@ -110,7 +119,7 @@ const HeroSection = () => {
           <div className="mt-10 flex flex-wrap items-center justify-center gap-8 text-sm text-muted-foreground">
             <div className="flex items-center gap-2">
               <span className="font-display text-2xl font-bold text-foreground">
-                {activePropertiesData?.totalCount ?? stats?.properties_count ?? "-"}
+                {activePropertiesCount ?? stats?.properties_count ?? "-"}
               </span>
               <span>woningen</span>
             </div>
