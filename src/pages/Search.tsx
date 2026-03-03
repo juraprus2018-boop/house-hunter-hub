@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useProperties } from "@/hooks/useProperties";
 import { Search, SlidersHorizontal, List, Map } from "lucide-react";
+import ExploreMap from "@/components/explore/ExploreMap";
 import {
   Sheet,
   SheetContent,
@@ -219,18 +220,15 @@ const SearchPage = () => {
                   ))}
                 </div>
               ) : properties && properties.length > 0 ? (
-                viewMode === "list" ? (
+              viewMode === "list" ? (
                   <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
                     {properties.map((property) => (
                       <PropertyCard key={property.id} property={property} />
                     ))}
                   </div>
                 ) : (
-                  <div className="flex h-[500px] items-center justify-center rounded-lg border bg-muted/50">
-                    <div className="text-center">
-                      <Map className="mx-auto mb-2 h-12 w-12 text-muted-foreground" />
-                      <p className="text-muted-foreground">Kaartweergave komt binnenkort</p>
-                    </div>
+                  <div className="h-[500px] rounded-lg border overflow-hidden">
+                    <ExploreMap properties={properties} />
                   </div>
                 )
               ) : (
