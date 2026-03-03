@@ -107,6 +107,17 @@ const Footer = () => {
                 <Mail className="h-4 w-4" />
                 info@woonpeek.nl
               </li>
+              <li>
+                <a
+                  href="https://www.facebook.com/profile.php?id=61588380235270"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  <img src="/facebook-logo.png" alt="Facebook" className="h-4 w-4" />
+                  Facebook
+                </a>
+              </li>
             </ul>
           </div>
         </div>
