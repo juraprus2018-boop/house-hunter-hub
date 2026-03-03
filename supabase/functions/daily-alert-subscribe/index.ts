@@ -9,6 +9,38 @@ const corsHeaders = {
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+async function verifyTurnstileToken(token: string, remoteIp?: string | null) {
+  const secretKey = Deno.env.get("TURNSTILE_SECRET_KEY");
+  if (!secretKey) {
+    // No secret configured: skip verification (dev/fallback).
+    return { success: true };
+  }
+
+  if (!token) {
+    return { success: false, message: "Captcha-token ontbreekt." };
+  }
+
+  const formData = new URLSearchParams();
+  formData.append("secret", secretKey);
+  formData.append("response", token);
+  if (remoteIp) formData.append("remoteip", remoteIp);
+
+  const res = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
+    method: "POST",
+    body: formData,
+  });
+
+  if (!res.ok) {
+    return { success: false, message: "Captcha-verificatie mislukt." };
+  }
+
+  const data = await res.json();
+  return {
+    success: data.success === true,
+    message: data.success === true ? undefined : "Captcha-controle mislukt. Probeer opnieuw.",
+  };
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -24,23 +56,28 @@ serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
-
     const authHeader = req.headers.get("Authorization") ?? "";
+    const jwt = authHeader.startsWith("Bearer ") ? authHeader.slice("Bearer ".length) : "";
 
     const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
-    const supabaseUser = createClient(supabaseUrl, anonKey, {
-      global: {
-        headers: {
-          Authorization: authHeader,
-        },
-      },
-    });
+    const { email, source, turnstileToken } = await req.json().catch(() => ({}));
 
-    const { email, source } = await req.json().catch(() => ({}));
+    const captcha = await verifyTurnstileToken(String(turnstileToken || ""), req.headers.get("x-forwarded-for"));
+    if (!captcha.success) {
+      return new Response(JSON.stringify({ error: captcha.message }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
-    const { data: authData } = await supabaseUser.auth.getUser();
-    const user = authData?.user ?? null;
+    let user: { id: string; email?: string | null } | null = null;
+    if (jwt) {
+      const { data: userData, error: userError } = await supabaseAdmin.auth.getUser(jwt);
+      if (!userError) {
+        user = userData.user ? { id: userData.user.id, email: userData.user.email } : null;
+      }
+    }
+
     const targetEmail = String(user?.email ?? email ?? "").trim().toLowerCase();
 
     if (!targetEmail || !emailRegex.test(targetEmail)) {

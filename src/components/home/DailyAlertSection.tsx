@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { BellRing, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -6,6 +6,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
+import TurnstileWidget from "@/components/security/TurnstileWidget";
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -13,9 +14,11 @@ const DailyAlertSection = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [email, setEmail] = useState("");
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const turnstileSiteKey = import.meta.env.VITE_TURNSTILE_SITE_KEY as string | undefined;
 
   const subscribe = useMutation({
-    mutationFn: async (payload: { email?: string }) => {
+    mutationFn: async (payload: { email?: string; turnstileToken?: string | null }) => {
       const { data, error } = await supabase.functions.invoke("daily-alert-subscribe", {
         body: payload,
       });
@@ -29,6 +32,7 @@ const DailyAlertSection = () => {
         description: data?.message || "Je bent ingeschreven voor dagelijkse alerts.",
       });
       setEmail("");
+      setTurnstileToken(null);
     },
     onError: (error: unknown) => {
       toast({
@@ -49,12 +53,35 @@ const DailyAlertSection = () => {
       });
       return;
     }
-    subscribe.mutate({ email: cleanedEmail });
+
+    if (turnstileSiteKey && !turnstileToken) {
+      toast({
+        variant: "destructive",
+        title: "Captcha vereist",
+        description: "Vink de captcha aan voordat je je inschrijft.",
+      });
+      return;
+    }
+
+    subscribe.mutate({ email: cleanedEmail, turnstileToken });
   };
 
   const handleAccountSubscribe = () => {
-    subscribe.mutate({});
+    if (turnstileSiteKey && !turnstileToken) {
+      toast({
+        variant: "destructive",
+        title: "Captcha vereist",
+        description: "Vink de captcha aan voordat je je inschrijft.",
+      });
+      return;
+    }
+
+    subscribe.mutate({ turnstileToken });
   };
+
+  const handleTokenChange = useCallback((token: string | null) => {
+    setTurnstileToken(token);
+  }, []);
 
   return (
     <section className="py-16">
@@ -79,24 +106,28 @@ const DailyAlertSection = () => {
               <p className="text-sm text-muted-foreground">
                 Ingeschreven met je account e-mail: <span className="font-medium text-foreground">{user.email}</span>
               </p>
+              <TurnstileWidget siteKey={turnstileSiteKey} onTokenChange={handleTokenChange} />
               <Button onClick={handleAccountSubscribe} disabled={subscribe.isPending} className="gap-2">
                 {subscribe.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
                 Activeer dagelijkse alert
               </Button>
             </div>
           ) : (
-            <div className="flex flex-col gap-3 sm:flex-row">
-              <Input
-                type="email"
-                placeholder="jouw@email.nl"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="sm:max-w-sm"
-              />
-              <Button onClick={handleGuestSubscribe} disabled={subscribe.isPending} className="gap-2">
-                {subscribe.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
-                Schrijf me in
-              </Button>
+            <div className="space-y-3">
+              <div className="flex flex-col gap-3 sm:flex-row">
+                <Input
+                  type="email"
+                  placeholder="jouw@email.nl"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="sm:max-w-sm"
+                />
+                <Button onClick={handleGuestSubscribe} disabled={subscribe.isPending} className="gap-2">
+                  {subscribe.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
+                  Schrijf me in
+                </Button>
+              </div>
+              <TurnstileWidget siteKey={turnstileSiteKey} onTokenChange={handleTokenChange} />
             </div>
           )}
         </div>
