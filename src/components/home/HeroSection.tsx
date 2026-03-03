@@ -1,6 +1,7 @@
 import { Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useHomeStats } from "@/hooks/useHomeStats";
+import { useProperties } from "@/hooks/useProperties";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -15,6 +16,7 @@ import { useNavigate } from "react-router-dom";
 const HeroSection = () => {
   const navigate = useNavigate();
   const { data: stats } = useHomeStats();
+  const { data: activePropertiesData } = useProperties({ includeInactive: false, page: 1, pageSize: 1 });
   const [searchParams, setSearchParams] = useState({
     location: "",
     type: "",
@@ -107,7 +109,9 @@ const HeroSection = () => {
           {/* Quick stats - will be dynamic later */}
           <div className="mt-10 flex flex-wrap items-center justify-center gap-8 text-sm text-muted-foreground">
             <div className="flex items-center gap-2">
-              <span className="font-display text-2xl font-bold text-foreground">{stats?.properties_count ?? "-"}</span>
+              <span className="font-display text-2xl font-bold text-foreground">
+                {activePropertiesData?.totalCount ?? stats?.properties_count ?? "-"}
+              </span>
               <span>woningen</span>
             </div>
             <div className="hidden h-8 w-px bg-border md:block" />
