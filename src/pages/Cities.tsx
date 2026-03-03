@@ -44,10 +44,23 @@ const Cities = () => {
       <main className="flex-1 container py-8">
         <Breadcrumbs items={[{ label: "Home", href: "/" }, { label: "Steden" }]} />
 
-        <div className="mt-6 mb-8">
-          <h1 className="font-display text-3xl font-bold text-foreground">Alle steden</h1>
+        <div className="mt-6 mb-4">
+          <h1 className="font-display text-3xl font-bold text-foreground">Alle steden met woningaanbod</h1>
           <p className="mt-2 text-muted-foreground">
             Ontdek woningen in {cities?.length ?? "…"} steden door heel Nederland
+          </p>
+        </div>
+        <div className="mb-8 max-w-3xl space-y-3 text-sm text-muted-foreground leading-relaxed">
+          <p>
+            WoonPeek verzamelt dagelijks huurwoningen en koopwoningen uit steden door heel Nederland. 
+            Van de Randstad tot de provincies — hieronder vind je een overzicht van alle steden waar momenteel 
+            actief woningaanbod beschikbaar is. Klik op een stad om het volledige aanbod te bekijken, 
+            inclusief appartementen, huizen, studio's en kamers.
+          </p>
+          <p>
+            De populairste steden op WoonPeek zijn Amsterdam, Rotterdam, Utrecht, Eindhoven, Den Haag en 
+            Groningen. Maar ook in kleinere gemeenten vind je regelmatig aantrekkelijk woningaanbod. 
+            Mis niets en stel een dagelijkse alert in om als eerste op de hoogte te zijn van nieuwe woningen.
           </p>
         </div>
 
@@ -79,6 +92,21 @@ const Cities = () => {
             ))}
           </div>
         )}
+
+        <div className="mt-12 max-w-3xl space-y-3 text-sm text-muted-foreground leading-relaxed border-t pt-8">
+          <h2 className="font-display text-2xl font-bold text-foreground">Woningen zoeken per stad</h2>
+          <p>
+            Nederland telt honderden steden en gemeenten, elk met een eigen woningmarkt en karakter. 
+            In grote steden als Amsterdam en Rotterdam is het aanbod divers maar de concurrentie groot. 
+            In middelgrote steden als Tilburg, Breda en Arnhem vind je vaak meer ruimte voor je budget. 
+            En in kleinere plaatsen zijn er verrassend betaalbare opties beschikbaar.
+          </p>
+          <p>
+            WoonPeek helpt je bij het vinden van de perfecte woning, ongeacht de stad. Gebruik onze 
+            zoekfunctie om direct te filteren op locatie, prijs en woningtype. Of verken het aanbod 
+            via onze interactieve kaart op de verkenningspagina.
+          </p>
+        </div>
       </main>
       <Footer />
     </div>

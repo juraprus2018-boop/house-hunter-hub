@@ -151,7 +151,7 @@ const CityPage = () => {
             <h2 className="font-display text-2xl font-bold mb-4">
               Huurwoningen en koophuizen in {cityName}
             </h2>
-            <div className="prose prose-muted text-muted-foreground text-sm space-y-3">
+            <div className="prose prose-muted text-muted-foreground text-sm space-y-3 leading-relaxed">
               <p>
                 Op WoonPeek vind je het meest actuele aanbod van huurwoningen en koophuizen in {cityName}. 
                 Of je nu op zoek bent naar een appartement, huis, studio of kamer – wij verzamelen dagelijks 
@@ -168,6 +168,18 @@ const CityPage = () => {
                       : ""
                 }.
                 Gebruik de filters op onze zoekpagina om snel de perfecte woning te vinden.
+              </p>
+              <p>
+                De woningmarkt in {cityName} is dynamisch en verandert dagelijks. Nieuwe huurwoningen en 
+                koophuizen worden continu aan ons platform toegevoegd. Wil je als eerste op de hoogte zijn 
+                van nieuw aanbod in {cityName}? Stel dan een gratis dagelijkse alert in en ontvang 
+                automatisch een e-mail zodra er nieuwe woningen beschikbaar komen.
+              </p>
+              <p>
+                Bij WoonPeek kun je niet alleen zoeken op stad, maar ook filteren op postcode, woningtype, 
+                prijs en aantal slaapkamers. Gebruik onze interactieve kaart om woningen in specifieke 
+                wijken van {cityName} te bekijken. Zo vind je snel een woning in de buurt die het beste 
+                bij jou past.
               </p>
             </div>
           </div>
