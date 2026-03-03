@@ -44,7 +44,9 @@ const Header = () => {
       <div className="container flex h-16 items-center justify-between">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2 transition-opacity hover:opacity-80">
-          <img src="/facebook-logo.png" alt="WoonPeek logo" className="h-9 w-9 rounded-lg" />
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
+            <Home className="h-5 w-5 text-primary-foreground" />
+          </div>
           <span className="font-display text-xl font-semibold text-foreground">
             WoonPeek
           </span>
