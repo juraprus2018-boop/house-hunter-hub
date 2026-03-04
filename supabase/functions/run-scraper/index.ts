@@ -1622,10 +1622,22 @@ async function fetchHuurzoneDetail(sourceUrl: string): Promise<{
       result.description = descMatch[1].replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
     }
 
-    // Postcode
-    const postcodeMatch = html.match(/Postcode[\s\S]*?<dd[^>]*>\s*([\dA-Z]{6,7})\s*<\/dd>/i);
-    if (postcodeMatch) {
-      result.postalCode = postcodeMatch[1].trim();
+    // Postcode - try multiple patterns
+    const postcodePatterns = [
+      /Postcode[\s\S]*?<dd[^>]*>\s*([\dA-Z]{6,7})\s*<\/dd>/i,
+      /(\d{4}\s?[A-Z]{2})/,
+      /postcode[^>]*>[\s\S]*?(\d{4}\s?[A-Z]{2})/i,
+      /data-postcode="([^"]+)"/i,
+    ];
+    for (const pattern of postcodePatterns) {
+      const postcodeMatch = html.match(pattern);
+      if (postcodeMatch) {
+        const pc = postcodeMatch[1].replace(/\s/g, "").trim();
+        if (pc.length >= 6 && /^\d{4}[A-Z]{2}$/i.test(pc)) {
+          result.postalCode = pc.toUpperCase();
+          break;
+        }
+      }
     }
 
     // Gemeente
