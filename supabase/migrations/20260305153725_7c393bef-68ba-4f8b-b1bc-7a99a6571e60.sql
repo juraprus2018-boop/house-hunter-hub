@@ -1,0 +1,1 @@
+UPDATE blog_posts SET published_at = published_at - INTERVAL '2 days' WHERE published_at::date = CURRENT_DATE;
