@@ -83,7 +83,7 @@ const BlogPostPage = () => {
             </div>
           )}
 
-          <div className="container max-w-3xl py-8">
+          <div className="container max-w-4xl py-10 md:py-14">
             <Breadcrumbs
               items={[
                 { label: "Home", href: "/" },
@@ -92,14 +92,14 @@ const BlogPostPage = () => {
               ]}
             />
 
-            <Button variant="ghost" asChild className="mt-4 mb-6">
+            <Button variant="ghost" asChild className="mt-4 mb-8">
               <Link to="/blog">
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Terug naar blog
               </Link>
             </Button>
 
-            <h1 className="font-display text-3xl font-bold text-foreground md:text-4xl">
+            <h1 className="font-display text-3xl font-bold text-foreground leading-tight md:text-5xl lg:text-[3.25rem]">
               {post.title}
             </h1>
 
@@ -116,7 +116,21 @@ const BlogPostPage = () => {
               </div>
             )}
 
-            <div className="mt-8 prose prose-lg max-w-none text-foreground prose-headings:font-display prose-headings:text-foreground prose-p:text-muted-foreground prose-a:text-primary prose-strong:text-foreground">
+            <div 
+              className="mt-10 prose prose-lg lg:prose-xl max-w-none 
+                text-foreground 
+                prose-headings:font-display prose-headings:text-foreground prose-headings:leading-tight
+                prose-h2:text-2xl prose-h2:md:text-3xl prose-h2:mt-12 prose-h2:mb-4 prose-h2:border-b prose-h2:border-border prose-h2:pb-3
+                prose-h3:text-xl prose-h3:md:text-2xl prose-h3:mt-8 prose-h3:mb-3
+                prose-p:text-muted-foreground prose-p:text-base prose-p:md:text-lg prose-p:leading-relaxed prose-p:mb-5
+                prose-a:text-primary prose-a:font-semibold prose-a:underline prose-a:underline-offset-4 hover:prose-a:text-accent
+                prose-strong:text-foreground prose-strong:font-bold
+                prose-ul:my-6 prose-ul:space-y-2 prose-li:text-muted-foreground prose-li:text-base prose-li:md:text-lg
+                prose-ol:my-6 prose-ol:space-y-2
+                prose-blockquote:border-l-4 prose-blockquote:border-primary prose-blockquote:bg-secondary prose-blockquote:py-4 prose-blockquote:px-6 prose-blockquote:rounded-r-lg prose-blockquote:not-italic prose-blockquote:text-foreground prose-blockquote:my-8
+                prose-img:rounded-xl prose-img:shadow-lg
+              "
+            >
               <div dangerouslySetInnerHTML={{ __html: post.content }} />
             </div>
           </div>
