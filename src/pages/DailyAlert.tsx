@@ -1,7 +1,9 @@
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
+import PageBanner from "@/components/layout/PageBanner";
 import DailyAlertSection from "@/components/home/DailyAlertSection";
 import SEOHead from "@/components/seo/SEOHead";
+import bannerAlert from "@/assets/banner-alert.jpg";
 
 const DailyAlert = () => {
   return (
@@ -13,6 +15,14 @@ const DailyAlert = () => {
       />
       <Header />
       <main className="flex-1">
+        <PageBanner image={bannerAlert} alt="Dagelijkse woningalert">
+          <h1 className="font-display text-3xl font-bold text-foreground md:text-4xl">
+            Dagelijkse Woningalert
+          </h1>
+          <p className="mt-2 text-muted-foreground">
+            Ontvang elke dag het nieuwste woningaanbod in je inbox
+          </p>
+        </PageBanner>
         <DailyAlertSection />
         <section className="border-t bg-muted/30 py-12">
           <div className="container max-w-3xl space-y-6 text-sm text-muted-foreground leading-relaxed">
