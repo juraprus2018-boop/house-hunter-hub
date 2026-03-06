@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToggleFavorite } from "@/hooks/useFavorites";
+import { useFeedLogos } from "@/hooks/useFeedLogos";
 import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
 import { Database } from "@/integrations/supabase/types";
@@ -18,7 +19,12 @@ interface PropertyCardProps {
 const PropertyCard = ({ property }: PropertyCardProps) => {
   const { user } = useAuth();
   const { toggle, isFavorite, isLoading } = useToggleFavorite();
+  const { data: feedLogos } = useFeedLogos();
   const isPropertyFavorite = isFavorite(property.id);
+
+  const sourceLogo = feedLogos && property.source_site
+    ? feedLogos[property.source_site.toLowerCase()]
+    : undefined;
 
   const formatPrice = (price: number, listingType: string) => {
     const formatted = new Intl.NumberFormat("nl-NL", {
@@ -86,6 +92,15 @@ const PropertyCard = ({ property }: PropertyCardProps) => {
                 className={cn("h-5 w-5", isPropertyFavorite && "fill-current")}
               />
             </Button>
+          )}
+          {sourceLogo && (
+            <div className="absolute right-3 bottom-3 h-8 w-8 rounded-md bg-white/90 p-1 shadow-sm">
+              <img
+                src={sourceLogo}
+                alt={property.source_site || "Aanbieder"}
+                className="h-full w-full object-contain"
+              />
+            </div>
           )}
         </div>
         <CardContent className="p-4">
