@@ -62,6 +62,11 @@ const AdminDaisycon = () => {
   const uploadLogo = useUploadFeedLogo();
   const { data: programsData, refetch: fetchPrograms, isLoading: programsLoading, isFetching: programsFetching } = useDaisyconPrograms();
 
+  // Wooniezie
+  const wooniezieImport = useRunWooniezieImport();
+  const { data: wooniezieStats } = useWooniezieStats();
+  const [wooniezieIncludeKoop, setWooniezieIncludeKoop] = useState(false);
+
   const [showAddFeed, setShowAddFeed] = useState(false);
   const [showConnect, setShowConnect] = useState(false);
   const [showEditFeed, setShowEditFeed] = useState(false);
