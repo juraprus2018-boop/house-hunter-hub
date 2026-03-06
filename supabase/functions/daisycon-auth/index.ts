@@ -229,6 +229,32 @@ Deno.serve(async (req) => {
 
       const subscriptions = await subsRes.json();
 
+      // Collect all unique program IDs and fetch names
+      const allProgramIds = new Set<number>();
+      for (const sub of subscriptions) {
+        const ids = sub.program_ids || (sub.program_id ? [sub.program_id] : []);
+        for (const id of ids) allProgramIds.add(id);
+      }
+
+      const programNames: Record<number, string> = {};
+      await Promise.all([...allProgramIds].map(async (pid) => {
+        try {
+          const res = await fetch(
+            `https://services.daisycon.com/publishers/${publisherId}/programs/${pid}`,
+            { headers: { Authorization: `Bearer ${accessToken}`, Accept: "application/json" } }
+          );
+          if (res.ok) {
+            const data = await res.json();
+            programNames[pid] = data.name || `Program ${pid}`;
+          } else {
+            await res.text();
+            programNames[pid] = `Program ${pid}`;
+          }
+        } catch {
+          programNames[pid] = `Program ${pid}`;
+        }
+      }));
+
       // Fetch media list
       const mediaRes = await fetch(
         `https://services.daisycon.com/publishers/${publisherId}/media?page=1&per_page=100`,
@@ -241,7 +267,7 @@ Deno.serve(async (req) => {
       }
 
       return new Response(
-        JSON.stringify({ subscriptions, media: mediaList }),
+        JSON.stringify({ subscriptions, media: mediaList, program_names: programNames }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
