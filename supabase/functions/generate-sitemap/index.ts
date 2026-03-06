@@ -109,15 +109,26 @@ Deno.serve(async (req) => {
   const supabase = createClient(supabaseUrl, supabaseKey);
 
   try {
-    const { data: properties, error: propError } = await supabase
-      .from("properties")
-      .select("slug, id, city, updated_at, listing_type")
-      .eq("status", "actief")
-      .order("updated_at", { ascending: false });
+    const [propResult, blogResult] = await Promise.all([
+      supabase
+        .from("properties")
+        .select("slug, id, city, updated_at, listing_type")
+        .eq("status", "actief")
+        .order("updated_at", { ascending: false }),
+      supabase
+        .from("blog_posts")
+        .select("slug, updated_at")
+        .eq("status", "published")
+        .order("published_at", { ascending: false }),
+    ]);
 
-    if (propError) throw propError;
+    if (propResult.error) throw propResult.error;
+    if (blogResult.error) throw blogResult.error;
 
-    const xml = buildSitemapXml(properties || []);
+    const properties = propResult.data || [];
+    const blogPosts = blogResult.data || [];
+
+    const xml = buildSitemapXml(properties, blogPosts);
 
     // GET = serve XML directly, POST = regenerate & store
     if (req.method === "GET") {
