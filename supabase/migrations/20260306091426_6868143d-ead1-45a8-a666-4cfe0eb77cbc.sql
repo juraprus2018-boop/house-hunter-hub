@@ -1,0 +1,1 @@
+ALTER TABLE public.daisycon_feeds ADD COLUMN IF NOT EXISTS logo_url text;

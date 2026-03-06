@@ -108,6 +108,7 @@ export type Database = {
           id: string
           is_active: boolean
           last_import_at: string | null
+          logo_url: string | null
           media_id: number
           name: string
           program_id: number
@@ -120,6 +121,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           last_import_at?: string | null
+          logo_url?: string | null
           media_id: number
           name: string
           program_id: number
@@ -132,6 +134,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           last_import_at?: string | null
+          logo_url?: string | null
           media_id?: number
           name?: string
           program_id?: number
