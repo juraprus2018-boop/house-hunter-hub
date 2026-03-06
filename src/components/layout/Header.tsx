@@ -1,6 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Home, Search, Heart, PlusCircle, User, Menu, LogOut, Shield, Map, Bell, MapPin, CalendarDays } from "lucide-react";
+import { Search, Heart, PlusCircle, User, Menu, LogOut, Shield, Map, Bell, MapPin, CalendarDays } from "lucide-react";
+import logoWoonpeek from "@/assets/logo-woonpeek.png";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -44,9 +45,7 @@ const Header = () => {
       <div className="container flex h-16 items-center justify-between">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2 transition-opacity hover:opacity-80">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
-            <Home className="h-5 w-5 text-primary-foreground" />
-          </div>
+          <img src={logoWoonpeek} alt="Logo WoonPeek" className="h-9" />
           <span className="font-display text-xl font-semibold text-foreground">
             WoonPeek
           </span>

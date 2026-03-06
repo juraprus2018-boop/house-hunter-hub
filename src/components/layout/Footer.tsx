@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
-import { Home, Mail } from "lucide-react";
+import { Mail } from "lucide-react";
+import logoWoonpeek from "@/assets/logo-woonpeek.png";
 
 const Footer = () => {
   return (
@@ -9,9 +10,7 @@ const Footer = () => {
           {/* Brand */}
           <div className="space-y-4">
             <Link to="/" className="flex items-center gap-2">
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
-                <Home className="h-5 w-5 text-primary-foreground" />
-              </div>
+              <img src={logoWoonpeek} alt="Logo WoonPeek" className="h-9" />
               <span className="font-display text-xl font-semibold">WoonPeek</span>
             </Link>
             <p className="text-sm text-muted-foreground">
