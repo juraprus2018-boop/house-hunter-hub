@@ -119,15 +119,23 @@ const BlogPostPage = () => {
             <div 
               className="mt-10 prose prose-lg lg:prose-xl max-w-none 
                 text-foreground 
+
                 prose-headings:font-display prose-headings:text-foreground prose-headings:leading-tight
-                prose-h2:text-2xl prose-h2:md:text-3xl prose-h2:mt-12 prose-h2:mb-4 prose-h2:border-b prose-h2:border-border prose-h2:pb-3
-                prose-h3:text-xl prose-h3:md:text-2xl prose-h3:mt-8 prose-h3:mb-3
-                prose-p:text-muted-foreground prose-p:text-base prose-p:md:text-lg prose-p:leading-relaxed prose-p:mb-5
-                prose-a:text-primary prose-a:font-semibold prose-a:underline prose-a:underline-offset-4 hover:prose-a:text-accent
+
+                prose-h2:text-2xl prose-h2:md:text-[1.875rem] prose-h2:mt-16 prose-h2:mb-6 prose-h2:border-b prose-h2:border-border prose-h2:pb-4
+                prose-h3:text-xl prose-h3:md:text-2xl prose-h3:mt-10 prose-h3:mb-4
+
+                prose-p:text-muted-foreground prose-p:text-[1.0625rem] prose-p:md:text-lg prose-p:leading-[1.85] prose-p:mb-6
+
+                prose-a:text-primary prose-a:font-semibold prose-a:underline prose-a:decoration-primary/40 prose-a:underline-offset-4 prose-a:transition-colors hover:prose-a:text-accent hover:prose-a:decoration-accent
+
                 prose-strong:text-foreground prose-strong:font-bold
-                prose-ul:my-6 prose-ul:space-y-2 prose-li:text-muted-foreground prose-li:text-base prose-li:md:text-lg
-                prose-ol:my-6 prose-ol:space-y-2
-                prose-blockquote:border-l-4 prose-blockquote:border-primary prose-blockquote:bg-secondary prose-blockquote:py-4 prose-blockquote:px-6 prose-blockquote:rounded-r-lg prose-blockquote:not-italic prose-blockquote:text-foreground prose-blockquote:my-8
+
+                prose-ul:my-8 prose-ul:space-y-3 prose-li:text-muted-foreground prose-li:text-[1.0625rem] prose-li:md:text-lg prose-li:leading-[1.8]
+                prose-ol:my-8 prose-ol:space-y-3
+
+                prose-blockquote:border-l-4 prose-blockquote:border-primary prose-blockquote:bg-secondary prose-blockquote:py-5 prose-blockquote:px-6 prose-blockquote:rounded-r-lg prose-blockquote:not-italic prose-blockquote:text-foreground prose-blockquote:my-10
+
                 prose-img:rounded-xl prose-img:shadow-lg
               "
             >

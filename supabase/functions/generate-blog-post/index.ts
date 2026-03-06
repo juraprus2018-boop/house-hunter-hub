@@ -160,14 +160,15 @@ SCHRIJFSTIJL & STRUCTUUR (ZEER BELANGRIJK):
 - Voeg GEEN H1 toe (die wordt apart weergegeven als paginatitel)
 
 HTML STRUCTUUR (STRIKT VOLGEN):
-- Begin met een sterke intro van 2-3 paragrafen in <p> tags
-- Gebruik <h2> voor hoofdsecties (minimaal 4-5 h2 koppen)
+- Begin met een KORTE, krachtige intro van maximaal 2 zinnen in één <p> tag. Geen lang verhaal, direct to-the-point.
+- Gebruik <h2> voor hoofdsecties (minimaal 5-6 h2 koppen, verdeel de content goed)
 - Gebruik <h3> voor subsecties binnen een h2
 - Elke sectie moet minimaal 2 paragrafen bevatten
+- Houd paragrafen KORT: maximaal 3-4 zinnen per <p> tag. Gebruik meerdere korte paragrafen in plaats van lange lappen tekst.
 - Gebruik <ul><li> of <ol><li> voor opsommingen en stappenplannen
 - Gebruik <strong> voor belangrijke termen en kernbegrippen
-- Gebruik <blockquote> voor tips of belangrijke waarschuwingen
-- Voeg witregels toe tussen secties voor leesbaarheid
+- Gebruik <blockquote> voor tips of belangrijke waarschuwingen (minimaal 2 per artikel)
+- BELANGRIJK: Zorg voor VEEL witruimte. Elke <h2> markeert een duidelijk nieuw onderwerp.
 
 INTERNE LINKS (VERPLICHT, minimaal 3):
 Voeg relevante interne links toe naar andere pagina's op WoonPeek.nl. Gebruik <a href="URL">anchor text</a>. Beschikbare pagina's:
