@@ -154,7 +154,8 @@ Deno.serve(async (req) => {
     return new Response(
       JSON.stringify({
         success: true,
-        properties_count: properties?.length || 0,
+        properties_count: properties.length,
+        blog_posts_count: blogPosts.length,
         cities_count: cityCount,
         sitemap_url: `${supabaseUrl}/storage/v1/object/public/property-images/sitemap.xml`,
       }),
