@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/select";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import heroBg from "@/assets/hero-bg.jpg";
 
 const HeroSection = () => {
   const navigate = useNavigate();
@@ -45,21 +46,22 @@ const HeroSection = () => {
   };
 
   return (
-    <section className="relative overflow-hidden bg-gradient-to-br from-primary/5 via-background to-accent/5 py-16 md:py-24">
-      {/* Background pattern */}
-      <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiMyMDIwMjAiIGZpbGwtb3BhY2l0eT0iMC4wMiI+PGNpcmNsZSBjeD0iMzAiIGN5PSIzMCIgcj0iMiIvPjwvZz48L2c+PC9zdmc+')] opacity-50" />
+    <section className="relative overflow-hidden py-16 md:py-24">
+      {/* Background image */}
+      <div 
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+        style={{ backgroundImage: `url(${heroBg})` }}
+      />
+      {/* Overlay for readability */}
+      <div className="absolute inset-0 bg-background/70" />
       
       <div className="container relative">
         <div className="mx-auto max-w-3xl text-center">
           <h1 className="font-display text-4xl font-bold tracking-tight text-foreground md:text-5xl lg:text-6xl">
-            Dagelijks nieuw <span className="text-primary">woningaanbod</span>
-            <br className="hidden sm:block" />
-            <span className="text-lg md:text-2xl lg:text-3xl font-semibold text-muted-foreground mt-2 block">
-              Huurwoningen & koopwoningen op WoonPeek
-            </span>
+            WoonPeek's uitgebreide aanbod aan <span className="text-primary">woonruimtes</span>
           </h1>
           <p className="mt-4 text-lg text-muted-foreground md:text-xl">
-            Zoek tussen duizenden woningen of plaats je eigen woning gratis op WoonPeek.
+            Wij doorzoeken duizenden websites en verzamelen het aanbod op één plek voor je.
             Direct contact met aanbieders, geen tussenpartijen.
           </p>
 
