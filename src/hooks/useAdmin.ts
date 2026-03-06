@@ -233,7 +233,7 @@ export const useDaisyconPrograms = () => {
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
-      return data as { subscriptions: any[]; media: any[] };
+      return data as { subscriptions: any[]; media: any[]; program_names?: Record<number, string> };
     },
     enabled: false, // only fetch on demand
   });

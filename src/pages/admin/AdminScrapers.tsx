@@ -399,9 +399,10 @@ const AdminDaisycon = () => {
                         programsData.subscriptions.flatMap((sub: any, idx: number) => {
                           const programIds: number[] = sub.program_ids || (sub.program_id ? [sub.program_id] : [sub.id]);
                           const defaultMediaId = sub.media_id || programsData.media?.[0]?.id;
+                          const names = programsData.program_names || {};
 
                           return programIds.map((pid: number) => {
-                            const programName = `Program ${pid}`;
+                            const programName = names[pid] || `Program ${pid}`;
                             const isAdded = existingProgramIds.has(pid);
 
                             return (
