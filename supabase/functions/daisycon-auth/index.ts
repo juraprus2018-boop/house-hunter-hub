@@ -50,7 +50,7 @@ Deno.serve(async (req) => {
       const codeVerifier = generateRandomString(64);
       const codeChallenge = await generateCodeChallenge(codeVerifier);
 
-      const authUrl = `${DAISYCON_AUTH_URL}?response_type=code&client_id=${encodeURIComponent(clientId)}&redirect_uri=${encodeURIComponent(DAISYCON_CLI_REDIRECT)}&code_challenge=${encodeURIComponent(codeChallenge)}`;
+      const authUrl = `${DAISYCON_AUTH_URL}?response_type=code&client_id=${encodeURIComponent(clientId)}&redirect_uri=${encodeURIComponent(DAISYCON_CLI_REDIRECT)}&code_challenge=${encodeURIComponent(codeChallenge)}&code_challenge_method=S256`;
 
       return new Response(
         JSON.stringify({ auth_url: authUrl, code_verifier: codeVerifier }),
