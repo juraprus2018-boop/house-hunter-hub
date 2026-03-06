@@ -210,9 +210,9 @@ const AdminDaisycon = () => {
       <div className="space-y-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="font-display text-2xl font-bold">Daisycon Integratie</h1>
+            <h1 className="font-display text-2xl font-bold">Data Bronnen</h1>
             <p className="mt-1 text-sm text-muted-foreground">
-              Beheer je Daisycon feeds en importeer woningen
+              Beheer Daisycon feeds en de Wooniezie scraper
             </p>
           </div>
           <div className="flex gap-2">
@@ -222,10 +222,77 @@ const AdminDaisycon = () => {
               className="gap-2"
             >
               <RefreshCw className={`h-4 w-4 ${runImport.isPending ? "animate-spin" : ""}`} />
-              Alle feeds importeren
+              Alle Daisycon feeds
             </Button>
           </div>
         </div>
+
+        {/* Wooniezie Scraper */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <Globe className="h-5 w-5" />
+                  Wooniezie Scraper
+                </CardTitle>
+                <CardDescription>
+                  Importeer sociale huurwoningen uit de regio Eindhoven-Helmond
+                </CardDescription>
+              </div>
+              <Badge className="gap-1">
+                <CheckCircle2 className="h-3 w-3" />
+                Actief
+              </Badge>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="space-y-1 text-sm text-muted-foreground">
+                <p>Woningen op platform: <span className="font-medium text-foreground">{wooniezieStats?.totalProperties ?? "..."}</span></p>
+                {wooniezieStats?.lastRun && (
+                  <p>Laatste import: {formatDistanceToNow(new Date(wooniezieStats.lastRun), { addSuffix: true, locale: nl })}
+                    {wooniezieStats.lastStatus && (
+                      <Badge variant={wooniezieStats.lastStatus === "success" ? "default" : "secondary"} className="ml-2 text-xs">
+                        {wooniezieStats.lastStatus}
+                      </Badge>
+                    )}
+                  </p>
+                )}
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    id="include-koop"
+                    checked={wooniezieIncludeKoop}
+                    onCheckedChange={(c) => setWooniezieIncludeKoop(c === true)}
+                  />
+                  <Label htmlFor="include-koop" className="text-sm">Incl. koopwoningen</Label>
+                </div>
+                <Button
+                  onClick={async () => {
+                    try {
+                      toast.info("Wooniezie import gestart...");
+                      const result = await wooniezieImport.mutateAsync(wooniezieIncludeKoop);
+                      toast.success(`Wooniezie: ${result.imported} nieuw, ${result.skipped} overgeslagen`);
+                    } catch (e) {
+                      toast.error("Wooniezie import mislukt: " + (e instanceof Error ? e.message : "onbekend"));
+                    }
+                  }}
+                  disabled={wooniezieImport.isPending}
+                  className="gap-2"
+                >
+                  {wooniezieImport.isPending ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Play className="h-4 w-4" />
+                  )}
+                  Importeer nu
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Connection Status */}
         <Card>
