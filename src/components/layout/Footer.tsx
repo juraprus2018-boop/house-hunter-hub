@@ -10,7 +10,7 @@ const Footer = () => {
           {/* Brand */}
           <div className="space-y-4">
             <Link to="/" className="flex items-center gap-2">
-              <img src={logoWoonpeek} alt="Logo WoonPeek" className="h-[72px]" />
+              <img src={logoWoonpeek} alt="Logo WoonPeek" className="h-[55px]" />
             </Link>
             <p className="text-sm text-muted-foreground">
               Vind jouw droomwoning of plaats je eigen woning op WoonPeek. 
