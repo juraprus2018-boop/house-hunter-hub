@@ -45,7 +45,7 @@ const Header = () => {
       <div className="container flex h-16 items-center justify-between">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2 transition-opacity hover:opacity-80">
-          <img src={logoWoonpeek} alt="Logo WoonPeek" className="h-9" />
+          <img src={logoWoonpeek} alt="Logo WoonPeek" className="h-[72px]" />
         </Link>
 
         {/* Desktop Navigation */}
