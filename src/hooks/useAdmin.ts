@@ -271,3 +271,50 @@ export const useDaisyconPrograms = () => {
     enabled: false, // only fetch on demand
   });
 };
+
+// Wooniezie hooks
+export const useRunWooniezieImport = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (includeKoop?: boolean) => {
+      const { data, error } = await supabase.functions.invoke("wooniezie-import", {
+        body: { include_koop: includeKoop || false },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      return data as { imported: number; skipped: number; errors: number };
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["properties"] });
+      queryClient.invalidateQueries({ queryKey: ["all-properties"] });
+      queryClient.invalidateQueries({ queryKey: ["wooniezie-stats"] });
+    },
+  });
+};
+
+export const useWooniezieStats = () => {
+  return useQuery({
+    queryKey: ["wooniezie-stats"],
+    queryFn: async () => {
+      // Count wooniezie properties
+      const { count, error } = await supabase
+        .from("properties")
+        .select("id", { count: "exact", head: true })
+        .eq("source_site", "Wooniezie");
+      if (error) throw error;
+
+      // Get scraper record
+      const { data: scraper } = await supabase
+        .from("scrapers")
+        .select("*")
+        .ilike("name", "%wooniezie%")
+        .maybeSingle();
+
+      return {
+        totalProperties: count || 0,
+        lastRun: scraper?.last_run_at || null,
+        lastStatus: scraper?.last_run_status || null,
+      };
+    },
+  });
+};
