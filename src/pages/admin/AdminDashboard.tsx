@@ -4,17 +4,16 @@ import { useQueryClient } from "@tanstack/react-query";
 import AdminLayout from "./AdminLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { useScrapers, useAllProperties, useScrapedProperties, useScraperLogs, useRunScraper, useDailyAlertSubscribers } from "@/hooks/useAdmin";
+import { useAllProperties, useDailyAlertSubscribers, useDaisyconStatus, useDaisyconFeeds, useRunDaisyconImport } from "@/hooks/useAdmin";
 import {
-  Home, Activity, Loader2, ClipboardCheck, Clock, CheckCircle, XCircle,
-  TrendingUp, Building2, Eye, Zap, RefreshCw, ExternalLink, BarChart3, Trash2, Facebook
+  Home, Loader2, Clock, CheckCircle, XCircle,
+  Building2, Eye, RefreshCw, ExternalLink, BarChart3, Trash2, Facebook, Rss, Link2
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { format, formatDistanceToNow } from "date-fns";
 import { nl } from "date-fns/locale";
-import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -37,37 +36,23 @@ import {
 } from "@/components/ui/select";
 
 const AdminDashboard = () => {
-  const { data: scrapers, isLoading: scrapersLoading } = useScrapers();
   const { data: properties, isLoading: propertiesLoading } = useAllProperties();
-  const { data: scrapedProperties } = useScrapedProperties("pending");
-  const { data: allLogs } = useScraperLogs();
   const { data: dailyAlertSubscribers } = useDailyAlertSubscribers();
-  const runScraper = useRunScraper();
+  const { data: daisyconStatus } = useDaisyconStatus();
+  const { data: daisyconFeeds } = useDaisyconFeeds();
+  const runImport = useRunDaisyconImport();
   const [resetting, setResetting] = useState(false);
   const [resetSource, setResetSource] = useState<string>("all");
   const queryClient = useQueryClient();
 
-  const activeScrapers = scrapers?.filter((s) => s.is_active).length || 0;
-  const totalScrapers = scrapers?.length || 0;
   const totalProperties = properties?.length || 0;
   const activeProperties = properties?.filter((p) => p.status === "actief").length || 0;
   const inactiveProperties = properties?.filter((p) => p.status === "inactief").length || 0;
   const otherStatusesProperties = Math.max(totalProperties - activeProperties - inactiveProperties, 0);
-  const pendingReviews = scrapedProperties?.length || 0;
   const activeAlertSubscribers = dailyAlertSubscribers?.filter((s) => s.is_active).length || 0;
   const unsubscribedAlertSubscribers = dailyAlertSubscribers?.filter((s) => !s.is_active).length || 0;
-
-  // Last scrape run info
-  const lastLog = allLogs?.[0];
-  const todayLogs = allLogs?.filter((l) => {
-    const logDate = new Date(l.created_at);
-    const today = new Date();
-    return logDate.toDateString() === today.toDateString();
-  }) || [];
-  const totalScrapedToday = todayLogs.reduce((sum, l) => sum + (l.properties_scraped || 0), 0);
-  const successfulRunsToday = todayLogs.filter((l) => l.status === "success").length;
-  const failedRunsToday = todayLogs.filter((l) => l.status === "error").length;
-  const recentLogs = allLogs?.slice(0, 10) || [];
+  const activeFeeds = daisyconFeeds?.filter((f: any) => f.is_active).length || 0;
+  const totalFeeds = daisyconFeeds?.length || 0;
 
   // Properties by city (top 5)
   const cityMap = new Map<string, number>();
@@ -78,7 +63,6 @@ const AdminDashboard = () => {
   const topCities = [...cityMap.entries()]
     .sort((a, b) => b[1] - a[1])
     .slice(0, 6);
-  const maxCityCount = topCities[0]?.[1] || 1;
 
   // Properties by source
   const sourceMap = new Map<string, { actief: number; inactief: number }>();
@@ -97,27 +81,6 @@ const AdminDashboard = () => {
     typeMap.set(p.property_type, (typeMap.get(p.property_type) || 0) + 1);
   });
 
-  // Scraper health
-  const workingScrapers = scrapers?.filter(s => s.last_run_status === "success" && s.is_active).length || 0;
-  const scraperHealthPct = activeScrapers > 0 ? Math.round((workingScrapers / activeScrapers) * 100) : 0;
-
-  const handleRunAllScrapers = async () => {
-    const activeOnes = scrapers?.filter(s => s.is_active) || [];
-    if (activeOnes.length === 0) {
-      toast.error("Geen actieve scrapers");
-      return;
-    }
-    toast.info(`${activeOnes.length} scrapers worden gestart...`);
-    for (const scraper of activeOnes) {
-      try {
-        await runScraper.mutateAsync(scraper.id);
-      } catch {
-        // individual errors handled
-      }
-    }
-    toast.success("Alle scrapers zijn uitgevoerd");
-  };
-
   // Unique sources for reset dropdown
   const availableSources = Array.from(
     new Set(properties?.map((p) => p.source_site).filter(Boolean) as string[])
@@ -133,9 +96,6 @@ const AdminDashboard = () => {
       toast.success(`Reset voltooid (${label}): ${data.active_deleted || 0} woningen verwijderd`);
       queryClient.invalidateQueries({ queryKey: ["all-properties"] });
       queryClient.invalidateQueries({ queryKey: ["properties"] });
-      queryClient.invalidateQueries({ queryKey: ["scrapers"] });
-      queryClient.invalidateQueries({ queryKey: ["scraper-logs"] });
-      queryClient.invalidateQueries({ queryKey: ["scraped-properties"] });
     } catch (e) {
       toast.error("Reset mislukt: " + (e instanceof Error ? e.message : "onbekend"));
     } finally {
@@ -143,7 +103,17 @@ const AdminDashboard = () => {
     }
   };
 
-  if (scrapersLoading || propertiesLoading) {
+  const handleImportAll = async () => {
+    try {
+      toast.info("Daisycon import gestart...");
+      const result = await runImport.mutateAsync(undefined);
+      toast.success(`Import voltooid: ${result.total_imported} nieuw, ${result.total_skipped} overgeslagen`);
+    } catch (e) {
+      toast.error("Import mislukt: " + (e instanceof Error ? e.message : "onbekend"));
+    }
+  };
+
+  if (propertiesLoading) {
     return (
       <AdminLayout>
         <div className="flex items-center justify-center py-12">
@@ -168,22 +138,17 @@ const AdminDashboard = () => {
           </div>
           <div className="flex gap-2">
             <Button
-              onClick={handleRunAllScrapers}
-              disabled={runScraper.isPending}
+              onClick={handleImportAll}
+              disabled={runImport.isPending || !daisyconStatus?.connected}
               size="sm"
               className="gap-2"
             >
-              <RefreshCw className={cn("h-4 w-4", runScraper.isPending && "animate-spin")} />
-              Alle scrapers draaien
+              <RefreshCw className={cn("h-4 w-4", runImport.isPending && "animate-spin")} />
+              Daisycon import
             </Button>
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  className="gap-2"
-                  disabled={resetting}
-                >
+                <Button variant="destructive" size="sm" className="gap-2" disabled={resetting}>
                   <Trash2 className={cn("h-4 w-4", resetting && "animate-spin")} />
                   Reset
                 </Button>
@@ -192,7 +157,7 @@ const AdminDashboard = () => {
                 <AlertDialogHeader>
                   <AlertDialogTitle>Data resetten</AlertDialogTitle>
                   <AlertDialogDescription>
-                    Selecteer welke bron je wilt resetten. Dit verwijdert actieve woningen van die bron, bijbehorende scraped data en logs. Verlopen woningen blijven behouden.
+                    Selecteer welke bron je wilt resetten. Dit verwijdert actieve woningen van die bron.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <div className="py-4">
@@ -245,124 +210,64 @@ const AdminDashboard = () => {
             </CardContent>
           </Card>
 
-          <Card className="relative overflow-hidden">
-            <CardContent className="p-4 md:p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs font-medium text-muted-foreground md:text-sm">Vandaag gescraped</p>
-                  <p className="mt-1 text-2xl font-bold md:text-3xl">{totalScrapedToday}</p>
-                  <p className="mt-0.5 text-xs text-muted-foreground">
-                    {successfulRunsToday} runs ✓ {failedRunsToday > 0 && `${failedRunsToday} ✗`}
-                  </p>
-                </div>
-                <div className="rounded-xl bg-accent/10 p-2.5 md:p-3">
-                  <TrendingUp className="h-5 w-5 text-accent md:h-6 md:w-6" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
           <Link to="/admin/scrapers">
             <Card className="h-full cursor-pointer transition-shadow hover:shadow-md">
               <CardContent className="p-4 md:p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-xs font-medium text-muted-foreground md:text-sm">Scrapers</p>
+                    <p className="text-xs font-medium text-muted-foreground md:text-sm">Daisycon</p>
                     <p className="mt-1 text-2xl font-bold md:text-3xl">
-                      {workingScrapers}<span className="text-lg text-muted-foreground">/{activeScrapers}</span>
+                      {activeFeeds}<span className="text-lg text-muted-foreground">/{totalFeeds}</span>
                     </p>
-                    <p className="mt-0.5 text-xs text-muted-foreground">werkend</p>
-                  </div>
-                  <div className="rounded-xl bg-green-500/10 p-2.5 md:p-3">
-                    <Activity className="h-5 w-5 text-green-600 md:h-6 md:w-6" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </Link>
-
-          <Link to="/admin/review">
-            <Card className={cn(
-              "h-full cursor-pointer transition-shadow hover:shadow-md",
-              pendingReviews > 0 && "ring-2 ring-amber-400/50"
-            )}>
-              <CardContent className="p-4 md:p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-xs font-medium text-muted-foreground md:text-sm">Review Queue</p>
-                    <p className="mt-1 text-2xl font-bold md:text-3xl">{pendingReviews}</p>
                     <p className="mt-0.5 text-xs text-muted-foreground">
-                      {pendingReviews > 0 ? "wachten op review" : "alles verwerkt ✓"}
+                      {daisyconStatus?.connected ? "verbonden ✓" : "niet verbonden"}
                     </p>
                   </div>
-                  <div className={cn(
-                    "rounded-xl p-2.5 md:p-3",
-                    pendingReviews > 0 ? "bg-amber-500/10" : "bg-green-500/10"
-                  )}>
-                    <ClipboardCheck className={cn(
-                      "h-5 w-5 md:h-6 md:w-6",
-                      pendingReviews > 0 ? "text-amber-600" : "text-green-600"
-                    )} />
+                  <div className="rounded-xl bg-green-600/10 p-2.5 md:p-3">
+                    <Rss className="h-5 w-5 text-green-600 md:h-6 md:w-6" />
                   </div>
                 </div>
               </CardContent>
             </Card>
           </Link>
-        </div>
 
-        {/* Scraper Health + City Distribution */}
-        <div className="grid gap-4 md:grid-cols-2">
-          {/* Scraper Health */}
           <Card>
-            <CardHeader className="pb-3">
+            <CardContent className="p-4 md:p-6">
               <div className="flex items-center justify-between">
-                <CardTitle className="flex items-center gap-2 text-base">
-                  <Zap className="h-4 w-4 text-muted-foreground" />
-                  Scraper Gezondheid
-                </CardTitle>
-                <Badge variant={scraperHealthPct >= 80 ? "default" : scraperHealthPct >= 50 ? "secondary" : "destructive"}>
-                  {scraperHealthPct}%
-                </Badge>
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground md:text-sm">Dagelijkse alerts</p>
+                  <p className="mt-1 text-2xl font-bold md:text-3xl">{activeAlertSubscribers}</p>
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    actieve abonnees
+                  </p>
+                </div>
+                <div className="rounded-xl bg-accent/10 p-2.5 md:p-3">
+                  <Link2 className="h-5 w-5 text-accent md:h-6 md:w-6" />
+                </div>
               </div>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <Progress value={scraperHealthPct} className="h-2" />
-              <div className="space-y-2">
-                {scrapers?.filter(s => s.is_active).slice(0, 6).map((scraper) => {
-                  const srcData = sourceMap.get(scraper.name.toLowerCase()) || sourceMap.get(
-                    // try to match scraper name to source_site
-                    [...sourceMap.keys()].find(k => scraper.name.toLowerCase().includes(k)) || ""
-                  );
-                  const activeCount = srcData?.actief || 0;
-                  return (
-                    <div key={scraper.id} className="flex items-center justify-between text-sm">
-                      <div className="flex items-center gap-2">
-                        {scraper.last_run_status === "success" ? (
-                          <div className="h-2 w-2 rounded-full bg-green-500" />
-                        ) : scraper.last_run_status === "error" ? (
-                          <div className="h-2 w-2 rounded-full bg-destructive" />
-                        ) : (
-                          <div className="h-2 w-2 rounded-full bg-muted-foreground/30" />
-                        )}
-                        <span className="truncate">{scraper.name}</span>
-                      </div>
-                      <span className="text-xs text-muted-foreground">
-                        {activeCount} actief
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
-              <Link to="/admin/scrapers" className="block">
-                <Button variant="ghost" size="sm" className="w-full gap-2 text-xs">
-                  Alle scrapers bekijken
-                  <ExternalLink className="h-3 w-3" />
-                </Button>
-              </Link>
             </CardContent>
           </Card>
 
-          {/* Source Distribution */}
+          <Card>
+            <CardContent className="p-4 md:p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground md:text-sm">Steden</p>
+                  <p className="mt-1 text-2xl font-bold md:text-3xl">{cityMap.size}</p>
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    unieke steden
+                  </p>
+                </div>
+                <div className="rounded-xl bg-primary/10 p-2.5 md:p-3">
+                  <Home className="h-5 w-5 text-primary md:h-6 md:w-6" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Source Distribution + City Overview */}
+        <div className="grid gap-4 md:grid-cols-2">
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-base">
@@ -373,7 +278,6 @@ const AdminDashboard = () => {
             <CardContent className="space-y-3">
               {sourceEntries.length > 0 ? (
                 sourceEntries.map(([source, counts]) => {
-                  const total = counts.actief + counts.inactief;
                   const maxTotal = sourceEntries[0] ? sourceEntries[0][1].actief + sourceEntries[0][1].inactief : 1;
                   return (
                     <div key={source} className="space-y-1">
@@ -407,7 +311,6 @@ const AdminDashboard = () => {
                 </p>
               )}
 
-              {/* City overview */}
               {topCities.length > 0 && (
                 <div className="border-t pt-3">
                   <p className="mb-2 text-xs font-medium text-muted-foreground">Top steden</p>
@@ -421,7 +324,6 @@ const AdminDashboard = () => {
                 </div>
               )}
 
-              {/* Property types mini-overview */}
               {typeMap.size > 0 && (
                 <div className="flex flex-wrap gap-2 border-t pt-3">
                   {[...typeMap.entries()].map(([type, count]) => (
@@ -433,90 +335,7 @@ const AdminDashboard = () => {
               )}
             </CardContent>
           </Card>
-        </div>
 
-        {/* Daily Alert Subscribers */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Dagelijkse alerts (nieuw aanbod)</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="mb-4 flex flex-wrap gap-4 text-sm">
-              <Badge variant="default">{activeAlertSubscribers} actief</Badge>
-              <Badge variant="secondary">{unsubscribedAlertSubscribers} afgemeld</Badge>
-              <Badge variant="outline">{dailyAlertSubscribers?.length || 0} totaal</Badge>
-            </div>
-            {dailyAlertSubscribers && dailyAlertSubscribers.length > 0 ? (
-              <div className="space-y-2">
-                {dailyAlertSubscribers.slice(0, 12).map((subscriber) => (
-                  <div key={subscriber.id} className="flex flex-col justify-between gap-2 rounded-lg border p-3 sm:flex-row sm:items-center">
-                    <div>
-                      <p className="text-sm font-medium">{subscriber.email}</p>
-                      <p className="text-xs text-muted-foreground">
-                        Ingeschreven: {format(new Date(subscriber.subscribed_at), "d MMM yyyy HH:mm", { locale: nl })}
-                      </p>
-                      {subscriber.unsubscribed_at ? (
-                        <p className="text-xs text-muted-foreground">
-                          Afgemeld: {format(new Date(subscriber.unsubscribed_at), "d MMM yyyy HH:mm", { locale: nl })}
-                        </p>
-                      ) : null}
-                    </div>
-                    <Badge variant={subscriber.is_active ? "default" : "secondary"}>
-                      {subscriber.is_active ? "Actief" : "Afgemeld"}
-                    </Badge>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-sm text-muted-foreground">Nog geen aanmeldingen voor dagelijkse alerts.</p>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Inactive Properties */}
-        {inactiveProperties > 0 && (
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-3">
-              <CardTitle className="flex items-center gap-2 text-base">
-                <Eye className="h-4 w-4 text-muted-foreground" />
-                Inactieve woningen ({inactiveProperties})
-              </CardTitle>
-              <Link to="/admin/woningen">
-                <Button variant="ghost" size="sm" className="text-xs">
-                  Bekijk alle
-                </Button>
-              </Link>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                {properties?.filter(p => p.status === "inactief").slice(0, 6).map((property) => (
-                  <div
-                    key={property.id}
-                    className="flex items-center gap-3 rounded-lg border p-2.5 transition-colors hover:bg-muted/50"
-                  >
-                    <div className="h-10 w-10 flex-shrink-0 overflow-hidden rounded-md bg-muted">
-                      <img
-                         src={property.images?.[0] || propertyPlaceholder}
-                        alt=""
-                        className="h-full w-full object-cover opacity-60"
-                      />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium">{property.title}</p>
-                      <p className="text-xs text-muted-foreground">{property.city} · €{Number(property.price).toLocaleString("nl-NL")}</p>
-                    </div>
-                    <Badge variant="secondary" className="text-[10px] flex-shrink-0">
-                      inactief
-                    </Badge>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Recent Properties + Recent Logs */}
-        <div className="grid gap-4 md:grid-cols-2">
           {/* Recent Properties */}
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-3">
@@ -562,56 +381,40 @@ const AdminDashboard = () => {
               )}
             </CardContent>
           </Card>
-
-          {/* Recent Logs */}
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-3">
-              <CardTitle className="flex items-center gap-2 text-base">
-                <Clock className="h-4 w-4 text-muted-foreground" />
-                Recente runs
-              </CardTitle>
-              {lastLog && (
-                <span className="text-xs text-muted-foreground">
-                  {formatDistanceToNow(new Date(lastLog.created_at), { addSuffix: true, locale: nl })}
-                </span>
-              )}
-            </CardHeader>
-            <CardContent>
-              {recentLogs.length > 0 ? (
-                <div className="space-y-2">
-                  {recentLogs.map((log) => (
-                    <div key={log.id} className="flex items-center justify-between rounded-lg border p-2.5">
-                      <div className="flex items-center gap-2 min-w-0 flex-1">
-                        {log.status === "success" ? (
-                          <CheckCircle className="h-3.5 w-3.5 flex-shrink-0 text-green-500" />
-                        ) : log.status === "warning" ? (
-                          <Eye className="h-3.5 w-3.5 flex-shrink-0 text-amber-500" />
-                        ) : (
-                          <XCircle className="h-3.5 w-3.5 flex-shrink-0 text-destructive" />
-                        )}
-                        <span className="truncate text-xs">{log.message || log.status}</span>
-                      </div>
-                      <div className="flex items-center gap-2 flex-shrink-0">
-                        {log.properties_scraped ? (
-                          <Badge variant="secondary" className="text-[10px]">
-                            {log.properties_scraped}
-                          </Badge>
-                        ) : null}
-                        <span className="text-[10px] text-muted-foreground whitespace-nowrap">
-                          {format(new Date(log.created_at), "dd MMM HH:mm", { locale: nl })}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="py-8 text-center text-sm text-muted-foreground">
-                  Nog geen runs uitgevoerd
-                </p>
-              )}
-            </CardContent>
-          </Card>
         </div>
+
+        {/* Daily Alert Subscribers */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Dagelijkse alerts (nieuw aanbod)</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="mb-4 flex flex-wrap gap-4 text-sm">
+              <Badge variant="default">{activeAlertSubscribers} actief</Badge>
+              <Badge variant="secondary">{unsubscribedAlertSubscribers} afgemeld</Badge>
+              <Badge variant="outline">{dailyAlertSubscribers?.length || 0} totaal</Badge>
+            </div>
+            {dailyAlertSubscribers && dailyAlertSubscribers.length > 0 ? (
+              <div className="space-y-2">
+                {dailyAlertSubscribers.slice(0, 12).map((subscriber) => (
+                  <div key={subscriber.id} className="flex flex-col justify-between gap-2 rounded-lg border p-3 sm:flex-row sm:items-center">
+                    <div>
+                      <p className="text-sm font-medium">{subscriber.email}</p>
+                      <p className="text-xs text-muted-foreground">
+                        Ingeschreven: {format(new Date(subscriber.subscribed_at), "d MMM yyyy HH:mm", { locale: nl })}
+                      </p>
+                    </div>
+                    <Badge variant={subscriber.is_active ? "default" : "secondary"}>
+                      {subscriber.is_active ? "Actief" : "Afgemeld"}
+                    </Badge>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">Nog geen aanmeldingen voor dagelijkse alerts.</p>
+            )}
+          </CardContent>
+        </Card>
 
         {/* Facebook Posts Overview */}
         <Card>

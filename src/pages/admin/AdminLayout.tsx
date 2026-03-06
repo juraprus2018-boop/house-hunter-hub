@@ -9,13 +9,12 @@ import {
   Activity,
   ArrowLeft,
   Loader2,
-  ClipboardCheck,
   Menu,
-    X,
-    FileText,
-    Users,
-    CalendarDays,
-  } from "lucide-react";
+  X,
+  FileText,
+  Users,
+  CalendarDays,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
@@ -64,8 +63,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
     { to: "/admin/dagoverzicht", label: "Dagoverzicht", icon: CalendarDays },
     { to: "/admin/gebruikers", label: "Gebruikers", icon: Users },
     { to: "/admin/woningen", label: "Woningen", icon: HomeIcon },
-    { to: "/admin/review", label: "Review Queue", icon: ClipboardCheck },
-    { to: "/admin/scrapers", label: "Scrapers", icon: Activity },
+    { to: "/admin/scrapers", label: "Daisycon", icon: Activity },
     { to: "/admin/blog", label: "Blog", icon: FileText },
     { to: "/admin/instellingen", label: "Instellingen", icon: Settings },
   ];

@@ -4,6 +4,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Dialog,
   DialogContent,
@@ -13,115 +15,104 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
-import { useScrapers, useToggleScraper, useScraperLogs, useRunScraper, useUpdateScraperSchedule } from "@/hooks/useAdmin";
-import { 
-  Loader2, 
-  Play, 
-  ExternalLink, 
-  Clock, 
-  CheckCircle2, 
+  useDaisyconStatus,
+  useDaisyconFeeds,
+  useAddDaisyconFeed,
+  useToggleDaisyconFeed,
+  useDeleteDaisyconFeed,
+  useRunDaisyconImport,
+  useDaisyconAuth,
+} from "@/hooks/useAdmin";
+import {
+  Loader2,
+  Play,
+  ExternalLink,
+  CheckCircle2,
   XCircle,
-  Activity,
-  Settings2,
-  CalendarClock,
+  Plus,
+  Trash2,
+  Link2,
+  RefreshCw,
+  Rss,
 } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { format } from "date-fns";
+import { toast } from "sonner";
+import { format, formatDistanceToNow } from "date-fns";
 import { nl } from "date-fns/locale";
 
-const AdminScrapers = () => {
-  const { data: scrapers, isLoading } = useScrapers();
-  const toggleScraper = useToggleScraper();
-  const runScraper = useRunScraper();
-  const updateSchedule = useUpdateScraperSchedule();
-  const { toast } = useToast();
-  const [selectedScraper, setSelectedScraper] = useState<string | null>(null);
-  const { data: logs } = useScraperLogs(selectedScraper || undefined);
-  const [scheduleScraper, setScheduleScraper] = useState<{ id: string; interval: string; days: number[] } | null>(null);
+const AdminDaisycon = () => {
+  const { data: status, isLoading: statusLoading, refetch: refetchStatus } = useDaisyconStatus();
+  const { data: feeds, isLoading: feedsLoading } = useDaisyconFeeds();
+  const addFeed = useAddDaisyconFeed();
+  const toggleFeed = useToggleDaisyconFeed();
+  const deleteFeed = useDeleteDaisyconFeed();
+  const runImport = useRunDaisyconImport();
+  const daisyconAuth = useDaisyconAuth();
 
-  const DAY_NAMES = ["Zo", "Ma", "Di", "Wo", "Do", "Vr", "Za"];
+  const [showAddFeed, setShowAddFeed] = useState(false);
+  const [showConnect, setShowConnect] = useState(false);
+  const [newFeed, setNewFeed] = useState({ name: "", program_id: "", media_id: "", feed_url: "" });
+  const [authCode, setAuthCode] = useState("");
+  const [codeVerifier, setCodeVerifier] = useState("");
+  const [authUrl, setAuthUrl] = useState("");
 
-  const getScheduleLabel = (interval: string, days?: number[] | null) => {
-    if (interval === "manual") return "Handmatig";
-    if (interval === "weekly") {
-      const dayLabels = (days || []).map(d => DAY_NAMES[d]).join(", ");
-      return dayLabels ? `Wekelijks (${dayLabels})` : "Wekelijks";
-    }
-    return "Dagelijks";
-  };
-
-  const handleSaveSchedule = async () => {
-    if (!scheduleScraper) return;
+  const handleConnect = async () => {
     try {
-      await updateSchedule.mutateAsync({
-        id: scheduleScraper.id,
-        schedule_interval: scheduleScraper.interval,
-        schedule_days: scheduleScraper.interval === "weekly" ? scheduleScraper.days : null,
-      });
-      toast({ title: "Planning opgeslagen", description: "De scraper planning is bijgewerkt." });
-      setScheduleScraper(null);
-    } catch {
-      toast({ title: "Fout", description: "Kon de planning niet opslaan.", variant: "destructive" });
+      const result = await daisyconAuth.mutateAsync({ action: "init" });
+      setAuthUrl(result.auth_url);
+      setCodeVerifier(result.code_verifier);
+      setShowConnect(true);
+    } catch (e) {
+      toast.error("Kon verbinding niet starten: " + (e instanceof Error ? e.message : "onbekend"));
     }
   };
 
-  const handleToggle = async (id: string, currentState: boolean) => {
+  const handleExchangeCode = async () => {
+    if (!authCode.trim()) {
+      toast.error("Voer de autorisatiecode in");
+      return;
+    }
     try {
-      await toggleScraper.mutateAsync({ id, isActive: !currentState });
-      toast({
-        title: currentState ? "Scraper gedeactiveerd" : "Scraper geactiveerd",
-        description: currentState 
-          ? "De scraper is uitgeschakeld en zal geen nieuwe woningen ophalen."
-          : "De scraper is nu actief en zal woningen ophalen.",
-      });
-    } catch (error) {
-      toast({
-        title: "Fout",
-        description: "Kon de scraper niet wijzigen.",
-        variant: "destructive",
-      });
+      await daisyconAuth.mutateAsync({ action: "exchange", code: authCode.trim(), code_verifier: codeVerifier });
+      toast.success("Daisycon succesvol gekoppeld!");
+      setShowConnect(false);
+      setAuthCode("");
+      refetchStatus();
+    } catch (e) {
+      toast.error("Koppeling mislukt: " + (e instanceof Error ? e.message : "onbekend"));
     }
   };
 
-  const handleRunScraper = async (id: string, name: string) => {
-    toast({
-      title: `${name} wordt gestart...`,
-      description: "De scraper wordt uitgevoerd. Dit kan enkele minuten duren.",
-    });
-
+  const handleAddFeed = async () => {
+    if (!newFeed.name || !newFeed.program_id || !newFeed.media_id) {
+      toast.error("Vul naam, program ID en media ID in");
+      return;
+    }
     try {
-      const result = await runScraper.mutateAsync(id);
-      
-      if (result.success) {
-        toast({
-          title: `${name} voltooid`,
-          description: `${result.properties_scraped} woningen gevonden in ${(result.duration_ms / 1000).toFixed(1)}s. Check de review queue.`,
-        });
-      } else {
-        toast({
-          title: `${name} fout`,
-          description: result.error || "Er ging iets mis bij het scrapen.",
-          variant: "destructive",
-        });
-      }
-    } catch (error) {
-      toast({
-        title: "Fout",
-        description: "Kon de scraper niet uitvoeren.",
-        variant: "destructive",
+      await addFeed.mutateAsync({
+        name: newFeed.name,
+        program_id: parseInt(newFeed.program_id),
+        media_id: parseInt(newFeed.media_id),
+        feed_url: newFeed.feed_url || undefined,
       });
+      toast.success("Feed toegevoegd");
+      setShowAddFeed(false);
+      setNewFeed({ name: "", program_id: "", media_id: "", feed_url: "" });
+    } catch (e) {
+      toast.error("Feed toevoegen mislukt: " + (e instanceof Error ? e.message : "onbekend"));
     }
   };
 
-  if (isLoading) {
+  const handleImport = async (feedId?: string) => {
+    try {
+      toast.info("Import gestart...");
+      const result = await runImport.mutateAsync(feedId);
+      toast.success(`Import voltooid: ${result.total_imported} nieuw, ${result.total_skipped} overgeslagen`);
+    } catch (e) {
+      toast.error("Import mislukt: " + (e instanceof Error ? e.message : "onbekend"));
+    }
+  };
+
+  if (statusLoading || feedsLoading) {
     return (
       <AdminLayout>
         <div className="flex items-center justify-center py-12">
@@ -134,294 +125,276 @@ const AdminScrapers = () => {
   return (
     <AdminLayout>
       <div className="space-y-6">
-        {/* Header */}
-        <div>
-          <h1 className="font-display text-3xl font-bold text-foreground">Scrapers</h1>
-          <p className="mt-1 text-muted-foreground">
-            Beheer scrapers om automatisch woningen van externe websites op te halen
-          </p>
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h1 className="font-display text-2xl font-bold">Daisycon Integratie</h1>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Beheer je Daisycon feeds en importeer woningen
+            </p>
+          </div>
+          <div className="flex gap-2">
+            <Button
+              onClick={() => handleImport()}
+              disabled={runImport.isPending || !status?.connected}
+              className="gap-2"
+            >
+              <RefreshCw className={`h-4 w-4 ${runImport.isPending ? "animate-spin" : ""}`} />
+              Alle feeds importeren
+            </Button>
+          </div>
         </div>
 
-        {/* Stats */}
-        <div className="grid gap-4 md:grid-cols-3">
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Totaal Scrapers
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{scrapers?.length || 0}</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Actieve Scrapers
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-green-600">
-                {scrapers?.filter((s) => s.is_active).length || 0}
+        {/* Connection Status */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <Link2 className="h-5 w-5" />
+                  Daisycon Verbinding
+                </CardTitle>
+                <CardDescription>OAuth 2.1 authenticatie met Daisycon API</CardDescription>
               </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Totaal Gevonden Woningen
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {scrapers?.reduce((acc, s) => acc + (s.properties_found || 0), 0) || 0}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Scrapers Grid */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {scrapers?.map((scraper) => (
-            <Card key={scraper.id} className="relative overflow-hidden">
-              <CardHeader className="pb-3">
-                <div className="flex items-start justify-between">
-                  <div className="space-y-1">
-                    <CardTitle className="text-lg">{scraper.name}</CardTitle>
-                    <CardDescription className="line-clamp-1">
-                      {scraper.description}
-                    </CardDescription>
-                  </div>
-                  <Switch
-                    checked={scraper.is_active}
-                    onCheckedChange={() => handleToggle(scraper.id, scraper.is_active)}
-                  />
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <ExternalLink className="h-4 w-4" />
-                  <a 
-                    href={scraper.website_url} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="truncate hover:underline"
-                  >
-                    {scraper.website_url}
-                  </a>
-                </div>
-
-                <div className="flex items-center gap-4 text-sm">
-                  <div className="flex items-center gap-1">
-                    <Activity className="h-4 w-4 text-muted-foreground" />
-                    <span>{scraper.properties_found || 0} woningen</span>
-                  </div>
-                  {scraper.last_run_at && (
-                    <div className="flex items-center gap-1 text-muted-foreground">
-                      <Clock className="h-4 w-4" />
-                      <span>
-                        {format(new Date(scraper.last_run_at), "d MMM HH:mm", { locale: nl })}
-                      </span>
-                    </div>
-                  )}
-                </div>
-
-                <div className="flex items-center gap-2 flex-wrap">
-                  {scraper.last_run_status && (
-                    <Badge
-                      variant={scraper.last_run_status === "success" ? "default" : "destructive"}
-                      className="gap-1"
-                    >
-                      {scraper.last_run_status === "success" ? (
-                        <CheckCircle2 className="h-3 w-3" />
-                      ) : (
-                        <XCircle className="h-3 w-3" />
-                      )}
-                      {scraper.last_run_status}
-                    </Badge>
-                  )}
-                  <Badge variant="outline" className="gap-1">
-                    <CalendarClock className="h-3 w-3" />
-                    {getScheduleLabel(scraper.schedule_interval, scraper.schedule_days)}
-                  </Badge>
-                </div>
-
-                <div className="flex gap-2">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => setScheduleScraper({
-                      id: scraper.id,
-                      interval: scraper.schedule_interval || "daily",
-                      days: scraper.schedule_days || [],
-                    })}
-                  >
-                    <Settings2 className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="flex-1"
-                    onClick={() => setSelectedScraper(scraper.id)}
-                  >
-                    Logs
-                  </Button>
-                  <Button
-                    size="sm"
-                    className="flex-1"
-                    disabled={!scraper.is_active || runScraper.isPending}
-                    onClick={() => handleRunScraper(scraper.id, scraper.name)}
-                  >
-                    {runScraper.isPending ? (
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    ) : (
-                      <Play className="mr-2 h-4 w-4" />
-                    )}
-                    {runScraper.isPending ? "Bezig..." : "Run"}
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-
-        {/* Info Card */}
-        <Card className="border-dashed">
-          <CardContent className="py-6">
-            <div className="text-center text-muted-foreground">
-              <Activity className="mx-auto h-12 w-12 mb-4 opacity-50" />
-              <p className="font-medium">Scraper Functionaliteit</p>
-              <p className="text-sm mt-1">
-                Activeer scrapers om automatisch woningen van externe websites op te halen.
-                <br />
-                De scrapers draaien periodiek of kunnen handmatig gestart worden.
-              </p>
+              {status?.connected ? (
+                <Badge className="gap-1">
+                  <CheckCircle2 className="h-3 w-3" />
+                  Verbonden
+                </Badge>
+              ) : (
+                <Badge variant="destructive" className="gap-1">
+                  <XCircle className="h-3 w-3" />
+                  Niet verbonden
+                </Badge>
+              )}
             </div>
+          </CardHeader>
+          <CardContent>
+            {status?.connected ? (
+              <div className="flex items-center justify-between">
+                <div className="text-sm text-muted-foreground">
+                  Laatst vernieuwd: {status.last_refreshed
+                    ? formatDistanceToNow(new Date(status.last_refreshed), { addSuffix: true, locale: nl })
+                    : "onbekend"}
+                </div>
+                <Button variant="outline" size="sm" onClick={handleConnect}>
+                  Opnieuw verbinden
+                </Button>
+              </div>
+            ) : (
+              <Button onClick={handleConnect} disabled={daisyconAuth.isPending} className="gap-2">
+                <Link2 className="h-4 w-4" />
+                Verbind met Daisycon
+              </Button>
+            )}
           </CardContent>
         </Card>
-      </div>
 
-      {/* Logs Dialog */}
-      <Dialog open={!!selectedScraper} onOpenChange={() => setSelectedScraper(null)}>
-        <DialogContent className="max-w-2xl max-h-[80vh] overflow-hidden flex flex-col">
-          <DialogHeader>
-            <DialogTitle>Scraper Logs</DialogTitle>
-            <DialogDescription>
-              Bekijk de recente activiteit van deze scraper
-            </DialogDescription>
-          </DialogHeader>
-          <div className="flex-1 overflow-y-auto space-y-2 min-h-0">
-            {logs && logs.length > 0 ? (
-              logs.map((log) => (
-                <div
-                  key={log.id}
-                  className="rounded-lg border p-3 text-sm"
-                >
-                  <div className="flex items-center justify-between mb-1">
-                    <Badge variant={log.status === "success" ? "default" : "destructive"}>
-                      {log.status}
-                    </Badge>
-                    <span className="text-muted-foreground text-xs">
-                      {format(new Date(log.created_at), "d MMM yyyy HH:mm:ss", { locale: nl })}
-                    </span>
+        {/* Feeds */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <Rss className="h-5 w-5" />
+                  Product Feeds
+                </CardTitle>
+                <CardDescription>
+                  Configureer welke Daisycon feeds worden geïmporteerd
+                </CardDescription>
+              </div>
+              <Button onClick={() => setShowAddFeed(true)} size="sm" className="gap-2">
+                <Plus className="h-4 w-4" />
+                Feed toevoegen
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {feeds && feeds.length > 0 ? (
+              <div className="space-y-3">
+                {feeds.map((feed: any) => (
+                  <div
+                    key={feed.id}
+                    className="flex items-center justify-between rounded-lg border p-4"
+                  >
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium">{feed.name}</span>
+                        <Badge variant="outline" className="text-xs">
+                          Program: {feed.program_id}
+                        </Badge>
+                        <Badge variant="outline" className="text-xs">
+                          Media: {feed.media_id}
+                        </Badge>
+                      </div>
+                      <div className="mt-1 text-xs text-muted-foreground">
+                        {feed.properties_imported || 0} geïmporteerd
+                        {feed.last_import_at && (
+                          <> · Laatst: {formatDistanceToNow(new Date(feed.last_import_at), { addSuffix: true, locale: nl })}</>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Switch
+                        checked={feed.is_active}
+                        onCheckedChange={(checked) =>
+                          toggleFeed.mutate({ id: feed.id, is_active: checked })
+                        }
+                      />
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => handleImport(feed.id)}
+                        disabled={runImport.isPending || !feed.is_active}
+                      >
+                        <Play className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => {
+                          if (confirm("Feed verwijderen?")) {
+                            deleteFeed.mutate(feed.id);
+                          }
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                      </Button>
+                    </div>
                   </div>
-                  {log.message && (
-                    <p className="text-muted-foreground">{log.message}</p>
-                  )}
-                  <div className="flex gap-4 mt-2 text-xs text-muted-foreground">
-                    {log.properties_scraped !== null && (
-                      <span>{log.properties_scraped} woningen gevonden</span>
-                    )}
-                    {log.duration_ms && (
-                      <span>{(log.duration_ms / 1000).toFixed(2)}s</span>
-                    )}
-                  </div>
-                </div>
-              ))
+                ))}
+              </div>
             ) : (
-              <div className="text-center py-8 text-muted-foreground">
-                Nog geen logs beschikbaar
+              <div className="py-8 text-center text-muted-foreground">
+                <Rss className="mx-auto mb-2 h-8 w-8 opacity-50" />
+                <p>Nog geen feeds geconfigureerd</p>
+                <p className="text-xs mt-1">Voeg een feed toe om woningen te importeren</p>
               </div>
             )}
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setSelectedScraper(null)}>
-              Sluiten
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </CardContent>
+        </Card>
 
-      {/* Schedule Dialog */}
-      <Dialog open={!!scheduleScraper} onOpenChange={() => setScheduleScraper(null)}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Scraper Planning</DialogTitle>
-            <DialogDescription>
-              Bepaal hoe vaak deze scraper automatisch moet draaien
-            </DialogDescription>
-          </DialogHeader>
-          {scheduleScraper && (
+        {/* Connect Dialog */}
+        <Dialog open={showConnect} onOpenChange={setShowConnect}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Verbind met Daisycon</DialogTitle>
+              <DialogDescription>
+                Volg de stappen om je Daisycon account te koppelen
+              </DialogDescription>
+            </DialogHeader>
             <div className="space-y-4">
-              <div className="space-y-2">
-                <Label>Frequentie</Label>
-                <Select
-                  value={scheduleScraper.interval}
-                  onValueChange={(val) => setScheduleScraper({ ...scheduleScraper, interval: val, days: val === "weekly" ? scheduleScraper.days : [] })}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="daily">Dagelijks</SelectItem>
-                    <SelectItem value="weekly">Wekelijks</SelectItem>
-                    <SelectItem value="manual">Alleen handmatig</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {scheduleScraper.interval === "weekly" && (
-                <div className="space-y-2">
-                  <Label>Op welke dagen?</Label>
-                  <div className="flex flex-wrap gap-2">
-                    {DAY_NAMES.map((name, idx) => (
-                      <label key={idx} className="flex items-center gap-1.5 cursor-pointer">
-                        <Checkbox
-                          checked={scheduleScraper.days.includes(idx)}
-                          onCheckedChange={(checked) => {
-                            const newDays = checked
-                              ? [...scheduleScraper.days, idx].sort()
-                              : scheduleScraper.days.filter(d => d !== idx);
-                            setScheduleScraper({ ...scheduleScraper, days: newDays });
-                          }}
-                        />
-                        <span className="text-sm">{name}</span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {scheduleScraper.interval === "manual" && (
-                <p className="text-sm text-muted-foreground">
-                  Deze scraper draait alleen als je handmatig op &quot;Run&quot; klikt.
+              <div>
+                <Label className="text-sm font-medium">Stap 1: Open de autorisatie-URL</Label>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Klik op de link hieronder, log in bij Daisycon en kopieer de code die je krijgt.
                 </p>
-              )}
+                {authUrl && (
+                  <a
+                    href={authUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-2 inline-flex items-center gap-1 text-sm text-primary hover:underline"
+                  >
+                    Open Daisycon Login <ExternalLink className="h-3 w-3" />
+                  </a>
+                )}
+              </div>
+              <div>
+                <Label htmlFor="auth-code" className="text-sm font-medium">
+                  Stap 2: Plak de autorisatiecode
+                </Label>
+                <Input
+                  id="auth-code"
+                  value={authCode}
+                  onChange={(e) => setAuthCode(e.target.value)}
+                  placeholder="Plak hier de code..."
+                  className="mt-1"
+                />
+              </div>
             </div>
-          )}
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setScheduleScraper(null)}>
-              Annuleren
-            </Button>
-            <Button onClick={handleSaveSchedule} disabled={updateSchedule.isPending}>
-              {updateSchedule.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Opslaan
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowConnect(false)}>
+                Annuleren
+              </Button>
+              <Button
+                onClick={handleExchangeCode}
+                disabled={daisyconAuth.isPending || !authCode.trim()}
+              >
+                {daisyconAuth.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Verbinden
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Add Feed Dialog */}
+        <Dialog open={showAddFeed} onOpenChange={setShowAddFeed}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Feed toevoegen</DialogTitle>
+              <DialogDescription>
+                Voeg een Daisycon product feed toe om woningen te importeren
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="feed-name">Naam</Label>
+                <Input
+                  id="feed-name"
+                  value={newFeed.name}
+                  onChange={(e) => setNewFeed({ ...newFeed, name: e.target.value })}
+                  placeholder="bijv. Pararius Huurwoningen"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="program-id">Program ID</Label>
+                  <Input
+                    id="program-id"
+                    type="number"
+                    value={newFeed.program_id}
+                    onChange={(e) => setNewFeed({ ...newFeed, program_id: e.target.value })}
+                    placeholder="bijv. 7611"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="media-id">Media ID</Label>
+                  <Input
+                    id="media-id"
+                    type="number"
+                    value={newFeed.media_id}
+                    onChange={(e) => setNewFeed({ ...newFeed, media_id: e.target.value })}
+                    placeholder="bijv. 22848"
+                  />
+                </div>
+              </div>
+              <div>
+                <Label htmlFor="feed-url">Feed URL (optioneel)</Label>
+                <Input
+                  id="feed-url"
+                  value={newFeed.feed_url}
+                  onChange={(e) => setNewFeed({ ...newFeed, feed_url: e.target.value })}
+                  placeholder="https://daisycon.io/datafeed/?..."
+                />
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Laat leeg om automatisch te genereren op basis van Program en Media ID
+                </p>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowAddFeed(false)}>
+                Annuleren
+              </Button>
+              <Button onClick={handleAddFeed} disabled={addFeed.isPending}>
+                {addFeed.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Toevoegen
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
     </AdminLayout>
   );
 };
 
-export default AdminScrapers;
+export default AdminDaisycon;
