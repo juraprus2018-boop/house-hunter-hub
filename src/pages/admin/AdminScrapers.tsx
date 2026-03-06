@@ -400,10 +400,11 @@ const AdminDaisycon = () => {
                           const programIds: number[] = sub.program_ids || (sub.program_id ? [sub.program_id] : [sub.id]);
                           const defaultMediaId = sub.media_id || programsData.media?.[0]?.id;
                           const names = programsData.program_names || {};
+                          const availability = programsData.feed_availability || {};
 
                           return programIds.map((pid: number) => {
                             const programName = names[pid] || `Program ${pid}`;
-                            const isAdded = existingProgramIds.has(pid);
+                            const hasFeed = availability[pid] ?? null;
 
                             return (
                               <div
@@ -411,12 +412,26 @@ const AdminDaisycon = () => {
                                 className="flex items-center justify-between rounded-md border p-3 hover:bg-muted/50"
                               >
                                 <div className="flex-1">
-                                  <div className="font-medium text-sm">{programName}</div>
+                                  <div className="flex items-center gap-2">
+                                    <span className="font-medium text-sm">{programName}</span>
+                                    {hasFeed === true && (
+                                      <Badge variant="default" className="text-xs gap-1">
+                                        <CheckCircle2 className="h-3 w-3" />
+                                        Feed beschikbaar
+                                      </Badge>
+                                    )}
+                                    {hasFeed === false && (
+                                      <Badge variant="outline" className="text-xs gap-1 text-muted-foreground">
+                                        <XCircle className="h-3 w-3" />
+                                        Geen feed
+                                      </Badge>
+                                    )}
+                                  </div>
                                   <div className="text-xs text-muted-foreground">
                                     Program ID: {pid} · Status: {sub.status || 'onbekend'}
                                   </div>
                                 </div>
-                                {isAdded ? (
+                                {existingProgramIds.has(pid) ? (
                                   <Badge variant="secondary" className="text-xs">
                                     <CheckCircle2 className="h-3 w-3 mr-1" />
                                     Toegevoegd
@@ -426,7 +441,7 @@ const AdminDaisycon = () => {
                                     size="sm"
                                     variant="outline"
                                     onClick={() => handleAddFromProgram({ program_id: pid, name: programName }, defaultMediaId || 0)}
-                                    disabled={addFeed.isPending}
+                                    disabled={addFeed.isPending || hasFeed === false}
                                   >
                                     <Plus className="h-3 w-3 mr-1" />
                                     Toevoegen

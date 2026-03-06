@@ -256,6 +256,18 @@ Deno.serve(async (req) => {
         }
       }));
 
+      // Check which programs have product feeds available
+      const feedAvailability: Record<number, boolean> = {};
+      await Promise.all([...allProgramIds].map(async (pid) => {
+        try {
+          const feedCheckUrl = `https://daisycon.io/datafeed/?program_id=${pid}&media_id=${subscriptions[0]?.media_id || ''}&standard_id=1&language_code=nl&locale_id=1&type=json&per_page=1`;
+          const res = await fetch(feedCheckUrl);
+          feedAvailability[pid] = res.status === 200 && (await res.text()).length > 10;
+        } catch {
+          feedAvailability[pid] = false;
+        }
+      }));
+
       // Fetch media list
       const mediaRes = await fetch(
         `https://services.daisycon.com/publishers/${publisherId}/media?page=1&per_page=100`,
@@ -268,7 +280,7 @@ Deno.serve(async (req) => {
       }
 
       return new Response(
-        JSON.stringify({ subscriptions, media: mediaList, program_names: programNames }),
+        JSON.stringify({ subscriptions, media: mediaList, program_names: programNames, feed_availability: feedAvailability }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
