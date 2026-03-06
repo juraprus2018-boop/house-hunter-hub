@@ -8,7 +8,10 @@ const corsHeaders = {
 
 const SITE_URL = "https://woonpeek.nl";
 
-function buildSitemapXml(properties: Array<{ slug: string | null; id: string; city: string; updated_at: string; listing_type: string }>): string {
+function buildSitemapXml(
+  properties: Array<{ slug: string | null; id: string; city: string; updated_at: string; listing_type: string }>,
+  blogPosts: Array<{ slug: string; updated_at: string }>,
+): string {
   const cityMap = new Map<string, { count: number; lastMod: string }>();
   for (const p of properties) {
     const citySlug = p.city.toLowerCase().replace(/\s+/g, "-");
@@ -54,6 +57,12 @@ function buildSitemapXml(properties: Array<{ slug: string | null; id: string; ci
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
+  <url>
+    <loc>${SITE_URL}/blog</loc>
+    <lastmod>${now}</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
 `;
 
   for (const [citySlug, info] of cityMap) {
@@ -72,6 +81,16 @@ function buildSitemapXml(properties: Array<{ slug: string | null; id: string; ci
     <lastmod>${p.updated_at.split("T")[0]}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
+  </url>
+`;
+  }
+
+  for (const b of blogPosts) {
+    xml += `  <url>
+    <loc>${SITE_URL}/blog/${b.slug}</loc>
+    <lastmod>${b.updated_at.split("T")[0]}</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
   </url>
 `;
   }
