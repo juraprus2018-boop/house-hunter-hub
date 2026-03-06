@@ -11,7 +11,6 @@ const Footer = () => {
           <div className="space-y-4">
             <Link to="/" className="flex items-center gap-2">
               <img src={logoWoonpeek} alt="Logo WoonPeek" className="h-9" />
-              <span className="font-display text-xl font-semibold">WoonPeek</span>
             </Link>
             <p className="text-sm text-muted-foreground">
               Vind jouw droomwoning of plaats je eigen woning op WoonPeek. 

@@ -46,9 +46,6 @@ const Header = () => {
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2 transition-opacity hover:opacity-80">
           <img src={logoWoonpeek} alt="Logo WoonPeek" className="h-9" />
-          <span className="font-display text-xl font-semibold text-foreground">
-            WoonPeek
-          </span>
         </Link>
 
         {/* Desktop Navigation */}
