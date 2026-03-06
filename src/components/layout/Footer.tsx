@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Mail } from "lucide-react";
+import { Mail, Facebook, Linkedin } from "lucide-react";
 import logoWoonpeek from "@/assets/logo-woonpeek.png";
 
 const Footer = () => {
@@ -117,8 +117,19 @@ const Footer = () => {
                   rel="noopener noreferrer"
                   className="flex items-center gap-2 text-muted-foreground transition-colors hover:text-foreground"
                 >
-                  <img src="/facebook-logo.png" alt="Facebook" className="h-4 w-4" />
+                  <Facebook className="h-4 w-4" />
                   Facebook
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://www.linkedin.com/company/woonpeek/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  <Linkedin className="h-4 w-4" />
+                  LinkedIn
                 </a>
               </li>
             </ul>
