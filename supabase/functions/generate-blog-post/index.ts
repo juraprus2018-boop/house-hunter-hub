@@ -325,11 +325,91 @@ Zorg dat het artikel actueel aanvoelt, praktische tips bevat, en relevant is voo
       console.log(`Blog post published with slug: ${slug}`);
     }
 
+    // Step 4: Post to Facebook
+    let facebookResult = null;
+    try {
+      const PAGE_ACCESS_TOKEN = Deno.env.get("FACEBOOK_PAGE_ACCESS_TOKEN");
+      let PAGE_ID = Deno.env.get("FACEBOOK_PAGE_ID");
+      const GRAPH_API = "https://graph.facebook.com/v21.0";
+      const siteUrl = "https://woonpeek.nl";
+
+      if (PAGE_ACCESS_TOKEN) {
+        // Auto-detect Page ID if needed
+        if (!PAGE_ID) {
+          const meRes = await fetch(`${GRAPH_API}/me?access_token=${PAGE_ACCESS_TOKEN}`);
+          const meData = await meRes.json();
+          if (meData.id) PAGE_ID = meData.id;
+        }
+
+        if (PAGE_ID) {
+          const blogUrl = `${siteUrl}/blog/${slug}`;
+          const hashtags = [
+            "#woningmarkt", "#huren", "#kopen", "#Nederland",
+            "#woonpeek", "#vastgoed", "#huizenmarkt", "#wonen",
+          ];
+          // Pick 4-5 relevant hashtags based on category
+          const categoryTags: Record<string, string[]> = {
+            "Huurmarkt tips": ["#huurwoning", "#huurders", "#huurtips"],
+            "Koopmarkt analyse": ["#koopwoning", "#hypotheek", "#huizenprijzen"],
+            "Woningmarkt nieuws": ["#woningtekort", "#nieuwbouw", "#woningmarktnieuws"],
+            "Wonen & lifestyle": ["#verhuizen", "#woontrends", "#lifestyle"],
+            "Juridisch & financieel": ["#huurrecht", "#belasting", "#financieel"],
+            "Duurzaamheid": ["#duurzaam", "#energielabel", "#verduurzaming"],
+          };
+          const extraTags = categoryTags[topic.category] || [];
+          const allTags = [...new Set([...extraTags, ...hashtags])].slice(0, 6);
+
+          let fbMessage = `📝 Nieuw op het blog!\n\n`;
+          fbMessage += `${article.title}\n\n`;
+          fbMessage += `${article.excerpt || ""}\n\n`;
+          fbMessage += `👉 Lees het volledige artikel: ${blogUrl}\n\n`;
+          fbMessage += allTags.join(" ");
+
+          // Post with banner image if available
+          const bannerUrl = `${siteUrl}/facebook-cover.png`;
+          const res = await fetch(`${GRAPH_API}/${PAGE_ID}/photos`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              url: bannerUrl,
+              message: fbMessage,
+              access_token: PAGE_ACCESS_TOKEN,
+            }),
+          });
+          const fbData = await res.json();
+          
+          if (fbData.error) {
+            // Fallback: text-only post with link
+            const feedRes = await fetch(`${GRAPH_API}/${PAGE_ID}/feed`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                message: fbMessage,
+                link: blogUrl,
+                access_token: PAGE_ACCESS_TOKEN,
+              }),
+            });
+            const feedData = await feedRes.json();
+            facebookResult = feedData.error ? { error: feedData.error.message } : { postId: feedData.id };
+          } else {
+            facebookResult = { postId: fbData.post_id || fbData.id };
+          }
+          console.log("Facebook blog post result:", JSON.stringify(facebookResult));
+        }
+      } else {
+        console.log("Facebook not configured, skipping blog post to Facebook");
+      }
+    } catch (fbErr) {
+      console.error("Facebook posting failed (non-blocking):", fbErr);
+      facebookResult = { error: String(fbErr) };
+    }
+
     return new Response(
       JSON.stringify({
         success: true,
         message: `Blog post "${article.title}" published`,
         slug,
+        facebook: facebookResult,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
