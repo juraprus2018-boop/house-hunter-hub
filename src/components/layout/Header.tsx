@@ -1,6 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Home, Search, Heart, PlusCircle, User, Menu, LogOut, Shield, Map, Bell, MapPin, CalendarDays } from "lucide-react";
+import { Search, Heart, PlusCircle, User, Menu, LogOut, Shield, Map, Bell, MapPin, CalendarDays } from "lucide-react";
+import logoWoonpeek from "@/assets/logo-woonpeek.png";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
