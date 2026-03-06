@@ -1,9 +1,10 @@
 import { useLocation, Link } from "react-router-dom";
 import { useEffect } from "react";
-import { Home, Search, ArrowLeft, MapPin } from "lucide-react";
+import { Home, Search, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
+import notFoundImg from "@/assets/not-found-illustration.jpg";
 
 const NotFound = () => {
   const location = useLocation();
@@ -18,26 +19,16 @@ const NotFound = () => {
       
       <main className="flex-1 flex items-center justify-center px-4 py-20">
         <div className="text-center max-w-lg mx-auto">
-          {/* Large 404 with gradient */}
-          <div className="relative mb-6">
-            <h1 
-              className="text-[10rem] font-bold leading-none tracking-tighter select-none"
-              style={{
-                background: "linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)))",
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent",
-                opacity: 0.15,
-              }}
-            >
-              404
-            </h1>
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="bg-background/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-border">
-                <MapPin className="w-12 h-12 text-accent mx-auto mb-2" />
-                <p className="text-lg font-semibold text-foreground">Adres niet gevonden</p>
-              </div>
-            </div>
+          {/* Atmospheric image */}
+          <div className="mx-auto mb-8 w-64 h-44 overflow-hidden rounded-2xl shadow-lg">
+            <img
+              src={notFoundImg}
+              alt="Pagina niet gevonden"
+              className="h-full w-full object-cover"
+            />
           </div>
+
+          <h1 className="text-7xl font-bold text-primary/20 mb-2">404</h1>
 
           <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-3">
             Deze pagina bestaat niet
@@ -47,7 +38,6 @@ const NotFound = () => {
             Misschien kunnen we je helpen met een nieuwe zoekopdracht?
           </p>
 
-          {/* Action buttons */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
             <Button asChild size="lg" className="w-full sm:w-auto bg-primary hover:bg-primary/90">
               <Link to="/">

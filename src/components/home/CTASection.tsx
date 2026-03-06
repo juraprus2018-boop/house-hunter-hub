@@ -1,17 +1,21 @@
 import { PlusCircle, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
+import ctaBackground from "@/assets/cta-background.jpg";
 
 const CTASection = () => {
   return (
     <section className="py-16">
       <div className="container">
-        <div className="relative overflow-hidden rounded-3xl bg-primary px-6 py-16 text-center md:px-12 md:py-20">
-          {/* Decorative elements */}
-          <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-white/10" />
-          <div className="absolute -bottom-20 -left-20 h-64 w-64 rounded-full bg-white/5" />
-          
-          <div className="relative">
+        <div className="relative overflow-hidden rounded-3xl">
+          {/* Background image */}
+          <div
+            className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+            style={{ backgroundImage: `url(${ctaBackground})` }}
+          />
+          <div className="absolute inset-0 bg-primary/85" />
+
+          <div className="relative px-6 py-16 text-center md:px-12 md:py-20">
             <h2 className="font-display text-3xl font-bold text-primary-foreground md:text-4xl">
               Heb je een woning te huur of te koop?
             </h2>
