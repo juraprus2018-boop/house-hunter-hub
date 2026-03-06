@@ -8,7 +8,10 @@ const corsHeaders = {
 
 const SITE_URL = "https://woonpeek.nl";
 
-function buildSitemapXml(properties: Array<{ slug: string | null; id: string; city: string; updated_at: string; listing_type: string }>): string {
+function buildSitemapXml(
+  properties: Array<{ slug: string | null; id: string; city: string; updated_at: string; listing_type: string }>,
+  blogPosts: Array<{ slug: string; updated_at: string }>,
+): string {
   const cityMap = new Map<string, { count: number; lastMod: string }>();
   for (const p of properties) {
     const citySlug = p.city.toLowerCase().replace(/\s+/g, "-");
@@ -54,6 +57,12 @@ function buildSitemapXml(properties: Array<{ slug: string | null; id: string; ci
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
+  <url>
+    <loc>${SITE_URL}/blog</loc>
+    <lastmod>${now}</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
 `;
 
   for (const [citySlug, info] of cityMap) {
@@ -76,6 +85,16 @@ function buildSitemapXml(properties: Array<{ slug: string | null; id: string; ci
 `;
   }
 
+  for (const b of blogPosts) {
+    xml += `  <url>
+    <loc>${SITE_URL}/blog/${b.slug}</loc>
+    <lastmod>${b.updated_at.split("T")[0]}</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+`;
+  }
+
   xml += `</urlset>`;
   return xml;
 }
@@ -90,15 +109,26 @@ Deno.serve(async (req) => {
   const supabase = createClient(supabaseUrl, supabaseKey);
 
   try {
-    const { data: properties, error: propError } = await supabase
-      .from("properties")
-      .select("slug, id, city, updated_at, listing_type")
-      .eq("status", "actief")
-      .order("updated_at", { ascending: false });
+    const [propResult, blogResult] = await Promise.all([
+      supabase
+        .from("properties")
+        .select("slug, id, city, updated_at, listing_type")
+        .eq("status", "actief")
+        .order("updated_at", { ascending: false }),
+      supabase
+        .from("blog_posts")
+        .select("slug, updated_at")
+        .eq("status", "published")
+        .order("published_at", { ascending: false }),
+    ]);
 
-    if (propError) throw propError;
+    if (propResult.error) throw propResult.error;
+    if (blogResult.error) throw blogResult.error;
 
-    const xml = buildSitemapXml(properties || []);
+    const properties = propResult.data || [];
+    const blogPosts = blogResult.data || [];
+
+    const xml = buildSitemapXml(properties, blogPosts);
 
     // GET = serve XML directly, POST = regenerate & store
     if (req.method === "GET") {
@@ -124,7 +154,8 @@ Deno.serve(async (req) => {
     return new Response(
       JSON.stringify({
         success: true,
-        properties_count: properties?.length || 0,
+        properties_count: properties.length,
+        blog_posts_count: blogPosts.length,
         cities_count: cityCount,
         sitemap_url: `${supabaseUrl}/storage/v1/object/public/property-images/sitemap.xml`,
       }),
