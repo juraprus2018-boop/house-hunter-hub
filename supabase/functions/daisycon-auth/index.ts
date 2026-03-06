@@ -43,7 +43,8 @@ Deno.serve(async (req) => {
     }
 
     const supabase = createClient(supabaseUrl, serviceRoleKey);
-    const { action, code, code_verifier } = await req.json();
+    const body = await req.json();
+    const { action, code, code_verifier } = body;
 
     if (action === "init") {
       // Generate PKCE values and return auth URL
@@ -270,6 +271,45 @@ Deno.serve(async (req) => {
         JSON.stringify({ subscriptions, media: mediaList, program_names: programNames }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
+    }
+
+    if (action === "test_feed") {
+      const pid = body.program_id;
+      const mid = body.media_id;
+      
+      // Get access token
+      const { data: tokenRow } = await supabase
+        .from("daisycon_tokens")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .single();
+      
+      if (!tokenRow) throw new Error("Not connected");
+      
+      const publisherId = Deno.env.get("DAISYCON_PUBLISHER_ID");
+      
+      // Try the REST API productfeeds endpoint
+      const apiUrl = `https://services.daisycon.com/publishers/${publisherId}/programs/${pid}/media/${mid}/productfeeds?page=1&per_page=5`;
+      console.log("Testing API URL:", apiUrl);
+      
+      const apiRes = await fetch(apiUrl, {
+        headers: { Authorization: `Bearer ${tokenRow.access_token}`, Accept: "application/json" },
+      });
+      const apiText = await apiRes.text();
+      console.log("API response:", apiRes.status, apiText.substring(0, 1000));
+      
+      // Also try the datafeed URL with different standard_ids
+      const results: any = { api_response: { status: apiRes.status, body: apiText.substring(0, 2000) }, feed_tests: [] };
+      
+      for (const stdId of [1, 2, 3, 4, 5]) {
+        const feedUrl = `https://daisycon.io/datafeed/?program_id=${pid}&media_id=${mid}&standard_id=${stdId}&language_code=nl&locale_id=1&type=json&per_page=2`;
+        const res = await fetch(feedUrl);
+        const text = await res.text();
+        results.feed_tests.push({ standard_id: stdId, status: res.status, length: text.length, preview: text.substring(0, 500) });
+      }
+      
+      return new Response(JSON.stringify(results), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
     throw new Error(`Unknown action: ${action}`);
