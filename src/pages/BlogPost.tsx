@@ -1,4 +1,5 @@
 import { useParams, Link } from "react-router-dom";
+import { useMemo } from "react";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import Breadcrumbs from "@/components/seo/Breadcrumbs";
@@ -7,9 +8,46 @@ import { useBlogPost } from "@/hooks/useBlog";
 import { Button } from "@/components/ui/button";
 import { Loader2, ArrowLeft, Calendar } from "lucide-react";
 
+/**
+ * Cleans up AI-generated blog HTML:
+ * - Converts <p><strong>heading text</strong></p> patterns into proper <h2> tags
+ * - Ensures paragraphs are properly separated
+ */
+function cleanBlogHtml(html: string): string {
+  let cleaned = html;
+
+  // Convert <p><strong>heading</strong></p> to <h2> (common AI pattern)
+  cleaned = cleaned.replace(
+    /<p>\s*<strong>([^<]{10,120})<\/strong>\s*<\/p>/gi,
+    '<h2>$1</h2>'
+  );
+
+  // Convert standalone <strong>heading</strong> followed by newline/break to <h2>
+  cleaned = cleaned.replace(
+    /(?:^|<br\s*\/?>|\n)\s*<strong>([^<]{10,120})<\/strong>\s*(?:<br\s*\/?>|\n)/gi,
+    '<h2>$1</h2>'
+  );
+
+  // Add spacing between consecutive paragraphs that lack it
+  cleaned = cleaned.replace(/<\/p>\s*<p>/gi, '</p>\n\n<p>');
+
+  // Add spacing before h2
+  cleaned = cleaned.replace(/<\/p>\s*<h2>/gi, '</p>\n\n<h2>');
+
+  // Convert <blockquote> that are just <p><strong>Tip:</strong>...</p> 
+  // Wrap "Tip:" paragraphs in blockquote if not already
+  cleaned = cleaned.replace(
+    /<p>\s*<strong>Tip:<\/strong>\s*([\s\S]*?)<\/p>/gi,
+    '<blockquote><p><strong>Tip:</strong> $1</p></blockquote>'
+  );
+
+  return cleaned;
+}
+
 const BlogPostPage = () => {
   const { slug } = useParams<{ slug: string }>();
   const { data: post, isLoading } = useBlogPost(slug || "");
+  const cleanedContent = useMemo(() => post ? cleanBlogHtml(post.content) : "", [post]);
 
   if (isLoading) {
     return (
@@ -139,7 +177,7 @@ const BlogPostPage = () => {
                 prose-img:rounded-xl prose-img:shadow-lg
               "
             >
-              <div dangerouslySetInnerHTML={{ __html: post.content }} />
+              <div dangerouslySetInnerHTML={{ __html: cleanedContent }} />
             </div>
           </div>
         </article>
