@@ -170,6 +170,82 @@ Deno.serve(async (req) => {
       );
     }
 
+    if (action === "programs") {
+      // Get valid access token
+      const { data: tokenRow, error: fetchErr } = await supabase
+        .from("daisycon_tokens")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .single();
+
+      if (fetchErr || !tokenRow) {
+        throw new Error("Niet verbonden met Daisycon. Verbind eerst je account.");
+      }
+
+      let accessToken = tokenRow.access_token;
+
+      // Check if token expired, refresh if needed
+      const expiresAt = new Date(tokenRow.expires_at).getTime();
+      if (Date.now() >= expiresAt - 2 * 60 * 1000) {
+        const refreshRes = await fetch(DAISYCON_TOKEN_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            grant_type: "refresh_token",
+            client_id: clientId,
+            client_secret: clientSecret,
+            redirect_uri: DAISYCON_CLI_REDIRECT,
+            refresh_token: tokenRow.refresh_token,
+          }),
+        });
+        if (!refreshRes.ok) {
+          throw new Error("Token refresh failed");
+        }
+        const newTokens = await refreshRes.json();
+        accessToken = newTokens.access_token;
+        await supabase.from("daisycon_tokens").update({
+          access_token: newTokens.access_token,
+          refresh_token: newTokens.refresh_token,
+          expires_at: new Date(Date.now() + 29 * 60 * 1000).toISOString(),
+          updated_at: new Date().toISOString(),
+        }).eq("id", tokenRow.id);
+      }
+
+      const publisherId = Deno.env.get("DAISYCON_PUBLISHER_ID");
+      if (!publisherId) throw new Error("DAISYCON_PUBLISHER_ID not configured");
+
+      // Fetch subscriptions (programs the publisher is subscribed to)
+      const subsRes = await fetch(
+        `https://services.daisycon.com/publishers/${publisherId}/subscriptions?page=1&per_page=100`,
+        { headers: { Authorization: `Bearer ${accessToken}`, Accept: "application/json" } }
+      );
+
+      if (!subsRes.ok) {
+        const errText = await subsRes.text();
+        console.error("Subscriptions fetch failed:", subsRes.status, errText);
+        throw new Error(`Kon programma's niet ophalen [${subsRes.status}]`);
+      }
+
+      const subscriptions = await subsRes.json();
+
+      // Fetch media list
+      const mediaRes = await fetch(
+        `https://services.daisycon.com/publishers/${publisherId}/media?page=1&per_page=100`,
+        { headers: { Authorization: `Bearer ${accessToken}`, Accept: "application/json" } }
+      );
+
+      let mediaList: any[] = [];
+      if (mediaRes.ok) {
+        mediaList = await mediaRes.json();
+      }
+
+      return new Response(
+        JSON.stringify({ subscriptions, media: mediaList }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     throw new Error(`Unknown action: ${action}`);
   } catch (error) {
     console.error("Daisycon auth error:", error);

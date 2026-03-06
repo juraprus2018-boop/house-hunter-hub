@@ -223,3 +223,18 @@ export const useDaisyconAuth = () => {
     },
   });
 };
+
+export const useDaisyconPrograms = () => {
+  return useQuery({
+    queryKey: ["daisycon-programs"],
+    queryFn: async () => {
+      const { data, error } = await supabase.functions.invoke("daisycon-auth", {
+        body: { action: "programs" },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      return data as { subscriptions: any[]; media: any[] };
+    },
+    enabled: false, // only fetch on demand
+  });
+};

@@ -22,6 +22,7 @@ import {
   useDeleteDaisyconFeed,
   useRunDaisyconImport,
   useDaisyconAuth,
+  useDaisyconPrograms,
 } from "@/hooks/useAdmin";
 import {
   Loader2,
@@ -34,9 +35,10 @@ import {
   Link2,
   RefreshCw,
   Rss,
+  Search,
 } from "lucide-react";
 import { toast } from "sonner";
-import { format, formatDistanceToNow } from "date-fns";
+import { formatDistanceToNow } from "date-fns";
 import { nl } from "date-fns/locale";
 
 const AdminDaisycon = () => {
@@ -47,6 +49,7 @@ const AdminDaisycon = () => {
   const deleteFeed = useDeleteDaisyconFeed();
   const runImport = useRunDaisyconImport();
   const daisyconAuth = useDaisyconAuth();
+  const { data: programsData, refetch: fetchPrograms, isLoading: programsLoading, isFetching: programsFetching } = useDaisyconPrograms();
 
   const [showAddFeed, setShowAddFeed] = useState(false);
   const [showConnect, setShowConnect] = useState(false);
@@ -102,6 +105,28 @@ const AdminDaisycon = () => {
     }
   };
 
+  const handleAddFromProgram = async (sub: any, mediaId: number) => {
+    const programName = sub.program?.name || sub.name || `Program ${sub.program_id}`;
+    const programId = sub.program_id || sub.program?.id || sub.id;
+    try {
+      await addFeed.mutateAsync({
+        name: programName,
+        program_id: programId,
+        media_id: mediaId,
+      });
+      toast.success(`Feed "${programName}" toegevoegd`);
+    } catch (e) {
+      toast.error("Feed toevoegen mislukt: " + (e instanceof Error ? e.message : "onbekend"));
+    }
+  };
+
+  const handleOpenAddFeed = async () => {
+    setShowAddFeed(true);
+    if (status?.connected && !programsData) {
+      fetchPrograms();
+    }
+  };
+
   const handleImport = async (feedId?: string) => {
     try {
       toast.info("Import gestart...");
@@ -111,6 +136,9 @@ const AdminDaisycon = () => {
       toast.error("Import mislukt: " + (e instanceof Error ? e.message : "onbekend"));
     }
   };
+
+  // Get already-added program IDs
+  const existingProgramIds = new Set((feeds || []).map((f: any) => f.program_id));
 
   if (statusLoading || feedsLoading) {
     return (
@@ -202,7 +230,7 @@ const AdminDaisycon = () => {
                   Configureer welke Daisycon feeds worden geïmporteerd
                 </CardDescription>
               </div>
-              <Button onClick={() => setShowAddFeed(true)} size="sm" className="gap-2">
+              <Button onClick={handleOpenAddFeed} size="sm" className="gap-2">
                 <Plus className="h-4 w-4" />
                 Feed toevoegen
               </Button>
@@ -329,56 +357,152 @@ const AdminDaisycon = () => {
 
         {/* Add Feed Dialog */}
         <Dialog open={showAddFeed} onOpenChange={setShowAddFeed}>
-          <DialogContent>
+          <DialogContent className="max-w-2xl">
             <DialogHeader>
               <DialogTitle>Feed toevoegen</DialogTitle>
               <DialogDescription>
-                Voeg een Daisycon product feed toe om woningen te importeren
+                Selecteer een programma uit je Daisycon account of voer handmatig een feed in
               </DialogDescription>
             </DialogHeader>
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="feed-name">Naam</Label>
-                <Input
-                  id="feed-name"
-                  value={newFeed.name}
-                  onChange={(e) => setNewFeed({ ...newFeed, name: e.target.value })}
-                  placeholder="bijv. Pararius Huurwoningen"
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-6">
+              {/* Auto-discover section */}
+              {status?.connected && (
                 <div>
-                  <Label htmlFor="program-id">Program ID</Label>
+                  <div className="flex items-center justify-between mb-3">
+                    <Label className="text-sm font-medium">Beschikbare programma's</Label>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => fetchPrograms()}
+                      disabled={programsFetching}
+                      className="gap-1"
+                    >
+                      {programsFetching ? (
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                      ) : (
+                        <Search className="h-3 w-3" />
+                      )}
+                      {programsFetching ? "Laden..." : "Vernieuw"}
+                    </Button>
+                  </div>
+
+                  {programsFetching && !programsData && (
+                    <div className="flex items-center justify-center py-6">
+                      <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                      <span className="ml-2 text-sm text-muted-foreground">Programma's ophalen...</span>
+                    </div>
+                  )}
+
+                  {programsData && (
+                    <div className="max-h-64 overflow-y-auto space-y-2 rounded-lg border p-2">
+                      {programsData.subscriptions && programsData.subscriptions.length > 0 ? (
+                        programsData.subscriptions.map((sub: any, idx: number) => {
+                          const programId = sub.program_id || sub.program?.id || sub.id;
+                          const programName = sub.program?.name || sub.name || `Program ${programId}`;
+                          const isAdded = existingProgramIds.has(programId);
+                          const defaultMediaId = programsData.media?.[0]?.id;
+
+                          return (
+                            <div
+                              key={idx}
+                              className="flex items-center justify-between rounded-md border p-3 hover:bg-muted/50"
+                            >
+                              <div className="flex-1">
+                                <div className="font-medium text-sm">{programName}</div>
+                                <div className="text-xs text-muted-foreground">
+                                  Program ID: {programId}
+                                  {sub.program?.category && ` · ${sub.program.category}`}
+                                </div>
+                              </div>
+                              {isAdded ? (
+                                <Badge variant="secondary" className="text-xs">
+                                  <CheckCircle2 className="h-3 w-3 mr-1" />
+                                  Toegevoegd
+                                </Badge>
+                              ) : (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handleAddFromProgram(sub, defaultMediaId || 0)}
+                                  disabled={addFeed.isPending}
+                                >
+                                  <Plus className="h-3 w-3 mr-1" />
+                                  Toevoegen
+                                </Button>
+                              )}
+                            </div>
+                          );
+                        })
+                      ) : (
+                        <div className="py-4 text-center text-sm text-muted-foreground">
+                          Geen programma's gevonden. Controleer je Daisycon subscripties.
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {programsData?.media && programsData.media.length > 0 && (
+                    <div className="mt-2 text-xs text-muted-foreground">
+                      Media: {programsData.media.map((m: any) => `${m.name || m.id} (${m.id})`).join(", ")}
+                    </div>
+                  )}
+
+                  <div className="relative my-4">
+                    <div className="absolute inset-0 flex items-center">
+                      <span className="w-full border-t" />
+                    </div>
+                    <div className="relative flex justify-center text-xs uppercase">
+                      <span className="bg-background px-2 text-muted-foreground">of handmatig</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Manual entry */}
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="feed-name">Naam</Label>
                   <Input
-                    id="program-id"
-                    type="number"
-                    value={newFeed.program_id}
-                    onChange={(e) => setNewFeed({ ...newFeed, program_id: e.target.value })}
-                    placeholder="bijv. 7611"
+                    id="feed-name"
+                    value={newFeed.name}
+                    onChange={(e) => setNewFeed({ ...newFeed, name: e.target.value })}
+                    placeholder="bijv. Pararius Huurwoningen"
                   />
                 </div>
-                <div>
-                  <Label htmlFor="media-id">Media ID</Label>
-                  <Input
-                    id="media-id"
-                    type="number"
-                    value={newFeed.media_id}
-                    onChange={(e) => setNewFeed({ ...newFeed, media_id: e.target.value })}
-                    placeholder="bijv. 22848"
-                  />
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="program-id">Program ID</Label>
+                    <Input
+                      id="program-id"
+                      type="number"
+                      value={newFeed.program_id}
+                      onChange={(e) => setNewFeed({ ...newFeed, program_id: e.target.value })}
+                      placeholder="bijv. 7611"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="media-id">Media ID</Label>
+                    <Input
+                      id="media-id"
+                      type="number"
+                      value={newFeed.media_id}
+                      onChange={(e) => setNewFeed({ ...newFeed, media_id: e.target.value })}
+                      placeholder="bijv. 22848"
+                    />
+                  </div>
                 </div>
-              </div>
-              <div>
-                <Label htmlFor="feed-url">Feed URL (optioneel)</Label>
-                <Input
-                  id="feed-url"
-                  value={newFeed.feed_url}
-                  onChange={(e) => setNewFeed({ ...newFeed, feed_url: e.target.value })}
-                  placeholder="https://daisycon.io/datafeed/?..."
-                />
-                <p className="mt-1 text-xs text-muted-foreground">
-                  Laat leeg om automatisch te genereren op basis van Program en Media ID
-                </p>
+                <div>
+                  <Label htmlFor="feed-url">Feed URL (optioneel)</Label>
+                  <Input
+                    id="feed-url"
+                    value={newFeed.feed_url}
+                    onChange={(e) => setNewFeed({ ...newFeed, feed_url: e.target.value })}
+                    placeholder="https://daisycon.io/datafeed/?..."
+                  />
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Laat leeg om automatisch te genereren op basis van Program en Media ID
+                  </p>
+                </div>
               </div>
             </div>
             <DialogFooter>
@@ -387,7 +511,7 @@ const AdminDaisycon = () => {
               </Button>
               <Button onClick={handleAddFeed} disabled={addFeed.isPending}>
                 {addFeed.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Toevoegen
+                Handmatig toevoegen
               </Button>
             </DialogFooter>
           </DialogContent>
