@@ -396,42 +396,44 @@ const AdminDaisycon = () => {
                   {programsData && (
                     <div className="max-h-64 overflow-y-auto space-y-2 rounded-lg border p-2">
                       {programsData.subscriptions && programsData.subscriptions.length > 0 ? (
-                        programsData.subscriptions.map((sub: any, idx: number) => {
-                          const programId = sub.program_id || sub.program?.id || sub.id;
-                          const programName = sub.program?.name || sub.name || `Program ${programId}`;
-                          const isAdded = existingProgramIds.has(programId);
-                          const defaultMediaId = programsData.media?.[0]?.id;
+                        programsData.subscriptions.flatMap((sub: any, idx: number) => {
+                          const programIds: number[] = sub.program_ids || (sub.program_id ? [sub.program_id] : [sub.id]);
+                          const defaultMediaId = sub.media_id || programsData.media?.[0]?.id;
 
-                          return (
-                            <div
-                              key={idx}
-                              className="flex items-center justify-between rounded-md border p-3 hover:bg-muted/50"
-                            >
-                              <div className="flex-1">
-                                <div className="font-medium text-sm">{programName}</div>
-                                <div className="text-xs text-muted-foreground">
-                                  Program ID: {programId}
-                                  {sub.program?.category && ` · ${sub.program.category}`}
+                          return programIds.map((pid: number) => {
+                            const programName = `Program ${pid}`;
+                            const isAdded = existingProgramIds.has(pid);
+
+                            return (
+                              <div
+                                key={`${idx}-${pid}`}
+                                className="flex items-center justify-between rounded-md border p-3 hover:bg-muted/50"
+                              >
+                                <div className="flex-1">
+                                  <div className="font-medium text-sm">{programName}</div>
+                                  <div className="text-xs text-muted-foreground">
+                                    Program ID: {pid} · Status: {sub.status || 'onbekend'}
+                                  </div>
                                 </div>
+                                {isAdded ? (
+                                  <Badge variant="secondary" className="text-xs">
+                                    <CheckCircle2 className="h-3 w-3 mr-1" />
+                                    Toegevoegd
+                                  </Badge>
+                                ) : (
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => handleAddFromProgram({ program_id: pid, name: programName }, defaultMediaId || 0)}
+                                    disabled={addFeed.isPending}
+                                  >
+                                    <Plus className="h-3 w-3 mr-1" />
+                                    Toevoegen
+                                  </Button>
+                                )}
                               </div>
-                              {isAdded ? (
-                                <Badge variant="secondary" className="text-xs">
-                                  <CheckCircle2 className="h-3 w-3 mr-1" />
-                                  Toegevoegd
-                                </Badge>
-                              ) : (
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => handleAddFromProgram(sub, defaultMediaId || 0)}
-                                  disabled={addFeed.isPending}
-                                >
-                                  <Plus className="h-3 w-3 mr-1" />
-                                  Toevoegen
-                                </Button>
-                              )}
-                            </div>
-                          );
+                            );
+                          });
                         })
                       ) : (
                         <div className="py-4 text-center text-sm text-muted-foreground">
