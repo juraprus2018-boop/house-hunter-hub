@@ -1,38 +1,33 @@
-import { Building2, Home, Building, DoorOpen } from "lucide-react";
 import { Link } from "react-router-dom";
+import categoryAppartement from "@/assets/category-appartement.jpg";
+import categoryHuis from "@/assets/category-huis.jpg";
+import categoryStudio from "@/assets/category-studio.jpg";
+import categoryKamer from "@/assets/category-kamer.jpg";
 
 const categories = [
   {
     title: "Appartement",
-    description: "Ruime appartementen in de stad. Van compacte stadsappartementen tot luxe penthouses met uitzicht.",
-    icon: Building2,
+    description: "Ruime appartementen in de stad",
     slug: "appartement",
-    gradient: "from-blue-500/10 to-cyan-500/10",
-    iconColor: "text-blue-600",
+    image: categoryAppartement,
   },
   {
     title: "Huis",
-    description: "Eengezinswoningen met tuin. Ideaal voor gezinnen die ruimte en privacy zoeken.",
-    icon: Home,
+    description: "Eengezinswoningen met tuin",
     slug: "huis",
-    gradient: "from-green-500/10 to-emerald-500/10",
-    iconColor: "text-green-600",
+    image: categoryHuis,
   },
   {
     title: "Studio",
-    description: "Compacte, zelfstandige woonruimtes. Perfect voor starters en alleenstaanden.",
-    icon: Building,
+    description: "Compacte, zelfstandige woonruimtes",
     slug: "studio",
-    gradient: "from-purple-500/10 to-pink-500/10",
-    iconColor: "text-purple-600",
+    image: categoryStudio,
   },
   {
     title: "Kamer",
-    description: "Kamers in gedeelde woningen. Betaalbare optie voor studenten en young professionals.",
-    icon: DoorOpen,
+    description: "Kamers in gedeelde woningen",
     slug: "kamer",
-    gradient: "from-orange-500/10 to-amber-500/10",
-    iconColor: "text-orange-600",
+    image: categoryKamer,
   },
 ];
 
@@ -70,16 +65,24 @@ const CategorySection = () => {
               to={`/zoeken?type=${category.slug}`}
               className="group"
             >
-              <div className={`rounded-2xl bg-gradient-to-br ${category.gradient} p-6 transition-all hover:shadow-lg`}>
-                <div className={`mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-white shadow-sm ${category.iconColor}`}>
-                  <category.icon className="h-6 w-6" />
+              <div className="relative overflow-hidden rounded-2xl transition-all hover:shadow-lg">
+                <div className="aspect-[4/3] overflow-hidden">
+                  <img
+                    src={category.image}
+                    alt={category.title}
+                    loading="lazy"
+                    className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                  />
                 </div>
-                <h3 className="font-display text-xl font-semibold text-foreground">
-                  {category.title}
-                </h3>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  {category.description}
-                </p>
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+                <div className="absolute bottom-0 left-0 right-0 p-5">
+                  <h3 className="font-display text-xl font-semibold text-white">
+                    {category.title}
+                  </h3>
+                  <p className="mt-1 text-sm text-white/80">
+                    {category.description}
+                  </p>
+                </div>
               </div>
             </Link>
           ))}

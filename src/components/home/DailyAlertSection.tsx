@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import TurnstileWidget from "@/components/security/TurnstileWidget";
+import dailyAlertImg from "@/assets/daily-alert-illustration.jpg";
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -86,50 +87,65 @@ const DailyAlertSection = () => {
   return (
     <section className="py-16">
       <div className="container">
-        <div className="rounded-3xl border bg-card p-6 md:p-10">
-          <div className="mb-6 flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-primary/10">
-              <BellRing className="h-5 w-5 text-primary" />
+        <div className="overflow-hidden rounded-3xl border bg-card">
+          <div className="grid md:grid-cols-5">
+            {/* Image side */}
+            <div className="hidden md:col-span-2 md:block">
+              <img
+                src={dailyAlertImg}
+                alt="Dagelijkse woningalerts"
+                className="h-full w-full object-cover"
+                loading="lazy"
+              />
             </div>
-            <div>
-              <h2 className="font-display text-2xl font-bold text-foreground md:text-3xl">
-                Alert voor nieuw woningaanbod
-              </h2>
-              <p className="text-sm text-muted-foreground">
-                Ontvang dagelijks 1 e-mail na de run met het aantal nieuwe woningen en een knop naar al het aanbod.
-              </p>
+
+            {/* Content side */}
+            <div className="p-6 md:col-span-3 md:p-10">
+              <div className="mb-6 flex items-center gap-3">
+                <div className="flex h-11 w-11 items-center justify-center rounded-full bg-primary/10">
+                  <BellRing className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <h2 className="font-display text-2xl font-bold text-foreground md:text-3xl">
+                    Alert voor nieuw woningaanbod
+                  </h2>
+                  <p className="text-sm text-muted-foreground">
+                    Ontvang dagelijks 1 e-mail na de run met het aantal nieuwe woningen en een knop naar al het aanbod.
+                  </p>
+                </div>
+              </div>
+
+              {user ? (
+                <div className="space-y-3">
+                  <p className="text-sm text-muted-foreground">
+                    Ingeschreven met je account e-mail: <span className="font-medium text-foreground">{user.email}</span>
+                  </p>
+                  <TurnstileWidget siteKey={turnstileSiteKey} onTokenChange={handleTokenChange} />
+                  <Button onClick={handleAccountSubscribe} disabled={subscribe.isPending} className="gap-2">
+                    {subscribe.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
+                    Activeer dagelijkse alert
+                  </Button>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <div className="flex flex-col gap-3 sm:flex-row">
+                    <Input
+                      type="email"
+                      placeholder="jouw@email.nl"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="sm:max-w-sm"
+                    />
+                    <Button onClick={handleGuestSubscribe} disabled={subscribe.isPending} className="gap-2">
+                      {subscribe.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
+                      Schrijf me in
+                    </Button>
+                  </div>
+                  <TurnstileWidget siteKey={turnstileSiteKey} onTokenChange={handleTokenChange} />
+                </div>
+              )}
             </div>
           </div>
-
-          {user ? (
-            <div className="space-y-3">
-              <p className="text-sm text-muted-foreground">
-                Ingeschreven met je account e-mail: <span className="font-medium text-foreground">{user.email}</span>
-              </p>
-              <TurnstileWidget siteKey={turnstileSiteKey} onTokenChange={handleTokenChange} />
-              <Button onClick={handleAccountSubscribe} disabled={subscribe.isPending} className="gap-2">
-                {subscribe.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
-                Activeer dagelijkse alert
-              </Button>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              <div className="flex flex-col gap-3 sm:flex-row">
-                <Input
-                  type="email"
-                  placeholder="jouw@email.nl"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="sm:max-w-sm"
-                />
-                <Button onClick={handleGuestSubscribe} disabled={subscribe.isPending} className="gap-2">
-                  {subscribe.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
-                  Schrijf me in
-                </Button>
-              </div>
-              <TurnstileWidget siteKey={turnstileSiteKey} onTokenChange={handleTokenChange} />
-            </div>
-          )}
         </div>
       </div>
     </section>
