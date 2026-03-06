@@ -1,9 +1,9 @@
 project_id = "uszlfqgxjvceugrpavde"
 
-[functions.run-scraper]
+[functions.daisycon-auth]
 verify_jwt = false
 
-[functions.daily-scrape]
+[functions.daisycon-import]
 verify_jwt = false
 
 [functions.generate-sitemap]
@@ -28,4 +28,7 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.generate-blog-post]
+verify_jwt = false
+
+[functions.admin-reset]
 verify_jwt = false

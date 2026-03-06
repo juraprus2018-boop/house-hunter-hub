@@ -101,6 +101,72 @@ export type Database = {
         }
         Relationships: []
       }
+      daisycon_feeds: {
+        Row: {
+          created_at: string
+          feed_url: string | null
+          id: string
+          is_active: boolean
+          last_import_at: string | null
+          media_id: number
+          name: string
+          program_id: number
+          properties_imported: number | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          feed_url?: string | null
+          id?: string
+          is_active?: boolean
+          last_import_at?: string | null
+          media_id: number
+          name: string
+          program_id: number
+          properties_imported?: number | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          feed_url?: string | null
+          id?: string
+          is_active?: boolean
+          last_import_at?: string | null
+          media_id?: number
+          name?: string
+          program_id?: number
+          properties_imported?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      daisycon_tokens: {
+        Row: {
+          access_token: string
+          created_at: string
+          expires_at: string
+          id: string
+          refresh_token: string
+          updated_at: string
+        }
+        Insert: {
+          access_token: string
+          created_at?: string
+          expires_at: string
+          id?: string
+          refresh_token: string
+          updated_at?: string
+        }
+        Update: {
+          access_token?: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          refresh_token?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       favorites: {
         Row: {
           created_at: string

@@ -10,107 +10,17 @@ export const useIsAdmin = () => {
     queryKey: ["is-admin", user?.id],
     queryFn: async () => {
       if (!user) return false;
-
       const { data, error } = await supabase.rpc("has_role", {
         _user_id: user.id,
         _role: "admin",
       });
-
       if (error) {
         console.error("Error checking admin role:", error);
         return false;
       }
-
       return data === true;
     },
     enabled: !!user,
-  });
-};
-
-export const useScrapers = () => {
-  return useQuery({
-    queryKey: ["scrapers"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("scrapers")
-        .select("*")
-        .order("name");
-
-      if (error) throw error;
-      return data;
-    },
-  });
-};
-
-export const useToggleScraper = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async ({ id, isActive }: { id: string; isActive: boolean }) => {
-      const { data, error } = await supabase
-        .from("scrapers")
-        .update({ is_active: isActive })
-        .eq("id", id)
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["scrapers"] });
-    },
-  });
-};
-
-export const useUpdateScraperSchedule = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async ({
-      id,
-      schedule_interval,
-      schedule_days,
-    }: {
-      id: string;
-      schedule_interval: string;
-      schedule_days: number[] | null;
-    }) => {
-      const { data, error } = await supabase
-        .from("scrapers")
-        .update({ schedule_interval, schedule_days })
-        .eq("id", id)
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["scrapers"] });
-    },
-  });
-};
-
-export const useScraperLogs = (scraperId?: string) => {
-  return useQuery({
-    queryKey: ["scraper-logs", scraperId],
-    queryFn: async () => {
-      let query = supabase
-        .from("scraper_logs")
-        .select("*")
-        .order("created_at", { ascending: false })
-        .limit(50);
-
-      if (scraperId) {
-        query = query.eq("scraper_id", scraperId);
-      }
-
-      const { data, error } = await query;
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!scraperId || true,
   });
 };
 
@@ -131,9 +41,7 @@ export const useAllProperties = () => {
 
         if (error) throw error;
         if (!data || data.length === 0) break;
-
         allProperties.push(...data);
-
         if (data.length < pageSize) break;
         from += pageSize;
       }
@@ -154,7 +62,6 @@ export const useUpdatePropertyAdmin = () => {
         .eq("id", id)
         .select()
         .single();
-
       if (error) throw error;
       return data;
     },
@@ -180,46 +87,6 @@ export const useDeletePropertyAdmin = () => {
   });
 };
 
-export const useRunScraper = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (scraperId: string) => {
-      const { data, error } = await supabase.functions.invoke("run-scraper", {
-        body: { scraper_id: scraperId },
-      });
-
-      if (error) throw error;
-      return data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["scrapers"] });
-      queryClient.invalidateQueries({ queryKey: ["scraper-logs"] });
-      queryClient.invalidateQueries({ queryKey: ["scraped-properties"] });
-    },
-  });
-};
-
-export const useScrapedProperties = (status?: string) => {
-  return useQuery({
-    queryKey: ["scraped-properties", status],
-    queryFn: async () => {
-      let query = supabase
-        .from("scraped_properties")
-        .select("*")
-        .order("created_at", { ascending: false });
-
-      if (status) {
-        query = query.eq("status", status);
-      }
-
-      const { data, error } = await query;
-      if (error) throw error;
-      return data;
-    },
-  });
-};
-
 export const useDailyAlertSubscribers = () => {
   return useQuery({
     queryKey: ["daily-alert-subscribers"],
@@ -228,7 +95,6 @@ export const useDailyAlertSubscribers = () => {
         .from("daily_alert_subscribers")
         .select("*")
         .order("created_at", { ascending: false });
-
       if (error) throw error;
       return data as any[];
     },
@@ -248,23 +114,112 @@ export const usePostToFacebook = () => {
   });
 };
 
-export const useUpdateScrapedProperty = () => {
-  const queryClient = useQueryClient();
+// Daisycon hooks
+export const useDaisyconStatus = () => {
+  return useQuery({
+    queryKey: ["daisycon-status"],
+    queryFn: async () => {
+      const { data, error } = await supabase.functions.invoke("daisycon-auth", {
+        body: { action: "status" },
+      });
+      if (error) throw error;
+      return data as { connected: boolean; expires_at?: string; last_refreshed?: string };
+    },
+  });
+};
 
+export const useDaisyconFeeds = () => {
+  return useQuery({
+    queryKey: ["daisycon-feeds"],
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from("daisycon_feeds")
+        .select("*")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data as any[];
+    },
+  });
+};
+
+export const useAddDaisyconFeed = () => {
+  const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, ...updates }: { id: string; status?: string; reviewed_at?: string; reviewed_by?: string }) => {
-      const { data, error } = await supabase
-        .from("scraped_properties")
-        .update(updates)
-        .eq("id", id)
+    mutationFn: async (feed: { name: string; program_id: number; media_id: number; feed_url?: string }) => {
+      const { data, error } = await (supabase as any)
+        .from("daisycon_feeds")
+        .insert(feed)
         .select()
         .single();
-
       if (error) throw error;
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["scraped-properties"] });
+      queryClient.invalidateQueries({ queryKey: ["daisycon-feeds"] });
+    },
+  });
+};
+
+export const useToggleDaisyconFeed = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, is_active }: { id: string; is_active: boolean }) => {
+      const { error } = await (supabase as any)
+        .from("daisycon_feeds")
+        .update({ is_active })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["daisycon-feeds"] });
+    },
+  });
+};
+
+export const useDeleteDaisyconFeed = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await (supabase as any)
+        .from("daisycon_feeds")
+        .delete()
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["daisycon-feeds"] });
+    },
+  });
+};
+
+export const useRunDaisyconImport = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (feedId?: string) => {
+      const { data, error } = await supabase.functions.invoke("daisycon-import", {
+        body: feedId ? { feed_id: feedId } : {},
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["daisycon-feeds"] });
+      queryClient.invalidateQueries({ queryKey: ["properties"] });
+      queryClient.invalidateQueries({ queryKey: ["all-properties"] });
+    },
+  });
+};
+
+export const useDaisyconAuth = () => {
+  return useMutation({
+    mutationFn: async ({ action, code, code_verifier }: { action: string; code?: string; code_verifier?: string }) => {
+      const { data, error } = await supabase.functions.invoke("daisycon-auth", {
+        body: { action, code, code_verifier },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      return data;
     },
   });
 };

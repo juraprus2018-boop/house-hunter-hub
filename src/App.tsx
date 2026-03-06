@@ -17,7 +17,7 @@ import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminProperties from "./pages/admin/AdminProperties";
 import AdminScrapers from "./pages/admin/AdminScrapers";
 import AdminSettings from "./pages/admin/AdminSettings";
-import AdminReviewQueue from "./pages/admin/AdminReviewQueue";
+
 import MyProperties from "./pages/MyProperties";
 import CreateProperty from "./pages/CreateProperty";
 import EditProperty from "./pages/EditProperty";
@@ -64,7 +64,7 @@ const App = () => (
             <Route path="/woning/:id/bewerken" element={<EditProperty />} />
             <Route path="/admin" element={<AdminDashboard />} />
             <Route path="/admin/woningen" element={<AdminProperties />} />
-            <Route path="/admin/review" element={<AdminReviewQueue />} />
+            {/* Review queue removed - using Daisycon feeds now */}
             <Route path="/admin/scrapers" element={<AdminScrapers />} />
             <Route path="/admin/instellingen" element={<AdminSettings />} />
             <Route path="/admin/blog" element={<AdminBlog />} />
