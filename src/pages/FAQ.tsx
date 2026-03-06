@@ -1,7 +1,9 @@
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
+import PageBanner from "@/components/layout/PageBanner";
 import Breadcrumbs from "@/components/seo/Breadcrumbs";
 import SEOHead from "@/components/seo/SEOHead";
+import bannerFaq from "@/assets/banner-faq.jpg";
 
 const FAQ_ITEMS = [
   {
@@ -83,22 +85,20 @@ const FAQPage = () => {
       />
       <Header />
       <main className="flex-1">
-        <section className="border-b bg-gradient-to-b from-primary/5 to-background py-12">
-          <div className="container max-w-3xl">
-            <Breadcrumbs
-              items={[
-                { label: "Home", href: "/" },
-                { label: "Veelgestelde vragen" },
-              ]}
-            />
-            <h1 className="mt-4 font-display text-3xl font-bold text-foreground">
-              Veelgestelde vragen
-            </h1>
-            <p className="mt-2 text-muted-foreground">
-              Alles wat je wilt weten over WoonPeek en ons woningaanbod
-            </p>
-          </div>
-        </section>
+        <PageBanner image={bannerFaq} alt="Veelgestelde vragen">
+          <Breadcrumbs
+            items={[
+              { label: "Home", href: "/" },
+              { label: "Veelgestelde vragen" },
+            ]}
+          />
+          <h1 className="mt-4 font-display text-3xl font-bold text-foreground md:text-4xl">
+            Veelgestelde vragen
+          </h1>
+          <p className="mt-2 text-muted-foreground">
+            Alles wat je wilt weten over WoonPeek en ons woningaanbod
+          </p>
+        </PageBanner>
 
         <section className="container max-w-3xl py-12">
           <div className="space-y-6">

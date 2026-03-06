@@ -5,8 +5,10 @@ import { MapPin, Home, Loader2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
+import PageBanner from "@/components/layout/PageBanner";
 import SEOHead from "@/components/seo/SEOHead";
 import Breadcrumbs from "@/components/seo/Breadcrumbs";
+import bannerCities from "@/assets/banner-cities.jpg";
 
 const useCityCounts = () =>
   useQuery({
@@ -41,15 +43,16 @@ const Cities = () => {
         canonical="https://woonpeek.nl/steden"
       />
       <Header />
-      <main className="flex-1 container py-8">
-        <Breadcrumbs items={[{ label: "Home", href: "/" }, { label: "Steden" }]} />
-
-        <div className="mt-6 mb-4">
-          <h1 className="font-display text-3xl font-bold text-foreground">Alle steden met woningaanbod</h1>
+      <main className="flex-1">
+        <PageBanner image={bannerCities} alt="Steden in Nederland">
+          <Breadcrumbs items={[{ label: "Home", href: "/" }, { label: "Steden" }]} />
+          <h1 className="mt-4 font-display text-3xl font-bold text-foreground md:text-4xl">Alle steden met woningaanbod</h1>
           <p className="mt-2 text-muted-foreground">
             Ontdek woningen in {cities?.length ?? "…"} steden door heel Nederland
           </p>
-        </div>
+        </PageBanner>
+
+        <div className="container py-8">
         <div className="mb-8 max-w-3xl space-y-3 text-sm text-muted-foreground leading-relaxed">
           <p>
             WoonPeek verzamelt dagelijks huurwoningen en koopwoningen uit steden door heel Nederland. 
@@ -106,6 +109,7 @@ const Cities = () => {
             zoekfunctie om direct te filteren op locatie, prijs en woningtype. Of verken het aanbod 
             via onze interactieve kaart op de verkenningspagina.
           </p>
+        </div>
         </div>
       </main>
       <Footer />

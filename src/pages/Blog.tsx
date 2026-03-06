@@ -1,12 +1,14 @@
 import { Link } from "react-router-dom";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
+import PageBanner from "@/components/layout/PageBanner";
 import Breadcrumbs from "@/components/seo/Breadcrumbs";
 import SEOHead from "@/components/seo/SEOHead";
 import { useBlogPosts } from "@/hooks/useBlog";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Calendar } from "lucide-react";
+import bannerBlog from "@/assets/banner-blog.jpg";
 
 const BlogPage = () => {
   const { data: posts, isLoading } = useBlogPosts();
@@ -20,22 +22,20 @@ const BlogPage = () => {
       />
       <Header />
       <main className="flex-1">
-        <section className="border-b bg-gradient-to-b from-primary/5 to-background py-12">
-          <div className="container max-w-4xl">
-            <Breadcrumbs
-              items={[
-                { label: "Home", href: "/" },
-                { label: "Blog" },
-              ]}
-            />
-            <h1 className="mt-4 font-display text-3xl font-bold text-foreground">
-              Blog
-            </h1>
-            <p className="mt-2 text-muted-foreground">
-              Tips, advies en inzichten over de woningmarkt in Nederland
-            </p>
-          </div>
-        </section>
+        <PageBanner image={bannerBlog} alt="WoonPeek Blog">
+          <Breadcrumbs
+            items={[
+              { label: "Home", href: "/" },
+              { label: "Blog" },
+            ]}
+          />
+          <h1 className="mt-4 font-display text-3xl font-bold text-foreground md:text-4xl">
+            Blog
+          </h1>
+          <p className="mt-2 text-muted-foreground">
+            Tips, advies en inzichten over de woningmarkt in Nederland
+          </p>
+        </PageBanner>
 
         <section className="container max-w-4xl py-12">
           {isLoading ? (
