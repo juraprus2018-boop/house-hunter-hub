@@ -2,11 +2,13 @@ import { useParams, Link } from "react-router-dom";
 import { useMemo } from "react";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
+import PageBanner from "@/components/layout/PageBanner";
 import Breadcrumbs from "@/components/seo/Breadcrumbs";
 import SEOHead from "@/components/seo/SEOHead";
 import { useBlogPost } from "@/hooks/useBlog";
 import { Button } from "@/components/ui/button";
 import { Loader2, ArrowLeft, Calendar } from "lucide-react";
+import bannerBlog from "@/assets/banner-blog.jpg";
 
 /**
  * Cleans up AI-generated blog HTML:
@@ -107,21 +109,7 @@ const BlogPostPage = () => {
       <Header />
       <main className="flex-1">
         <article>
-          {post.cover_image && (
-            <div className="relative bg-muted">
-              <div className="container">
-                <div className="aspect-[21/9] overflow-hidden">
-                  <img
-                    src={post.cover_image}
-                    alt={post.title}
-                    className="h-full w-full object-cover"
-                  />
-                </div>
-              </div>
-            </div>
-          )}
-
-          <div className="container max-w-4xl py-10 md:py-14">
+          <PageBanner image={post.cover_image || bannerBlog} alt={post.title}>
             <Breadcrumbs
               items={[
                 { label: "Home", href: "/" },
@@ -129,18 +117,15 @@ const BlogPostPage = () => {
                 { label: post.title },
               ]}
             />
-
-            <Button variant="ghost" asChild className="mt-4 mb-8">
+            <Button variant="ghost" asChild className="mt-4 mb-4 -ml-3 text-foreground/80 hover:text-foreground">
               <Link to="/blog">
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Terug naar blog
               </Link>
             </Button>
-
             <h1 className="font-display text-3xl font-bold text-foreground leading-tight md:text-5xl lg:text-[3.25rem]">
               {post.title}
             </h1>
-
             {post.published_at && (
               <div className="mt-3 flex items-center gap-1 text-sm text-muted-foreground">
                 <Calendar className="h-4 w-4" />
@@ -153,9 +138,11 @@ const BlogPostPage = () => {
                 </time>
               </div>
             )}
+          </PageBanner>
 
+          <div className="container max-w-4xl py-10 md:py-14">
             <div 
-              className="mt-10 prose prose-lg lg:prose-xl max-w-none 
+              className="prose prose-lg lg:prose-xl max-w-none 
                 text-foreground 
 
                 prose-headings:font-display prose-headings:text-foreground prose-headings:leading-tight
