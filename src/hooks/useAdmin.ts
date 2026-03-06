@@ -224,6 +224,39 @@ export const useDaisyconAuth = () => {
   });
 };
 
+export const useUpdateDaisyconFeed = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...updates }: { id: string; name?: string; logo_url?: string | null; feed_url?: string | null }) => {
+      const { error } = await (supabase as any)
+        .from("daisycon_feeds")
+        .update(updates)
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["daisycon-feeds"] });
+    },
+  });
+};
+
+export const useUploadFeedLogo = () => {
+  return useMutation({
+    mutationFn: async ({ feedId, file }: { feedId: string; file: File }) => {
+      const ext = file.name.split(".").pop();
+      const path = `feed-logos/${feedId}.${ext}`;
+      const { error } = await supabase.storage
+        .from("property-images")
+        .upload(path, file, { upsert: true });
+      if (error) throw error;
+      const { data: urlData } = supabase.storage
+        .from("property-images")
+        .getPublicUrl(path);
+      return urlData.publicUrl;
+    },
+  });
+};
+
 export const useDaisyconPrograms = () => {
   return useQuery({
     queryKey: ["daisycon-programs"],

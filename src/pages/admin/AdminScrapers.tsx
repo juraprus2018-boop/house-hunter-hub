@@ -23,6 +23,8 @@ import {
   useRunDaisyconImport,
   useDaisyconAuth,
   useDaisyconPrograms,
+  useUpdateDaisyconFeed,
+  useUploadFeedLogo,
 } from "@/hooks/useAdmin";
 import {
   Loader2,
@@ -36,6 +38,9 @@ import {
   RefreshCw,
   Rss,
   Search,
+  Pencil,
+  Upload,
+  Image,
 } from "lucide-react";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
@@ -49,10 +54,16 @@ const AdminDaisycon = () => {
   const deleteFeed = useDeleteDaisyconFeed();
   const runImport = useRunDaisyconImport();
   const daisyconAuth = useDaisyconAuth();
+  const updateFeed = useUpdateDaisyconFeed();
+  const uploadLogo = useUploadFeedLogo();
   const { data: programsData, refetch: fetchPrograms, isLoading: programsLoading, isFetching: programsFetching } = useDaisyconPrograms();
 
   const [showAddFeed, setShowAddFeed] = useState(false);
   const [showConnect, setShowConnect] = useState(false);
+  const [showEditFeed, setShowEditFeed] = useState(false);
+  const [editingFeed, setEditingFeed] = useState<any>(null);
+  const [editForm, setEditForm] = useState({ name: "", feed_url: "" });
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [newFeed, setNewFeed] = useState({ name: "", program_id: "", media_id: "", feed_url: "" });
   const [authCode, setAuthCode] = useState("");
   const [codeVerifier, setCodeVerifier] = useState("");
@@ -134,6 +145,41 @@ const AdminDaisycon = () => {
       toast.success(`Import voltooid: ${result.total_imported} nieuw, ${result.total_skipped} overgeslagen`);
     } catch (e) {
       toast.error("Import mislukt: " + (e instanceof Error ? e.message : "onbekend"));
+    }
+  };
+
+  const handleOpenEdit = (feed: any) => {
+    setEditingFeed(feed);
+    setEditForm({ name: feed.name, feed_url: feed.feed_url || "" });
+    setLogoPreview(feed.logo_url || null);
+    setShowEditFeed(true);
+  };
+
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !editingFeed) return;
+    try {
+      const url = await uploadLogo.mutateAsync({ feedId: editingFeed.id, file });
+      setLogoPreview(url);
+      await updateFeed.mutateAsync({ id: editingFeed.id, logo_url: url });
+      toast.success("Logo geüpload");
+    } catch (err) {
+      toast.error("Logo uploaden mislukt");
+    }
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editingFeed) return;
+    try {
+      await updateFeed.mutateAsync({
+        id: editingFeed.id,
+        name: editForm.name,
+        feed_url: editForm.feed_url || null,
+      });
+      toast.success("Feed bijgewerkt");
+      setShowEditFeed(false);
+    } catch (err) {
+      toast.error("Bijwerken mislukt");
     }
   };
 
@@ -244,21 +290,30 @@ const AdminDaisycon = () => {
                     key={feed.id}
                     className="flex items-center justify-between rounded-lg border p-4"
                   >
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium">{feed.name}</span>
-                        <Badge variant="outline" className="text-xs">
-                          Program: {feed.program_id}
-                        </Badge>
-                        <Badge variant="outline" className="text-xs">
-                          Media: {feed.media_id}
-                        </Badge>
-                      </div>
-                      <div className="mt-1 text-xs text-muted-foreground">
-                        {feed.properties_imported || 0} geïmporteerd
-                        {feed.last_import_at && (
-                          <> · Laatst: {formatDistanceToNow(new Date(feed.last_import_at), { addSuffix: true, locale: nl })}</>
-                        )}
+                    <div className="flex items-center gap-3 flex-1">
+                      {feed.logo_url ? (
+                        <img src={feed.logo_url} alt={feed.name} className="h-10 w-10 rounded-md object-contain border bg-white" />
+                      ) : (
+                        <div className="h-10 w-10 rounded-md border bg-muted flex items-center justify-center">
+                          <Image className="h-5 w-5 text-muted-foreground" />
+                        </div>
+                      )}
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium">{feed.name}</span>
+                          <Badge variant="outline" className="text-xs">
+                            Program: {feed.program_id}
+                          </Badge>
+                          <Badge variant="outline" className="text-xs">
+                            Media: {feed.media_id}
+                          </Badge>
+                        </div>
+                        <div className="mt-1 text-xs text-muted-foreground">
+                          {feed.properties_imported || 0} geïmporteerd
+                          {feed.last_import_at && (
+                            <> · Laatst: {formatDistanceToNow(new Date(feed.last_import_at), { addSuffix: true, locale: nl })}</>
+                          )}
+                        </div>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
@@ -268,6 +323,14 @@ const AdminDaisycon = () => {
                           toggleFeed.mutate({ id: feed.id, is_active: checked })
                         }
                       />
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => handleOpenEdit(feed)}
+                        title="Bewerken"
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
                       <Button
                         variant="outline"
                         size="icon"
@@ -530,6 +593,81 @@ const AdminDaisycon = () => {
               <Button onClick={handleAddFeed} disabled={addFeed.isPending}>
                 {addFeed.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Handmatig toevoegen
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Edit Feed Dialog */}
+        <Dialog open={showEditFeed} onOpenChange={setShowEditFeed}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Feed bewerken</DialogTitle>
+              <DialogDescription>
+                Pas de naam, feed URL en het logo van deze campagne aan
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label>Logo</Label>
+                <div className="mt-2 flex items-center gap-4">
+                  {logoPreview ? (
+                    <img src={logoPreview} alt="Logo" className="h-16 w-16 rounded-lg object-contain border bg-white" />
+                  ) : (
+                    <div className="h-16 w-16 rounded-lg border bg-muted flex items-center justify-center">
+                      <Image className="h-8 w-8 text-muted-foreground" />
+                    </div>
+                  )}
+                  <div>
+                    <Label htmlFor="logo-upload" className="cursor-pointer">
+                      <div className="inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm hover:bg-muted">
+                        <Upload className="h-4 w-4" />
+                        Logo uploaden
+                      </div>
+                    </Label>
+                    <input
+                      id="logo-upload"
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleLogoUpload}
+                    />
+                    {uploadLogo.isPending && (
+                      <p className="text-xs text-muted-foreground mt-1">Uploaden...</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+              <div>
+                <Label htmlFor="edit-name">Naam</Label>
+                <Input
+                  id="edit-name"
+                  value={editForm.name}
+                  onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                />
+              </div>
+              <div>
+                <Label htmlFor="edit-feed-url">Feed URL (optioneel)</Label>
+                <Input
+                  id="edit-feed-url"
+                  value={editForm.feed_url}
+                  onChange={(e) => setEditForm({ ...editForm, feed_url: e.target.value })}
+                  placeholder="https://daisycon.io/datafeed/?..."
+                />
+              </div>
+              {editingFeed && (
+                <div className="text-xs text-muted-foreground">
+                  Program ID: {editingFeed.program_id} · Media ID: {editingFeed.media_id}
+                </div>
+              )}
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowEditFeed(false)}>
+                Annuleren
+              </Button>
+              <Button onClick={handleSaveEdit} disabled={updateFeed.isPending}>
+                {updateFeed.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Opslaan
               </Button>
             </DialogFooter>
           </DialogContent>
