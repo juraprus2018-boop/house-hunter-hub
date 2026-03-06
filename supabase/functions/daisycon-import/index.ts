@@ -217,7 +217,7 @@ Deno.serve(async (req) => {
         // Build the datafeed URL - the Daisycon datafeed endpoint doesn't need Bearer auth
         // It uses program_id and media_id as authentication
         const feedUrl = feed.feed_url ||
-          `https://daisycon.io/datafeed/?filter_id=&program_id=${feed.program_id}&media_id=${feed.media_id}&type=json`;
+          `https://daisycon.io/datafeed/?program_id=${feed.program_id}&media_id=${feed.media_id}&standard_id=1&language_code=nl&locale_id=1&type=json&rawdata=true`;
 
         console.log(`Importing feed: ${feed.name} (program: ${feed.program_id}, media: ${feed.media_id})`);
         console.log(`Feed URL: ${feedUrl}`);
