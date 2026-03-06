@@ -162,7 +162,7 @@ serve(async (req) => {
 
   try {
     const body = await req.json();
-    const { property_id, auto_post, count = 5, debug }: PostRequest & { debug?: boolean } = body;
+    const { property_id, auto_post, count = 5, debug, blog_post, title, excerpt, slug }: PostRequest & { debug?: boolean; blog_post?: boolean; title?: string; excerpt?: string; slug?: string } = body;
 
     // Debug mode: check token permissions
     if (debug) {
@@ -180,6 +180,47 @@ serve(async (req) => {
         page_id_configured: PAGE_ID 
       }), {
         status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Blog post to Facebook
+    if (blog_post && title && slug) {
+      const blogUrl = `${siteUrl}/blog/${slug}`;
+      const hashtags = ["#woningmarkt", "#huren", "#Nederland", "#woonpeek", "#vastgoed", "#huurwoning", "#huurtips", "#wonen"];
+      const selectedTags = hashtags.slice(0, 6);
+
+      let fbMessage = `📝 Nieuw op het blog!\n\n`;
+      fbMessage += `${title}\n\n`;
+      if (excerpt) fbMessage += `${excerpt}\n\n`;
+      fbMessage += `👉 Lees het volledige artikel: ${blogUrl}\n\n`;
+      fbMessage += selectedTags.join(" ");
+
+      // Try photo post with banner, fallback to link post
+      const bannerUrl = `${siteUrl}/facebook-cover.png`;
+      let result: { success: boolean; postId?: string; error?: string };
+      
+      const res = await fetch(`${GRAPH_API}/${PAGE_ID}/photos`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: bannerUrl, message: fbMessage, access_token: PAGE_ACCESS_TOKEN }),
+      });
+      const fbData = await res.json();
+
+      if (fbData.error) {
+        const feedRes = await fetch(`${GRAPH_API}/${PAGE_ID}/feed`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message: fbMessage, link: blogUrl, access_token: PAGE_ACCESS_TOKEN }),
+        });
+        const feedData = await feedRes.json();
+        result = feedData.error ? { success: false, error: feedData.error.message } : { success: true, postId: feedData.id };
+      } else {
+        result = { success: true, postId: fbData.post_id || fbData.id };
+      }
+
+      return new Response(JSON.stringify(result), {
+        status: result.success ? 200 : 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -255,7 +296,7 @@ serve(async (req) => {
     }
 
     return new Response(
-      JSON.stringify({ error: "Provide property_id or auto_post=true" }),
+      JSON.stringify({ error: "Provide property_id, auto_post=true, or blog_post=true" }),
       { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (err) {
