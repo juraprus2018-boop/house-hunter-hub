@@ -238,22 +238,22 @@ Deno.serve(async (req) => {
         })
         .eq("id", scraper.id);
 
-      // Log the run
       await supabase.from("scraper_logs").insert({
         scraper_id: scraper.id,
         status: totalErrors > 0 ? "partial" : "success",
         properties_scraped: totalImported,
-        message: `Imported ${totalImported}, skipped ${totalSkipped}, errors ${totalErrors}`,
+        message: `Imported ${totalImported}, skipped ${totalSkipped}, deactivated ${totalDeactivated}, errors ${totalErrors}`,
       });
     }
 
-    console.log(`Wooniezie import done: ${totalImported} imported, ${totalSkipped} skipped, ${totalErrors} errors`);
+    console.log(`Wooniezie import done: ${totalImported} imported, ${totalSkipped} skipped, ${totalDeactivated} deactivated, ${totalErrors} errors`);
 
     return new Response(
       JSON.stringify({
         success: true,
         imported: totalImported,
         skipped: totalSkipped,
+        deactivated: totalDeactivated,
         errors: totalErrors,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
