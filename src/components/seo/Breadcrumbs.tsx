@@ -29,7 +29,7 @@ const Breadcrumbs = ({ items }: BreadcrumbsProps) => {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
       <nav className="text-sm text-muted-foreground overflow-hidden" aria-label="Breadcrumb">
-        <ol className="flex flex-wrap items-center gap-1 overflow-hidden">
+        <ol className="flex items-center gap-1 overflow-hidden whitespace-nowrap text-ellipsis">
           {items.map((item, i) => (
             <li key={i} className="flex items-center gap-1">
               {i > 0 && <ChevronRight className="h-3 w-3" />}
