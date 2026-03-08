@@ -125,6 +125,10 @@ Deno.serve(async (req) => {
     let totalImported = 0;
     let totalSkipped = 0;
     let totalErrors = 0;
+    let totalDeactivated = 0;
+
+    // Collect all active source URLs from the API
+    const activeSourceUrls = new Set<string>();
 
     for (const api of apis) {
       console.log(`Fetching Wooniezie ${api.type}...`);
@@ -150,15 +154,24 @@ Deno.serve(async (req) => {
         }
 
         const sourceUrl = `${WOONIEZIE_BASE}/aanbod/nu-te-huur/te-huur/details?dwellingID=${item.id}`;
+        activeSourceUrls.add(sourceUrl);
 
         // Check if already exists
         const { data: existing } = await supabase
           .from("properties")
-          .select("id")
+          .select("id, status")
           .eq("source_url", sourceUrl)
           .maybeSingle();
 
         if (existing) {
+          // Reactivate if it was set to inactive
+          if (existing.status === "inactief") {
+            await supabase
+              .from("properties")
+              .update({ status: "actief", updated_at: new Date().toISOString() })
+              .eq("id", existing.id);
+            console.log(`Reactivated: ${sourceUrl}`);
+          }
           totalSkipped++;
           continue;
         }
@@ -176,6 +189,35 @@ Deno.serve(async (req) => {
           totalImported++;
         }
       }
+    }
+
+    // Deactivate Wooniezie properties no longer in the API
+    const pageSize = 1000;
+    let from = 0;
+    while (true) {
+      const { data: existingProps, error: fetchErr } = await supabase
+        .from("properties")
+        .select("id, source_url")
+        .eq("source_site", "Wooniezie")
+        .eq("status", "actief")
+        .range(from, from + pageSize - 1);
+
+      if (fetchErr || !existingProps || existingProps.length === 0) break;
+
+      for (const prop of existingProps) {
+        if (prop.source_url && !activeSourceUrls.has(prop.source_url)) {
+          const { error: updateErr } = await supabase
+            .from("properties")
+            .update({ status: "inactief", updated_at: new Date().toISOString() })
+            .eq("id", prop.id);
+          if (!updateErr) {
+            totalDeactivated++;
+          }
+        }
+      }
+
+      if (existingProps.length < pageSize) break;
+      from += pageSize;
     }
 
     // Update scraper record if exists
@@ -196,22 +238,22 @@ Deno.serve(async (req) => {
         })
         .eq("id", scraper.id);
 
-      // Log the run
       await supabase.from("scraper_logs").insert({
         scraper_id: scraper.id,
         status: totalErrors > 0 ? "partial" : "success",
         properties_scraped: totalImported,
-        message: `Imported ${totalImported}, skipped ${totalSkipped}, errors ${totalErrors}`,
+        message: `Imported ${totalImported}, skipped ${totalSkipped}, deactivated ${totalDeactivated}, errors ${totalErrors}`,
       });
     }
 
-    console.log(`Wooniezie import done: ${totalImported} imported, ${totalSkipped} skipped, ${totalErrors} errors`);
+    console.log(`Wooniezie import done: ${totalImported} imported, ${totalSkipped} skipped, ${totalDeactivated} deactivated, ${totalErrors} errors`);
 
     return new Response(
       JSON.stringify({
         success: true,
         imported: totalImported,
         skipped: totalSkipped,
+        deactivated: totalDeactivated,
         errors: totalErrors,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
