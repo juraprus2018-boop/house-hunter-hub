@@ -561,8 +561,7 @@ const AdminDaisycon = () => {
                                     )}
                                     {hasFeed === false && (
                                       <Badge variant="outline" className="text-xs gap-1 text-muted-foreground">
-                                        <XCircle className="h-3 w-3" />
-                                        Geen feed
+                                        Niet gedetecteerd
                                       </Badge>
                                     )}
                                   </div>
@@ -580,7 +579,7 @@ const AdminDaisycon = () => {
                                     size="sm"
                                     variant="outline"
                                     onClick={() => handleAddFromProgram({ program_id: pid, name: programName }, defaultMediaId || 0)}
-                                    disabled={addFeed.isPending || hasFeed === false}
+                                    disabled={addFeed.isPending}
                                   >
                                     <Plus className="h-3 w-3 mr-1" />
                                     Toevoegen
