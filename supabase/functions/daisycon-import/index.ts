@@ -214,30 +214,57 @@ Deno.serve(async (req) => {
 
     for (const feed of feeds) {
       try {
-        // Build the datafeed URL - the Daisycon datafeed endpoint doesn't need Bearer auth
-        // It uses program_id and media_id as authentication
-        const feedUrl = feed.feed_url ||
-          `https://daisycon.io/datafeed/?program_id=${feed.program_id}&media_id=${feed.media_id}&standard_id=1&language_code=nl&locale_id=1&type=json&rawdata=true`;
+        let feedUrl = feed.feed_url;
+        let responseText = "";
 
-        console.log(`Importing feed: ${feed.name} (program: ${feed.program_id}, media: ${feed.media_id})`);
-        console.log(`Feed URL: ${feedUrl}`);
+        if (feedUrl) {
+          // Use the custom feed URL, but request JSON format
+          const urlObj = new URL(feedUrl);
+          urlObj.searchParams.set("type", "json");
+          feedUrl = urlObj.toString();
 
-        // Datafeed endpoint - no auth header needed, it authenticates via media_id
-        const feedResponse = await fetch(feedUrl, {
-          headers: { Accept: "application/json" },
-        });
+          console.log(`Importing feed: ${feed.name} (custom URL)`);
+          console.log(`Feed URL: ${feedUrl}`);
 
-        if (!feedResponse.ok) {
-          const errText = await feedResponse.text();
-          console.error(`Feed fetch failed for ${feed.name}: ${feedResponse.status} - ${errText.substring(0, 500)}`);
-          results.push({ feed: feed.name, imported: 0, skipped: 0, error: `HTTP ${feedResponse.status}: ${errText.substring(0, 100)}` });
-          continue;
+          const feedResponse = await fetch(feedUrl, { headers: { Accept: "application/json" } });
+          if (!feedResponse.ok) {
+            const errText = await feedResponse.text();
+            console.error(`Feed fetch failed for ${feed.name}: ${feedResponse.status} - ${errText.substring(0, 500)}`);
+            results.push({ feed: feed.name, imported: 0, skipped: 0, error: `HTTP ${feedResponse.status}` });
+            continue;
+          }
+          responseText = await feedResponse.text();
+        } else {
+          // Try multiple standard_ids to find the one that works
+          const standardIds = [1, 20, 2, 3, 4, 5, 10, 15];
+          let found = false;
+          for (const stdId of standardIds) {
+            const tryUrl = `https://daisycon.io/datafeed/?program_id=${feed.program_id}&media_id=${feed.media_id}&standard_id=${stdId}&language_code=nl&locale_id=1&type=json&rawdata=false&encoding=utf8`;
+            console.log(`Trying feed: ${feed.name} with standard_id=${stdId}`);
+            const feedResponse = await fetch(tryUrl, { headers: { Accept: "application/json" } });
+            if (feedResponse.status === 200) {
+              const text = await feedResponse.text();
+              if (text.length > 10 && (text.startsWith('[') || text.startsWith('{'))) {
+                responseText = text;
+                feedUrl = tryUrl;
+                found = true;
+                console.log(`Found working feed for ${feed.name} with standard_id=${stdId}`);
+                break;
+              }
+            } else {
+              await feedResponse.text(); // drain
+            }
+          }
+          if (!found) {
+            console.error(`No working feed found for ${feed.name} across standard_ids`);
+            results.push({ feed: feed.name, imported: 0, skipped: 0, error: "Geen werkende feed URL gevonden" });
+            continue;
+          }
         }
 
-        let feedData: any;
-        const contentType = feedResponse.headers.get("content-type") || "";
-        const responseText = await feedResponse.text();
+        console.log(`Feed URL: ${feedUrl}`);
 
+        let feedData: any;
         try {
           feedData = JSON.parse(responseText);
         } catch {
