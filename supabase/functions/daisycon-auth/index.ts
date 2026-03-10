@@ -335,7 +335,7 @@ Deno.serve(async (req) => {
       // Also try the datafeed URL with different standard_ids
       const results: any = { api_response: { status: apiRes.status, body: apiText.substring(0, 2000) }, feed_tests: [] };
       
-      for (const stdId of [1, 2, 3, 4, 5]) {
+      for (const stdId of [1, 2, 3, 4, 5, 10, 15, 20]) {
         const feedUrl = `https://daisycon.io/datafeed/?program_id=${pid}&media_id=${mid}&standard_id=${stdId}&language_code=nl&locale_id=1&type=json&per_page=2`;
         const res = await fetch(feedUrl);
         const text = await res.text();
