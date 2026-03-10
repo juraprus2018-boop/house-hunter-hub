@@ -257,15 +257,35 @@ Deno.serve(async (req) => {
       }));
 
       // Check which programs have product feeds available
+      // Try all known media IDs since each program may work with different media
+      const allMediaIds = mediaList.map((m: any) => m.id).filter(Boolean);
+      if (allMediaIds.length === 0 && subscriptions[0]?.media_id) {
+        allMediaIds.push(subscriptions[0].media_id);
+      }
+
       const feedAvailability: Record<number, boolean> = {};
       await Promise.all([...allProgramIds].map(async (pid) => {
-        try {
-          const feedCheckUrl = `https://daisycon.io/datafeed/?program_id=${pid}&media_id=${subscriptions[0]?.media_id || ''}&standard_id=1&language_code=nl&locale_id=1&type=json&per_page=1`;
-          const res = await fetch(feedCheckUrl);
-          feedAvailability[pid] = res.status === 200 && (await res.text()).length > 10;
-        } catch {
-          feedAvailability[pid] = false;
+        // Try each media_id until we find one that works
+        for (const mid of allMediaIds) {
+          try {
+            const feedCheckUrl = `https://daisycon.io/datafeed/?program_id=${pid}&media_id=${mid}&standard_id=1&language_code=nl&locale_id=1&type=json&per_page=1`;
+            const res = await fetch(feedCheckUrl);
+            if (res.status === 200) {
+              const text = await res.text();
+              // Check for actual JSON data, not error pages
+              const isValidFeed = text.startsWith('[') || text.startsWith('{');
+              if (isValidFeed && text.length > 10) {
+                feedAvailability[pid] = true;
+                return;
+              }
+            } else {
+              await res.text(); // drain body
+            }
+          } catch {
+            // continue to next media_id
+          }
         }
+        feedAvailability[pid] = false;
       }));
 
       // Fetch media list
