@@ -97,7 +97,7 @@ function pickTopic(): { category: string; prompt: string } {
   return { category: cat.category, prompt: cat.prompts[promptIndex] };
 }
 
-serve(async (req) => {
+Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
