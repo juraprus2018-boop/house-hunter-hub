@@ -256,39 +256,7 @@ Deno.serve(async (req) => {
         }
       }));
 
-      // Check which programs have product feeds available
-      // Try all known media IDs since each program may work with different media
-      const allMediaIds = mediaList.map((m: any) => m.id).filter(Boolean);
-      if (allMediaIds.length === 0 && subscriptions[0]?.media_id) {
-        allMediaIds.push(subscriptions[0].media_id);
-      }
-
-      const feedAvailability: Record<number, boolean> = {};
-      await Promise.all([...allProgramIds].map(async (pid) => {
-        // Try each media_id until we find one that works
-        for (const mid of allMediaIds) {
-          try {
-            const feedCheckUrl = `https://daisycon.io/datafeed/?program_id=${pid}&media_id=${mid}&standard_id=1&language_code=nl&locale_id=1&type=json&per_page=1`;
-            const res = await fetch(feedCheckUrl);
-            if (res.status === 200) {
-              const text = await res.text();
-              // Check for actual JSON data, not error pages
-              const isValidFeed = text.startsWith('[') || text.startsWith('{');
-              if (isValidFeed && text.length > 10) {
-                feedAvailability[pid] = true;
-                return;
-              }
-            } else {
-              await res.text(); // drain body
-            }
-          } catch {
-            // continue to next media_id
-          }
-        }
-        feedAvailability[pid] = false;
-      }));
-
-      // Fetch media list
+      // Fetch media list first (needed for feed availability check)
       const mediaRes = await fetch(
         `https://services.daisycon.com/publishers/${publisherId}/media?page=1&per_page=100`,
         { headers: { Authorization: `Bearer ${accessToken}`, Accept: "application/json" } }
@@ -298,6 +266,36 @@ Deno.serve(async (req) => {
       if (mediaRes.ok) {
         mediaList = await mediaRes.json();
       }
+
+      // Check which programs have product feeds available
+      // Try all known media IDs since each program may work with different media
+      const allMediaIds = mediaList.map((m: any) => m.id).filter(Boolean);
+      if (allMediaIds.length === 0 && subscriptions[0]?.media_id) {
+        allMediaIds.push(subscriptions[0].media_id);
+      }
+
+      const feedAvailability: Record<number, boolean> = {};
+      await Promise.all([...allProgramIds].map(async (pid) => {
+        for (const mid of allMediaIds) {
+          try {
+            const feedCheckUrl = `https://daisycon.io/datafeed/?program_id=${pid}&media_id=${mid}&standard_id=1&language_code=nl&locale_id=1&type=json&per_page=1`;
+            const res = await fetch(feedCheckUrl);
+            if (res.status === 200) {
+              const text = await res.text();
+              const isValidFeed = text.startsWith('[') || text.startsWith('{');
+              if (isValidFeed && text.length > 10) {
+                feedAvailability[pid] = true;
+                return;
+              }
+            } else {
+              await res.text();
+            }
+          } catch {
+            // continue to next media_id
+          }
+        }
+        feedAvailability[pid] = false;
+      }));
 
       return new Response(
         JSON.stringify({ subscriptions, media: mediaList, program_names: programNames, feed_availability: feedAvailability }),
