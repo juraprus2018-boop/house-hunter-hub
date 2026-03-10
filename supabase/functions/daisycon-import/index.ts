@@ -352,30 +352,11 @@ Deno.serve(async (req) => {
           continue;
         }
 
-        // Handle different response formats from Daisycon datafeed
-        let products: DaisyconProduct[] = [];
-        if (Array.isArray(feedData)) {
-          products = feedData;
-        } else if (feedData.datafeed?.product_info) {
-          // XML-style wrapped response
-          const pi = feedData.datafeed.product_info;
-          products = Array.isArray(pi) ? pi : [pi];
-        } else if (feedData.product_info) {
-          const pi = feedData.product_info;
-          products = Array.isArray(pi) ? pi : [pi];
-        } else if (feedData.products) {
-          products = feedData.products;
-        } else if (feedData.items) {
-          products = feedData.items;
-        } else if (feedData.datafeed) {
-          const df = feedData.datafeed;
-          products = Array.isArray(df) ? df : [df];
-        }
+        const products = extractProducts(feedData);
 
         console.log(`Feed ${feed.name}: ${products.length} products found`);
         if (products.length > 0) {
           console.log(`Feed ${feed.name}: Sample product keys: ${Object.keys(products[0]).join(", ")}`);
-          console.log(`Feed ${feed.name}: Sample product (first 1000 chars): ${JSON.stringify(products[0]).substring(0, 1000)}`);
         }
 
         if (products.length === 0) {
@@ -388,12 +369,7 @@ Deno.serve(async (req) => {
         let skipped = 0;
 
         for (const product of products) {
-          // Use the affiliate link as unique identifier and source URL
-          // Try many possible field names for the link
-          const sourceUrl = product.link || product.link_url || product.deeplink || 
-            product.url || product.affiliate_url || product.click_url ||
-            product.tracking_url || product.redirect_url || 
-            (product as any).link_to_product || (product as any).product_url || "";
+          const sourceUrl = buildAffiliateLink(product, feed.media_id, feed.program_id);
           
           if (!sourceUrl) {
             console.log(`Skipping product without link: ${product.title} - keys: ${Object.keys(product).join(", ")}`);
@@ -413,7 +389,7 @@ Deno.serve(async (req) => {
             continue;
           }
 
-          const propertyData = mapDaisyconToProperty(product, feed.name);
+          const propertyData = mapDaisyconToProperty(product, feed.name, sourceUrl);
 
           const { error: insertErr } = await supabase
             .from("properties")
