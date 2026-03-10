@@ -294,6 +294,10 @@ Deno.serve(async (req) => {
         }
 
         console.log(`Feed ${feed.name}: ${products.length} products found`);
+        if (products.length > 0) {
+          console.log(`Feed ${feed.name}: Sample product keys: ${Object.keys(products[0]).join(", ")}`);
+          console.log(`Feed ${feed.name}: Sample product (first 1000 chars): ${JSON.stringify(products[0]).substring(0, 1000)}`);
+        }
 
         if (products.length === 0) {
           console.log(`Feed ${feed.name}: No products. Response keys: ${Object.keys(feedData).join(", ")}`);
@@ -306,10 +310,14 @@ Deno.serve(async (req) => {
 
         for (const product of products) {
           // Use the affiliate link as unique identifier and source URL
-          const sourceUrl = product.link || product.link_url || product.deeplink || "";
+          // Try many possible field names for the link
+          const sourceUrl = product.link || product.link_url || product.deeplink || 
+            product.url || product.affiliate_url || product.click_url ||
+            product.tracking_url || product.redirect_url || 
+            (product as any).link_to_product || (product as any).product_url || "";
           
           if (!sourceUrl) {
-            console.log(`Skipping product without link: ${product.title}`);
+            console.log(`Skipping product without link: ${product.title} - keys: ${Object.keys(product).join(", ")}`);
             skipped++;
             continue;
           }
