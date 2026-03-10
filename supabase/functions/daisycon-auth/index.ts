@@ -275,23 +275,26 @@ Deno.serve(async (req) => {
       }
 
       const feedAvailability: Record<number, boolean> = {};
+      const standardIds = [1, 20, 2, 3, 4, 5, 10, 15];
       await Promise.all([...allProgramIds].map(async (pid) => {
         for (const mid of allMediaIds) {
-          try {
-            const feedCheckUrl = `https://daisycon.io/datafeed/?program_id=${pid}&media_id=${mid}&standard_id=1&language_code=nl&locale_id=1&type=json&per_page=1`;
-            const res = await fetch(feedCheckUrl);
-            if (res.status === 200) {
-              const text = await res.text();
-              const isValidFeed = text.startsWith('[') || text.startsWith('{');
-              if (isValidFeed && text.length > 10) {
-                feedAvailability[pid] = true;
-                return;
+          for (const stdId of standardIds) {
+            try {
+              const feedCheckUrl = `https://daisycon.io/datafeed/?program_id=${pid}&media_id=${mid}&standard_id=${stdId}&language_code=nl&locale_id=1&type=json&per_page=1`;
+              const res = await fetch(feedCheckUrl);
+              if (res.status === 200) {
+                const text = await res.text();
+                const isValidFeed = text.startsWith('[') || text.startsWith('{');
+                if (isValidFeed && text.length > 10) {
+                  feedAvailability[pid] = true;
+                  return;
+                }
+              } else {
+                await res.text();
               }
-            } else {
-              await res.text();
+            } catch {
+              // continue
             }
-          } catch {
-            // continue to next media_id
           }
         }
         feedAvailability[pid] = false;
@@ -332,7 +335,7 @@ Deno.serve(async (req) => {
       // Also try the datafeed URL with different standard_ids
       const results: any = { api_response: { status: apiRes.status, body: apiText.substring(0, 2000) }, feed_tests: [] };
       
-      for (const stdId of [1, 2, 3, 4, 5]) {
+      for (const stdId of [1, 2, 3, 4, 5, 10, 15, 20]) {
         const feedUrl = `https://daisycon.io/datafeed/?program_id=${pid}&media_id=${mid}&standard_id=${stdId}&language_code=nl&locale_id=1&type=json&per_page=2`;
         const res = await fetch(feedUrl);
         const text = await res.text();
