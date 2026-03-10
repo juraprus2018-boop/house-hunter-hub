@@ -72,6 +72,12 @@ interface DaisyconProduct {
   link?: string;
   link_url?: string;
   deeplink?: string;
+  url?: string;
+  affiliate_url?: string;
+  click_url?: string;
+  tracking_url?: string;
+  link_to_product?: string;
+  product_url?: string;
   image_url?: string;
   image_large?: string;
   image_url_large?: string;
@@ -90,41 +96,118 @@ interface DaisyconProduct {
   surface?: number | string;
   surface_area?: number | string;
   living_area?: number | string;
+  floor_area?: number | string;
   woonoppervlakte?: string;
   rooms?: number | string;
+  number_of_rooms?: number | string;
   bedrooms?: number | string;
+  number_of_bedrooms?: number | string;
   slaapkamers?: string;
   bathrooms?: number | string;
   property_type?: string;
+  type_of_property?: string;
   type?: string;
   category?: string;
   listing_type?: string;
+  contract_type?: string;
   rent_buy?: string;
   soort_aanbod?: string;
   in_stock?: string;
+  sku?: string;
+  daisycon_unique_id?: string;
+  province?: string;
   [key: string]: unknown;
 }
 
-function mapDaisyconToProperty(product: DaisyconProduct, sourceSite: string) {
+function flattenProduct(raw: any): DaisyconProduct {
+  // Handle nested format: { update_info: {}, product_info: {} }
+  if (raw.product_info && typeof raw.product_info === "object") {
+    const merged = { ...raw.product_info };
+    if (raw.update_info) {
+      merged.daisycon_unique_id = raw.update_info.daisycon_unique_id;
+    }
+    return merged as DaisyconProduct;
+  }
+  return raw as DaisyconProduct;
+}
+
+function extractProducts(feedData: any): DaisyconProduct[] {
+  let rawProducts: any[] = [];
+
+  if (Array.isArray(feedData)) {
+    rawProducts = feedData;
+  } else if (feedData.datafeed?.programs) {
+    // Format: { datafeed: { programs: [{ products: [...] }] } }
+    for (const prog of feedData.datafeed.programs) {
+      if (prog.products && Array.isArray(prog.products)) {
+        rawProducts.push(...prog.products);
+      }
+    }
+  } else if (feedData.datafeed?.product_info) {
+    const pi = feedData.datafeed.product_info;
+    rawProducts = Array.isArray(pi) ? pi : [pi];
+  } else if (feedData.product_info) {
+    const pi = feedData.product_info;
+    rawProducts = Array.isArray(pi) ? pi : [pi];
+  } else if (feedData.products) {
+    rawProducts = feedData.products;
+  } else if (feedData.items) {
+    rawProducts = feedData.items;
+  } else if (feedData.datafeed) {
+    const df = feedData.datafeed;
+    rawProducts = Array.isArray(df) ? df : [df];
+  }
+
+  return rawProducts.map(flattenProduct);
+}
+
+function buildAffiliateLink(product: DaisyconProduct, feedMediaId: number, feedProgramId: number): string | null {
+  // Check for existing affiliate link in product data
+  const existing = product.link || product.link_url || product.deeplink || 
+    product.url || product.affiliate_url || product.click_url ||
+    product.tracking_url || product.link_to_product || product.product_url;
+  if (existing && typeof existing === "string") return existing;
+
+  // Build Daisycon tracking link from SKU/unique ID
+  const uniqueId = product.daisycon_unique_id || product.sku;
+  if (uniqueId) {
+    return `https://ds1.nl/c/?wi=${feedMediaId}&si=${feedProgramId}&li=${uniqueId}&ws=`;
+  }
+
+  return null;
+}
+
+function mapDaisyconToProperty(product: DaisyconProduct, sourceSite: string, sourceUrl: string) {
   const price = parseFloat(String(product.price || "0")) || 0;
   const street = product.street || product.address || "";
   const houseNumber = product.house_number || product.housenumber || "";
   const city = product.city || "";
   const postalCode = product.zipcode || product.postal_code || product.postcode || "";
-  const surface = parseInt(String(product.surface || product.surface_area || product.living_area || product.woonoppervlakte || "0")) || null;
-  const bedrooms = parseInt(String(product.bedrooms || product.slaapkamers || product.rooms || "0")) || null;
+  const surface = parseInt(String(
+    product.floor_area || product.surface || product.surface_area || 
+    product.living_area || product.woonoppervlakte || "0"
+  )) || null;
+  const bedrooms = parseInt(String(
+    product.number_of_bedrooms || product.bedrooms || product.slaapkamers || 
+    product.number_of_rooms || product.rooms || "0"
+  )) || null;
   const bathrooms = parseInt(String(product.bathrooms || "0")) || null;
 
   // Determine listing type
   let listingType: "huur" | "koop" = "huur";
-  const rentBuy = String(product.rent_buy || product.listing_type || product.soort_aanbod || product.category || "").toLowerCase();
+  const rentBuy = String(
+    product.contract_type || product.rent_buy || product.listing_type || 
+    product.soort_aanbod || product.category || ""
+  ).toLowerCase();
   if (rentBuy.includes("koop") || rentBuy.includes("buy") || rentBuy.includes("sale")) {
     listingType = "koop";
   }
 
   // Determine property type
   let propertyType: "appartement" | "huis" | "studio" | "kamer" = "appartement";
-  const pType = String(product.property_type || product.type || product.category || "").toLowerCase();
+  const pType = String(
+    product.type_of_property || product.property_type || product.type || product.category || ""
+  ).toLowerCase();
   if (pType.includes("huis") || pType.includes("house") || pType.includes("woning") || pType.includes("villa") || pType.includes("tussenwoning") || pType.includes("hoekwoning")) {
     propertyType = "huis";
   } else if (pType.includes("studio")) {
@@ -140,14 +223,10 @@ function mapDaisyconToProperty(product: DaisyconProduct, sourceSite: string) {
   if (product.additional_image_urls) {
     images.push(...product.additional_image_urls.slice(0, 9));
   }
-  // Also check extra_image_url fields
-  for (let i = 1; i <= 3; i++) {
-    const extraImg = product[`extra_image_url_${i}`];
+  for (let i = 1; i <= 10; i++) {
+    const extraImg = product[`extra_image_url_${i}`] || product[`image_url_${i}`];
     if (typeof extraImg === "string" && extraImg) images.push(extraImg);
   }
-
-  // Affiliate link as source URL - this is the link that earns commission
-  const sourceUrl = product.link || product.link_url || product.deeplink || null;
 
   const title = product.title || `${street} ${houseNumber}, ${city}`.trim();
 
@@ -273,27 +352,12 @@ Deno.serve(async (req) => {
           continue;
         }
 
-        // Handle different response formats from Daisycon datafeed
-        let products: DaisyconProduct[] = [];
-        if (Array.isArray(feedData)) {
-          products = feedData;
-        } else if (feedData.datafeed?.product_info) {
-          // XML-style wrapped response
-          const pi = feedData.datafeed.product_info;
-          products = Array.isArray(pi) ? pi : [pi];
-        } else if (feedData.product_info) {
-          const pi = feedData.product_info;
-          products = Array.isArray(pi) ? pi : [pi];
-        } else if (feedData.products) {
-          products = feedData.products;
-        } else if (feedData.items) {
-          products = feedData.items;
-        } else if (feedData.datafeed) {
-          const df = feedData.datafeed;
-          products = Array.isArray(df) ? df : [df];
-        }
+        const products = extractProducts(feedData);
 
         console.log(`Feed ${feed.name}: ${products.length} products found`);
+        if (products.length > 0) {
+          console.log(`Feed ${feed.name}: Sample product keys: ${Object.keys(products[0]).join(", ")}`);
+        }
 
         if (products.length === 0) {
           console.log(`Feed ${feed.name}: No products. Response keys: ${Object.keys(feedData).join(", ")}`);
@@ -305,11 +369,10 @@ Deno.serve(async (req) => {
         let skipped = 0;
 
         for (const product of products) {
-          // Use the affiliate link as unique identifier and source URL
-          const sourceUrl = product.link || product.link_url || product.deeplink || "";
+          const sourceUrl = buildAffiliateLink(product, feed.media_id, feed.program_id);
           
           if (!sourceUrl) {
-            console.log(`Skipping product without link: ${product.title}`);
+            console.log(`Skipping product without link: ${product.title} - keys: ${Object.keys(product).join(", ")}`);
             skipped++;
             continue;
           }
@@ -326,7 +389,7 @@ Deno.serve(async (req) => {
             continue;
           }
 
-          const propertyData = mapDaisyconToProperty(product, feed.name);
+          const propertyData = mapDaisyconToProperty(product, feed.name, sourceUrl);
 
           const { error: insertErr } = await supabase
             .from("properties")
