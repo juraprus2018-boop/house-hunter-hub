@@ -12,7 +12,7 @@ import { useProperties, useFilterFacets } from "@/hooks/useProperties";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { ArrowRight, MapPin, Search, SlidersHorizontal } from "lucide-react";
+import { ArrowRight, Search, SlidersHorizontal } from "lucide-react";
 import { cityPath, citySlugToName } from "@/lib/cities";
 
 const EMPTY_FILTERS: SearchFilterValues = {
@@ -138,38 +138,33 @@ const CityPage = () => {
               />
             </div>
 
-            <div className="flex items-start gap-4">
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary/10">
-                <MapPin className="h-6 w-6 text-primary" />
-              </div>
-              <div className="max-w-3xl">
-                <h1 className="font-display text-3xl font-bold text-foreground md:text-4xl">
-                  Woningen in {cityName}
-                </h1>
-                <p className="mt-2 text-base text-muted-foreground">
-                  Bekijk alle woningen van {cityName}, gebruik filters om sneller te zoeken en ontdek direct het actuele aanbod.
-                </p>
-                <div className="mt-4 flex flex-wrap gap-3">
-                  <div className="rounded-full bg-card px-4 py-2 text-sm text-foreground shadow-sm">
-                    {totalCount} totaal aanbod
-                  </div>
-                  <Link to={`/huurwoningen/${citySlug}`}>
-                    <Button variant="outline" size="sm" className="gap-2">
-                      Huurwoningen
-                      <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
-                        {huurCount}
-                      </span>
-                    </Button>
-                  </Link>
-                  <Link to={`/koopwoningen/${citySlug}`}>
-                    <Button variant="outline" size="sm" className="gap-2">
-                      Koopwoningen
-                      <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
-                        {koopCount}
-                      </span>
-                    </Button>
-                  </Link>
+            <div className="max-w-3xl">
+              <h1 className="font-display text-3xl font-bold text-foreground md:text-4xl">
+                Woningen in {cityName}
+              </h1>
+              <p className="mt-2 text-base text-muted-foreground">
+                Bekijk alle woningen van {cityName}, gebruik filters om sneller te zoeken en ontdek direct het actuele aanbod.
+              </p>
+              <div className="mt-4 flex flex-wrap gap-3">
+                <div className="rounded-full bg-card px-4 py-2 text-sm text-foreground shadow-sm">
+                  {totalCount} totaal aanbod
                 </div>
+                <Link to={`/huurwoningen/${citySlug}`}>
+                  <Button variant="outline" size="sm" className="gap-2">
+                    Huurwoningen
+                    <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+                      {huurCount}
+                    </span>
+                  </Button>
+                </Link>
+                <Link to={`/koopwoningen/${citySlug}`}>
+                  <Button variant="outline" size="sm" className="gap-2">
+                    Koopwoningen
+                    <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+                      {koopCount}
+                    </span>
+                  </Button>
+                </Link>
               </div>
             </div>
           </div>
