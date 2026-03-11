@@ -186,7 +186,7 @@ const AdminProperties = () => {
                   onChange={(e) => handleSearchChange(e.target.value)}
                 />
               </div>
-              <Select value={sourceFilter} onValueChange={setSourceFilter}>
+              <Select value={sourceFilter} onValueChange={(v) => { setSourceFilter(v); setCurrentPage(0); }}>
                 <SelectTrigger className="w-full sm:w-[200px]">
                   <Filter className="mr-2 h-4 w-4" />
                   <SelectValue placeholder="Alle bronnen" />
@@ -194,11 +194,8 @@ const AdminProperties = () => {
                 <SelectContent className="z-50 bg-popover">
                   <SelectItem value="all">Alle bronnen</SelectItem>
                   <SelectItem value="user">Gebruikers</SelectItem>
-                  {availableSources.map((source) => (
-                    <SelectItem key={source} value={source} className="capitalize">
-                      {source}
-                    </SelectItem>
-                  ))}
+                  <SelectItem value="Huurwoningen.nl">Huurwoningen.nl</SelectItem>
+                  <SelectItem value="Wooniezie">Wooniezie</SelectItem>
                 </SelectContent>
               </Select>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
