@@ -359,7 +359,19 @@ Deno.serve(async (req) => {
     let totalUpdated = 0;
     const results: { feed: string; imported: number; updated: number; skipped: number; error?: string }[] = [];
 
-    for (const feed of feeds) {
+    for (let feedIndex = 0; feedIndex < feeds.length; feedIndex++) {
+      const feed = feeds[feedIndex];
+      // Update job progress
+      if (jobId) {
+        await supabase.from("import_jobs").update({
+          processed_feeds: feedIndex,
+          feed_name: feed.name,
+          message: `Bezig met feed "${feed.name}" (${feedIndex + 1}/${feeds.length})...`,
+          imported: totalImported,
+          updated: totalUpdated,
+          skipped: totalSkipped,
+        }).eq("id", jobId);
+      }
       try {
         let feedUrl = feed.feed_url;
         let responseText = "";
