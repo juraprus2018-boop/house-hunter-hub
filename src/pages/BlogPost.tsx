@@ -10,46 +10,51 @@ import { Button } from "@/components/ui/button";
 import { Loader2, ArrowLeft, Calendar } from "lucide-react";
 import bannerBlog from "@/assets/banner-blog.jpg";
 
-/**
- * Cleans up AI-generated blog HTML:
- * - Converts <p><strong>heading text</strong></p> patterns into proper <h2> tags
- * - Ensures paragraphs are properly separated
- */
 function cleanBlogHtml(html: string): string {
   let cleaned = html;
-
-  // Convert <p><strong>heading</strong></p> to <h2> (common AI pattern)
   cleaned = cleaned.replace(
     /<p>\s*<strong>([^<]{10,120})<\/strong>\s*<\/p>/gi,
     '<h2>$1</h2>'
   );
-
-  // Convert standalone <strong>heading</strong> followed by newline/break to <h2>
   cleaned = cleaned.replace(
     /(?:^|<br\s*\/?>|\n)\s*<strong>([^<]{10,120})<\/strong>\s*(?:<br\s*\/?>|\n)/gi,
     '<h2>$1</h2>'
   );
-
-  // Add spacing between consecutive paragraphs that lack it
   cleaned = cleaned.replace(/<\/p>\s*<p>/gi, '</p>\n\n<p>');
-
-  // Add spacing before h2
   cleaned = cleaned.replace(/<\/p>\s*<h2>/gi, '</p>\n\n<h2>');
-
-  // Convert <blockquote> that are just <p><strong>Tip:</strong>...</p> 
-  // Wrap "Tip:" paragraphs in blockquote if not already
   cleaned = cleaned.replace(
     /<p>\s*<strong>Tip:<\/strong>\s*([\s\S]*?)<\/p>/gi,
     '<blockquote><p><strong>Tip:</strong> $1</p></blockquote>'
   );
-
   return cleaned;
+}
+
+/** Parse enriched meta_description that may contain JSON with FAQ data */
+function parseSeoMeta(metaDescription: string | null): {
+  description: string;
+  faqQuestions: { question: string; answer: string }[];
+  primaryKeyword: string;
+} {
+  if (!metaDescription) return { description: "", faqQuestions: [], primaryKeyword: "" };
+
+  try {
+    const parsed = JSON.parse(metaDescription);
+    return {
+      description: parsed.meta_description || metaDescription,
+      faqQuestions: parsed.faq_questions || [],
+      primaryKeyword: parsed.primary_keyword || "",
+    };
+  } catch {
+    return { description: metaDescription, faqQuestions: [], primaryKeyword: "" };
+  }
 }
 
 const BlogPostPage = () => {
   const { slug } = useParams<{ slug: string }>();
   const { data: post, isLoading } = useBlogPost(slug || "");
   const cleanedContent = useMemo(() => post ? cleanBlogHtml(post.content) : "", [post]);
+
+  const seoMeta = useMemo(() => parseSeoMeta(post?.meta_description || null), [post]);
 
   if (isLoading) {
     return (
@@ -78,37 +83,113 @@ const BlogPostPage = () => {
     );
   }
 
-  const jsonLd = {
+  const canonicalUrl = `https://www.woonpeek.nl/blog/${post.slug}`;
+
+  // Rich Article schema
+  const articleJsonLd = {
     "@context": "https://schema.org",
     "@type": "Article",
     headline: post.title,
-    description: post.meta_description || post.excerpt || "",
+    description: seoMeta.description || post.excerpt || "",
     datePublished: post.published_at,
     dateModified: post.updated_at,
+    mainEntityOfPage: {
+      "@type": "WebPage",
+      "@id": canonicalUrl,
+    },
+    author: {
+      "@type": "Organization",
+      name: "WoonPeek",
+      url: "https://www.woonpeek.nl",
+      logo: {
+        "@type": "ImageObject",
+        url: "https://www.woonpeek.nl/favicon.png",
+      },
+    },
     publisher: {
       "@type": "Organization",
       name: "WoonPeek",
       url: "https://www.woonpeek.nl",
+      logo: {
+        "@type": "ImageObject",
+        url: "https://www.woonpeek.nl/favicon.png",
+      },
     },
     ...(post.cover_image ? { image: post.cover_image } : {}),
+    ...(seoMeta.primaryKeyword ? { keywords: seoMeta.primaryKeyword } : {}),
+    inLanguage: "nl-NL",
+    isAccessibleForFree: true,
+  };
+
+  // FAQPage schema (for rich snippets in Google)
+  const faqJsonLd = seoMeta.faqQuestions.length > 0 ? {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: seoMeta.faqQuestions.map(faq => ({
+      "@type": "Question",
+      name: faq.question,
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: faq.answer,
+      },
+    })),
+  } : null;
+
+  // BreadcrumbList schema
+  const breadcrumbJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: "Home",
+        item: "https://www.woonpeek.nl",
+      },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: "Blog",
+        item: "https://www.woonpeek.nl/blog",
+      },
+      {
+        "@type": "ListItem",
+        position: 3,
+        name: post.title,
+        item: canonicalUrl,
+      },
+    ],
   };
 
   return (
     <div className="flex min-h-screen flex-col">
       <SEOHead
         title={post.meta_title || `${post.title} | WoonPeek Blog`}
-        description={post.meta_description || post.excerpt || post.title}
-        canonical={`https://www.woonpeek.nl/blog/${post.slug}`}
+        description={seoMeta.description || post.excerpt || post.title}
+        canonical={canonicalUrl}
         ogImage={post.cover_image || undefined}
         ogType="article"
       />
+      {/* Article structured data */}
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(articleJsonLd) }}
+      />
+      {/* FAQ structured data for rich snippets */}
+      {faqJsonLd && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
+        />
+      )}
+      {/* Breadcrumb structured data */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
       />
       <Header />
       <main className="flex-1">
-        <article>
+        <article itemScope itemType="https://schema.org/Article">
           <PageBanner image={post.cover_image || bannerBlog} alt={post.title}>
             <Breadcrumbs
               items={[
@@ -123,13 +204,13 @@ const BlogPostPage = () => {
                 Terug naar blog
               </Link>
             </Button>
-            <h1 className="font-display text-3xl font-bold text-foreground leading-tight md:text-5xl lg:text-[3.25rem]">
+            <h1 className="font-display text-3xl font-bold text-foreground leading-tight md:text-5xl lg:text-[3.25rem]" itemProp="headline">
               {post.title}
             </h1>
             {post.published_at && (
               <div className="mt-3 flex items-center gap-1 text-sm text-muted-foreground">
                 <Calendar className="h-4 w-4" />
-                <time dateTime={post.published_at}>
+                <time dateTime={post.published_at} itemProp="datePublished">
                   {new Date(post.published_at).toLocaleDateString("nl-NL", {
                     day: "numeric",
                     month: "long",
@@ -163,6 +244,7 @@ const BlogPostPage = () => {
 
                 prose-img:rounded-xl prose-img:shadow-lg
               "
+              itemProp="articleBody"
             >
               <div dangerouslySetInnerHTML={{ __html: cleanedContent }} />
             </div>
