@@ -234,3 +234,92 @@ export const useSimilarProperties = (currentId: string, city: string, listingTyp
     enabled: !!currentId && !!city && !!listingType,
   });
 };
+
+export interface FilterFacets {
+  propertyTypes: Record<string, number>;
+  listingTypes: Record<string, number>;
+  bedroomCounts: Record<string, number>;
+  surfaceRanges: Record<string, number>;
+  priceMax: number;
+}
+
+interface FacetFilters {
+  city?: string;
+  propertyType?: string;
+  listingType?: string;
+  includeInactive?: boolean;
+}
+
+export const useFilterFacets = (filters: FacetFilters) => {
+  return useQuery({
+    queryKey: ["filter-facets", filters.city, filters.propertyType, filters.listingType, filters.includeInactive],
+    queryFn: async () => {
+      // We need to fetch minimal data to compute facets
+      // Only select the fields we need for counting
+      let query = supabase
+        .from("properties")
+        .select("property_type, listing_type, bedrooms, surface_area, price");
+
+      if (!filters.includeInactive) {
+        query = query.eq("status", "actief");
+      }
+
+      if (filters.city) {
+        const isPostalCode = /^\d/.test(filters.city.trim());
+        if (isPostalCode) {
+          query = query.ilike("postal_code", `%${filters.city.trim()}%`);
+        } else {
+          query = query.ilike("city", `%${filters.city}%`);
+        }
+      }
+
+      const { data, error } = await query;
+      if (error) throw error;
+
+      const propertyTypes: Record<string, number> = {};
+      const listingTypes: Record<string, number> = {};
+      const bedroomCounts: Record<string, number> = {};
+      const surfaceRanges: Record<string, number> = { "25": 0, "50": 0, "75": 0, "100": 0 };
+      let priceMax = 0;
+
+      // Apply cross-filtering: when computing facets for one dimension,
+      // apply filters from OTHER dimensions
+      for (const row of data || []) {
+        const matchesType = !filters.propertyType || row.property_type === filters.propertyType;
+        const matchesListing = !filters.listingType || row.listing_type === filters.listingType;
+
+        // Count property types (filtered by listing type only)
+        if (matchesListing) {
+          propertyTypes[row.property_type] = (propertyTypes[row.property_type] || 0) + 1;
+        }
+
+        // Count listing types (filtered by property type only)
+        if (matchesType) {
+          listingTypes[row.listing_type] = (listingTypes[row.listing_type] || 0) + 1;
+        }
+
+        // For bedrooms/surface/price, apply both filters
+        if (matchesType && matchesListing) {
+          if (row.bedrooms != null) {
+            for (const threshold of [1, 2, 3, 4]) {
+              if (row.bedrooms >= threshold) {
+                bedroomCounts[String(threshold)] = (bedroomCounts[String(threshold)] || 0) + 1;
+              }
+            }
+          }
+          if (row.surface_area != null) {
+            for (const threshold of [25, 50, 75, 100]) {
+              if (row.surface_area >= threshold) {
+                surfaceRanges[String(threshold)] = (surfaceRanges[String(threshold)] || 0) + 1;
+              }
+            }
+          }
+          if (row.price > priceMax) priceMax = row.price;
+        }
+      }
+
+      return { propertyTypes, listingTypes, bedroomCounts, surfaceRanges, priceMax } as FilterFacets;
+    },
+    staleTime: 30 * 1000,
+  });
+};
