@@ -11,6 +11,7 @@ import {
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { MapPin, X } from "lucide-react";
+import { type FilterFacets } from "@/hooks/useProperties";
 
 type PropertyType = "appartement" | "huis" | "studio" | "kamer";
 type ListingType = "huur" | "koop";
@@ -30,12 +31,30 @@ interface SearchFiltersProps {
   onChange: (filters: SearchFilterValues) => void;
   onClear: () => void;
   hideLocation?: boolean;
+  facets?: FilterFacets | null;
 }
 
-const SearchFilters = ({ filters, onChange, onClear, hideLocation = false }: SearchFiltersProps) => {
+const propertyTypeLabels: Record<string, string> = {
+  appartement: "Appartement",
+  huis: "Huis",
+  studio: "Studio",
+  kamer: "Kamer",
+};
+
+const listingTypeLabels: Record<string, string> = {
+  huur: "Te huur",
+  koop: "Te koop",
+};
+
+const SearchFilters = ({ filters, onChange, onClear, hideLocation = false, facets }: SearchFiltersProps) => {
   const update = (patch: Partial<SearchFilterValues>) => {
     onChange({ ...filters, ...patch });
   };
+
+  const propertyTypes: PropertyType[] = ["appartement", "huis", "studio", "kamer"];
+  const listingTypes: ListingType[] = ["huur", "koop"];
+  const bedroomOptions = [1, 2, 3, 4];
+  const surfaceOptions = [25, 50, 75, 100];
 
   return (
     <div className="space-y-6">
@@ -64,10 +83,18 @@ const SearchFilters = ({ filters, onChange, onClear, hideLocation = false }: Sea
             <SelectValue placeholder="Alle types" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="appartement">Appartement</SelectItem>
-            <SelectItem value="huis">Huis</SelectItem>
-            <SelectItem value="studio">Studio</SelectItem>
-            <SelectItem value="kamer">Kamer</SelectItem>
+            {propertyTypes.map((type) => {
+              const count = facets?.propertyTypes[type];
+              if (facets && (count === undefined || count === 0)) return null;
+              return (
+                <SelectItem key={type} value={type}>
+                  {propertyTypeLabels[type]}
+                  {count !== undefined && (
+                    <span className="ml-1 text-muted-foreground">({count.toLocaleString("nl-NL")})</span>
+                  )}
+                </SelectItem>
+              );
+            })}
           </SelectContent>
         </Select>
       </div>
@@ -82,8 +109,18 @@ const SearchFilters = ({ filters, onChange, onClear, hideLocation = false }: Sea
             <SelectValue placeholder="Koop & Huur" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="huur">Te huur</SelectItem>
-            <SelectItem value="koop">Te koop</SelectItem>
+            {listingTypes.map((type) => {
+              const count = facets?.listingTypes[type];
+              if (facets && (count === undefined || count === 0)) return null;
+              return (
+                <SelectItem key={type} value={type}>
+                  {listingTypeLabels[type]}
+                  {count !== undefined && (
+                    <span className="ml-1 text-muted-foreground">({count.toLocaleString("nl-NL")})</span>
+                  )}
+                </SelectItem>
+              );
+            })}
           </SelectContent>
         </Select>
       </div>
@@ -109,10 +146,18 @@ const SearchFilters = ({ filters, onChange, onClear, hideLocation = false }: Sea
             <SelectValue placeholder="Geen minimum" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="1">1+</SelectItem>
-            <SelectItem value="2">2+</SelectItem>
-            <SelectItem value="3">3+</SelectItem>
-            <SelectItem value="4">4+</SelectItem>
+            {bedroomOptions.map((num) => {
+              const count = facets?.bedroomCounts[String(num)];
+              if (facets && (count === undefined || count === 0)) return null;
+              return (
+                <SelectItem key={num} value={String(num)}>
+                  {num}+
+                  {count !== undefined && (
+                    <span className="ml-1 text-muted-foreground">({count.toLocaleString("nl-NL")})</span>
+                  )}
+                </SelectItem>
+              );
+            })}
           </SelectContent>
         </Select>
       </div>
@@ -127,10 +172,18 @@ const SearchFilters = ({ filters, onChange, onClear, hideLocation = false }: Sea
             <SelectValue placeholder="Geen minimum" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="25">25+ m²</SelectItem>
-            <SelectItem value="50">50+ m²</SelectItem>
-            <SelectItem value="75">75+ m²</SelectItem>
-            <SelectItem value="100">100+ m²</SelectItem>
+            {surfaceOptions.map((num) => {
+              const count = facets?.surfaceRanges[String(num)];
+              if (facets && (count === undefined || count === 0)) return null;
+              return (
+                <SelectItem key={num} value={String(num)}>
+                  {num}+ m²
+                  {count !== undefined && (
+                    <span className="ml-1 text-muted-foreground">({count.toLocaleString("nl-NL")})</span>
+                  )}
+                </SelectItem>
+              );
+            })}
           </SelectContent>
         </Select>
       </div>
