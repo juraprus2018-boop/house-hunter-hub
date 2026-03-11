@@ -77,7 +77,7 @@ const FAQPage = () => {
       <SEOHead
         title="Veelgestelde vragen | WoonPeek"
         description="Antwoorden op veelgestelde vragen over WoonPeek. Lees hoe ons woningplatform werkt, hoe je zoekt en hoe je zoekalerts instelt."
-        canonical="https://woonpeek.nl/veelgestelde-vragen"
+        canonical="https://www.woonpeek.nl/veelgestelde-vragen"
       />
       <script
         type="application/ld+json"

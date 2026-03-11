@@ -11,7 +11,7 @@ const DailyAlert = () => {
       <SEOHead
         title="Dagelijkse Woningalert – Ontvang nieuw aanbod per e-mail | WoonPeek"
         description="Schrijf je gratis in voor de WoonPeek dagelijkse alert en ontvang elke dag een e-mail met het nieuwste woningaanbod in Nederland."
-        canonical="https://woonpeek.nl/dagelijkse-alert"
+        canonical="https://www.woonpeek.nl/dagelijkse-alert"
       />
       <Header />
       <main className="flex-1">

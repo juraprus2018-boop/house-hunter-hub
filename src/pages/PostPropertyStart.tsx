@@ -23,7 +23,7 @@ const PostPropertyStart = () => {
       <SEOHead
         title="Woning plaatsen op WoonPeek | Gratis starten"
         description="Maak gratis een account aan en plaats je woning op WoonPeek. Snel online en direct zichtbaar voor woningzoekers."
-        canonical="https://woonpeek.nl/woning-plaatsen"
+        canonical="https://www.woonpeek.nl/woning-plaatsen"
       />
       <Header />
       <main className="flex-1">

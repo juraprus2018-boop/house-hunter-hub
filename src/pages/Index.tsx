@@ -42,7 +42,7 @@ const Index = () => {
       <SEOHead
         title="WoonPeek – Vind woningen in heel Nederland | Huurwoningen & koopwoningen"
         description="Zoek huurwoningen, appartementen, studio's en koopwoningen in heel Nederland. WoonPeek verzamelt dagelijks het nieuwste woningaanbod op één plek."
-        canonical="https://woonpeek.nl"
+        canonical="https://www.woonpeek.nl"
       />
       <script
         type="application/ld+json"

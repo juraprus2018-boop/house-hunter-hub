@@ -18,7 +18,7 @@ const BlogPage = () => {
       <SEOHead
         title="Blog – Tips & Advies over Woningen | WoonPeek"
         description="Lees onze artikelen over huurwoningen, koophuizen en de woningmarkt in Nederland. Tips, advies en marktinzichten op WoonPeek."
-        canonical="https://woonpeek.nl/blog"
+        canonical="https://www.woonpeek.nl/blog"
       />
       <Header />
       <main className="flex-1">

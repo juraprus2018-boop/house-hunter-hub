@@ -41,7 +41,7 @@ const Cities = () => {
       <SEOHead
         title="Alle steden met woningen | WoonPeek"
         description="Bekijk alle steden waar woningen beschikbaar zijn op WoonPeek, geordend op aantal beschikbare woningen."
-        canonical="https://woonpeek.nl/steden"
+        canonical="https://www.woonpeek.nl/steden"
       />
       <Header />
       <main className="flex-1">
