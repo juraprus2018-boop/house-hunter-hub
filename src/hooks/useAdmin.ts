@@ -52,6 +52,71 @@ export const useAllProperties = () => {
   });
 };
 
+export const useAdminPropertiesPaginated = (
+  page: number,
+  pageSize: number,
+  filters: {
+    search?: string;
+    source?: string;
+    status?: string;
+  }
+) => {
+  return useQuery({
+    queryKey: ["admin-properties-paginated", page, pageSize, filters],
+    queryFn: async () => {
+      const from = page * pageSize;
+      const to = from + pageSize - 1;
+
+      // Build count query
+      let countQuery = supabase
+        .from("properties")
+        .select("id", { count: "exact", head: true });
+
+      // Build data query
+      let dataQuery = supabase
+        .from("properties")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .range(from, to);
+
+      // Apply filters to both queries
+      if (filters.status && filters.status !== "all") {
+        countQuery = countQuery.eq("status", filters.status as "actief" | "inactief" | "verhuurd" | "verkocht");
+        dataQuery = dataQuery.eq("status", filters.status as "actief" | "inactief" | "verhuurd" | "verkocht");
+      }
+      if (filters.source && filters.source !== "all") {
+        if (filters.source === "user") {
+          countQuery = countQuery.is("source_site", null);
+          dataQuery = dataQuery.is("source_site", null);
+        } else {
+          countQuery = countQuery.eq("source_site", filters.source);
+          dataQuery = dataQuery.eq("source_site", filters.source);
+        }
+      }
+      if (filters.search && filters.search.trim()) {
+        const s = `%${filters.search.trim()}%`;
+        countQuery = countQuery.or(`title.ilike.${s},city.ilike.${s},street.ilike.${s}`);
+        dataQuery = dataQuery.or(`title.ilike.${s},city.ilike.${s},street.ilike.${s}`);
+      }
+
+      const [{ count, error: countError }, { data, error: dataError }] = await Promise.all([
+        countQuery,
+        dataQuery,
+      ]);
+
+      if (countError) throw countError;
+      if (dataError) throw dataError;
+
+      return {
+        properties: data || [],
+        totalCount: count || 0,
+        totalPages: Math.ceil((count || 0) / pageSize),
+      };
+    },
+    placeholderData: (prev) => prev,
+  });
+};
+
 export const useUpdatePropertyAdmin = () => {
   const queryClient = useQueryClient();
 

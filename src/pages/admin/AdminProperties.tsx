@@ -29,57 +29,52 @@ import {
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { useAllProperties, useUpdatePropertyAdmin, useDeletePropertyAdmin, usePostToFacebook } from "@/hooks/useAdmin";
-import { Search, Pencil, Trash2, Loader2, ExternalLink, Filter, Facebook, CheckCircle } from "lucide-react";
+import { useAdminPropertiesPaginated, useUpdatePropertyAdmin, useDeletePropertyAdmin, usePostToFacebook } from "@/hooks/useAdmin";
+import { Search, Pencil, Trash2, Loader2, ExternalLink, Filter, Facebook, CheckCircle, ChevronLeft, ChevronRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { nl } from "date-fns/locale";
 
+const PAGE_SIZE = 50;
+
 const AdminProperties = () => {
-  const { data: properties, isLoading } = useAllProperties();
+  const [currentPage, setCurrentPage] = useState(0);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [sourceFilter, setSourceFilter] = useState<string>("all");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+
+  // Debounce search
+  const [searchTimeout, setSearchTimeout] = useState<ReturnType<typeof setTimeout> | null>(null);
+  const handleSearchChange = (value: string) => {
+    setSearchQuery(value);
+    if (searchTimeout) clearTimeout(searchTimeout);
+    const timeout = setTimeout(() => {
+      setDebouncedSearch(value);
+      setCurrentPage(0);
+    }, 400);
+    setSearchTimeout(timeout);
+  };
+
+  const { data, isLoading } = useAdminPropertiesPaginated(currentPage, PAGE_SIZE, {
+    search: debouncedSearch,
+    source: sourceFilter,
+    status: statusFilter,
+  });
+
   const updateProperty = useUpdatePropertyAdmin();
   const deleteProperty = useDeletePropertyAdmin();
   const postToFacebook = usePostToFacebook();
   const { toast } = useToast();
 
-  const [searchQuery, setSearchQuery] = useState("");
-  const [sourceFilter, setSourceFilter] = useState<string>("all");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [editingProperty, setEditingProperty] = useState<typeof properties extends (infer T)[] ? T : never | null>(null);
+  const [editingProperty, setEditingProperty] = useState<any>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [formData, setFormData] = useState<Record<string, unknown>>({});
   const [postingToFb, setPostingToFb] = useState<string | null>(null);
 
-  const handlePostToFacebook = async (propertyId: string) => {
-    setPostingToFb(propertyId);
-    try {
-      await postToFacebook.mutateAsync(propertyId);
-      toast({ title: "Geplaatst op Facebook!", description: "De woning is gedeeld op je Facebook-pagina." });
-    } catch (error: unknown) {
-      const msg = error instanceof Error ? error.message : "Onbekende fout";
-      if (msg.includes("al op Facebook")) {
-        toast({ title: "Al geplaatst", description: msg, variant: "destructive" });
-      } else {
-        toast({ title: "Facebook post mislukt", description: msg, variant: "destructive" });
-      }
-    } finally {
-      setPostingToFb(null);
-    }
-  };
-
-  const availableSources = Array.from(
-    new Set(properties?.map((p) => p.source_site).filter(Boolean) as string[])
-  ).sort();
-
-  const filteredProperties = properties?.filter((p) => {
-    const matchesSearch =
-      p.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      p.city.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      p.street.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesSource = sourceFilter === "all" || p.source_site === sourceFilter || (sourceFilter === "user" && !p.source_site);
-    const matchesStatus = statusFilter === "all" || p.status === statusFilter;
-    return matchesSearch && matchesSource && matchesStatus;
-  });
+  const properties = data?.properties;
+  const totalCount = data?.totalCount || 0;
+  const totalPages = data?.totalPages || 1;
 
   const formatPrice = (price: number, listingType: string) => {
     const formatted = new Intl.NumberFormat("nl-NL", {
@@ -188,10 +183,10 @@ const AdminProperties = () => {
                   placeholder="Zoek op titel, stad of straat..."
                   className="pl-10"
                   value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onChange={(e) => handleSearchChange(e.target.value)}
                 />
               </div>
-              <Select value={sourceFilter} onValueChange={setSourceFilter}>
+              <Select value={sourceFilter} onValueChange={(v) => { setSourceFilter(v); setCurrentPage(0); }}>
                 <SelectTrigger className="w-full sm:w-[200px]">
                   <Filter className="mr-2 h-4 w-4" />
                   <SelectValue placeholder="Alle bronnen" />
@@ -199,14 +194,11 @@ const AdminProperties = () => {
                 <SelectContent className="z-50 bg-popover">
                   <SelectItem value="all">Alle bronnen</SelectItem>
                   <SelectItem value="user">Gebruikers</SelectItem>
-                  {availableSources.map((source) => (
-                    <SelectItem key={source} value={source} className="capitalize">
-                      {source}
-                    </SelectItem>
-                  ))}
+                  <SelectItem value="Huurwoningen.nl">Huurwoningen.nl</SelectItem>
+                  <SelectItem value="Wooniezie">Wooniezie</SelectItem>
                 </SelectContent>
               </Select>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v); setCurrentPage(0); }}>
                 <SelectTrigger className="w-full sm:w-[200px]">
                   <Filter className="mr-2 h-4 w-4" />
                   <SelectValue placeholder="Alle statussen" />
@@ -226,8 +218,11 @@ const AdminProperties = () => {
         {/* Table */}
         <Card>
           <CardHeader>
-            <CardTitle>
-              {filteredProperties?.length || 0} woningen gevonden
+            <CardTitle className="flex items-center justify-between">
+              <span>{totalCount} woningen gevonden</span>
+              <span className="text-sm font-normal text-muted-foreground">
+                Pagina {currentPage + 1} van {totalPages}
+              </span>
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -244,7 +239,7 @@ const AdminProperties = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredProperties?.map((property) => (
+                {properties?.map((property) => (
                   <TableRow key={property.id}>
                     <TableCell className="font-medium max-w-[200px] truncate">
                       {property.title}
@@ -281,7 +276,16 @@ const AdminProperties = () => {
                           size="icon"
                           title={property.facebook_posted_at ? `Geplaatst op ${format(new Date(property.facebook_posted_at), "d MMM yyyy HH:mm", { locale: nl })}` : "Plaats op Facebook"}
                           disabled={postingToFb === property.id || !!property.facebook_posted_at}
-                          onClick={() => handlePostToFacebook(property.id)}
+                          onClick={() => {
+                            setPostingToFb(property.id);
+                            postToFacebook.mutateAsync(property.id)
+                              .then(() => toast({ title: "Geplaatst op Facebook!", description: "De woning is gedeeld op je Facebook-pagina." }))
+                              .catch((error: unknown) => {
+                                const msg = error instanceof Error ? error.message : "Onbekende fout";
+                                toast({ title: "Facebook post mislukt", description: msg, variant: "destructive" });
+                              })
+                              .finally(() => setPostingToFb(null));
+                          }}
                         >
                           {postingToFb === property.id ? (
                             <Loader2 className="h-4 w-4 animate-spin" />
@@ -317,7 +321,7 @@ const AdminProperties = () => {
                     </TableCell>
                   </TableRow>
                 ))}
-                {(!filteredProperties || filteredProperties.length === 0) && (
+                {(!properties || properties.length === 0) && (
                   <TableRow>
                     <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                       Geen woningen gevonden
@@ -326,6 +330,35 @@ const AdminProperties = () => {
                 )}
               </TableBody>
             </Table>
+
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between pt-4 border-t mt-4">
+                <p className="text-sm text-muted-foreground">
+                  {currentPage * PAGE_SIZE + 1}–{Math.min((currentPage + 1) * PAGE_SIZE, totalCount)} van {totalCount}
+                </p>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={currentPage === 0}
+                    onClick={() => setCurrentPage((p) => p - 1)}
+                  >
+                    <ChevronLeft className="h-4 w-4 mr-1" />
+                    Vorige
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={currentPage >= totalPages - 1}
+                    onClick={() => setCurrentPage((p) => p + 1)}
+                  >
+                    Volgende
+                    <ChevronRight className="h-4 w-4 ml-1" />
+                  </Button>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
