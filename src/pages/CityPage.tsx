@@ -212,6 +212,7 @@ const CityPage = () => {
                   onChange={setFilters}
                   onClear={() => setFilters(EMPTY_FILTERS)}
                   hideLocation
+                  facets={facets}
                 />
               </div>
             </aside>
