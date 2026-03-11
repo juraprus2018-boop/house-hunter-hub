@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useProperties, useMapProperties } from "@/hooks/useProperties";
+import { useProperties } from "@/hooks/useProperties";
 import { Loader2, MapPin, ChevronRight, SlidersHorizontal, X, Navigation } from "lucide-react";
 import { cn } from "@/lib/utils";
 import ExploreMap from "@/components/explore/ExploreMap";
@@ -26,6 +26,7 @@ const SOURCE_SITE_LABELS: Record<string, string> = {
 };
 
 const DISTANCE_OPTIONS = [5, 10, 15, 25, 50];
+const LIST_PAGE_SIZE = 48;
 
 // Haversine distance in km
 const haversineKm = (lat1: number, lon1: number, lat2: number, lon2: number) => {
@@ -94,45 +95,33 @@ const ExplorePage = () => {
   }, [debouncedPostcode]);
 
   const { data: allData, isLoading } = useProperties({
-    city: selectedCity || undefined,
     listingType: listingType || undefined,
     sourceSite: selectedSource || undefined,
     disablePagination: true,
   });
-  const allProperties = allData?.properties;
+  const allProperties = allData?.properties || [];
 
-  // Separate optimized query for map markers (only properties with coords)
-  const { data: mapProps } = useMapProperties({
-    city: selectedCity || undefined,
-    listingType: listingType || undefined,
-    sourceSite: selectedSource || undefined,
-  });
-
-  // Filter by distance from postcode
+  // Filter by city + optional distance from postcode
   const filteredProperties = useMemo(() => {
-    if (!allProperties) return [];
-    if (!postcodeCoords) return allProperties;
-    return allProperties.filter((p) => {
+    const cityFiltered = selectedCity
+      ? allProperties.filter((p) => p.city === selectedCity)
+      : allProperties;
+
+    if (!postcodeCoords) return cityFiltered;
+
+    return cityFiltered.filter((p) => {
       if (!p.latitude || !p.longitude) return false;
       return haversineKm(postcodeCoords.lat, postcodeCoords.lng, Number(p.latitude), Number(p.longitude)) <= distanceKm;
     });
-  }, [allProperties, postcodeCoords, distanceKm]);
+  }, [allProperties, selectedCity, postcodeCoords, distanceKm]);
 
-  // Filter map properties by distance too
-  const filteredMapProperties = useMemo(() => {
-    if (!mapProps) return [];
-    if (!postcodeCoords) return mapProps;
-    return mapProps.filter((p) => {
-      return haversineKm(postcodeCoords.lat, postcodeCoords.lng, Number(p.latitude), Number(p.longitude)) <= distanceKm;
-    });
-  }, [mapProps, postcodeCoords, distanceKm]);
+  // Map receives all filtered properties that have coordinates (no hard cap)
+  const filteredMapProperties = useMemo(
+    () => filteredProperties.filter((p) => p.latitude && p.longitude),
+    [filteredProperties]
+  );
 
-  const { data: citySourceData } = useProperties({
-    listingType: listingType || undefined,
-    sourceSite: selectedSource || undefined,
-    disablePagination: true,
-  });
-  const citySourceProperties = citySourceData?.properties;
+  const citySourceProperties = allProperties;
   const cities = useMemo(() => {
     if (!citySourceProperties) return [];
     const cityCount = new Map<string, number>();
@@ -159,6 +148,21 @@ const ExplorePage = () => {
   }, [citySourceProperties]);
 
   const [hoveredPropertyId, setHoveredPropertyId] = useState<string | null>(null);
+  const [listPage, setListPage] = useState(1);
+
+  const totalListPages = Math.max(1, Math.ceil(filteredProperties.length / LIST_PAGE_SIZE));
+  const paginatedProperties = useMemo(() => {
+    const from = (listPage - 1) * LIST_PAGE_SIZE;
+    return filteredProperties.slice(from, from + LIST_PAGE_SIZE);
+  }, [filteredProperties, listPage]);
+
+  useEffect(() => {
+    setListPage(1);
+  }, [selectedCity, listingType, selectedSource, debouncedPostcode, distanceKm]);
+
+  useEffect(() => {
+    if (listPage > totalListPages) setListPage(totalListPages);
+  }, [listPage, totalListPages]);
 
   const clearPostcode = useCallback(() => {
     setPostcode("");
@@ -390,7 +394,7 @@ const ExplorePage = () => {
                 </div>
               ) : (
                 <ExploreMap
-                  properties={filteredMapProperties as any}
+                  properties={filteredMapProperties}
                   hoveredPropertyId={hoveredPropertyId}
                 />
               )}
@@ -402,17 +406,47 @@ const ExplorePage = () => {
                   <Loader2 className="h-8 w-8 animate-spin text-primary" />
                 </div>
               ) : filteredProperties.length > 0 ? (
-                <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 xl:grid-cols-3">
-                  {filteredProperties.map((property) => (
-                    <div
-                      key={property.id}
-                      onMouseEnter={() => setHoveredPropertyId(property.id)}
-                      onMouseLeave={() => setHoveredPropertyId(null)}
-                    >
-                      <PropertyCard property={property} />
+                <>
+                  <div className="mb-4 flex items-center justify-between text-sm text-muted-foreground">
+                    <span>
+                      {((listPage - 1) * LIST_PAGE_SIZE) + 1}–{Math.min(listPage * LIST_PAGE_SIZE, filteredProperties.length)} van {filteredProperties.length}
+                    </span>
+                    <span>Pagina {listPage} / {totalListPages}</span>
+                  </div>
+
+                  <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 xl:grid-cols-3">
+                    {paginatedProperties.map((property) => (
+                      <div
+                        key={property.id}
+                        onMouseEnter={() => setHoveredPropertyId(property.id)}
+                        onMouseLeave={() => setHoveredPropertyId(null)}
+                      >
+                        <PropertyCard property={property} />
+                      </div>
+                    ))}
+                  </div>
+
+                  {totalListPages > 1 && (
+                    <div className="mt-6 flex items-center justify-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={listPage <= 1}
+                        onClick={() => setListPage((p) => p - 1)}
+                      >
+                        Vorige
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={listPage >= totalListPages}
+                        onClick={() => setListPage((p) => p + 1)}
+                      >
+                        Volgende
+                      </Button>
                     </div>
-                  ))}
-                </div>
+                  )}
+                </>
               ) : (
                 <div className="flex flex-col items-center justify-center py-12 text-center">
                   <MapPin className="mb-4 h-12 w-12 text-muted-foreground" />
