@@ -33,7 +33,7 @@ const PropertyCard = ({ property }: PropertyCardProps) => {
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
     }).format(price);
-    return listingType === "huur" ? `${formatted}/mnd` : formatted;
+    return listingType === "huur" ? `${formatted} per maand` : formatted;
   };
 
   const handleFavoriteClick = (e: React.MouseEvent) => {
