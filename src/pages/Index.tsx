@@ -26,7 +26,7 @@ const Index = () => {
     "@context": "https://schema.org",
     "@type": "WebSite",
     name: "WoonPeek",
-    url: "https://woonpeek.nl",
+    url: "https://www.woonpeek.nl",
     potentialAction: {
       "@type": "SearchAction",
       target: {
