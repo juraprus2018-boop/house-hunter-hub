@@ -183,7 +183,7 @@ const AdminProperties = () => {
                   placeholder="Zoek op titel, stad of straat..."
                   className="pl-10"
                   value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onChange={(e) => handleSearchChange(e.target.value)}
                 />
               </div>
               <Select value={sourceFilter} onValueChange={setSourceFilter}>
