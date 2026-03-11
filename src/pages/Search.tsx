@@ -199,7 +199,7 @@ const SearchPage = () => {
                     onClick={() => setViewMode("map")}
                     className="rounded-l-none"
                   >
-                    <Map className="h-4 w-4" />
+                    <MapIcon className="h-4 w-4" />
                   </Button>
                 </div>
               </div>
