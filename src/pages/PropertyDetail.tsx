@@ -601,43 +601,6 @@ const PropertyDetail = () => {
                       </Dialog>
                     )}
 
-                    {/* Secondary CTA */}
-                    <Dialog>
-                      <DialogTrigger asChild>
-                        <Button variant="outline" className="w-full" size="lg">
-                          <Calendar className="mr-2 h-4 w-4" />
-                          Plan een bezichtiging
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent>
-                        <DialogHeader>
-                          <DialogTitle>Bezichtiging plannen</DialogTitle>
-                          <DialogDescription>Vraag een bezichtiging aan voor {property.street} {property.house_number}, {property.city}.</DialogDescription>
-                        </DialogHeader>
-                        <div className="space-y-4 py-4">
-                          <div className="space-y-2">
-                            <Label>Naam *</Label>
-                            <Input placeholder="Je naam" />
-                          </div>
-                          <div className="space-y-2">
-                            <Label>E-mailadres *</Label>
-                            <Input type="email" placeholder="je@email.nl" />
-                          </div>
-                          <div className="space-y-2">
-                            <Label>Telefoonnummer</Label>
-                            <Input placeholder="Optioneel" />
-                          </div>
-                          <div className="space-y-2">
-                            <Label>Voorkeursdatum</Label>
-                            <Input type="date" />
-                          </div>
-                          <Button className="w-full">
-                            <Calendar className="mr-2 h-4 w-4" />
-                            Verstuur aanvraag
-                          </Button>
-                        </div>
-                      </DialogContent>
-                    </Dialog>
                   </CardContent>
                 </Card>
 
