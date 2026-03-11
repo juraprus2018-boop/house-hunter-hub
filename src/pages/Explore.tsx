@@ -349,6 +349,69 @@ const ExplorePage = () => {
       )}
     </>
   );
+  const renderPropertyList = () => {
+    if (isLoading) {
+      return (
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      );
+    }
+
+    if (filteredProperties.length === 0) {
+      return (
+        <div className="flex flex-col items-center justify-center py-12 text-center">
+          <MapPin className="mb-4 h-12 w-12 text-muted-foreground" />
+          <h3 className="font-display text-lg font-semibold">Geen woningen gevonden</h3>
+          <p className="text-muted-foreground">Pas je filters aan</p>
+        </div>
+      );
+    }
+
+    return (
+      <>
+        <div className="mb-3 flex items-center justify-between text-xs text-muted-foreground">
+          <span>
+            {((listPage - 1) * LIST_PAGE_SIZE) + 1}–{Math.min(listPage * LIST_PAGE_SIZE, filteredProperties.length)} van {filteredProperties.length}
+          </span>
+          <span>Pagina {listPage} / {totalListPages}</span>
+        </div>
+
+        <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 xl:grid-cols-3">
+          {paginatedProperties.map((property) => (
+            <div
+              key={property.id}
+              onMouseEnter={() => setHoveredPropertyId(property.id)}
+              onMouseLeave={() => setHoveredPropertyId(null)}
+            >
+              <PropertyCard property={property} />
+            </div>
+          ))}
+        </div>
+
+        {totalListPages > 1 && (
+          <div className="mt-6 flex items-center justify-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={listPage <= 1}
+              onClick={() => setListPage((p) => p - 1)}
+            >
+              Vorige
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={listPage >= totalListPages}
+              onClick={() => setListPage((p) => p + 1)}
+            >
+              Volgende
+            </Button>
+          </div>
+        )}
+      </>
+    );
+  };
 
   return (
     <div className="flex min-h-screen flex-col">
