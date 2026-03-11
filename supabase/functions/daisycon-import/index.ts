@@ -631,9 +631,9 @@ Deno.serve(async (req) => {
         totalImported += imported;
         totalSkipped += skipped;
         totalUpdated += updated;
-        results.push({ feed: feed.name, imported, updated, skipped });
+        results.push({ feed: feed.name, imported, updated, skipped, deactivated: 0 });
 
-        console.log(`Feed ${feed.name}: ${imported} imported, ${updated} updated with images, ${skipped} skipped`);
+        console.log(`Feed ${feed.name}: ${imported} imported, ${updated} updated, ${skipped} skipped`);
       } catch (feedErr) {
         const msg = feedErr instanceof Error ? feedErr.message : "Unknown error";
         console.error(`Error processing feed ${feed.name}:`, msg);
