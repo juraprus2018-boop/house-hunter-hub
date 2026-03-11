@@ -245,7 +245,16 @@ const SearchPage = () => {
                   </div>
                 ) : (
                   <div className="h-[500px] rounded-lg border overflow-hidden">
-                    <ExploreMap properties={properties} />
+                    {isMapLoading ? (
+                      <div className="flex items-center justify-center h-full">
+                        <Skeleton className="h-full w-full" />
+                      </div>
+                    ) : (
+                      <ExploreMap properties={(mapProperties || []) as any} />
+                    )}
+                    <p className="text-xs text-muted-foreground mt-2">
+                      {mapProperties?.length || 0} woningen met locatie op de kaart
+                    </p>
                   </div>
                 )
               ) : (
