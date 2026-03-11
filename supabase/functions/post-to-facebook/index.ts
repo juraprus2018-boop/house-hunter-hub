@@ -245,9 +245,8 @@ async function postPropertyToFacebook(
   pageId: string,
   accessToken: string
 ): Promise<{ success: boolean; postId?: string; error?: string }> {
-  // Add helper method for type display
-  (property as any).type_display = () => property.property_type;
   const message = buildCaption(property);
+  const images = getUniqueImages(property.images, 10);
   const images = getUniqueImages(property.images, 10);
 
   try {
