@@ -216,16 +216,17 @@ function mapDaisyconToProperty(product: DaisyconProduct, sourceSite: string, sou
     propertyType = "kamer";
   }
 
-  // Collect images
+  // Collect images - check many common Daisycon field naming patterns
   const images: string[] = [];
   const mainImage = product.image_large || product.image_url_large || product.image_url;
-  if (mainImage) images.push(mainImage);
-  if (product.additional_image_urls) {
-    images.push(...product.additional_image_urls.slice(0, 9));
+  if (mainImage && typeof mainImage === "string") images.push(mainImage);
+  if (product.additional_image_urls && Array.isArray(product.additional_image_urls)) {
+    images.push(...product.additional_image_urls.filter((u: unknown) => typeof u === "string" && u).slice(0, 9));
   }
-  for (let i = 1; i <= 10; i++) {
-    const extraImg = product[`extra_image_url_${i}`] || product[`image_url_${i}`];
-    if (typeof extraImg === "string" && extraImg) images.push(extraImg);
+  // Check image_url_1..20, extra_image_url_1..20, image_1..20
+  for (let i = 1; i <= 20; i++) {
+    const extraImg = product[`image_url_${i}`] || product[`extra_image_url_${i}`] || product[`image_${i}`];
+    if (typeof extraImg === "string" && extraImg && !images.includes(extraImg)) images.push(extraImg);
   }
 
   const title = product.title || `${street} ${houseNumber}, ${city}`.trim();
