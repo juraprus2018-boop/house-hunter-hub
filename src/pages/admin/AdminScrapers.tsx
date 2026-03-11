@@ -152,9 +152,12 @@ const AdminDaisycon = () => {
 
   const handleImport = async (feedId?: string) => {
     try {
-      toast.info("Import gestart...");
+      toast.info("Import gestart op de server...");
       const result = await runImport.mutateAsync(feedId);
-      toast.success(`Import voltooid: ${result.total_imported} nieuw, ${result.total_skipped} overgeslagen`);
+      if (result.job_id) {
+        importJob.startTracking(result.job_id);
+      }
+      toast.success(`Import voltooid: ${result.total_imported} nieuw, ${result.total_updated || 0} bijgewerkt, ${result.total_skipped} overgeslagen`);
     } catch (e) {
       toast.error("Import mislukt: " + (e instanceof Error ? e.message : "onbekend"));
     }
