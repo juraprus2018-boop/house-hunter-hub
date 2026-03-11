@@ -458,63 +458,100 @@ Deno.serve(async (req) => {
         let skipped = 0;
         let updated = 0;
 
+        // Map all products to property data
+        const allPropertyData: any[] = [];
         for (const product of products) {
           const sourceUrl = buildAffiliateLink(product, feed.media_id, feed.program_id);
-          
           if (!sourceUrl) {
-            console.log(`Skipping product without link: ${product.title} - keys: ${Object.keys(product).join(", ")}`);
             skipped++;
             continue;
           }
+          allPropertyData.push(mapDaisyconToProperty(product, feed.name, sourceUrl));
+        }
 
-          const propertyData = mapDaisyconToProperty(product, feed.name, sourceUrl);
+        console.log(`Feed ${feed.name}: ${allPropertyData.length} valid products to process`);
 
-          // Check if already exists by source_url
-          const { data: existing } = await supabase
+        // Get all existing source_urls for this feed in one query
+        const sourceUrls = allPropertyData.map(p => p.source_url);
+        const existingMap = new Map<string, { id: string; images: string[]; title: string }>();
+        
+        // Query in batches of 500 (Supabase IN filter limit)
+        for (let i = 0; i < sourceUrls.length; i += 500) {
+          const batch = sourceUrls.slice(i, i + 500);
+          const { data: existingRows } = await supabase
             .from("properties")
-            .select("id, images, title")
-            .eq("source_url", sourceUrl)
-            .maybeSingle();
+            .select("id, source_url, images, title")
+            .in("source_url", batch);
+          if (existingRows) {
+            for (const row of existingRows) {
+              existingMap.set(row.source_url!, { id: row.id, images: row.images || [], title: row.title });
+            }
+          }
+        }
 
+        console.log(`Feed ${feed.name}: ${existingMap.size} existing properties found`);
+
+        // Separate new inserts from updates
+        const toInsert: any[] = [];
+        const genericTitles = ["appartement", "huis", "studio", "kamer", "woning", "room", "house", "apartment"];
+
+        for (const propData of allPropertyData) {
+          const existing = existingMap.get(propData.source_url);
           if (existing) {
-            const existingImages = existing.images || [];
             const updates: Record<string, any> = {};
-
-            // Update images if missing or empty default array
-            const hasNoImages = existingImages.length === 0 || 
-              (existingImages.length === 1 && existingImages[0] === "");
-            if (hasNoImages && propertyData.images.length > 0) {
-              updates.images = propertyData.images;
+            const hasNoImages = existing.images.length === 0 || 
+              (existing.images.length === 1 && existing.images[0] === "");
+            if (hasNoImages && propData.images.length > 0) {
+              updates.images = propData.images;
             }
-
-            // Update generic titles
-            const genericTitles = ["appartement", "huis", "studio", "kamer", "woning", "room", "house", "apartment"];
             if (existing.title && genericTitles.includes(existing.title.trim().toLowerCase())) {
-              updates.title = propertyData.title;
+              updates.title = propData.title;
             }
-
             if (Object.keys(updates).length > 0) {
               updates.updated_at = new Date().toISOString();
               await supabase.from("properties").update(updates).eq("id", existing.id);
               updated++;
-              console.log(`Updated "${existing.id}": ${Object.keys(updates).join(", ")}`);
             } else {
               skipped++;
             }
-            continue;
+          } else {
+            toInsert.push(propData);
+          }
+        }
+
+        // Batch insert new properties in chunks of 100
+        console.log(`Feed ${feed.name}: inserting ${toInsert.length} new properties in batches...`);
+        for (let i = 0; i < toInsert.length; i += 100) {
+          const batch = toInsert.slice(i, i + 100);
+          const { error: batchErr, data: insertedData } = await supabase
+            .from("properties")
+            .insert(batch)
+            .select("id");
+          
+          if (batchErr) {
+            console.error(`Batch insert error at ${i}: ${batchErr.message}`);
+            // Fallback: try individual inserts for this batch
+            for (const item of batch) {
+              const { error: singleErr } = await supabase.from("properties").insert(item);
+              if (singleErr) {
+                console.error(`Single insert error: ${singleErr.message} - ${item.title}`);
+                skipped++;
+              } else {
+                imported++;
+              }
+            }
+          } else {
+            imported += insertedData?.length || batch.length;
           }
 
-          console.log(`Inserting "${propertyData.title}" with ${propertyData.images.length} images`);
-
-          const { error: insertErr } = await supabase
-            .from("properties")
-            .insert(propertyData);
-
-          if (insertErr) {
-            console.error(`Insert error for "${product.title}": ${insertErr.message}`);
-            skipped++;
-          } else {
-            imported++;
+          // Update job progress periodically
+          if (jobId && i % 500 === 0) {
+            await supabase.from("import_jobs").update({
+              imported: totalImported + imported,
+              updated: totalUpdated + updated,
+              skipped: totalSkipped + skipped,
+              message: `Feed "${feed.name}": ${imported + updated + skipped}/${allPropertyData.length} verwerkt...`,
+            }).eq("id", jobId);
           }
         }
 
