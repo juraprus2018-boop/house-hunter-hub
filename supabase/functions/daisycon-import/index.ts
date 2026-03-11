@@ -445,6 +445,7 @@ Deno.serve(async (req) => {
       JSON.stringify({
         success: true,
         total_imported: totalImported,
+        total_updated: totalUpdated,
         total_skipped: totalSkipped,
         results,
       }),
