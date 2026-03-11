@@ -39,7 +39,10 @@ const PropertyCardSkeleton = () => (
 );
 
 const CityPage = () => {
-  const { city: citySlug = "" } = useParams<{ city: string }>();
+  const { city: rawCitySlug = "" } = useParams<{ city: string }>();
+  const citySlug = rawCitySlug.startsWith("woningen-")
+    ? rawCitySlug.replace(/^woningen-/, "")
+    : rawCitySlug;
   const cityName = citySlugToName(citySlug);
   const [filters, setFilters] = useState<SearchFilterValues>(EMPTY_FILTERS);
 

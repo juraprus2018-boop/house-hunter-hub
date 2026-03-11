@@ -48,6 +48,7 @@ const LegacyCityRedirect = () => {
   const location = useLocation();
 
   if (!city) return <Navigate to="/steden" replace />;
+  if (city.startsWith("woningen-")) return <CityPage />;
 
   return <Navigate to={`${cityPath(city)}${location.search}`} replace />;
 };
@@ -94,7 +95,6 @@ const App = () => (
             <Route path="/alerts/afmelden/:token" element={<AlertUnsubscribe />} />
             <Route path="/huurwoningen/:city?" element={<ListingTypePage listingType="huur" />} />
             <Route path="/koopwoningen/:city?" element={<ListingTypePage listingType="koop" />} />
-            <Route path="/woningen-:city" element={<CityPage />} />
             <Route path="/:city" element={<LegacyCityRedirect />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
