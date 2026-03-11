@@ -227,9 +227,10 @@ function mapDaisyconToProperty(product: DaisyconProduct, sourceSite: string, sou
         if (typeof img === "string" && img) {
           images.push(img);
         } else if (img && typeof img === "object") {
-          // Object format: { url: "...", image: "...", src: "...", image_url: "..." }
-          const imgUrl = (img as any).url || (img as any).image || (img as any).src || 
-                         (img as any).image_url || (img as any).large || (img as any).original;
+          // Daisycon format: { location: "https://...", size: "large", tag: "detail" }
+          // Also check: url, image, src, image_url
+          const imgUrl = (img as any).location || (img as any).url || (img as any).image || 
+                         (img as any).src || (img as any).image_url || (img as any).large || (img as any).original;
           if (typeof imgUrl === "string" && imgUrl) images.push(imgUrl);
         }
       }
