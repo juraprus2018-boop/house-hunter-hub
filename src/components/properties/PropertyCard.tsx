@@ -105,9 +105,7 @@ const PropertyCard = ({ property }: PropertyCardProps) => {
         </div>
         <CardContent className="p-4">
           <div className="mb-2 flex items-start justify-between gap-2">
-            <h3 className="font-display text-lg font-semibold leading-tight text-foreground line-clamp-1">
-              {property.title}
-            </h3>
+            <h3 className="font-display text-lg font-semibold leading-tight text-foreground line-clamp-1" style={{ fontWeight: 600 }}>
           </div>
           <div className="mb-3 flex items-center gap-1 text-sm text-muted-foreground">
             <MapPin className="h-4 w-4" />
