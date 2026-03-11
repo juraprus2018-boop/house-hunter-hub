@@ -234,18 +234,19 @@ function mapDaisyconToProperty(product: DaisyconProduct, sourceSite: string, sou
   let listingType: "huur" | "koop" = "huur";
   const rentBuy = String(
     product.contract_type || product.rent_buy || product.listing_type || 
-    product.soort_aanbod || product.category || ""
+    product.soort_aanbod || product.category || product.price_type || ""
   ).toLowerCase();
   if (rentBuy.includes("koop") || rentBuy.includes("buy") || rentBuy.includes("sale")) {
     listingType = "koop";
   }
 
-  // Determine property type
+  // Determine property type - also check building_type field (standard_id=20)
   let propertyType: "appartement" | "huis" | "studio" | "kamer" = "appartement";
   const pType = String(
-    product.type_of_property || product.property_type || product.type || product.category || ""
+    product.type_of_property || product.property_type || product.building_type ||
+    product.type || product.category || ""
   ).toLowerCase();
-  if (pType.includes("huis") || pType.includes("house") || pType.includes("woning") || pType.includes("villa") || pType.includes("tussenwoning") || pType.includes("hoekwoning")) {
+  if (pType.includes("huis") || pType.includes("house") || pType.includes("woning") || pType.includes("villa") || pType.includes("tussenwoning") || pType.includes("hoekwoning") || pType.includes("eengezins")) {
     propertyType = "huis";
   } else if (pType.includes("studio")) {
     propertyType = "studio";
