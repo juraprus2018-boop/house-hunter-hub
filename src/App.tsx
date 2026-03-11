@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation, useParams } from "react-router-dom";
 import ScrollToTop from "@/components/ScrollToTop";
 import { AuthProvider } from "@/contexts/AuthContext";
 import Index from "./pages/Index";
@@ -39,8 +39,18 @@ import NewListings from "./pages/NewListings";
 import PostPropertyStart from "./pages/PostPropertyStart";
 import AlertUnsubscribe from "./pages/AlertUnsubscribe";
 import DailyAlert from "./pages/DailyAlert";
+import { cityPath } from "@/lib/cities";
 
 const queryClient = new QueryClient();
+
+const LegacyCityRedirect = () => {
+  const { city } = useParams<{ city: string }>();
+  const location = useLocation();
+
+  if (!city) return <Navigate to="/steden" replace />;
+
+  return <Navigate to={`${cityPath(city)}${location.search}`} replace />;
+};
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -84,7 +94,8 @@ const App = () => (
             <Route path="/alerts/afmelden/:token" element={<AlertUnsubscribe />} />
             <Route path="/huurwoningen/:city?" element={<ListingTypePage listingType="huur" />} />
             <Route path="/koopwoningen/:city?" element={<ListingTypePage listingType="koop" />} />
-            <Route path="/:city" element={<CityPage />} />
+            <Route path="/woningen-:city" element={<CityPage />} />
+            <Route path="/:city" element={<LegacyCityRedirect />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

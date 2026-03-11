@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
+import { cityPath } from "@/lib/cities";
 
 interface CityProperties {
   city: string;
@@ -123,7 +124,7 @@ const PopularCities = () => {
                     </p>
                   </div>
                 </div>
-                <Link to={`/${city.toLowerCase().replace(/\s+/g, "-")}`}>
+                <Link to={cityPath(city)}>
                   <Button variant="ghost" size="sm" className="gap-1">
                     Bekijk alle
                     <ArrowRight className="h-4 w-4" />

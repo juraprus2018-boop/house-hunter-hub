@@ -174,7 +174,7 @@ Voeg relevante interne links toe naar andere pagina's op WoonPeek.nl. Gebruik <a
 - /zoeken?listing_type=huur → voor huurwoningen zoeken
 - /zoeken?listing_type=koop → voor koopwoningen zoeken  
 - /steden → overzicht van alle steden
-- /steden/amsterdam → Amsterdam woningen (ook: rotterdam, utrecht, den-haag, eindhoven, groningen, etc.)
+- /woningen-amsterdam → Amsterdam woningen (ook: rotterdam, utrecht, den-haag, eindhoven, groningen, etc.)
 - /nieuwe-woningen → nieuw toegevoegde woningen
 - /verkennen → woningen op de kaart bekijken
 - /dagelijkse-alert → dagelijkse e-mail alerts instellen

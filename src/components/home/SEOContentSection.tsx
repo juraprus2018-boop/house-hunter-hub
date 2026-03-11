@@ -134,12 +134,12 @@ const SEOContentSection = () => {
           </p>
           <p>
             Populaire steden voor huurwoningen zijn onder andere{" "}
-            <Link to="/amsterdam" className="text-primary hover:underline">Amsterdam</Link>,{" "}
-            <Link to="/rotterdam" className="text-primary hover:underline">Rotterdam</Link>,{" "}
-            <Link to="/utrecht" className="text-primary hover:underline">Utrecht</Link>,{" "}
-            <Link to="/den-haag" className="text-primary hover:underline">Den Haag</Link>,{" "}
-            <Link to="/eindhoven" className="text-primary hover:underline">Eindhoven</Link> en{" "}
-            <Link to="/groningen" className="text-primary hover:underline">Groningen</Link>.
+            <Link to="/woningen-amsterdam" className="text-primary hover:underline">Amsterdam</Link>,{" "}
+            <Link to="/woningen-rotterdam" className="text-primary hover:underline">Rotterdam</Link>,{" "}
+            <Link to="/woningen-utrecht" className="text-primary hover:underline">Utrecht</Link>,{" "}
+            <Link to="/woningen-den-haag" className="text-primary hover:underline">Den Haag</Link>,{" "}
+            <Link to="/woningen-eindhoven" className="text-primary hover:underline">Eindhoven</Link> en{" "}
+            <Link to="/woningen-groningen" className="text-primary hover:underline">Groningen</Link>.
             Maar ook in kleinere steden en dorpen worden dagelijks nieuwe huurwoningen aangeboden.
           </p>
 

@@ -21,6 +21,7 @@ interface PropertyFilters {
   includeInactive?: boolean;
   page?: number;
   pageSize?: number;
+  disablePagination?: boolean;
 }
 
 export const useProperties = (filters?: PropertyFilters) => {
@@ -69,12 +70,13 @@ export const useProperties = (filters?: PropertyFilters) => {
         query = query.eq("source_site", filters.sourceSite);
       }
 
-      // Pagination
-      const page = filters?.page || 1;
-      const pageSize = filters?.pageSize || 12;
-      const from = (page - 1) * pageSize;
-      const to = from + pageSize - 1;
-      query = query.range(from, to);
+      if (!filters?.disablePagination) {
+        const page = filters?.page || 1;
+        const pageSize = filters?.pageSize || 12;
+        const from = (page - 1) * pageSize;
+        const to = from + pageSize - 1;
+        query = query.range(from, to);
+      }
 
       const { data, error, count } = await query;
       if (error) throw error;

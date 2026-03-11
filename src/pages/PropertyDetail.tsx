@@ -37,6 +37,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
+import { cityPath } from "@/lib/cities";
 import {
   Popover,
   PopoverContent,
@@ -357,7 +358,7 @@ const PropertyDetail = () => {
             <Breadcrumbs items={[
               { label: "Home", href: "/" },
               { label: property.property_type.charAt(0).toUpperCase() + property.property_type.slice(1) },
-              { label: property.city, href: `/${property.city.toLowerCase().replace(/\s+/g, "-")}` },
+              { label: property.city, href: cityPath(property.city) },
               { label: property.neighborhood || property.city },
             ]} />
             <div className="flex items-center gap-2">

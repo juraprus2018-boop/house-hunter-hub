@@ -9,6 +9,7 @@ import PageBanner from "@/components/layout/PageBanner";
 import SEOHead from "@/components/seo/SEOHead";
 import Breadcrumbs from "@/components/seo/Breadcrumbs";
 import bannerCities from "@/assets/banner-cities.jpg";
+import { cityPath } from "@/lib/cities";
 
 const useCityCounts = () =>
   useQuery({
@@ -74,7 +75,7 @@ const Cities = () => {
         ) : (
           <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
             {cities?.map(({ city, count }) => (
-              <Link key={city} to={`/${city.toLowerCase().replace(/\s+/g, "-")}`}>
+              <Link key={city} to={cityPath(city)}>
                 <Card className="group border-0 shadow-md transition-shadow hover:shadow-xl">
                   <CardContent className="flex items-center gap-3 p-4">
                     <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10">

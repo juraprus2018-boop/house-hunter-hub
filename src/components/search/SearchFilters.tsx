@@ -29,27 +29,30 @@ interface SearchFiltersProps {
   filters: SearchFilterValues;
   onChange: (filters: SearchFilterValues) => void;
   onClear: () => void;
+  hideLocation?: boolean;
 }
 
-const SearchFilters = ({ filters, onChange, onClear }: SearchFiltersProps) => {
+const SearchFilters = ({ filters, onChange, onClear, hideLocation = false }: SearchFiltersProps) => {
   const update = (patch: Partial<SearchFilterValues>) => {
     onChange({ ...filters, ...patch });
   };
 
   return (
     <div className="space-y-6">
-      <div className="space-y-2">
-        <Label>Locatie</Label>
-        <div className="relative">
-          <MapPin className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            placeholder="Stad of postcode"
-            value={filters.city}
-            onChange={(e) => update({ city: e.target.value })}
-            className="pl-10"
-          />
+      {!hideLocation && (
+        <div className="space-y-2">
+          <Label>Locatie</Label>
+          <div className="relative">
+            <MapPin className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              placeholder="Stad of postcode"
+              value={filters.city}
+              onChange={(e) => update({ city: e.target.value })}
+              className="pl-10"
+            />
+          </div>
         </div>
-      </div>
+      )}
 
       <div className="space-y-2">
         <Label>Type woning</Label>
@@ -110,6 +113,24 @@ const SearchFilters = ({ filters, onChange, onClear }: SearchFiltersProps) => {
             <SelectItem value="2">2+</SelectItem>
             <SelectItem value="3">3+</SelectItem>
             <SelectItem value="4">4+</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="space-y-2">
+        <Label>Min. oppervlakte</Label>
+        <Select
+          value={filters.minSurface?.toString() || ""}
+          onValueChange={(value) => update({ minSurface: value ? Number(value) : undefined })}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Geen minimum" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="25">25+ m²</SelectItem>
+            <SelectItem value="50">50+ m²</SelectItem>
+            <SelectItem value="75">75+ m²</SelectItem>
+            <SelectItem value="100">100+ m²</SelectItem>
           </SelectContent>
         </Select>
       </div>

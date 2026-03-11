@@ -67,7 +67,7 @@ function buildSitemapXml(
 
   for (const [citySlug, info] of cityMap) {
     xml += `  <url>
-    <loc>${SITE_URL}/${citySlug}</loc>
+    <loc>${SITE_URL}/woningen-${citySlug}</loc>
     <lastmod>${info.lastMod.split("T")[0]}</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
