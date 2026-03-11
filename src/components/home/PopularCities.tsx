@@ -1,81 +1,41 @@
 import { useQuery } from "@tanstack/react-query";
-import propertyPlaceholder from "@/assets/property-placeholder.jpg";
 import { supabase } from "@/integrations/supabase/client";
-import { MapPin, Bed, Square, ArrowRight, Loader2 } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { MapPin, ArrowRight, Loader2, Building2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { cityPath } from "@/lib/cities";
 
-interface CityProperties {
+interface CityData {
   city: string;
   count: number;
-  properties: Array<{
-    id: string;
-    title: string;
-    slug: string | null;
-    price: number;
-    listing_type: string;
-    property_type: string;
-    city: string;
-    bedrooms: number | null;
-    surface_area: number | null;
-    images: string[] | null;
-  }>;
 }
 
 const useTopCities = () => {
   return useQuery({
-    queryKey: ["top-cities"],
+    queryKey: ["top-cities-simple"],
     queryFn: async () => {
-      // Get top 5 cities by property count
-      const { data: cityData, error: cityError } = await supabase
+      const { data, error } = await supabase
         .from("properties")
         .select("city")
         .eq("status", "actief");
 
-      if (cityError) throw cityError;
+      if (error) throw error;
 
-      // Count per city
       const cityCounts: Record<string, number> = {};
-      cityData.forEach((p) => {
+      data.forEach((p) => {
         const c = p.city.trim();
-        cityCounts[c] = (cityCounts[c] || 0) + 1;
+        if (c && c !== "Onbekend") {
+          cityCounts[c] = (cityCounts[c] || 0) + 1;
+        }
       });
 
-      const top5 = Object.entries(cityCounts)
+      return Object.entries(cityCounts)
         .sort((a, b) => b[1] - a[1])
-        .slice(0, 5)
+        .slice(0, 12)
         .map(([city, count]) => ({ city, count }));
-
-      // Get 3 properties per city
-      const results: CityProperties[] = [];
-      for (const { city, count } of top5) {
-        const { data: props } = await supabase
-          .from("properties")
-          .select("id, title, slug, price, listing_type, property_type, city, bedrooms, surface_area, images")
-          .eq("status", "actief")
-          .eq("city", city)
-          .order("views_count", { ascending: false })
-          .limit(3);
-
-        results.push({ city, count, properties: props || [] });
-      }
-
-      return results;
     },
+    staleTime: 5 * 60 * 1000,
   });
-};
-
-const formatPrice = (price: number, listingType: string) => {
-  const formatted = new Intl.NumberFormat("nl-NL", {
-    style: "currency",
-    currency: "EUR",
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(price);
-  return listingType === "huur" ? `${formatted}/mnd` : formatted;
 };
 
 const PopularCities = () => {
@@ -83,7 +43,7 @@ const PopularCities = () => {
 
   if (isLoading) {
     return (
-      <section className="py-16 bg-muted/30">
+      <section className="py-16 md:py-20">
         <div className="container">
           <div className="flex items-center justify-center py-12">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -96,96 +56,46 @@ const PopularCities = () => {
   if (!cities || cities.length === 0) return null;
 
   return (
-    <section className="py-16 bg-muted/30">
+    <section className="py-16 md:py-20">
       <div className="container">
         <div className="mb-10 text-center">
-          <h2 className="font-display text-3xl font-bold text-foreground">
+          <h2 className="font-display text-3xl font-bold text-foreground md:text-4xl">
             Populaire steden
           </h2>
-          <p className="mt-2 text-muted-foreground">
-            Ontdek woningen in de meest populaire steden op ons platform
+          <p className="mx-auto mt-3 max-w-xl text-muted-foreground">
+            Ontdek het woningaanbod in de populairste steden van Nederland
           </p>
         </div>
 
-        <div className="space-y-12">
-          {cities.map(({ city, count, properties }) => (
-            <div key={city}>
-              <div className="mb-4 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
-                    <MapPin className="h-5 w-5 text-primary" />
-                  </div>
-                  <div>
-                    <h3 className="font-display text-xl font-semibold text-foreground">
-                      {city}
-                    </h3>
-                    <p className="text-sm text-muted-foreground">
-                      {count} {count === 1 ? "woning" : "woningen"} beschikbaar
-                    </p>
-                  </div>
-                </div>
-                <Link to={cityPath(city)}>
-                  <Button variant="ghost" size="sm" className="gap-1">
-                    Bekijk alle
-                    <ArrowRight className="h-4 w-4" />
-                  </Button>
-                </Link>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
+          {cities.map(({ city, count }) => (
+            <Link
+              key={city}
+              to={cityPath(city)}
+              className="group flex flex-col items-center gap-3 rounded-2xl border bg-card p-5 text-center transition-all hover:border-primary/30 hover:shadow-lg"
+            >
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 transition-colors group-hover:bg-primary/20">
+                <Building2 className="h-6 w-6 text-primary" />
               </div>
-
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {properties.map((property) => (
-                  <Link
-                    key={property.id}
-                    to={`/woning/${property.slug || property.id}`}
-                  >
-                    <Card className="group overflow-hidden border-0 shadow-md transition-shadow hover:shadow-xl">
-                      <div className="relative aspect-[4/3] overflow-hidden">
-                        <img
-                           src={property.images?.[0] || propertyPlaceholder}
-                           alt={property.title}
-                           className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                           onError={(e) => { e.currentTarget.src = propertyPlaceholder; }}
-                          loading="lazy"
-                        />
-                        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-3">
-                          <Badge
-                            variant="secondary"
-                            className="bg-white/90 capitalize text-foreground text-xs"
-                          >
-                            {property.property_type}
-                          </Badge>
-                        </div>
-                      </div>
-                      <CardContent className="p-4">
-                        <div className="mb-1 flex items-start justify-between gap-2">
-                          <h4 className="font-display text-sm font-semibold text-foreground line-clamp-1">
-                            {property.title}
-                          </h4>
-                          <span className="font-display text-sm font-bold text-primary whitespace-nowrap">
-                            {formatPrice(Number(property.price), property.listing_type)}
-                          </span>
-                        </div>
-                        <div className="mt-2 flex items-center gap-3 text-xs text-muted-foreground">
-                          {property.bedrooms && (
-                            <div className="flex items-center gap-1">
-                              <Bed className="h-3.5 w-3.5" />
-                              <span>{property.bedrooms}</span>
-                            </div>
-                          )}
-                          {property.surface_area && (
-                            <div className="flex items-center gap-1">
-                              <Square className="h-3.5 w-3.5" />
-                              <span>{property.surface_area} m²</span>
-                            </div>
-                          )}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </Link>
-                ))}
+              <div>
+                <h3 className="font-display text-sm font-semibold text-foreground md:text-base">
+                  {city}
+                </h3>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {count} {count === 1 ? "woning" : "woningen"}
+                </p>
               </div>
-            </div>
+            </Link>
           ))}
+        </div>
+
+        <div className="mt-8 text-center">
+          <Link to="/steden">
+            <Button variant="outline" className="gap-2">
+              Bekijk alle steden
+              <ArrowRight className="h-4 w-4" />
+            </Button>
+          </Link>
         </div>
       </div>
     </section>
