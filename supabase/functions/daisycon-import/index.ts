@@ -547,29 +547,41 @@ Deno.serve(async (req) => {
         for (const propData of allPropertyData) {
           const existing = existingMap.get(propData.source_url);
           if (existing) {
+            // Always sync ALL fields from feed to keep data fresh
             const updates: Record<string, any> = {};
+            
             // Reactivate if inactive
             if (existing.status === "inactief") {
               updates.status = "actief";
             }
-            const hasNoImages = existing.images.length === 0 || 
-              (existing.images.length === 1 && existing.images[0] === "");
-            if (hasNoImages && propData.images.length > 0) {
+            
+            // Always update images if feed has them
+            if (propData.images.length > 0) {
               updates.images = propData.images;
             }
+            
+            // Update title if current is generic
             if (existing.title && genericTitles.includes(existing.title.trim().toLowerCase())) {
               updates.title = propData.title;
             }
-            if (!existing.latitude && propData.latitude) {
+            
+            // Always update these fields from the feed if available
+            if (propData.latitude) {
               updates.latitude = propData.latitude;
               updates.longitude = propData.longitude;
             }
-            if (!existing.build_year && propData.build_year) {
-              updates.build_year = propData.build_year;
-            }
-            if (!existing.energy_label && propData.energy_label) {
-              updates.energy_label = propData.energy_label;
-            }
+            if (propData.build_year) updates.build_year = propData.build_year;
+            if (propData.energy_label) updates.energy_label = propData.energy_label;
+            if (propData.price) updates.price = propData.price;
+            if (propData.surface_area) updates.surface_area = propData.surface_area;
+            if (propData.bedrooms) updates.bedrooms = propData.bedrooms;
+            if (propData.bathrooms) updates.bathrooms = propData.bathrooms;
+            if (propData.description) updates.description = propData.description;
+            if (propData.street && propData.street !== "Onbekend") updates.street = propData.street;
+            if (propData.house_number && propData.house_number !== "-") updates.house_number = propData.house_number;
+            if (propData.city && propData.city !== "Onbekend") updates.city = propData.city;
+            if (propData.postal_code && propData.postal_code !== "0000AA") updates.postal_code = propData.postal_code;
+            
             if (Object.keys(updates).length > 0) {
               updates.updated_at = new Date().toISOString();
               await supabase.from("properties").update(updates).eq("id", existing.id);
