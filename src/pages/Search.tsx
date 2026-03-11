@@ -87,6 +87,16 @@ const SearchPage = () => {
   const totalCount = data?.totalCount || 0;
   const totalPages = Math.ceil(totalCount / pageSize);
 
+  // Separate query for map view: all properties with coordinates
+  const { data: mapProperties, isLoading: isMapLoading } = useMapProperties({
+    city: debouncedCity || undefined,
+    propertyType: filters.propertyType || undefined,
+    listingType: filters.listingType || undefined,
+    maxPrice: filters.maxPrice,
+    minBedrooms: filters.minBedrooms,
+    minSurface: filters.minSurface,
+  }, viewMode === "map");
+
   const handleFilterChange = useCallback((newFilters: SearchFilterValues) => {
     setFilters(newFilters);
     setCurrentPage(1);
