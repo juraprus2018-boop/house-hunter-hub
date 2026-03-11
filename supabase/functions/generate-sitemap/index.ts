@@ -243,7 +243,6 @@ Deno.serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/xml; charset=utf-8", "Cache-Control": "public, max-age=3600" },
       });
     }
-    }
 
     if (type === "blog") {
       const { data: blogPosts, error } = await supabase
