@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import AdminLayout from "./AdminLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -29,57 +29,52 @@ import {
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { useAllProperties, useUpdatePropertyAdmin, useDeletePropertyAdmin, usePostToFacebook } from "@/hooks/useAdmin";
-import { Search, Pencil, Trash2, Loader2, ExternalLink, Filter, Facebook, CheckCircle } from "lucide-react";
+import { useAdminPropertiesPaginated, useUpdatePropertyAdmin, useDeletePropertyAdmin, usePostToFacebook } from "@/hooks/useAdmin";
+import { Search, Pencil, Trash2, Loader2, ExternalLink, Filter, Facebook, CheckCircle, ChevronLeft, ChevronRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { nl } from "date-fns/locale";
 
+const PAGE_SIZE = 50;
+
 const AdminProperties = () => {
-  const { data: properties, isLoading } = useAllProperties();
+  const [currentPage, setCurrentPage] = useState(0);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [sourceFilter, setSourceFilter] = useState<string>("all");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+
+  // Debounce search
+  const [searchTimeout, setSearchTimeout] = useState<ReturnType<typeof setTimeout> | null>(null);
+  const handleSearchChange = (value: string) => {
+    setSearchQuery(value);
+    if (searchTimeout) clearTimeout(searchTimeout);
+    const timeout = setTimeout(() => {
+      setDebouncedSearch(value);
+      setCurrentPage(0);
+    }, 400);
+    setSearchTimeout(timeout);
+  };
+
+  const { data, isLoading } = useAdminPropertiesPaginated(currentPage, PAGE_SIZE, {
+    search: debouncedSearch,
+    source: sourceFilter,
+    status: statusFilter,
+  });
+
   const updateProperty = useUpdatePropertyAdmin();
   const deleteProperty = useDeletePropertyAdmin();
   const postToFacebook = usePostToFacebook();
   const { toast } = useToast();
 
-  const [searchQuery, setSearchQuery] = useState("");
-  const [sourceFilter, setSourceFilter] = useState<string>("all");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [editingProperty, setEditingProperty] = useState<typeof properties extends (infer T)[] ? T : never | null>(null);
+  const [editingProperty, setEditingProperty] = useState<any>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [formData, setFormData] = useState<Record<string, unknown>>({});
   const [postingToFb, setPostingToFb] = useState<string | null>(null);
 
-  const handlePostToFacebook = async (propertyId: string) => {
-    setPostingToFb(propertyId);
-    try {
-      await postToFacebook.mutateAsync(propertyId);
-      toast({ title: "Geplaatst op Facebook!", description: "De woning is gedeeld op je Facebook-pagina." });
-    } catch (error: unknown) {
-      const msg = error instanceof Error ? error.message : "Onbekende fout";
-      if (msg.includes("al op Facebook")) {
-        toast({ title: "Al geplaatst", description: msg, variant: "destructive" });
-      } else {
-        toast({ title: "Facebook post mislukt", description: msg, variant: "destructive" });
-      }
-    } finally {
-      setPostingToFb(null);
-    }
-  };
-
-  const availableSources = Array.from(
-    new Set(properties?.map((p) => p.source_site).filter(Boolean) as string[])
-  ).sort();
-
-  const filteredProperties = properties?.filter((p) => {
-    const matchesSearch =
-      p.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      p.city.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      p.street.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesSource = sourceFilter === "all" || p.source_site === sourceFilter || (sourceFilter === "user" && !p.source_site);
-    const matchesStatus = statusFilter === "all" || p.status === statusFilter;
-    return matchesSearch && matchesSource && matchesStatus;
-  });
+  const properties = data?.properties;
+  const totalCount = data?.totalCount || 0;
+  const totalPages = data?.totalPages || 1;
 
   const formatPrice = (price: number, listingType: string) => {
     const formatted = new Intl.NumberFormat("nl-NL", {
