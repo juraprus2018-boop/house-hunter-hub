@@ -218,15 +218,44 @@ function mapDaisyconToProperty(product: DaisyconProduct, sourceSite: string, sou
 
   // Collect images - check many common Daisycon field naming patterns
   const images: string[] = [];
-  const mainImage = product.image_large || product.image_url_large || product.image_url;
-  if (mainImage && typeof mainImage === "string") images.push(mainImage);
-  if (product.additional_image_urls && Array.isArray(product.additional_image_urls)) {
-    images.push(...product.additional_image_urls.filter((u: unknown) => typeof u === "string" && u).slice(0, 9));
+  
+  // Handle "images" field (Daisycon standard_id=20 format) - can be array of objects, array of strings, or string
+  const rawImages = product.images || product[`images`];
+  if (rawImages) {
+    if (Array.isArray(rawImages)) {
+      for (const img of rawImages) {
+        if (typeof img === "string" && img) {
+          images.push(img);
+        } else if (img && typeof img === "object") {
+          // Object format: { url: "...", image: "...", src: "...", image_url: "..." }
+          const imgUrl = (img as any).url || (img as any).image || (img as any).src || 
+                         (img as any).image_url || (img as any).large || (img as any).original;
+          if (typeof imgUrl === "string" && imgUrl) images.push(imgUrl);
+        }
+      }
+    } else if (typeof rawImages === "string" && rawImages) {
+      // Could be comma-separated or pipe-separated
+      const urls = rawImages.includes(",") ? rawImages.split(",") : 
+                   rawImages.includes("|") ? rawImages.split("|") : [rawImages];
+      for (const u of urls) {
+        const trimmed = u.trim();
+        if (trimmed) images.push(trimmed);
+      }
+    }
   }
-  // Check image_url_1..20, extra_image_url_1..20, image_1..20
-  for (let i = 1; i <= 20; i++) {
-    const extraImg = product[`image_url_${i}`] || product[`extra_image_url_${i}`] || product[`image_${i}`];
-    if (typeof extraImg === "string" && extraImg && !images.includes(extraImg)) images.push(extraImg);
+
+  // Fallback: check individual image fields
+  if (images.length === 0) {
+    const mainImage = product.image_large || product.image_url_large || product.image_url;
+    if (mainImage && typeof mainImage === "string") images.push(mainImage);
+    if (product.additional_image_urls && Array.isArray(product.additional_image_urls)) {
+      images.push(...product.additional_image_urls.filter((u: unknown) => typeof u === "string" && u).slice(0, 9));
+    }
+    // Check image_url_1..20, extra_image_url_1..20, image_1..20
+    for (let i = 1; i <= 20; i++) {
+      const extraImg = product[`image_url_${i}`] || product[`extra_image_url_${i}`] || product[`image_${i}`];
+      if (typeof extraImg === "string" && extraImg && !images.includes(extraImg)) images.push(extraImg);
+    }
   }
 
   const title = product.title || `${street} ${houseNumber}, ${city}`.trim();
