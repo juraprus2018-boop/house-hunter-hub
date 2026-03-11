@@ -24,99 +24,126 @@ interface PropertyFilters {
   disablePagination?: boolean;
 }
 
+const DEFAULT_BATCH_SIZE = 1000;
+
+const applyPropertyFilters = <T,>(query: T, filters?: PropertyFilters) => {
+  let q: any = query;
+
+  if (!filters?.includeInactive) {
+    q = q.eq("status", "actief");
+  } else {
+    q = q.in("status", ["actief", "inactief", "verhuurd", "verkocht"]);
+  }
+
+  if (filters?.city) {
+    const cityValue = filters.city.trim();
+    const isPostalCode = /^\d/.test(cityValue);
+    if (isPostalCode) {
+      q = q.ilike("postal_code", `%${cityValue}%`);
+    } else {
+      q = q.ilike("city", `%${cityValue}%`);
+    }
+  }
+
+  if (filters?.propertyType) q = q.eq("property_type", filters.propertyType);
+  if (filters?.listingType) q = q.eq("listing_type", filters.listingType);
+  if (filters?.minPrice) q = q.gte("price", filters.minPrice);
+  if (filters?.maxPrice) q = q.lte("price", filters.maxPrice);
+  if (filters?.minSurface) q = q.gte("surface_area", filters.minSurface);
+  if (filters?.minBedrooms) q = q.gte("bedrooms", filters.minBedrooms);
+  if (filters?.sourceSite) q = q.eq("source_site", filters.sourceSite);
+
+  return q as T;
+};
+
 export const useProperties = (filters?: PropertyFilters) => {
   return useQuery({
     queryKey: ["properties", filters],
     queryFn: async () => {
-      let query = supabase
-        .from("properties")
-        .select("*", { count: "exact" })
-        .order("created_at", { ascending: false });
-
-      if (!filters?.includeInactive) {
-        query = query.eq("status", "actief");
-      } else {
-        query = query.in("status", ["actief", "inactief", "verhuurd", "verkocht"]);
-      }
-
-      if (filters?.city) {
-        // Check if it looks like a postal code (starts with digits)
-        const isPostalCode = /^\d/.test(filters.city.trim());
-        if (isPostalCode) {
-          query = query.ilike("postal_code", `%${filters.city.trim()}%`);
-        } else {
-          query = query.ilike("city", `%${filters.city}%`);
-        }
-      }
-      if (filters?.propertyType) {
-        query = query.eq("property_type", filters.propertyType);
-      }
-      if (filters?.listingType) {
-        query = query.eq("listing_type", filters.listingType);
-      }
-      if (filters?.minPrice) {
-        query = query.gte("price", filters.minPrice);
-      }
-      if (filters?.maxPrice) {
-        query = query.lte("price", filters.maxPrice);
-      }
-      if (filters?.minSurface) {
-        query = query.gte("surface_area", filters.minSurface);
-      }
-      if (filters?.minBedrooms) {
-        query = query.gte("bedrooms", filters.minBedrooms);
-      }
-      if (filters?.sourceSite) {
-        query = query.eq("source_site", filters.sourceSite);
-      }
-
+      // Paginated mode (default)
       if (!filters?.disablePagination) {
         const page = filters?.page || 1;
         const pageSize = filters?.pageSize || 12;
         const from = (page - 1) * pageSize;
         const to = from + pageSize - 1;
-        query = query.range(from, to);
-      } else {
-        // Supabase default limit is 1000, explicitly set higher to get all results
-        query = query.limit(10000);
+
+        let query = supabase
+          .from("properties")
+          .select("*", { count: "exact" })
+          .order("created_at", { ascending: false })
+          .range(from, to);
+
+        query = applyPropertyFilters(query, filters);
+
+        const { data, error, count } = await query;
+        if (error) throw error;
+
+        return { properties: (data as Property[]) || [], totalCount: count || 0 };
       }
 
-      const { data, error, count } = await query;
-      if (error) throw error;
-      return { properties: data as Property[], totalCount: count || 0 };
+      // Full mode (all rows) - fetch in batches to avoid 1000-row API limit
+      const { count, error: countError } = await applyPropertyFilters(
+        supabase.from("properties").select("id", { count: "exact", head: true }),
+        filters
+      );
+      if (countError) throw countError;
+
+      const allProperties: Property[] = [];
+      let from = 0;
+
+      while (true) {
+        let batchQuery = supabase
+          .from("properties")
+          .select("*")
+          .order("created_at", { ascending: false })
+          .range(from, from + DEFAULT_BATCH_SIZE - 1);
+
+        batchQuery = applyPropertyFilters(batchQuery, filters);
+
+        const { data, error } = await batchQuery;
+        if (error) throw error;
+        if (!data || data.length === 0) break;
+
+        allProperties.push(...(data as Property[]));
+
+        if (data.length < DEFAULT_BATCH_SIZE) break;
+        from += DEFAULT_BATCH_SIZE;
+      }
+
+      return { properties: allProperties, totalCount: count || allProperties.length };
     },
   });
 };
 
-export const useMapProperties = (filters?: Omit<PropertyFilters, 'page' | 'pageSize' | 'disablePagination'>, enabled = true) => {
+export const useMapProperties = (filters?: Omit<PropertyFilters, "page" | "pageSize" | "disablePagination">, enabled = true) => {
   return useQuery({
     queryKey: ["map-properties", filters],
     queryFn: async () => {
-      let query = supabase
-        .from("properties")
-        .select("id, title, price, listing_type, property_type, city, street, house_number, slug, images, latitude, longitude, status")
-        .not("latitude", "is", null)
-        .not("longitude", "is", null)
-        .eq("status", "actief")
-        .limit(5000);
+      const allMapProperties: Property[] = [];
+      let from = 0;
 
-      if (filters?.city) {
-        const isPostalCode = /^\d/.test(filters.city.trim());
-        if (isPostalCode) {
-          query = query.ilike("postal_code", `%${filters.city.trim()}%`);
-        } else {
-          query = query.ilike("city", `%${filters.city}%`);
-        }
+      while (true) {
+        let query = supabase
+          .from("properties")
+          .select("id, title, price, listing_type, property_type, city, street, house_number, slug, images, latitude, longitude, status, bedrooms, surface_area, source_site")
+          .not("latitude", "is", null)
+          .not("longitude", "is", null)
+          .order("created_at", { ascending: false })
+          .range(from, from + DEFAULT_BATCH_SIZE - 1);
+
+        query = applyPropertyFilters(query, filters);
+
+        const { data, error } = await query;
+        if (error) throw error;
+        if (!data || data.length === 0) break;
+
+        allMapProperties.push(...(data as unknown as Property[]));
+
+        if (data.length < DEFAULT_BATCH_SIZE) break;
+        from += DEFAULT_BATCH_SIZE;
       }
-      if (filters?.propertyType) query = query.eq("property_type", filters.propertyType);
-      if (filters?.listingType) query = query.eq("listing_type", filters.listingType);
-      if (filters?.maxPrice) query = query.lte("price", filters.maxPrice);
-      if (filters?.minBedrooms) query = query.gte("bedrooms", filters.minBedrooms);
-      if (filters?.minSurface) query = query.gte("surface_area", filters.minSurface);
 
-      const { data, error } = await query;
-      if (error) throw error;
-      return data || [];
+      return allMapProperties;
     },
     enabled,
     staleTime: 60 * 1000,
