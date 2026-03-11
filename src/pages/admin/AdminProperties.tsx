@@ -198,7 +198,7 @@ const AdminProperties = () => {
                   <SelectItem value="Wooniezie">Wooniezie</SelectItem>
                 </SelectContent>
               </Select>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v); setCurrentPage(0); }}>
                 <SelectTrigger className="w-full sm:w-[200px]">
                   <Filter className="mr-2 h-4 w-4" />
                   <SelectValue placeholder="Alle statussen" />
