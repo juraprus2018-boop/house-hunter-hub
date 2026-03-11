@@ -280,10 +280,20 @@ const CityPage = () => {
           </div>
         </section>
 
+        {/* Similar Properties */}
+        <SimilarProperties
+          cityName={cityName}
+          excludeIds={filteredProperties.map((p) => p.id)}
+        />
+
+        {/* Related Cities */}
+        <RelatedCities currentCity={cityName} />
+
+        {/* SEO Text */}
         <section className="border-t bg-muted/30 py-12">
           <div className="container max-w-4xl">
             <h2 className="font-display text-2xl font-bold text-foreground">
-              SEO tekst over woningen in {cityName}
+              Alles over woningen in {cityName}
             </h2>
             <div className="mt-4 space-y-4 text-sm leading-relaxed text-muted-foreground">
               <p>
@@ -291,16 +301,20 @@ const CityPage = () => {
                 Op WoonPeek tonen we dagelijks nieuw aanbod in {cityName}, zodat je niet meerdere websites apart hoeft te controleren.
               </p>
               <p>
-                Zoek je een appartement, huis, studio of kamer in {cityName}, dan kun je op deze pagina direct filteren op woningtype,
-                prijs, slaapkamers en oppervlakte. Daardoor zie je sneller alleen het aanbod dat echt aansluit op je zoekprofiel.
+                Zoek je een appartement, huis, studio of kamer in {cityName}? Op deze pagina kun je direct filteren op woningtype,
+                prijs, slaapkamers en oppervlakte. Zo zie je alleen het aanbod dat echt aansluit op jouw zoekprofiel.
               </p>
               <p>
-                Momenteel staan er {totalCount} woningen in {cityName} op WoonPeek. Ben je specifiek op zoek naar huurwoningen of juist
-                koopwoningen in {cityName}, dan kun je ook doorklikken naar de aparte overzichtspagina&apos;s per aanbodtype.
+                Momenteel staan er {totalCount} woningen in {cityName} op WoonPeek, waarvan {huurCount} huurwoningen
+                en {koopCount} koopwoningen. Bekijk ook de aparte overzichtspagina&apos;s
+                voor <Link to={`/huurwoningen/${citySlug}`} className="text-primary underline hover:no-underline">huurwoningen in {cityName}</Link> en{" "}
+                <Link to={`/koopwoningen/${citySlug}`} className="text-primary underline hover:no-underline">koopwoningen in {cityName}</Link>.
               </p>
               <p>
-                Door regelmatig terug te komen op deze pagina voor {cityName}, mis je minder snel nieuwe woningen. Het aanbod verandert
-                doorlopend en populaire woningen verdwijnen vaak snel van de markt.
+                Het aanbod verandert doorlopend en populaire woningen verdwijnen vaak snel van de markt. Door regelmatig
+                deze pagina te bezoeken of een{" "}
+                <Link to="/dagelijkse-alert" className="text-primary underline hover:no-underline">dagelijkse alert</Link>{" "}
+                in te stellen, mis je geen enkel nieuw aanbod in {cityName}.
               </p>
             </div>
           </div>
