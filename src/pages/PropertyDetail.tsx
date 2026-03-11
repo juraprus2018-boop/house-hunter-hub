@@ -14,6 +14,7 @@ import PropertyMap from "@/components/properties/PropertyMap";
 import SEOHead from "@/components/seo/SEOHead";
 import Breadcrumbs from "@/components/seo/Breadcrumbs";
 import PropertyCard from "@/components/properties/PropertyCard";
+import PriceAnalysis from "@/components/properties/PriceAnalysis";
 import {
   Heart,
   Share2,
@@ -478,6 +479,15 @@ const PropertyDetail = () => {
                   ))}
                 </div>
               </section>
+
+              {/* ── Price Analysis ── */}
+              <PriceAnalysis
+                price={Number(property.price)}
+                surfaceArea={property.surface_area}
+                city={property.city}
+                listingType={property.listing_type}
+                propertyType={property.property_type}
+              />
 
               {/* ── Map ── */}
               {property.latitude && property.longitude && (
