@@ -3,10 +3,10 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
+    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-// Rotating topic categories for variety
+// Topic categories for rotation (used as fallback when no news is found)
 const TOPIC_CATEGORIES = [
   {
     category: "Huurmarkt tips",
@@ -85,7 +85,6 @@ function generateSlug(title: string): string {
     .trim();
 }
 
-// Pick a topic based on current day to ensure rotation
 function pickTopic(): { category: string; prompt: string } {
   const now = new Date();
   const dayOfYear = Math.floor(
@@ -96,6 +95,143 @@ function pickTopic(): { category: string; prompt: string } {
   const promptIndex = Math.floor(dayOfYear / TOPIC_CATEGORIES.length) % cat.prompts.length;
   return { category: cat.category, prompt: cat.prompts[promptIndex] };
 }
+
+// Fetch housing-related news from nu.nl RSS feed
+async function fetchNuNlNews(): Promise<{ title: string; description: string; link: string }[]> {
+  const RSS_URLS = [
+    "https://www.nu.nl/rss/Economie",
+    "https://www.nu.nl/rss/Algemeen",
+  ];
+
+  const housingKeywords = [
+    "woning", "huis", "huur", "koop", "hypotheek", "woningmarkt",
+    "huizenprijs", "huizenprijzen", "vastgoed", "nieuwbouw", "bouwvergunning",
+    "huurprijs", "energielabel", "verduurzaming", "isolatie", "warmtepomp",
+    "woningtekort", "starters", "rente", "huurtoeslag", "wooncrisis",
+    "appartement", "koopwoning", "huurwoning", "makelaars", "taxatie",
+    "WOZ", "erfpacht", "zonnepanelen", "woningcorporatie", "sociale huur",
+    "vrije sector", "overbieden", "woningbouw", "verhuizen", "kamertekort",
+  ];
+
+  const allArticles: { title: string; description: string; link: string }[] = [];
+
+  for (const rssUrl of RSS_URLS) {
+    try {
+      const res = await fetch(rssUrl, {
+        headers: { "User-Agent": "WoonPeek-BlogBot/1.0" },
+      });
+      if (!res.ok) continue;
+      const xml = await res.text();
+
+      // Simple XML parsing for RSS items
+      const items = xml.match(/<item>([\s\S]*?)<\/item>/g) || [];
+      for (const item of items) {
+        const titleMatch = item.match(/<title><!\[CDATA\[(.*?)\]\]>|<title>(.*?)<\/title>/);
+        const descMatch = item.match(/<description><!\[CDATA\[(.*?)\]\]>|<description>(.*?)<\/description>/);
+        const linkMatch = item.match(/<link>(.*?)<\/link>/);
+
+        const title = (titleMatch?.[1] || titleMatch?.[2] || "").trim();
+        const description = (descMatch?.[1] || descMatch?.[2] || "").replace(/<[^>]+>/g, "").trim();
+        const link = (linkMatch?.[1] || "").trim();
+
+        if (title) {
+          const combined = `${title} ${description}`.toLowerCase();
+          const isRelevant = housingKeywords.some(kw => combined.includes(kw));
+          if (isRelevant) {
+            allArticles.push({ title, description, link });
+          }
+        }
+      }
+    } catch (err) {
+      console.error(`Failed to fetch RSS from ${rssUrl}:`, err);
+    }
+  }
+
+  // Return max 5 most relevant articles
+  return allArticles.slice(0, 5);
+}
+
+const SYSTEM_PROMPT = `Je bent een top-tier Nederlandse SEO-contentwriter gespecialiseerd in de woningmarkt.
+Je schrijft professionele, goed gestructureerde blogartikelen voor WoonPeek.nl, een platform dat huur- en koopwoningen in Nederland verzamelt.
+
+SCHRIJFSTIJL & STRUCTUUR (ZEER BELANGRIJK):
+- Schrijf ALTIJD in het Nederlands, vlot en toegankelijk
+- Maak het artikel minimaal 1000 woorden
+- Voeg GEEN H1 toe (die wordt apart weergegeven als paginatitel)
+
+HTML STRUCTUUR (STRIKT VOLGEN):
+- Begin met een KORTE, krachtige intro van maximaal 2 zinnen in één <p> tag
+- Gebruik <h2> voor hoofdsecties (minimaal 5-6 h2 koppen)
+- Gebruik <h3> voor subsecties binnen een h2
+- Elke sectie moet minimaal 2 paragrafen bevatten
+- Houd paragrafen KORT: maximaal 3-4 zinnen per <p> tag
+- Gebruik <ul><li> of <ol><li> voor opsommingen en stappenplannen
+- Gebruik <strong> voor belangrijke termen en kernbegrippen
+- Gebruik <blockquote> voor tips of belangrijke waarschuwingen (minimaal 2 per artikel)
+
+FAQ SECTIE (VERPLICHT):
+- Voeg ALTIJD een FAQ-sectie toe aan het einde van het artikel, vóór de conclusie
+- Gebruik <h2>Veelgestelde vragen</h2> als kop
+- Schrijf minimaal 4 veelgestelde vragen met antwoorden
+- Gebruik dit exacte HTML-formaat voor elke vraag:
+  <div class="faq-item" itemscope itemprop="mainEntity" itemtype="https://schema.org/Question">
+    <h3 itemprop="name">De vraag hier?</h3>
+    <div itemscope itemprop="acceptedAnswer" itemtype="https://schema.org/Answer">
+      <p itemprop="text">Het antwoord hier.</p>
+    </div>
+  </div>
+
+INTERNE LINKS (VERPLICHT, minimaal 3):
+Voeg relevante interne links toe naar andere pagina's op WoonPeek.nl:
+- /zoeken?listing_type=huur → voor huurwoningen zoeken
+- /zoeken?listing_type=koop → voor koopwoningen zoeken  
+- /steden → overzicht van alle steden
+- /woningen-amsterdam → Amsterdam woningen (ook: rotterdam, utrecht, den-haag, etc.)
+- /nieuwe-woningen → nieuw toegevoegde woningen
+- /verkennen → woningen op de kaart bekijken
+- /dagelijkse-alert → dagelijkse e-mail alerts instellen
+- /blog → meer blogartikelen lezen
+
+INHOUD:
+- Gebruik concrete cijfers, bedragen en percentages
+- Geef praktische, direct toepasbare tips
+- Verwijs naar actuele wet- en regelgeving waar relevant
+- Schrijf alsof je een expert bent die een vriend adviseert
+- Eindig met een sterke conclusie en CTA naar WoonPeek`;
+
+const TOOL_DEFINITION = {
+  type: "function" as const,
+  function: {
+    name: "create_blog_post",
+    description: "Create a blog post with structured content",
+    parameters: {
+      type: "object",
+      properties: {
+        title: { type: "string", description: "Blog post title, max 60 chars, SEO optimized" },
+        excerpt: { type: "string", description: "Short summary, max 160 chars" },
+        meta_title: { type: "string", description: "SEO title for Google, max 60 chars, include primary keyword" },
+        meta_description: { type: "string", description: "Meta description for Google, max 155 chars, include CTA" },
+        content: { type: "string", description: "Full article content in HTML with FAQ section" },
+        faq_questions: {
+          type: "array",
+          description: "Array of FAQ question-answer pairs for JSON-LD schema",
+          items: {
+            type: "object",
+            properties: {
+              question: { type: "string" },
+              answer: { type: "string" },
+            },
+            required: ["question", "answer"],
+            additionalProperties: false,
+          },
+        },
+        primary_keyword: { type: "string", description: "The main SEO keyword for this article" },
+      },
+      required: ["title", "excerpt", "meta_title", "meta_description", "content", "faq_questions", "primary_keyword"],
+      additionalProperties: false,
+    },
+  },
+};
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -132,10 +268,46 @@ Deno.serve(async (req) => {
       );
     }
 
-    const topic = pickTopic();
-    console.log(`Generating blog about: ${topic.category} - ${topic.prompt}`);
+    // Step 1: Try to fetch relevant news from nu.nl
+    console.log("Fetching housing news from nu.nl...");
+    const newsArticles = await fetchNuNlNews();
+    const hasNews = newsArticles.length > 0;
+    console.log(`Found ${newsArticles.length} relevant news articles`);
 
-    // Step 1: Generate the article with AI
+    // Step 2: Build the prompt based on news or fallback topic
+    let userPrompt: string;
+    let topicCategory: string;
+
+    if (hasNews) {
+      topicCategory = "Actueel woningmarkt nieuws";
+      const newsContext = newsArticles
+        .map((a, i) => `${i + 1}. "${a.title}" - ${a.description} (bron: ${a.link})`)
+        .join("\n");
+
+      userPrompt = `Schrijf een uitgebreid, informatief en SEO-geoptimaliseerd blogartikel gebaseerd op dit ACTUELE nieuws over de woningmarkt:
+
+${newsContext}
+
+BELANGRIJK:
+- Gebruik deze nieuwsberichten als inspiratie en context, maar schrijf een EIGEN uniek artikel
+- Verwijs NIET direct naar nu.nl of andere bronnen met links
+- Combineer de nieuwsfeiten tot een samenhangend verhaal met praktische tips
+- Maak het artikel actueel en relevant voor woningzoekers
+- Het is vandaag ${new Date().toLocaleDateString("nl-NL", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
+- Zorg dat de FAQ-vragen relevant zijn bij het actuele nieuws`;
+    } else {
+      const topic = pickTopic();
+      topicCategory = topic.category;
+      userPrompt = `Schrijf een uitgebreid, informatief en SEO-geoptimaliseerd blogartikel over het volgende onderwerp: "${topic.prompt}". 
+              
+Categorie: ${topic.category}.
+Het is vandaag ${new Date().toLocaleDateString("nl-NL", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}.
+
+Zorg dat het artikel actueel aanvoelt, praktische tips bevat, en relevant is voor mensen die actief op zoek zijn naar een woning in Nederland. Gebruik concrete voorbeelden en cijfers waar mogelijk.`;
+    }
+
+    // Step 3: Generate the article with AI
+    console.log(`Generating blog about: ${topicCategory}`);
     const aiResponse = await fetch(
       "https://ai.gateway.lovable.dev/v1/chat/completions",
       {
@@ -147,87 +319,10 @@ Deno.serve(async (req) => {
         body: JSON.stringify({
           model: "google/gemini-2.5-flash",
           messages: [
-            {
-              role: "system",
-              content: `Je bent een top-tier Nederlandse SEO-contentwriter gespecialiseerd in de woningmarkt.
-Je schrijft professionele, goed gestructureerde blogartikelen voor WoonPeek.nl, een platform dat huur- en koopwoningen in Nederland verzamelt.
-
-SCHRIJFSTIJL & STRUCTUUR (ZEER BELANGRIJK):
-- Schrijf ALTIJD in het Nederlands, vlot en toegankelijk
-- Het is nu ${new Date().toLocaleDateString("nl-NL", { month: "long", year: "numeric" })}
-- Maak het artikel minimaal 1000 woorden
-- Voeg GEEN H1 toe (die wordt apart weergegeven als paginatitel)
-
-HTML STRUCTUUR (STRIKT VOLGEN):
-- Begin met een KORTE, krachtige intro van maximaal 2 zinnen in één <p> tag. Geen lang verhaal, direct to-the-point.
-- Gebruik <h2> voor hoofdsecties (minimaal 5-6 h2 koppen, verdeel de content goed)
-- Gebruik <h3> voor subsecties binnen een h2
-- Elke sectie moet minimaal 2 paragrafen bevatten
-- Houd paragrafen KORT: maximaal 3-4 zinnen per <p> tag. Gebruik meerdere korte paragrafen in plaats van lange lappen tekst.
-- Gebruik <ul><li> of <ol><li> voor opsommingen en stappenplannen
-- Gebruik <strong> voor belangrijke termen en kernbegrippen
-- Gebruik <blockquote> voor tips of belangrijke waarschuwingen (minimaal 2 per artikel)
-- BELANGRIJK: Zorg voor VEEL witruimte. Elke <h2> markeert een duidelijk nieuw onderwerp.
-
-INTERNE LINKS (VERPLICHT, minimaal 3):
-Voeg relevante interne links toe naar andere pagina's op WoonPeek.nl. Gebruik <a href="URL">anchor text</a>. Beschikbare pagina's:
-- /zoeken?listing_type=huur → voor huurwoningen zoeken
-- /zoeken?listing_type=koop → voor koopwoningen zoeken  
-- /steden → overzicht van alle steden
-- /woningen-amsterdam → Amsterdam woningen (ook: rotterdam, utrecht, den-haag, eindhoven, groningen, etc.)
-- /nieuwe-woningen → nieuw toegevoegde woningen
-- /verkennen → woningen op de kaart bekijken
-- /dagelijkse-alert → dagelijkse e-mail alerts instellen
-- /blog → meer blogartikelen lezen
-
-Voorbeeld: <a href="/zoeken?listing_type=huur">Bekijk alle beschikbare huurwoningen</a>
-
-INHOUD:
-- Gebruik concrete cijfers, bedragen en percentages
-- Geef praktische, direct toepasbare tips
-- Verwijs naar actuele wet- en regelgeving waar relevant
-- Schrijf alsof je een expert bent die een vriend adviseert
-- Eindig met een sterke conclusie en CTA naar WoonPeek
-
-Je antwoord MOET een JSON object zijn met exact deze structuur:
-{
-  "title": "Pakkende, nieuwsgierig makende SEO-titel (max 60 tekens)",
-  "excerpt": "Korte samenvatting voor de overzichtspagina (max 160 tekens)", 
-  "meta_title": "SEO titel voor Google (max 60 tekens)",
-  "meta_description": "Meta beschrijving voor Google (max 155 tekens)",
-  "content": "<p>Het volledige artikel in HTML...</p>"
-}`,
-            },
-            {
-              role: "user",
-              content: `Schrijf een uitgebreid, informatief en SEO-geoptimaliseerd blogartikel over het volgende onderwerp: "${topic.prompt}". 
-              
-Categorie: ${topic.category}.
-
-Zorg dat het artikel actueel aanvoelt, praktische tips bevat, en relevant is voor mensen die actief op zoek zijn naar een woning in Nederland. Gebruik concrete voorbeelden en cijfers waar mogelijk.`,
-            },
+            { role: "system", content: SYSTEM_PROMPT },
+            { role: "user", content: userPrompt },
           ],
-          tools: [
-            {
-              type: "function",
-              function: {
-                name: "create_blog_post",
-                description: "Create a blog post with structured content",
-                parameters: {
-                  type: "object",
-                  properties: {
-                    title: { type: "string", description: "Blog post title, max 60 chars" },
-                    excerpt: { type: "string", description: "Short summary, max 160 chars" },
-                    meta_title: { type: "string", description: "SEO title, max 60 chars" },
-                    meta_description: { type: "string", description: "Meta description, max 155 chars" },
-                    content: { type: "string", description: "Full article content in HTML" },
-                  },
-                  required: ["title", "excerpt", "meta_title", "meta_description", "content"],
-                  additionalProperties: false,
-                },
-              },
-            },
-          ],
+          tools: [TOOL_DEFINITION],
           tool_choice: { type: "function", function: { name: "create_blog_post" } },
         }),
       }
@@ -240,14 +335,13 @@ Zorg dat het artikel actueel aanvoelt, praktische tips bevat, en relevant is voo
     }
 
     const aiData = await aiResponse.json();
-    
+
     // Extract from tool call
     let article: any;
     const toolCall = aiData.choices?.[0]?.message?.tool_calls?.[0];
     if (toolCall?.function?.arguments) {
       article = JSON.parse(toolCall.function.arguments);
     } else {
-      // Fallback: try parsing content as JSON
       const content = aiData.choices?.[0]?.message?.content || "";
       const jsonMatch = content.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
@@ -263,7 +357,7 @@ Zorg dat het artikel actueel aanvoelt, praktische tips bevat, en relevant is voo
 
     console.log(`Generated article: "${article.title}"`);
 
-    // Step 2: Get an admin user to use as author
+    // Step 4: Get an admin user as author
     const { data: adminRole } = await supabase
       .from("user_roles")
       .select("user_id")
@@ -275,46 +369,44 @@ Zorg dat het artikel actueel aanvoelt, praktische tips bevat, en relevant is voo
       throw new Error("No admin user found to set as author");
     }
 
-    // Step 3: Save to database
+    // Step 5: Save to database with enriched metadata
     const slug = generateSlug(article.title);
     const now = new Date().toISOString();
 
-    const { data: newPost, error: insertError } = await supabase
+    // Store FAQ and SEO data in meta_description as JSON enrichment
+    const seoMeta = {
+      meta_description: article.meta_description,
+      faq_questions: article.faq_questions || [],
+      primary_keyword: article.primary_keyword || "",
+      news_based: hasNews,
+    };
+
+    const insertData = {
+      title: article.title,
+      slug,
+      excerpt: article.excerpt || null,
+      content: article.content,
+      meta_title: article.meta_title || null,
+      meta_description: JSON.stringify(seoMeta),
+      author_id: adminRole.user_id,
+      status: "published",
+      published_at: now,
+    };
+
+    const { error: insertError } = await supabase
       .from("blog_posts")
-      .insert({
-        title: article.title,
-        slug,
-        excerpt: article.excerpt || null,
-        content: article.content,
-        meta_title: article.meta_title || null,
-        meta_description: article.meta_description || null,
-        author_id: adminRole.user_id,
-        status: "published",
-        published_at: now,
-      })
+      .insert(insertData)
       .select()
       .single();
 
     if (insertError) {
-      // If slug conflict, add date suffix
       if (insertError.code === "23505") {
         const slugWithDate = `${slug}-${today}`;
-        const { data: retryPost, error: retryError } = await supabase
+        const { error: retryError } = await supabase
           .from("blog_posts")
-          .insert({
-            title: article.title,
-            slug: slugWithDate,
-            excerpt: article.excerpt || null,
-            content: article.content,
-            meta_title: article.meta_title || null,
-            meta_description: article.meta_description || null,
-            author_id: adminRole.user_id,
-            status: "published",
-            published_at: now,
-          })
+          .insert({ ...insertData, slug: slugWithDate })
           .select()
           .single();
-
         if (retryError) throw retryError;
         console.log(`Blog post published with slug: ${slugWithDate}`);
       } else {
@@ -324,7 +416,7 @@ Zorg dat het artikel actueel aanvoelt, praktische tips bevat, en relevant is voo
       console.log(`Blog post published with slug: ${slug}`);
     }
 
-    // Step 4: Post to Facebook
+    // Step 6: Post to Facebook
     let facebookResult = null;
     try {
       const PAGE_ACCESS_TOKEN = Deno.env.get("FACEBOOK_PAGE_ACCESS_TOKEN");
@@ -333,7 +425,6 @@ Zorg dat het artikel actueel aanvoelt, praktische tips bevat, en relevant is voo
       const siteUrl = "https://www.woonpeek.nl";
 
       if (PAGE_ACCESS_TOKEN) {
-        // Auto-detect Page ID if needed
         if (!PAGE_ID) {
           const meRes = await fetch(`${GRAPH_API}/me?access_token=${PAGE_ACCESS_TOKEN}`);
           const meData = await meRes.json();
@@ -342,29 +433,26 @@ Zorg dat het artikel actueel aanvoelt, praktische tips bevat, en relevant is voo
 
         if (PAGE_ID) {
           const blogUrl = `${siteUrl}/blog/${slug}`;
-          const hashtags = [
-            "#woningmarkt", "#huren", "#kopen", "#Nederland",
-            "#woonpeek", "#vastgoed", "#huizenmarkt", "#wonen",
-          ];
-          // Pick 4-5 relevant hashtags based on category
           const categoryTags: Record<string, string[]> = {
             "Huurmarkt tips": ["#huurwoning", "#huurders", "#huurtips"],
             "Koopmarkt analyse": ["#koopwoning", "#hypotheek", "#huizenprijzen"],
             "Woningmarkt nieuws": ["#woningtekort", "#nieuwbouw", "#woningmarktnieuws"],
+            "Actueel woningmarkt nieuws": ["#breaking", "#woningmarktnieuws", "#actueel"],
             "Wonen & lifestyle": ["#verhuizen", "#woontrends", "#lifestyle"],
             "Juridisch & financieel": ["#huurrecht", "#belasting", "#financieel"],
             "Duurzaamheid": ["#duurzaam", "#energielabel", "#verduurzaming"],
           };
-          const extraTags = categoryTags[topic.category] || [];
-          const allTags = [...new Set([...extraTags, ...hashtags])].slice(0, 6);
+          const baseTags = ["#woningmarkt", "#woonpeek", "#vastgoed", "#Nederland"];
+          const extraTags = categoryTags[topicCategory] || [];
+          const allTags = [...new Set([...extraTags, ...baseTags])].slice(0, 6);
 
-          let fbMessage = `📝 Nieuw op het blog!\n\n`;
+          const newsEmoji = hasNews ? "📰" : "📝";
+          let fbMessage = `${newsEmoji} ${hasNews ? "Actueel nieuws" : "Nieuw op het blog"}!\n\n`;
           fbMessage += `${article.title}\n\n`;
           fbMessage += `${article.excerpt || ""}\n\n`;
           fbMessage += `👉 Lees het volledige artikel: ${blogUrl}\n\n`;
           fbMessage += allTags.join(" ");
 
-          // Post with banner image if available
           const bannerUrl = `${siteUrl}/facebook-cover.png`;
           const res = await fetch(`${GRAPH_API}/${PAGE_ID}/photos`, {
             method: "POST",
@@ -376,9 +464,8 @@ Zorg dat het artikel actueel aanvoelt, praktische tips bevat, en relevant is voo
             }),
           });
           const fbData = await res.json();
-          
+
           if (fbData.error) {
-            // Fallback: text-only post with link
             const feedRes = await fetch(`${GRAPH_API}/${PAGE_ID}/feed`, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
@@ -395,8 +482,6 @@ Zorg dat het artikel actueel aanvoelt, praktische tips bevat, en relevant is voo
           }
           console.log("Facebook blog post result:", JSON.stringify(facebookResult));
         }
-      } else {
-        console.log("Facebook not configured, skipping blog post to Facebook");
       }
     } catch (fbErr) {
       console.error("Facebook posting failed (non-blocking):", fbErr);
@@ -408,6 +493,8 @@ Zorg dat het artikel actueel aanvoelt, praktische tips bevat, en relevant is voo
         success: true,
         message: `Blog post "${article.title}" published`,
         slug,
+        news_based: hasNews,
+        news_count: newsArticles.length,
         facebook: facebookResult,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
