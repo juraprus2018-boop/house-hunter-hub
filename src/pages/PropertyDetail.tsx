@@ -4,7 +4,7 @@ import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { useProperty, useSimilarProperties } from "@/hooks/useProperties";
 import { useToggleFavorite } from "@/hooks/useFavorites";
@@ -26,14 +26,15 @@ import {
   ChevronRight,
   Loader2,
   Mail,
-  Phone,
-  ArrowLeft,
   ExternalLink,
-  Globe,
   Home,
   Copy,
   MessageCircle,
   Camera,
+  ArrowRight,
+  Building2,
+  Ruler,
+  Tag,
 } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
@@ -87,9 +88,7 @@ const PropertyDetail = () => {
     const url = window.location.href;
     const title = property?.title || "Woning op WoonPeek";
     if (navigator.share) {
-      try {
-        await navigator.share({ title, url });
-      } catch {}
+      try { await navigator.share({ title, url }); } catch {}
     }
   };
 
@@ -125,12 +124,6 @@ const PropertyDetail = () => {
     }
   };
 
-  const sourceInfo = property ? { source_url: property.source_url, source_site: property.source_site } : null;
-
-  const sourceMeta = sourceInfo?.source_site
-    ? SOURCE_SITE_META[sourceInfo.source_site] || { label: sourceInfo.source_site, color: "hsl(var(--primary))" }
-    : null;
-
   if (isLoading) {
     return (
       <div className="flex min-h-screen flex-col">
@@ -147,14 +140,11 @@ const PropertyDetail = () => {
     return (
       <div className="flex min-h-screen flex-col">
         <Header />
-        <main className="flex flex-1 flex-col items-center justify-center">
+        <main className="flex flex-1 flex-col items-center justify-center gap-4 p-8">
+          <Home className="h-12 w-12 text-muted-foreground/40" />
           <h1 className="font-display text-2xl font-bold">Woning niet gevonden</h1>
-          <p className="mt-2 text-muted-foreground">
-            Deze woning bestaat niet of is niet meer beschikbaar.
-          </p>
-          <Button asChild className="mt-4">
-            <Link to="/zoeken">Terug naar zoeken</Link>
-          </Button>
+          <p className="text-muted-foreground">Deze woning bestaat niet of is niet meer beschikbaar.</p>
+          <Button asChild><Link to="/zoeken">Terug naar zoeken</Link></Button>
         </main>
         <Footer />
       </div>
@@ -163,34 +153,28 @@ const PropertyDetail = () => {
 
   const images = property.images?.length ? property.images : [propertyPlaceholder];
   const isPropertyFavorite = isFavorite(property.id);
+  const sourceInfo = { source_url: property.source_url, source_site: property.source_site };
+  const sourceMeta = sourceInfo.source_site
+    ? SOURCE_SITE_META[sourceInfo.source_site] || { label: sourceInfo.source_site, color: "hsl(var(--primary))" }
+    : null;
 
   const formatPrice = (price: number, listingType: string) => {
-    const formatted = new Intl.NumberFormat("nl-NL", {
-      style: "currency",
-      currency: "EUR",
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(price);
+    const formatted = new Intl.NumberFormat("nl-NL", { style: "currency", currency: "EUR", minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(price);
     return listingType === "huur" ? `${formatted}/mnd` : formatted;
   };
 
-  const nextImage = () => {
-    setCurrentImageIndex((prev) => (prev + 1) % images.length);
-  };
+  const nextImage = () => setCurrentImageIndex((prev) => (prev + 1) % images.length);
+  const prevImage = () => setCurrentImageIndex((prev) => (prev - 1 + images.length) % images.length);
 
-  const prevImage = () => {
-    setCurrentImageIndex((prev) => (prev - 1 + images.length) % images.length);
-  };
+  const typeLabel = property.property_type.charAt(0).toUpperCase() + property.property_type.slice(1);
+  const seoTitle = `${typeLabel} te ${property.listing_type}: ${property.street} ${property.house_number}, ${property.city} | WoonPeek`;
+  const seoDescription = `${typeLabel} te ${property.listing_type} aan ${property.street} ${property.house_number}, ${property.postal_code} ${property.city}. ${property.surface_area ? property.surface_area + ' m²' : ''} ${property.bedrooms ? property.bedrooms + ' slaapkamers' : ''} voor ${formatPrice(Number(property.price), property.listing_type)}.`;
 
-  const seoTitle = property
-    ? `${property.property_type.charAt(0).toUpperCase() + property.property_type.slice(1)} te ${property.listing_type}: ${property.street} ${property.house_number} ${property.postal_code} ${property.city} | WoonPeek`
-    : "Woning | WoonPeek";
-
-  const jsonLd = property ? {
+  const jsonLd = {
     "@context": "https://schema.org",
     "@type": "RealEstateListing",
     "name": property.title,
-    "description": property.description || `${property.property_type} te ${property.listing_type} in ${property.city}`,
+    "description": property.description || `${typeLabel} te ${property.listing_type} in ${property.city}`,
     "url": `https://www.woonpeek.nl/woning/${property.slug}`,
     "datePosted": property.created_at,
     "image": property.images?.length ? property.images : undefined,
@@ -208,11 +192,7 @@ const PropertyDetail = () => {
       "addressCountry": "NL",
     },
     ...(property.latitude && property.longitude ? {
-      "geo": {
-        "@type": "GeoCoordinates",
-        "latitude": Number(property.latitude),
-        "longitude": Number(property.longitude),
-      }
+      "geo": { "@type": "GeoCoordinates", "latitude": Number(property.latitude), "longitude": Number(property.longitude) }
     } : {}),
     "additionalProperty": [
       ...(property.surface_area ? [{ "@type": "PropertyValue", "name": "Oppervlakte", "value": `${property.surface_area} m²` }] : []),
@@ -221,80 +201,89 @@ const PropertyDetail = () => {
       ...(property.build_year ? [{ "@type": "PropertyValue", "name": "Bouwjaar", "value": property.build_year }] : []),
       ...(property.energy_label ? [{ "@type": "PropertyValue", "name": "Energielabel", "value": property.energy_label }] : []),
     ],
-  } : null;
+  };
+
+  const kenmerken = [
+    { icon: Building2, label: "Type", value: typeLabel },
+    { icon: Tag, label: "Aanbod", value: `Te ${property.listing_type}` },
+    property.surface_area ? { icon: Maximize, label: "Oppervlakte", value: `${property.surface_area} m²` } : null,
+    property.bedrooms ? { icon: Bed, label: "Slaapkamers", value: String(property.bedrooms) } : null,
+    property.bathrooms ? { icon: Bath, label: "Badkamers", value: String(property.bathrooms) } : null,
+    property.build_year ? { icon: Calendar, label: "Bouwjaar", value: String(property.build_year) } : null,
+    property.energy_label ? { icon: Zap, label: "Energielabel", value: property.energy_label } : null,
+    property.neighborhood ? { icon: MapPin, label: "Buurt", value: property.neighborhood } : null,
+  ].filter(Boolean) as { icon: typeof Home; label: string; value: string }[];
 
   return (
     <div className="flex min-h-screen flex-col">
-      {property && (
-        <>
-          <SEOHead
-            title={seoTitle}
-            description={`${property.property_type} te ${property.listing_type} aan ${property.street} ${property.house_number}, ${property.postal_code} ${property.city}. ${property.surface_area ? property.surface_area + ' m²' : ''} ${property.bedrooms ? property.bedrooms + ' slaapkamers' : ''} voor ${formatPrice(Number(property.price), property.listing_type)}.`}
-            canonical={`https://www.woonpeek.nl/woning/${property.slug}`}
-            ogImage={property.images?.length ? property.images[0] : undefined}
-            ogType="article"
-          />
-          <script
-            type="application/ld+json"
-            dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-          />
-        </>
-      )}
+      <SEOHead
+        title={seoTitle}
+        description={seoDescription}
+        canonical={`https://www.woonpeek.nl/woning/${property.slug}`}
+        ogImage={property.images?.length ? property.images[0] : undefined}
+        ogType="article"
+      />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+
       <Header />
+
       <main className="flex-1">
-        {/* Photo Gallery Grid - Pararius style */}
-        <div className="relative bg-muted">
-          <div
-            className="cursor-pointer"
-            onClick={() => { setLightboxOpen(true); setCurrentImageIndex(0); }}
-          >
+        {/* ── Photo Gallery ── */}
+        <section className="relative bg-muted">
+          <div className="cursor-pointer" onClick={() => { setLightboxOpen(true); setCurrentImageIndex(0); }}>
             {images.length >= 3 ? (
-              <div className="grid h-[280px] grid-cols-3 gap-1 md:h-[420px]">
-                <div className="col-span-1 overflow-hidden">
-                  <img
-                    src={images[0]}
-                    alt={property.title}
-                    className="h-full w-full object-cover transition-opacity hover:opacity-90"
-                    onError={(e) => { e.currentTarget.src = propertyPlaceholder; }}
-                  />
+              <div className="mx-auto grid h-[300px] max-w-screen-2xl grid-cols-4 gap-1 md:h-[480px]">
+                <div className="col-span-2 row-span-2 overflow-hidden">
+                  <img src={images[0]} alt={property.title} className="h-full w-full object-cover transition-transform duration-300 hover:scale-[1.02]" onError={(e) => { e.currentTarget.src = propertyPlaceholder; }} />
                 </div>
                 <div className="col-span-1 overflow-hidden">
-                  <img
-                    src={images[1]}
-                    alt={`${property.title} - foto 2`}
-                    className="h-full w-full object-cover transition-opacity hover:opacity-90"
-                    onError={(e) => { e.currentTarget.src = propertyPlaceholder; }}
-                  />
+                  <img src={images[1]} alt={`${property.title} - foto 2`} className="h-full w-full object-cover transition-transform duration-300 hover:scale-[1.02]" onError={(e) => { e.currentTarget.src = propertyPlaceholder; }} />
                 </div>
                 <div className="col-span-1 overflow-hidden">
-                  <img
-                    src={images[2]}
-                    alt={`${property.title} - foto 3`}
-                    className="h-full w-full object-cover transition-opacity hover:opacity-90"
-                    onError={(e) => { e.currentTarget.src = propertyPlaceholder; }}
-                  />
+                  <img src={images[2]} alt={`${property.title} - foto 3`} className="h-full w-full object-cover transition-transform duration-300 hover:scale-[1.02]" onError={(e) => { e.currentTarget.src = propertyPlaceholder; }} />
                 </div>
+                {images.length >= 5 ? (
+                  <>
+                    <div className="col-span-1 overflow-hidden">
+                      <img src={images[3]} alt={`${property.title} - foto 4`} className="h-full w-full object-cover transition-transform duration-300 hover:scale-[1.02]" onError={(e) => { e.currentTarget.src = propertyPlaceholder; }} />
+                    </div>
+                    <div className="relative col-span-1 overflow-hidden">
+                      <img src={images[4]} alt={`${property.title} - foto 5`} className="h-full w-full object-cover" onError={(e) => { e.currentTarget.src = propertyPlaceholder; }} />
+                      {images.length > 5 && (
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/50 text-lg font-semibold text-white">
+                          +{images.length - 5} foto's
+                        </div>
+                      )}
+                    </div>
+                  </>
+                ) : images.length === 4 ? (
+                  <>
+                    <div className="col-span-2 overflow-hidden">
+                      <img src={images[3]} alt={`${property.title} - foto 4`} className="h-full w-full object-cover transition-transform duration-300 hover:scale-[1.02]" onError={(e) => { e.currentTarget.src = propertyPlaceholder; }} />
+                    </div>
+                  </>
+                ) : null}
+              </div>
+            ) : images.length === 2 ? (
+              <div className="mx-auto grid h-[300px] max-w-screen-2xl grid-cols-2 gap-1 md:h-[480px]">
+                <div className="overflow-hidden"><img src={images[0]} alt={property.title} className="h-full w-full object-cover" onError={(e) => { e.currentTarget.src = propertyPlaceholder; }} /></div>
+                <div className="overflow-hidden"><img src={images[1]} alt={`${property.title} - foto 2`} className="h-full w-full object-cover" onError={(e) => { e.currentTarget.src = propertyPlaceholder; }} /></div>
               </div>
             ) : (
-              <div className="h-[280px] overflow-hidden md:h-[420px]">
-                <img
-                  src={images[0]}
-                  alt={property.title}
-                  className="h-full w-full object-cover"
-                  onError={(e) => { e.currentTarget.src = propertyPlaceholder; }}
-                />
+              <div className="mx-auto h-[300px] max-w-screen-2xl overflow-hidden md:h-[480px]">
+                <img src={images[0]} alt={property.title} className="h-full w-full object-cover" onError={(e) => { e.currentTarget.src = propertyPlaceholder; }} />
               </div>
             )}
             {images.length > 1 && (
-              <div className="absolute bottom-4 right-4 flex items-center gap-2 rounded-lg bg-background/90 px-3 py-2 text-sm font-medium text-foreground shadow-md backdrop-blur-sm">
+              <div className="absolute bottom-4 right-4 flex items-center gap-2 rounded-full bg-background/90 px-4 py-2 text-sm font-medium text-foreground shadow-lg backdrop-blur-sm">
                 <Camera className="h-4 w-4" />
-                {images.length} foto's
+                Alle {images.length} foto's
               </div>
             )}
           </div>
-        </div>
+        </section>
 
-        {/* Lightbox Dialog */}
+        {/* Lightbox */}
         <Dialog open={lightboxOpen} onOpenChange={setLightboxOpen}>
           <DialogContent className="max-w-5xl border-0 bg-black/95 p-0">
             <DialogHeader className="sr-only">
@@ -310,20 +299,10 @@ const PropertyDetail = () => {
               />
               {images.length > 1 && (
                 <>
-                  <Button
-                    variant="secondary"
-                    size="icon"
-                    className="absolute left-4 top-1/2 -translate-y-1/2"
-                    onClick={(e) => { e.stopPropagation(); prevImage(); }}
-                  >
+                  <Button variant="secondary" size="icon" className="absolute left-4 top-1/2 -translate-y-1/2" onClick={(e) => { e.stopPropagation(); prevImage(); }}>
                     <ChevronLeft className="h-5 w-5" />
                   </Button>
-                  <Button
-                    variant="secondary"
-                    size="icon"
-                    className="absolute right-4 top-1/2 -translate-y-1/2"
-                    onClick={(e) => { e.stopPropagation(); nextImage(); }}
-                  >
+                  <Button variant="secondary" size="icon" className="absolute right-4 top-1/2 -translate-y-1/2" onClick={(e) => { e.stopPropagation(); nextImage(); }}>
                     <ChevronRight className="h-5 w-5" />
                   </Button>
                   <div className="absolute bottom-4 left-1/2 -translate-x-1/2 rounded-full bg-background/80 px-4 py-1.5 text-sm font-medium text-foreground">
@@ -332,18 +311,10 @@ const PropertyDetail = () => {
                 </>
               )}
             </div>
-            {/* Thumbnail strip */}
             {images.length > 1 && (
               <div className="flex gap-1 overflow-x-auto bg-black p-2">
                 {images.map((img, i) => (
-                  <button
-                    key={i}
-                    onClick={() => setCurrentImageIndex(i)}
-                    className={cn(
-                      "h-16 w-20 flex-shrink-0 overflow-hidden rounded transition-all",
-                      i === currentImageIndex ? "ring-2 ring-primary" : "opacity-50 hover:opacity-80"
-                    )}
-                  >
+                  <button key={i} onClick={() => setCurrentImageIndex(i)} className={cn("h-16 w-20 flex-shrink-0 overflow-hidden rounded transition-all", i === currentImageIndex ? "ring-2 ring-primary" : "opacity-50 hover:opacity-80")}>
                     <img src={img} alt="" className="h-full w-full object-cover" onError={(e) => { e.currentTarget.src = propertyPlaceholder; }} />
                   </button>
                 ))}
@@ -352,97 +323,121 @@ const PropertyDetail = () => {
           </DialogContent>
         </Dialog>
 
-        {/* Breadcrumbs + Content */}
-        <div className="container py-6">
-          <div className="mb-4 flex items-center justify-between">
-            <Breadcrumbs items={[
-              { label: "Home", href: "/" },
-              { label: property.property_type.charAt(0).toUpperCase() + property.property_type.slice(1) },
-              { label: property.city, href: cityPath(property.city) },
-              { label: property.neighborhood || property.city },
-            ]} />
-            <div className="flex items-center gap-2">
-              {user && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className={cn(isPropertyFavorite && "text-red-500")}
-                  onClick={() => toggle(property.id)}
-                  disabled={favoriteLoading}
-                >
-                  <Heart className={cn("mr-1.5 h-4 w-4", isPropertyFavorite && "fill-current")} />
-                  {isPropertyFavorite ? "Opgeslagen" : "Toevoegen aan favorieten"}
-                </Button>
-              )}
-              {typeof navigator.share === "function" ? (
-                <Button variant="ghost" size="sm" onClick={handleShare}>
-                  <Share2 className="mr-1.5 h-4 w-4" />
-                  Delen
-                </Button>
-              ) : (
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button variant="ghost" size="sm">
-                      <Share2 className="mr-1.5 h-4 w-4" />
-                      Delen
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-48 p-2">
-                    <div className="flex flex-col gap-1">
-                      <Button variant="ghost" size="sm" className="justify-start" onClick={copyLink}>
-                        <Copy className="mr-2 h-4 w-4" /> Link kopiëren
-                      </Button>
-                      <Button variant="ghost" size="sm" className="justify-start" asChild>
-                        <a href={`https://wa.me/?text=${encodeURIComponent(property.title + " " + window.location.href)}`} target="_blank" rel="noopener noreferrer">
-                          <MessageCircle className="mr-2 h-4 w-4" /> WhatsApp
-                        </a>
-                      </Button>
-                      <Button variant="ghost" size="sm" className="justify-start" asChild>
-                        <a href={`mailto:?subject=${encodeURIComponent(property.title)}&body=${encodeURIComponent(window.location.href)}`}>
-                          <Mail className="mr-2 h-4 w-4" /> E-mail
-                        </a>
-                      </Button>
-                    </div>
-                  </PopoverContent>
-                </Popover>
-              )}
-            </div>
-          </div>
+        {/* ── Main Content ── */}
+        <div className="container py-6 lg:py-10">
+          {/* Breadcrumbs */}
+          <Breadcrumbs items={[
+            { label: "Home", href: "/" },
+            { label: typeLabel },
+            { label: property.city, href: cityPath(property.city) },
+            { label: `${property.street} ${property.house_number}` },
+          ]} />
 
-          {/* Inactive banners */}
+          {/* Status banners */}
           {property.status === "inactief" && (
-            <div className="mb-4 rounded-lg border border-amber-300 bg-amber-50 p-4 dark:border-amber-700 dark:bg-amber-950/30">
-              <p className="text-sm font-medium text-amber-800 dark:text-amber-200">
-                ⚠️ Deze woning is verlopen — het aanbod is niet meer beschikbaar bij de aanbieder.
-              </p>
+            <div className="mt-4 rounded-lg border border-amber-300 bg-amber-50 p-4 dark:border-amber-700 dark:bg-amber-950/30">
+              <p className="text-sm font-medium text-amber-800 dark:text-amber-200">⚠️ Deze woning is verlopen — het aanbod is niet meer beschikbaar.</p>
               <p className="mt-1 text-xs text-amber-600 dark:text-amber-400">
                 Verlopen sinds {new Date(property.updated_at).toLocaleDateString("nl-NL", { day: "numeric", month: "long", year: "numeric" })}
               </p>
             </div>
           )}
           {(property.status === "verkocht" || property.status === "verhuurd") && (
-            <div className="mb-4 rounded-lg border border-amber-300 bg-amber-50 p-4 dark:border-amber-700 dark:bg-amber-950/30">
-              <p className="text-sm font-medium text-amber-800 dark:text-amber-200">
-                ⚠️ Deze woning is {property.status}.
-              </p>
+            <div className="mt-4 rounded-lg border border-amber-300 bg-amber-50 p-4 dark:border-amber-700 dark:bg-amber-950/30">
+              <p className="text-sm font-medium text-amber-800 dark:text-amber-200">⚠️ Deze woning is {property.status}.</p>
             </div>
           )}
 
-          <div className="grid gap-8 lg:grid-cols-3">
-            {/* Main content */}
-            <div className="lg:col-span-2 space-y-6">
-              {/* Title & address */}
+          <div className="mt-6 grid gap-8 lg:grid-cols-3">
+            {/* ── Left Column ── */}
+            <div className="space-y-8 lg:col-span-2">
+              {/* Title + price + quick stats */}
               <div>
-                <h1 className="font-display text-2xl font-bold md:text-3xl">{property.title}</h1>
-                <p className="mt-1 text-muted-foreground">
-                  {property.street} {property.house_number}, {property.postal_code} {property.city}, Netherlands
+                <div className="flex flex-wrap items-center gap-2 mb-2">
+                  <Badge variant="secondary" className="capitalize">{property.listing_type === "huur" ? "Te huur" : "Te koop"}</Badge>
+                  <Badge variant="outline" className="capitalize">{property.property_type}</Badge>
+                  {sourceMeta && (
+                    <Badge variant="outline" style={{ borderColor: sourceMeta.color, color: sourceMeta.color }}>
+                      {sourceMeta.label}
+                    </Badge>
+                  )}
+                </div>
+                <h1 className="font-display text-2xl font-bold leading-tight md:text-3xl lg:text-4xl">
+                  {property.title}
+                </h1>
+                <div className="mt-2 flex items-center gap-2 text-muted-foreground">
+                  <MapPin className="h-4 w-4 shrink-0" />
+                  <span>{property.street} {property.house_number}, {property.postal_code} {property.city}</span>
+                </div>
+                <p className="mt-3 font-display text-3xl font-bold text-primary md:text-4xl">
+                  {formatPrice(Number(property.price), property.listing_type)}
                 </p>
+
+                {/* Quick stats row */}
+                <div className="mt-4 flex flex-wrap gap-4 text-sm">
+                  {property.surface_area && (
+                    <div className="flex items-center gap-1.5 text-muted-foreground">
+                      <Maximize className="h-4 w-4" />
+                      <span className="font-medium text-foreground">{property.surface_area} m²</span>
+                    </div>
+                  )}
+                  {property.bedrooms && (
+                    <div className="flex items-center gap-1.5 text-muted-foreground">
+                      <Bed className="h-4 w-4" />
+                      <span className="font-medium text-foreground">{property.bedrooms} slaapkamers</span>
+                    </div>
+                  )}
+                  {property.bathrooms && (
+                    <div className="flex items-center gap-1.5 text-muted-foreground">
+                      <Bath className="h-4 w-4" />
+                      <span className="font-medium text-foreground">{property.bathrooms} badkamers</span>
+                    </div>
+                  )}
+                  {property.energy_label && (
+                    <div className="flex items-center gap-1.5 text-muted-foreground">
+                      <Zap className="h-4 w-4" />
+                      <span className="font-medium text-foreground">Label {property.energy_label}</span>
+                    </div>
+                  )}
+                </div>
               </div>
 
-              {/* Description */}
-              <div>
-                <h2 className="mb-3 font-display text-lg font-semibold">
-                  Te {property.listing_type}: {property.street} {property.house_number}, {property.city} –
+              {/* Action row */}
+              <div className="flex flex-wrap gap-2 border-y py-3">
+                {user && (
+                  <Button variant="ghost" size="sm" className={cn(isPropertyFavorite && "text-red-500")} onClick={() => toggle(property.id)} disabled={favoriteLoading}>
+                    <Heart className={cn("mr-1.5 h-4 w-4", isPropertyFavorite && "fill-current")} />
+                    {isPropertyFavorite ? "Opgeslagen" : "Opslaan"}
+                  </Button>
+                )}
+                {typeof navigator.share === "function" ? (
+                  <Button variant="ghost" size="sm" onClick={handleShare}>
+                    <Share2 className="mr-1.5 h-4 w-4" /> Delen
+                  </Button>
+                ) : (
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="ghost" size="sm"><Share2 className="mr-1.5 h-4 w-4" /> Delen</Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-48 p-2">
+                      <div className="flex flex-col gap-1">
+                        <Button variant="ghost" size="sm" className="justify-start" onClick={copyLink}><Copy className="mr-2 h-4 w-4" /> Link kopiëren</Button>
+                        <Button variant="ghost" size="sm" className="justify-start" asChild>
+                          <a href={`https://wa.me/?text=${encodeURIComponent(property.title + " " + window.location.href)}`} target="_blank" rel="noopener noreferrer"><MessageCircle className="mr-2 h-4 w-4" /> WhatsApp</a>
+                        </Button>
+                        <Button variant="ghost" size="sm" className="justify-start" asChild>
+                          <a href={`mailto:?subject=${encodeURIComponent(property.title)}&body=${encodeURIComponent(window.location.href)}`}><Mail className="mr-2 h-4 w-4" /> E-mail</a>
+                        </Button>
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                )}
+              </div>
+
+              {/* ── Description ── */}
+              <section>
+                <h2 className="font-display text-xl font-semibold mb-3">
+                  Beschrijving
                 </h2>
                 {property.description ? (
                   <div className="whitespace-pre-wrap leading-relaxed text-muted-foreground">
@@ -452,106 +447,85 @@ const PropertyDetail = () => {
                   <div className="rounded-lg border border-dashed p-6 text-center">
                     <Home className="mx-auto mb-3 h-8 w-8 text-muted-foreground/50" />
                     <p className="text-sm font-medium text-muted-foreground">
-                      Er is nog geen uitgebreide beschrijving beschikbaar voor deze woning.
+                      Er is nog geen beschrijving beschikbaar voor deze woning.
                     </p>
-                    {sourceInfo?.source_url && (
+                    {sourceInfo.source_url && (
                       <p className="mt-2 text-xs text-muted-foreground/70">
-                        Bekijk de originele advertentie voor meer informatie bij de aanbieder.
+                        Bekijk de originele advertentie voor meer informatie.
                       </p>
                     )}
                   </div>
                 )}
-              </div>
+              </section>
 
-              <Separator />
+              {/* ── Kenmerken ── */}
+              <section>
+                <h2 className="font-display text-xl font-semibold mb-4">Kenmerken</h2>
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
+                  {kenmerken.map(({ icon: Icon, label, value }) => (
+                    <div key={label} className="flex flex-col items-center gap-2 rounded-xl border bg-card p-4 text-center">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
+                        <Icon className="h-5 w-5" />
+                      </div>
+                      <span className="text-xs text-muted-foreground">{label}</span>
+                      <span className="text-sm font-semibold">{value}</span>
+                    </div>
+                  ))}
+                </div>
+              </section>
 
-              {/* Details / Kenmerken */}
-              <div>
-                <h2 className="mb-4 font-display text-lg font-semibold">Kenmerken</h2>
-                <dl className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                  <div className="flex justify-between rounded-lg border p-3">
-                    <dt className="text-muted-foreground">Type</dt>
-                    <dd className="font-medium capitalize">{property.property_type}</dd>
-                  </div>
-                  <div className="flex justify-between rounded-lg border p-3">
-                    <dt className="text-muted-foreground">Aanbod</dt>
-                    <dd className="font-medium capitalize">Te {property.listing_type}</dd>
-                  </div>
-                  {property.surface_area && (
-                    <div className="flex justify-between rounded-lg border p-3">
-                      <dt className="flex items-center gap-2 text-muted-foreground"><Maximize className="h-4 w-4" /> Oppervlakte</dt>
-                      <dd className="font-medium">{property.surface_area} m²</dd>
-                    </div>
-                  )}
-                  {property.bedrooms && (
-                    <div className="flex justify-between rounded-lg border p-3">
-                      <dt className="flex items-center gap-2 text-muted-foreground"><Bed className="h-4 w-4" /> Slaapkamers</dt>
-                      <dd className="font-medium">{property.bedrooms}</dd>
-                    </div>
-                  )}
-                  {property.bathrooms && (
-                    <div className="flex justify-between rounded-lg border p-3">
-                      <dt className="flex items-center gap-2 text-muted-foreground"><Bath className="h-4 w-4" /> Badkamers</dt>
-                      <dd className="font-medium">{property.bathrooms}</dd>
-                    </div>
-                  )}
-                  {property.build_year && (
-                    <div className="flex justify-between rounded-lg border p-3">
-                      <dt className="flex items-center gap-2 text-muted-foreground"><Calendar className="h-4 w-4" /> Bouwjaar</dt>
-                      <dd className="font-medium">{property.build_year}</dd>
-                    </div>
-                  )}
-                  {property.energy_label && (
-                    <div className="flex justify-between rounded-lg border p-3">
-                      <dt className="flex items-center gap-2 text-muted-foreground"><Zap className="h-4 w-4" /> Energielabel</dt>
-                      <dd className="font-medium">{property.energy_label}</dd>
-                    </div>
-                  )}
-                  {property.neighborhood && (
-                    <div className="flex justify-between rounded-lg border p-3">
-                      <dt className="flex items-center gap-2 text-muted-foreground"><MapPin className="h-4 w-4" /> Buurt</dt>
-                      <dd className="font-medium">{property.neighborhood}</dd>
-                    </div>
-                  )}
-                </dl>
-              </div>
-
-              {/* Map */}
+              {/* ── Map ── */}
               {property.latitude && property.longitude && (
-                <div>
-                  <h2 className="mb-4 font-display text-lg font-semibold flex items-center gap-2">
+                <section>
+                  <h2 className="font-display text-xl font-semibold mb-4 flex items-center gap-2">
                     <MapPin className="h-5 w-5" /> Locatie
                   </h2>
-                  <div className="h-[300px] overflow-hidden rounded-lg border">
+                  <div className="h-[350px] overflow-hidden rounded-xl border">
                     <PropertyMap
                       latitude={Number(property.latitude)}
                       longitude={Number(property.longitude)}
                       title={property.title}
                     />
                   </div>
-                </div>
+                </section>
               )}
+
+              {/* ── Internal link to city ── */}
+              <section className="rounded-xl border bg-muted/30 p-6">
+                <h3 className="font-display text-lg font-semibold mb-2">
+                  Meer woningen in {property.city}
+                </h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Bekijk alle beschikbare huurwoningen en koopwoningen in {property.city} en omgeving.
+                </p>
+                <Button asChild variant="outline">
+                  <Link to={cityPath(property.city)}>
+                    Bekijk woningen in {property.city}
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Link>
+                </Button>
+              </section>
             </div>
 
-            {/* Sidebar */}
+            {/* ── Sidebar ── */}
             <div className="lg:col-span-1">
               <div className="sticky top-24 space-y-4">
-                {/* Price card */}
-                <Card className="overflow-hidden">
-                  <CardContent className="p-6">
-                    <p className="text-sm text-muted-foreground capitalize">
-                      {property.listing_type === "huur" ? "Maandhuur" : "Koopprijs"}
-                    </p>
-                    <p className="mt-1 font-display text-3xl font-bold text-foreground">
-                      {new Intl.NumberFormat("nl-NL", {
-                        minimumFractionDigits: 0,
-                        maximumFractionDigits: 0,
-                      }).format(Number(property.price))}
-                      <span className="ml-1 text-lg font-normal text-muted-foreground">€</span>
-                    </p>
-                    <Separator className="my-4" />
-                    {/* Quick specs in sidebar */}
-                    <div className="space-y-3">
+                {/* Price + CTA Card */}
+                <Card className="overflow-hidden shadow-lg">
+                  <CardContent className="p-6 space-y-4">
+                    <div>
+                      <p className="text-sm text-muted-foreground capitalize">
+                        {property.listing_type === "huur" ? "Maandhuur" : "Koopprijs"}
+                      </p>
+                      <p className="mt-1 font-display text-3xl font-bold text-primary">
+                        {formatPrice(Number(property.price), property.listing_type)}
+                      </p>
+                    </div>
+
+                    <Separator />
+
+                    {/* Quick specs */}
+                    <div className="space-y-2.5">
                       {property.surface_area && (
                         <div className="flex justify-between text-sm">
                           <span className="text-muted-foreground">Oppervlakte</span>
@@ -570,14 +544,22 @@ const PropertyDetail = () => {
                           <span className="font-medium">{property.bathrooms}</span>
                         </div>
                       )}
+                      {property.build_year && (
+                        <div className="flex justify-between text-sm">
+                          <span className="text-muted-foreground">Bouwjaar</span>
+                          <span className="font-medium">{property.build_year}</span>
+                        </div>
+                      )}
                     </div>
-                    <Separator className="my-4" />
-                    {/* CTA Button */}
-                    {sourceInfo?.source_url ? (
+
+                    <Separator />
+
+                    {/* Primary CTA */}
+                    {sourceInfo.source_url ? (
                       <Button asChild className="w-full" size="lg">
                         <a href={sourceInfo.source_url} target="_blank" rel="noopener noreferrer">
                           <ExternalLink className="mr-2 h-4 w-4" />
-                          Reageren
+                          Reageer op deze woning
                         </a>
                       </Button>
                     ) : (
@@ -585,7 +567,7 @@ const PropertyDetail = () => {
                         <DialogTrigger asChild>
                           <Button className="w-full" size="lg">
                             <Mail className="mr-2 h-4 w-4" />
-                            Reageren
+                            Vraag meer informatie
                           </Button>
                         </DialogTrigger>
                         <DialogContent>
@@ -618,18 +600,53 @@ const PropertyDetail = () => {
                         </DialogContent>
                       </Dialog>
                     )}
+
+                    {/* Secondary CTA */}
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <Button variant="outline" className="w-full" size="lg">
+                          <Calendar className="mr-2 h-4 w-4" />
+                          Plan een bezichtiging
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>Bezichtiging plannen</DialogTitle>
+                          <DialogDescription>Vraag een bezichtiging aan voor {property.street} {property.house_number}, {property.city}.</DialogDescription>
+                        </DialogHeader>
+                        <div className="space-y-4 py-4">
+                          <div className="space-y-2">
+                            <Label>Naam *</Label>
+                            <Input placeholder="Je naam" />
+                          </div>
+                          <div className="space-y-2">
+                            <Label>E-mailadres *</Label>
+                            <Input type="email" placeholder="je@email.nl" />
+                          </div>
+                          <div className="space-y-2">
+                            <Label>Telefoonnummer</Label>
+                            <Input placeholder="Optioneel" />
+                          </div>
+                          <div className="space-y-2">
+                            <Label>Voorkeursdatum</Label>
+                            <Input type="date" />
+                          </div>
+                          <Button className="w-full">
+                            <Calendar className="mr-2 h-4 w-4" />
+                            Verstuur aanvraag
+                          </Button>
+                        </div>
+                      </DialogContent>
+                    </Dialog>
                   </CardContent>
                 </Card>
 
-                {/* Source / aanbieder card */}
-                {sourceInfo && sourceMeta && (
+                {/* Source card */}
+                {sourceMeta && (
                   <Card>
                     <CardContent className="p-5">
                       <div className="flex items-center gap-3">
-                        <div
-                          className="flex h-10 w-10 items-center justify-center rounded-lg text-sm font-bold text-white"
-                          style={{ backgroundColor: sourceMeta.color }}
-                        >
+                        <div className="flex h-10 w-10 items-center justify-center rounded-lg text-sm font-bold text-white" style={{ backgroundColor: sourceMeta.color }}>
                           {sourceMeta.label.charAt(0).toUpperCase()}
                         </div>
                         <div>
@@ -653,22 +670,52 @@ const PropertyDetail = () => {
           </div>
         </div>
 
-        {/* Similar properties */}
+        {/* ── Similar Properties ── */}
         {similarProperties && similarProperties.length > 0 && (
-          <section className="border-t bg-muted/30 py-12">
+          <section className="border-t bg-muted/30 py-12 lg:py-16">
             <div className="container">
-              <h2 className="font-display text-2xl font-bold mb-6">
+              <h2 className="font-display text-2xl font-bold mb-2">
                 Vergelijkbare woningen in {property.city}
               </h2>
+              <p className="text-muted-foreground mb-8">
+                Bekijk andere {property.listing_type === "huur" ? "huurwoningen" : "koopwoningen"} in {property.city}
+              </p>
               <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
                 {similarProperties.map((p) => (
                   <PropertyCard key={p.id} property={p} />
                 ))}
               </div>
+              <div className="mt-8 text-center">
+                <Button asChild variant="outline" size="lg">
+                  <Link to={cityPath(property.city)}>
+                    Alle woningen in {property.city}
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Link>
+                </Button>
+              </div>
             </div>
           </section>
         )}
+
+        {/* ── Bottom CTA ── */}
+        <section className="border-t py-12 lg:py-16">
+          <div className="container text-center">
+            <h2 className="font-display text-2xl font-bold mb-3">Op zoek naar een woning?</h2>
+            <p className="mx-auto max-w-lg text-muted-foreground mb-6">
+              Ontdek duizenden huurwoningen en koopwoningen door heel Nederland op WoonPeek.
+            </p>
+            <div className="flex flex-wrap justify-center gap-3">
+              <Button asChild size="lg">
+                <Link to="/zoeken">Bekijk het aanbod</Link>
+              </Button>
+              <Button asChild variant="outline" size="lg">
+                <Link to="/dagelijkse-alert">Ontvang dagelijkse alerts</Link>
+              </Button>
+            </div>
+          </div>
+        </section>
       </main>
+
       <Footer />
     </div>
   );
