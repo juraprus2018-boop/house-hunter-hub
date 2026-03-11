@@ -96,17 +96,27 @@ const CityPage = () => {
   const jsonLd = useMemo(
     () => ({
       "@context": "https://schema.org",
-      "@type": "ItemList",
+      "@type": "CollectionPage",
       name: `Woningen in ${cityName}`,
       description: pageDescription,
-      numberOfItems: filteredCount,
-      itemListElement: filteredProperties.slice(0, 10).map((property, index) => ({
-        "@type": "ListItem",
-        position: index + 1,
-        url: `https://woonpeek.nl/woning/${property.slug || property.id}`,
-      })),
+      url: canonical,
+      isPartOf: {
+        "@type": "WebSite",
+        name: "WoonPeek",
+        url: "https://woonpeek.nl",
+      },
+      mainEntity: {
+        "@type": "ItemList",
+        numberOfItems: filteredCount,
+        itemListElement: filteredProperties.slice(0, 10).map((property, index) => ({
+          "@type": "ListItem",
+          position: index + 1,
+          url: `https://woonpeek.nl/woning/${property.slug || property.id}`,
+          name: property.title,
+        })),
+      },
     }),
-    [cityName, filteredCount, filteredProperties, pageDescription]
+    [cityName, filteredCount, filteredProperties, pageDescription, canonical]
   );
 
   return (
