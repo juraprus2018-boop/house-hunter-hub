@@ -262,7 +262,25 @@ function mapDaisyconToProperty(product: DaisyconProduct, sourceSite: string, sou
     }
   }
 
-  const title = product.title || `${street} ${houseNumber}, ${city}`.trim();
+  // Build a descriptive title instead of using generic ones like "appartement"
+  const rawTitle = product.title || "";
+  const genericTitles = ["appartement", "huis", "studio", "kamer", "woning", "room", "house", "apartment"];
+  const isGeneric = !rawTitle || genericTitles.includes(rawTitle.trim().toLowerCase());
+
+  let title: string;
+  if (isGeneric) {
+    const typeLabel = propertyType === "huis" ? "Huis" : propertyType === "studio" ? "Studio" : propertyType === "kamer" ? "Kamer" : "Appartement";
+    const actionLabel = listingType === "koop" ? "te koop" : "te huur";
+    if (street && city) {
+      title = `${typeLabel} ${actionLabel} aan ${street}${houseNumber ? ` ${houseNumber}` : ""}, ${city}`;
+    } else if (city) {
+      title = `${typeLabel} ${actionLabel} in ${city}`;
+    } else {
+      title = `${typeLabel} ${actionLabel}`;
+    }
+  } else {
+    title = rawTitle;
+  }
 
   return {
     title,
