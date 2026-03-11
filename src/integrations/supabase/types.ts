@@ -199,6 +199,68 @@ export type Database = {
           },
         ]
       }
+      import_jobs: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          errors: number | null
+          feed_id: string | null
+          feed_name: string | null
+          id: string
+          imported: number | null
+          message: string | null
+          processed_feeds: number | null
+          skipped: number | null
+          started_at: string
+          status: string
+          total_feeds: number | null
+          type: string
+          updated: number | null
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          errors?: number | null
+          feed_id?: string | null
+          feed_name?: string | null
+          id?: string
+          imported?: number | null
+          message?: string | null
+          processed_feeds?: number | null
+          skipped?: number | null
+          started_at?: string
+          status?: string
+          total_feeds?: number | null
+          type?: string
+          updated?: number | null
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          errors?: number | null
+          feed_id?: string | null
+          feed_name?: string | null
+          id?: string
+          imported?: number | null
+          message?: string | null
+          processed_feeds?: number | null
+          skipped?: number | null
+          started_at?: string
+          status?: string
+          total_feeds?: number | null
+          type?: string
+          updated?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "import_jobs_feed_id_fkey"
+            columns: ["feed_id"]
+            isOneToOne: false
+            referencedRelation: "daisycon_feeds"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
