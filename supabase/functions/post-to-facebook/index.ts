@@ -247,7 +247,6 @@ async function postPropertyToFacebook(
 ): Promise<{ success: boolean; postId?: string; error?: string }> {
   const message = buildCaption(property);
   const images = getUniqueImages(property.images, 10);
-  const images = getUniqueImages(property.images, 10);
 
   try {
     // Strategy 1: Multi-photo post (3+ images)
