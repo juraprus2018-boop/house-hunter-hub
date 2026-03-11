@@ -480,8 +480,10 @@ Deno.serve(async (req) => {
             const existingImages = existing.images || [];
             const updates: Record<string, any> = {};
 
-            // Update images if missing
-            if (existingImages.length === 0 && propertyData.images.length > 0) {
+            // Update images if missing or empty default array
+            const hasNoImages = existingImages.length === 0 || 
+              (existingImages.length === 1 && existingImages[0] === "");
+            if (hasNoImages && propertyData.images.length > 0) {
               updates.images = propertyData.images;
             }
 
