@@ -297,24 +297,41 @@ const CityPage = () => {
             </h2>
             <div className="mt-4 space-y-4 text-sm leading-relaxed text-muted-foreground">
               <p>
-                Woningen in {cityName} zijn populair bij woningzoekers die snel een compleet overzicht willen van huur- en koopaanbod.
-                Op WoonPeek tonen we dagelijks nieuw aanbod in {cityName}, zodat je niet meerdere websites apart hoeft te controleren.
+                Ben je op zoek naar een <strong>huurwoning {cityName}</strong>? Op WoonPeek vind je het meest actuele overzicht
+                van huur- en koopwoningen in {cityName}. Of je nu een <strong>appartement {cityName}</strong> zoekt of liever
+                een ruim <strong>huis huren {cityName}</strong>, wij verzamelen dagelijks nieuw aanbod uit tientallen bronnen
+                zodat jij niets mist.
               </p>
               <p>
-                Zoek je een appartement, huis, studio of kamer in {cityName}? Op deze pagina kun je direct filteren op woningtype,
-                prijs, slaapkamers en oppervlakte. Zo zie je alleen het aanbod dat echt aansluit op jouw zoekprofiel.
+                Het aanbod op deze pagina bevat alle woningtypes: appartementen, eengezinswoningen, studio&apos;s en kamers.
+                Zoek je specifiek een <strong>woning huren {cityName}</strong>? Gebruik dan de filters hierboven om direct
+                te filteren op huur of koop, woningtype, prijs en oppervlakte. Momenteel staan er {totalCount} woningen
+                in {cityName} op WoonPeek, waarvan {huurCount} huurwoningen en {koopCount} koopwoningen.
               </p>
               <p>
-                Momenteel staan er {totalCount} woningen in {cityName} op WoonPeek, waarvan {huurCount} huurwoningen
-                en {koopCount} koopwoningen. Bekijk ook de aparte overzichtspagina&apos;s
+                <strong>Appartement huren {cityName}</strong> is populair bij starters en young professionals. Zoek je juist
+                een <strong>kamer huren {cityName}</strong>? Ook daarvoor bieden we uitgebreid aanbod. Daarnaast vind je hier
+                ook <strong>huizen te koop {cityName}</strong> als je liever wilt kopen dan huren.
+              </p>
+              <p>
+                Op zoek naar een <strong>goedkope huurwoning {cityName}</strong>? Sorteer op prijs en vind snel betaalbare
+                opties. Wil je een <strong>appartement huren {cityName} centrum</strong>? Filter op wijk of gebruik de
+                zoekpagina met kaartweergave. We tonen ook aanbod van particuliere verhuurders — ideaal als je een{" "}
+                <strong>huurwoning {cityName} particulier</strong> zoekt.
+              </p>
+              <p>
+                Veel woningzoekers vragen zich af of het mogelijk is een <strong>woning huren {cityName} zonder inschrijving</strong>.
+                Op WoonPeek tonen we aanbod van verschillende bronnen, waaronder particuliere aanbieders die soms geen
+                inschrijving vereisen. Zoek je een <strong>huis te koop {cityName} met tuin</strong>? Bekijk het koopwoningenaanbod
+                en filter op jouw wensen.
+              </p>
+              <p>
+                Bekijk ook de aparte overzichtspagina&apos;s
                 voor <Link to={`/huurwoningen/${citySlug}`} className="text-primary underline hover:no-underline">huurwoningen in {cityName}</Link> en{" "}
                 <Link to={`/koopwoningen/${citySlug}`} className="text-primary underline hover:no-underline">koopwoningen in {cityName}</Link>.
-              </p>
-              <p>
-                Het aanbod verandert doorlopend en populaire woningen verdwijnen vaak snel van de markt. Door regelmatig
-                deze pagina te bezoeken of een{" "}
+                Het aanbod verandert doorlopend — stel een{" "}
                 <Link to="/dagelijkse-alert" className="text-primary underline hover:no-underline">dagelijkse alert</Link>{" "}
-                in te stellen, mis je geen enkel nieuw aanbod in {cityName}.
+                in en mis geen enkel nieuw aanbod in {cityName}.
               </p>
             </div>
           </div>
