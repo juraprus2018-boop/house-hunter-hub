@@ -548,6 +548,10 @@ Deno.serve(async (req) => {
           const existing = existingMap.get(propData.source_url);
           if (existing) {
             const updates: Record<string, any> = {};
+            // Reactivate if inactive
+            if (existing.status === "inactief") {
+              updates.status = "actief";
+            }
             const hasNoImages = existing.images.length === 0 || 
               (existing.images.length === 1 && existing.images[0] === "");
             if (hasNoImages && propData.images.length > 0) {
@@ -556,7 +560,6 @@ Deno.serve(async (req) => {
             if (existing.title && genericTitles.includes(existing.title.trim().toLowerCase())) {
               updates.title = propData.title;
             }
-            // Fill in missing geo/building data
             if (!existing.latitude && propData.latitude) {
               updates.latitude = propData.latitude;
               updates.longitude = propData.longitude;
