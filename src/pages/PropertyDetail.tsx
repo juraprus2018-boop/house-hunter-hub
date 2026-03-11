@@ -480,6 +480,15 @@ const PropertyDetail = () => {
                 </div>
               </section>
 
+              {/* ── Price Analysis ── */}
+              <PriceAnalysis
+                price={Number(property.price)}
+                surfaceArea={property.surface_area}
+                city={property.city}
+                listingType={property.listing_type}
+                propertyType={property.property_type}
+              />
+
               {/* ── Map ── */}
               {property.latitude && property.longitude && (
                 <section>
