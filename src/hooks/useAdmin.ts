@@ -81,8 +81,8 @@ export const useAdminPropertiesPaginated = (
 
       // Apply filters to both queries
       if (filters.status && filters.status !== "all") {
-        countQuery = countQuery.eq("status", filters.status);
-        dataQuery = dataQuery.eq("status", filters.status);
+        countQuery = countQuery.eq("status", filters.status as "actief" | "inactief" | "verhuurd" | "verkocht");
+        dataQuery = dataQuery.eq("status", filters.status as "actief" | "inactief" | "verhuurd" | "verkocht");
       }
       if (filters.source && filters.source !== "all") {
         if (filters.source === "user") {
