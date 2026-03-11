@@ -2,40 +2,40 @@ import { TrendingUp, Search, Bell, Shield, Zap, Heart } from "lucide-react";
 
 const benefits = [
   {
-    icon: TrendingUp,
-    title: "Actueel woningaanbod",
+    icon: Zap,
+    title: "Sneller dan anderen",
     description:
-      "Dagelijks worden er nieuwe woningen toegevoegd vanuit betrouwbare bronnen in heel Nederland.",
+      "Ontdek nieuwe woningen zodra ze online komen — nog voordat ze op de grote platforms staan.",
   },
   {
     icon: Search,
-    title: "Zoeken op stad en woningtype",
+    title: "Alles op één plek",
     description:
-      "Filter eenvoudig op stad, postcode, prijs, woningtype en aantal slaapkamers.",
-  },
-  {
-    icon: Zap,
-    title: "Snel woningen vinden",
-    description:
-      "Geen eindeloos zoeken op tientallen websites. Bij ons vind je alles op één overzichtelijke plek.",
+      "Geen tientallen websites doorzoeken. WoonPeek combineert het aanbod van meerdere bronnen.",
   },
   {
     icon: Bell,
     title: "Gratis dagelijkse alerts",
     description:
-      "Ontvang automatisch een e-mail zodra er nieuwe woningen beschikbaar komen in jouw zoekgebied.",
+      "Ontvang automatisch een e-mail met nieuw woningaanbod in jouw zoekgebied.",
   },
   {
     icon: Shield,
     title: "Betrouwbare bronnen",
     description:
-      "Alle woningen komen van geverifieerde woningplatforms en makelaars. Altijd actueel, altijd betrouwbaar.",
+      "Alle woningen komen van geverifieerde woningplatforms en makelaars.",
+  },
+  {
+    icon: TrendingUp,
+    title: "Dagelijks bijgewerkt",
+    description:
+      "Ons platform wordt dagelijks geüpdatet met de nieuwste huur- en koopwoningen.",
   },
   {
     icon: Heart,
     title: "100% gratis",
     description:
-      "Zoek onbeperkt, sla favorieten op en stel alerts in — volledig gratis, zonder verborgen kosten.",
+      "Zoek onbeperkt, sla favorieten op en stel alerts in — volledig gratis.",
   },
 ];
 
@@ -48,22 +48,22 @@ const WhyUsSection = () => {
             Waarom WoonPeek?
           </h2>
           <p className="mx-auto mt-3 max-w-xl text-muted-foreground">
-            Het slimste woningplatform van Nederland
+            Ontdek nieuwe woningen sneller dan anderen
           </p>
         </div>
 
-        <div className="mx-auto grid max-w-5xl gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mx-auto grid max-w-5xl gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {benefits.map((benefit) => {
             const Icon = benefit.icon;
             return (
               <div
                 key={benefit.title}
-                className="rounded-2xl border bg-card p-6 transition-shadow hover:shadow-md"
+                className="rounded-2xl border bg-card p-6 transition-all duration-200 hover:shadow-md hover:-translate-y-0.5"
               >
-                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
-                  <Icon className="h-6 w-6 text-primary" />
+                <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10">
+                  <Icon className="h-5 w-5 text-primary" />
                 </div>
-                <h3 className="font-display text-lg font-semibold text-foreground">
+                <h3 className="font-display text-base font-semibold text-foreground">
                   {benefit.title}
                 </h3>
                 <p className="mt-2 text-sm leading-relaxed text-muted-foreground">

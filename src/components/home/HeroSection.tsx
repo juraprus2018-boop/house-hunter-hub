@@ -1,11 +1,18 @@
-import { Search, MapPin } from "lucide-react";
+import { Search, MapPin, Bell, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useHomeStats } from "@/hooks/useHomeStats";
 import { Input } from "@/components/ui/input";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import heroBg from "@/assets/hero-bg.jpg";
 
 const HeroSection = () => {
@@ -25,11 +32,17 @@ const HeroSection = () => {
   });
 
   const [searchQuery, setSearchQuery] = useState("");
+  const [listingType, setListingType] = useState<string>("");
+  const [maxPrice, setMaxPrice] = useState<string>("");
+  const [minBedrooms, setMinBedrooms] = useState<string>("");
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     const params = new URLSearchParams();
     if (searchQuery.trim()) params.set("locatie", searchQuery.trim());
+    if (listingType) params.set("aanbod", listingType);
+    if (maxPrice) params.set("max_prijs", maxPrice);
+    if (minBedrooms) params.set("min_kamers", minBedrooms);
     navigate(`/zoeken?${params.toString()}`);
   };
 
@@ -43,10 +56,10 @@ const HeroSection = () => {
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
         style={{ backgroundImage: `url(${heroBg})` }}
       />
-      <div className="absolute inset-0 bg-gradient-to-b from-primary/80 via-primary/70 to-primary/90" />
+      <div className="absolute inset-0 bg-gradient-to-b from-primary/85 via-primary/75 to-primary/90" />
 
-      <div className="container relative py-20 md:py-32 lg:py-40">
-        <div className="mx-auto max-w-3xl text-center">
+      <div className="container relative py-16 md:py-28 lg:py-36">
+        <div className="mx-auto max-w-4xl text-center">
           {/* Trust badge */}
           <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-sm text-white/90 backdrop-blur-sm">
             <MapPin className="h-4 w-4" />
@@ -56,38 +69,99 @@ const HeroSection = () => {
             </span>
           </div>
 
-          <h1 className="font-display text-4xl font-bold tracking-tight text-white md:text-5xl lg:text-6xl">
-            Vind woningen in heel{" "}
-            <span className="text-accent">Nederland</span>
+          <h1 className="font-display text-3xl font-bold tracking-tight text-white sm:text-4xl md:text-5xl lg:text-6xl">
+            Vind nieuwe woningen{" "}
+            <span className="text-accent">sneller dan op Funda</span>
           </h1>
 
-          <p className="mx-auto mt-5 max-w-2xl text-lg text-white/80 md:text-xl">
-            Bekijk huurwoningen, appartementen, studio's en koopwoningen in verschillende steden
+          <p className="mx-auto mt-5 max-w-2xl text-base text-white/80 sm:text-lg md:text-xl">
+            WoonPeek helpt je nieuwe woningen te ontdekken zodra ze beschikbaar komen.
+            Huurwoningen, koopwoningen en meer — dagelijks bijgewerkt.
           </p>
 
-          {/* Search Bar */}
+          {/* Search Bar - Extended */}
           <form onSubmit={handleSearch} className="mt-10">
-            <div className="mx-auto flex max-w-xl flex-col gap-3 sm:flex-row sm:gap-0">
-              <div className="relative flex-1">
-                <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
+            <div className="mx-auto max-w-3xl overflow-hidden rounded-2xl bg-white shadow-xl">
+              {/* Main search input */}
+              <div className="flex items-center border-b border-border/50 px-4">
+                <Search className="h-5 w-5 shrink-0 text-muted-foreground" />
                 <Input
                   type="text"
-                  placeholder="Zoek op stad, plaatsnaam of woningtype..."
-                  className="h-14 rounded-xl border-0 bg-white pl-12 pr-4 text-base shadow-xl placeholder:text-muted-foreground/60 focus-visible:ring-2 focus-visible:ring-accent sm:rounded-r-none"
+                  placeholder="Zoek op stad of postcode..."
+                  className="h-14 border-0 bg-transparent text-base shadow-none focus-visible:ring-0"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
               </div>
-              <Button
-                type="submit"
-                size="lg"
-                className="h-14 rounded-xl bg-accent px-8 text-base font-semibold text-accent-foreground shadow-xl hover:bg-accent/90 sm:rounded-l-none"
-              >
-                <Search className="mr-2 h-5 w-5" />
-                Bekijk woningen
-              </Button>
+
+              {/* Filter row */}
+              <div className="grid grid-cols-3 divide-x divide-border/50">
+                <Select value={listingType} onValueChange={setListingType}>
+                  <SelectTrigger className="h-12 rounded-none border-0 bg-transparent text-sm shadow-none focus:ring-0">
+                    <SelectValue placeholder="Koop of huur" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="huur">Huur</SelectItem>
+                    <SelectItem value="koop">Koop</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                <Select value={maxPrice} onValueChange={setMaxPrice}>
+                  <SelectTrigger className="h-12 rounded-none border-0 bg-transparent text-sm shadow-none focus:ring-0">
+                    <SelectValue placeholder="Max. prijs" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="750">Tot €750</SelectItem>
+                    <SelectItem value="1000">Tot €1.000</SelectItem>
+                    <SelectItem value="1250">Tot €1.250</SelectItem>
+                    <SelectItem value="1500">Tot €1.500</SelectItem>
+                    <SelectItem value="2000">Tot €2.000</SelectItem>
+                    <SelectItem value="250000">Tot €250.000</SelectItem>
+                    <SelectItem value="350000">Tot €350.000</SelectItem>
+                    <SelectItem value="500000">Tot €500.000</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                <Select value={minBedrooms} onValueChange={setMinBedrooms}>
+                  <SelectTrigger className="h-12 rounded-none border-0 bg-transparent text-sm shadow-none focus:ring-0">
+                    <SelectValue placeholder="Kamers" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="1">1+ kamer</SelectItem>
+                    <SelectItem value="2">2+ kamers</SelectItem>
+                    <SelectItem value="3">3+ kamers</SelectItem>
+                    <SelectItem value="4">4+ kamers</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Search button */}
+              <div className="p-3">
+                <Button
+                  type="submit"
+                  size="lg"
+                  className="h-12 w-full gap-2 rounded-xl bg-accent text-base font-semibold text-accent-foreground shadow-md hover:bg-accent/90"
+                >
+                  <Search className="h-5 w-5" />
+                  Zoek woningen
+                </Button>
+              </div>
             </div>
           </form>
+
+          {/* CTA buttons */}
+          <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row">
+            <Link to="/dagelijkse-alert">
+              <Button
+                variant="outline"
+                size="lg"
+                className="gap-2 border-white/25 bg-white/10 text-white backdrop-blur-sm hover:bg-white/20 hover:text-white"
+              >
+                <Bell className="h-4 w-4" />
+                Ontvang woningalerts
+              </Button>
+            </Link>
+          </div>
 
           {/* Quick links */}
           <div className="mt-8 flex flex-wrap items-center justify-center gap-2">
