@@ -445,7 +445,7 @@ Deno.serve(async (req) => {
           // Check if already exists by source_url
           const { data: existing } = await supabase
             .from("properties")
-            .select("id, images")
+            .select("id, images, title")
             .eq("source_url", sourceUrl)
             .maybeSingle();
 
