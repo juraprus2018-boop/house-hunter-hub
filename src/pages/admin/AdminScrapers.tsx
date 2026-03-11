@@ -233,6 +233,45 @@ const AdminDaisycon = () => {
           </div>
         </div>
 
+        {/* Import Progress Banner */}
+        {(runImport.isPending || (importJob.job && importJob.isPolling)) && (
+          <Card className="border-primary/30 bg-primary/5">
+            <CardContent className="py-4">
+              <div className="flex items-center gap-3">
+                <Loader2 className="h-5 w-5 animate-spin text-primary shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between mb-1">
+                    <p className="text-sm font-medium">
+                      {importJob.job?.status === "completed" ? "Import voltooid!" : importJob.job?.message || "Import bezig..."}
+                    </p>
+                    {importJob.job && (
+                      <span className="text-xs text-muted-foreground shrink-0 ml-2">
+                        {importJob.job.imported} nieuw · {importJob.job.updated} bijgewerkt · {importJob.job.skipped} overgeslagen
+                      </span>
+                    )}
+                  </div>
+                  {importJob.job && importJob.job.total_feeds > 0 && (
+                    <Progress 
+                      value={(importJob.job.processed_feeds / importJob.job.total_feeds) * 100} 
+                      className="h-2"
+                    />
+                  )}
+                  {importJob.job?.feed_name && importJob.job.status !== "completed" && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Feed: {importJob.job.feed_name} ({importJob.job.processed_feeds + 1}/{importJob.job.total_feeds})
+                    </p>
+                  )}
+                </div>
+                {importJob.job?.status === "completed" && (
+                  <Button variant="ghost" size="sm" onClick={importJob.dismiss}>
+                    ✕
+                  </Button>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Wooniezie Scraper */}
         <Card>
           <CardHeader>
