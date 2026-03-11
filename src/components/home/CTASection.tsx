@@ -1,46 +1,45 @@
-import { PlusCircle, ArrowRight } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import ctaBackground from "@/assets/cta-background.jpg";
 
 const CTASection = () => {
   return (
-    <section className="py-16">
+    <section className="py-16 md:py-20">
       <div className="container">
-        <div className="relative overflow-hidden rounded-3xl">
-          {/* Background image */}
-          <div
-            className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-            style={{ backgroundImage: `url(${ctaBackground})` }}
-          />
-          <div className="absolute inset-0 bg-primary/85" />
+        <div className="relative overflow-hidden rounded-3xl bg-primary px-6 py-16 text-center md:px-12 md:py-20">
+          {/* Subtle pattern overlay */}
+          <div className="absolute inset-0 opacity-5">
+            <div className="absolute inset-0" style={{
+              backgroundImage: "radial-gradient(circle at 1px 1px, white 1px, transparent 0)",
+              backgroundSize: "40px 40px",
+            }} />
+          </div>
 
-          <div className="relative px-6 py-16 text-center md:px-12 md:py-20">
+          <div className="relative">
             <h2 className="font-display text-3xl font-bold text-primary-foreground md:text-4xl">
-              Heb je een woning te huur of te koop?
+              Op zoek naar een woning?
             </h2>
-            <p className="mx-auto mt-4 max-w-2xl text-lg text-primary-foreground/80">
-              Plaats je woning gratis op WoonPeek en bereik duizenden woningzoekers.
-              Geen makelaarskosten, direct contact met geïnteresseerden.
+            <p className="mx-auto mt-4 max-w-xl text-lg text-primary-foreground/80">
+              Bekijk het complete woningaanbod van Nederland op WoonPeek. Huurwoningen,
+              koopwoningen en meer — dagelijks bijgewerkt.
             </p>
             <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
-              <Link to="/woning-plaatsen">
-                <Button 
-                  size="lg" 
-                  className="gap-2 bg-accent text-accent-foreground shadow-lg hover:scale-[1.02] hover:bg-accent/90"
+              <Link to="/zoeken">
+                <Button
+                  size="lg"
+                  className="gap-2 bg-accent px-8 text-accent-foreground shadow-lg hover:bg-accent/90"
                 >
-                  <PlusCircle className="h-5 w-5" />
-                  Plaats je woning
+                  Bekijk het aanbod
+                  <ArrowRight className="h-5 w-5" />
                 </Button>
               </Link>
-              <Link to="/hoe-werkt-het">
-                <Button 
-                  size="lg" 
-                  variant="outline" 
+              <Link to="/dagelijkse-alert">
+                <Button
+                  size="lg"
+                  variant="outline"
                   className="gap-2 border-primary-foreground/30 bg-transparent text-primary-foreground hover:bg-primary-foreground/10"
                 >
-                  Hoe werkt het?
-                  <ArrowRight className="h-5 w-5" />
+                  Stel een alert in
                 </Button>
               </Link>
             </div>

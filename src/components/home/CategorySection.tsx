@@ -1,91 +1,75 @@
 import { Link } from "react-router-dom";
-import categoryAppartement from "@/assets/category-appartement.jpg";
-import categoryHuis from "@/assets/category-huis.jpg";
-import categoryStudio from "@/assets/category-studio.jpg";
-import categoryKamer from "@/assets/category-kamer.jpg";
+import { Home, Building2, DoorOpen, BedDouble, Key } from "lucide-react";
 
 const categories = [
   {
-    title: "Appartement",
+    title: "Huurwoningen",
+    description: "Alle huurwoningen in Nederland",
+    href: "/huurwoningen",
+    icon: Key,
+  },
+  {
+    title: "Appartementen",
     description: "Ruime appartementen in de stad",
-    slug: "appartement",
-    image: categoryAppartement,
+    href: "/zoeken?type=appartement",
+    icon: Building2,
   },
   {
-    title: "Huis",
-    description: "Eengezinswoningen met tuin",
-    slug: "huis",
-    image: categoryHuis,
-  },
-  {
-    title: "Studio",
+    title: "Studio's",
     description: "Compacte, zelfstandige woonruimtes",
-    slug: "studio",
-    image: categoryStudio,
+    href: "/zoeken?type=studio",
+    icon: DoorOpen,
   },
   {
-    title: "Kamer",
+    title: "Kamers",
     description: "Kamers in gedeelde woningen",
-    slug: "kamer",
-    image: categoryKamer,
+    href: "/zoeken?type=kamer",
+    icon: BedDouble,
+  },
+  {
+    title: "Koopwoningen",
+    description: "Woningen te koop in Nederland",
+    href: "/koopwoningen",
+    icon: Home,
   },
 ];
 
 const CategorySection = () => {
   return (
-    <section className="bg-muted/30 py-16">
+    <section className="py-16 md:py-20">
       <div className="container">
-        <div className="mb-8 text-center">
-          <h2 className="font-display text-3xl font-bold text-foreground">
+        <div className="mb-10 text-center">
+          <h2 className="font-display text-3xl font-bold text-foreground md:text-4xl">
             Zoek per woningtype
           </h2>
-          <p className="mt-2 text-muted-foreground">
+          <p className="mx-auto mt-3 max-w-xl text-muted-foreground">
             Kies het type woning dat bij jou past
           </p>
-          <div className="mt-4 flex items-center justify-center gap-4">
-            <Link
-              to="/huurwoningen"
-              className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-4 py-2 text-sm font-medium text-primary transition-colors hover:bg-primary/20"
-            >
-              Alle huurwoningen
-            </Link>
-            <Link
-              to="/koopwoningen"
-              className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-4 py-2 text-sm font-medium text-primary transition-colors hover:bg-primary/20"
-            >
-              Alle koopwoningen
-            </Link>
-          </div>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {categories.map((category) => (
-            <Link
-              key={category.slug}
-              to={`/zoeken?type=${category.slug}`}
-              className="group"
-            >
-              <div className="relative overflow-hidden rounded-2xl transition-all hover:shadow-lg">
-                <div className="aspect-[4/3] overflow-hidden">
-                  <img
-                    src={category.image}
-                    alt={category.title}
-                    loading="lazy"
-                    className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                  />
+        <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-5">
+          {categories.map((category) => {
+            const Icon = category.icon;
+            return (
+              <Link
+                key={category.href}
+                to={category.href}
+                className="group flex flex-col items-center gap-4 rounded-2xl border bg-card p-6 text-center transition-all hover:border-primary/30 hover:shadow-lg"
+              >
+                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
+                  <Icon className="h-7 w-7 text-primary group-hover:text-primary-foreground" />
                 </div>
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-                <div className="absolute bottom-0 left-0 right-0 p-5">
-                  <h3 className="font-display text-xl font-semibold text-white">
+                <div>
+                  <h3 className="font-display text-base font-semibold text-foreground">
                     {category.title}
                   </h3>
-                  <p className="mt-1 text-sm text-white/80">
+                  <p className="mt-1 text-xs text-muted-foreground">
                     {category.description}
                   </p>
                 </div>
-              </div>
-            </Link>
-          ))}
+              </Link>
+            );
+          })}
         </div>
       </div>
     </section>
