@@ -513,7 +513,9 @@ Deno.serve(async (req) => {
             skipped++;
             continue;
           }
-          allPropertyData.push(mapDaisyconToProperty(product, feed.name, sourceUrl));
+          const propData = mapDaisyconToProperty(product, feed.name, sourceUrl);
+          allPropertyData.push(propData);
+          allActiveSourceUrls.add(sourceUrl);
         }
 
         console.log(`Feed ${feed.name}: ${allPropertyData.length} valid products to process`);
