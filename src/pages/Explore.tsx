@@ -97,9 +97,16 @@ const ExplorePage = () => {
     city: selectedCity || undefined,
     listingType: listingType || undefined,
     sourceSite: selectedSource || undefined,
-    pageSize: 1000,
+    disablePagination: true,
   });
   const allProperties = allData?.properties;
+
+  // Separate optimized query for map markers (only properties with coords)
+  const { data: mapProps } = useMapProperties({
+    city: selectedCity || undefined,
+    listingType: listingType || undefined,
+    sourceSite: selectedSource || undefined,
+  });
 
   // Filter by distance from postcode
   const filteredProperties = useMemo(() => {
