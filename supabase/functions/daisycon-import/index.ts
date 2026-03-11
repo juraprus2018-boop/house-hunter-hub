@@ -219,23 +219,26 @@ function mapDaisyconToProperty(product: DaisyconProduct, sourceSite: string, sou
   // Collect images - check many common Daisycon field naming patterns
   const images: string[] = [];
   
-  // Handle "images" field (Daisycon standard_id=20 format) - can be array of objects, array of strings, or string
-  const rawImages = product.images || product[`images`];
+  // Handle "images" field (Daisycon standard_id=20 format)
+  let rawImages: any = product.images;
   if (rawImages) {
+    // Unwrap { img: [...] } or { img: { location: "..." } } format
+    if (!Array.isArray(rawImages) && typeof rawImages === "object" && rawImages.img) {
+      rawImages = Array.isArray(rawImages.img) ? rawImages.img : [rawImages.img];
+    }
+    
     if (Array.isArray(rawImages)) {
       for (const img of rawImages) {
         if (typeof img === "string" && img) {
           images.push(img);
         } else if (img && typeof img === "object") {
           // Daisycon format: { location: "https://...", size: "large", tag: "detail" }
-          // Also check: url, image, src, image_url
           const imgUrl = (img as any).location || (img as any).url || (img as any).image || 
-                         (img as any).src || (img as any).image_url || (img as any).large || (img as any).original;
+                         (img as any).src || (img as any).image_url;
           if (typeof imgUrl === "string" && imgUrl) images.push(imgUrl);
         }
       }
     } else if (typeof rawImages === "string" && rawImages) {
-      // Could be comma-separated or pipe-separated
       const urls = rawImages.includes(",") ? rawImages.split(",") : 
                    rawImages.includes("|") ? rawImages.split("|") : [rawImages];
       for (const u of urls) {
