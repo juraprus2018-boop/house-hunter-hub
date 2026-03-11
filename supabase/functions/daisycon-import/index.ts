@@ -289,8 +289,8 @@ Deno.serve(async (req) => {
     }
 
     let totalImported = 0;
-    let totalSkipped = 0;
-    const results: { feed: string; imported: number; skipped: number; error?: string }[] = [];
+    let totalUpdated = 0;
+    const results: { feed: string; imported: number; updated: number; skipped: number; error?: string }[] = [];
 
     for (const feed of feeds) {
       try {
