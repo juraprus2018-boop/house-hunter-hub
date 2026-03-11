@@ -319,3 +319,63 @@ export const useWooniezieStats = () => {
     },
   });
 };
+
+// Import job progress tracking
+export interface ImportJob {
+  id: string;
+  type: string;
+  status: string;
+  feed_id: string | null;
+  feed_name: string | null;
+  total_feeds: number;
+  processed_feeds: number;
+  imported: number;
+  updated: number;
+  skipped: number;
+  errors: number;
+  message: string | null;
+  started_at: string;
+  completed_at: string | null;
+}
+
+export const useActiveImportJob = () => {
+  const [jobId, setJobId] = useState<string | null>(null);
+  const [isPolling, setIsPolling] = useState(false);
+
+  const query = useQuery({
+    queryKey: ["import-job", jobId],
+    queryFn: async () => {
+      if (!jobId) return null;
+      const { data, error } = await (supabase as any)
+        .from("import_jobs")
+        .select("*")
+        .eq("id", jobId)
+        .single();
+      if (error) return null;
+      return data as ImportJob;
+    },
+    enabled: !!jobId && isPolling,
+    refetchInterval: isPolling ? 2000 : false,
+  });
+
+  // Stop polling when job is completed
+  useEffect(() => {
+    if (query.data?.status === "completed" || query.data?.status === "error") {
+      // Keep showing for a few seconds then stop
+      const timer = setTimeout(() => setIsPolling(false), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [query.data?.status]);
+
+  const startTracking = (id: string) => {
+    setJobId(id);
+    setIsPolling(true);
+  };
+
+  const dismiss = () => {
+    setIsPolling(false);
+    setJobId(null);
+  };
+
+  return { job: query.data, isPolling, startTracking, dismiss };
+};
