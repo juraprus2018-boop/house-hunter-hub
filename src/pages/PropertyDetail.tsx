@@ -610,15 +610,25 @@ const PropertyDetail = () => {
                 </Card>
 
                 {/* Source card */}
-                {sourceMeta && (
+                {(sourceMeta || sourceLogo) && (
                   <Card>
                     <CardContent className="p-5">
                       <div className="flex items-center gap-3">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-lg text-sm font-bold text-white" style={{ backgroundColor: sourceMeta.color }}>
-                          {sourceMeta.label.charAt(0).toUpperCase()}
-                        </div>
+                        {sourceLogo ? (
+                          <div className="flex h-10 w-10 items-center justify-center rounded-lg border bg-white p-1">
+                            <img
+                              src={sourceLogo}
+                              alt={sourceMeta?.label || sourceInfo.source_site || "Aanbieder"}
+                              className="h-full w-full object-contain"
+                            />
+                          </div>
+                        ) : sourceMeta ? (
+                          <div className="flex h-10 w-10 items-center justify-center rounded-lg text-sm font-bold text-white" style={{ backgroundColor: sourceMeta.color }}>
+                            {sourceMeta.label.charAt(0).toUpperCase()}
+                          </div>
+                        ) : null}
                         <div>
-                          <p className="font-semibold">{sourceMeta.label}</p>
+                          <p className="font-semibold">{sourceMeta?.label || sourceInfo.source_site}</p>
                           <p className="text-xs text-muted-foreground">Externe aanbieder</p>
                         </div>
                       </div>
@@ -626,7 +636,7 @@ const PropertyDetail = () => {
                         <Button asChild variant="outline" className="mt-3 w-full" size="sm">
                           <a href={sourceInfo.source_url} target="_blank" rel="noopener noreferrer">
                             <ExternalLink className="mr-2 h-3.5 w-3.5" />
-                            Bekijk bij {sourceMeta.label}
+                            Bekijk bij {sourceMeta?.label || sourceInfo.source_site}
                           </a>
                         </Button>
                       )}
