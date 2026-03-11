@@ -203,7 +203,7 @@ const SearchPage = () => {
             <aside className="hidden w-72 shrink-0 md:block">
               <div className="sticky top-24 rounded-lg border bg-card p-6">
                 <h2 className="mb-4 font-display text-lg font-semibold">Filters</h2>
-                <SearchFilters filters={filters} onChange={handleFilterChange} onClear={clearFilters} />
+                <SearchFilters filters={filters} onChange={handleFilterChange} onClear={clearFilters} facets={facets} />
               </div>
             </aside>
 
