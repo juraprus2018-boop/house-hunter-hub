@@ -7,7 +7,7 @@ import Breadcrumbs from "@/components/seo/Breadcrumbs";
 import SEOHead from "@/components/seo/SEOHead";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useProperties, useFilterFacets } from "@/hooks/useProperties";
+import { useProperties, useFilterFacets, useMapProperties } from "@/hooks/useProperties";
 import { Search, SlidersHorizontal, List, Map } from "lucide-react";
 import ExploreMap from "@/components/explore/ExploreMap";
 import {
@@ -86,6 +86,16 @@ const SearchPage = () => {
   const properties = data?.properties;
   const totalCount = data?.totalCount || 0;
   const totalPages = Math.ceil(totalCount / pageSize);
+
+  // Separate query for map view: all properties with coordinates
+  const { data: mapProperties, isLoading: isMapLoading } = useMapProperties({
+    city: debouncedCity || undefined,
+    propertyType: filters.propertyType || undefined,
+    listingType: filters.listingType || undefined,
+    maxPrice: filters.maxPrice,
+    minBedrooms: filters.minBedrooms,
+    minSurface: filters.minSurface,
+  }, viewMode === "map");
 
   const handleFilterChange = useCallback((newFilters: SearchFilterValues) => {
     setFilters(newFilters);
@@ -235,7 +245,16 @@ const SearchPage = () => {
                   </div>
                 ) : (
                   <div className="h-[500px] rounded-lg border overflow-hidden">
-                    <ExploreMap properties={properties} />
+                    {isMapLoading ? (
+                      <div className="flex items-center justify-center h-full">
+                        <Skeleton className="h-full w-full" />
+                      </div>
+                    ) : (
+                      <ExploreMap properties={(mapProperties || []) as any} />
+                    )}
+                    <p className="text-xs text-muted-foreground mt-2">
+                      {mapProperties?.length || 0} woningen met locatie op de kaart
+                    </p>
                   </div>
                 )
               ) : (

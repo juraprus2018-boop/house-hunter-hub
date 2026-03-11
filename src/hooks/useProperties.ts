@@ -88,6 +88,41 @@ export const useProperties = (filters?: PropertyFilters) => {
   });
 };
 
+export const useMapProperties = (filters?: Omit<PropertyFilters, 'page' | 'pageSize' | 'disablePagination'>, enabled = true) => {
+  return useQuery({
+    queryKey: ["map-properties", filters],
+    queryFn: async () => {
+      let query = supabase
+        .from("properties")
+        .select("id, title, price, listing_type, property_type, city, street, house_number, slug, images, latitude, longitude, status")
+        .not("latitude", "is", null)
+        .not("longitude", "is", null)
+        .eq("status", "actief")
+        .limit(5000);
+
+      if (filters?.city) {
+        const isPostalCode = /^\d/.test(filters.city.trim());
+        if (isPostalCode) {
+          query = query.ilike("postal_code", `%${filters.city.trim()}%`);
+        } else {
+          query = query.ilike("city", `%${filters.city}%`);
+        }
+      }
+      if (filters?.propertyType) query = query.eq("property_type", filters.propertyType);
+      if (filters?.listingType) query = query.eq("listing_type", filters.listingType);
+      if (filters?.maxPrice) query = query.lte("price", filters.maxPrice);
+      if (filters?.minBedrooms) query = query.gte("bedrooms", filters.minBedrooms);
+      if (filters?.minSurface) query = query.gte("surface_area", filters.minSurface);
+
+      const { data, error } = await query;
+      if (error) throw error;
+      return data || [];
+    },
+    enabled,
+    staleTime: 60 * 1000,
+  });
+};
+
 export const useProperty = (slugOrId: string) => {
   return useQuery({
     queryKey: ["property", slugOrId],
