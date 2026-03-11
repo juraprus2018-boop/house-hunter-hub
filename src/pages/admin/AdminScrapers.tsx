@@ -63,6 +63,7 @@ const AdminDaisycon = () => {
   const updateFeed = useUpdateDaisyconFeed();
   const uploadLogo = useUploadFeedLogo();
   const { data: programsData, refetch: fetchPrograms, isLoading: programsLoading, isFetching: programsFetching } = useDaisyconPrograms();
+  const importJob = useActiveImportJob();
 
   // Wooniezie
   const wooniezieImport = useRunWooniezieImport();
