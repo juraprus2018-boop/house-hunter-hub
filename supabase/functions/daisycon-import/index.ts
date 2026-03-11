@@ -541,12 +541,26 @@ Deno.serve(async (req) => {
       }
     }
 
+    // Mark job as completed
+    if (jobId) {
+      await supabase.from("import_jobs").update({
+        status: "completed",
+        processed_feeds: feeds.length,
+        imported: totalImported,
+        updated: totalUpdated,
+        skipped: totalSkipped,
+        message: `Klaar: ${totalImported} nieuw, ${totalUpdated} bijgewerkt, ${totalSkipped} overgeslagen`,
+        completed_at: new Date().toISOString(),
+      }).eq("id", jobId);
+    }
+
     return new Response(
       JSON.stringify({
         success: true,
         total_imported: totalImported,
         total_updated: totalUpdated,
         total_skipped: totalSkipped,
+        job_id: jobId,
         results,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
