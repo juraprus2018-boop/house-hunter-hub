@@ -216,16 +216,17 @@ function mapDaisyconToProperty(product: DaisyconProduct, sourceSite: string, sou
     propertyType = "kamer";
   }
 
-  // Collect images
+  // Collect images - check many common Daisycon field naming patterns
   const images: string[] = [];
   const mainImage = product.image_large || product.image_url_large || product.image_url;
-  if (mainImage) images.push(mainImage);
-  if (product.additional_image_urls) {
-    images.push(...product.additional_image_urls.slice(0, 9));
+  if (mainImage && typeof mainImage === "string") images.push(mainImage);
+  if (product.additional_image_urls && Array.isArray(product.additional_image_urls)) {
+    images.push(...product.additional_image_urls.filter((u: unknown) => typeof u === "string" && u).slice(0, 9));
   }
-  for (let i = 1; i <= 10; i++) {
-    const extraImg = product[`extra_image_url_${i}`] || product[`image_url_${i}`];
-    if (typeof extraImg === "string" && extraImg) images.push(extraImg);
+  // Check image_url_1..20, extra_image_url_1..20, image_1..20
+  for (let i = 1; i <= 20; i++) {
+    const extraImg = product[`image_url_${i}`] || product[`extra_image_url_${i}`] || product[`image_${i}`];
+    if (typeof extraImg === "string" && extraImg && !images.includes(extraImg)) images.push(extraImg);
   }
 
   const title = product.title || `${street} ${houseNumber}, ${city}`.trim();
@@ -288,8 +289,8 @@ Deno.serve(async (req) => {
     }
 
     let totalImported = 0;
-    let totalSkipped = 0;
-    const results: { feed: string; imported: number; skipped: number; error?: string }[] = [];
+    let totalUpdated = 0;
+    const results: { feed: string; imported: number; updated: number; skipped: number; error?: string }[] = [];
 
     for (const feed of feeds) {
       try {
@@ -367,6 +368,7 @@ Deno.serve(async (req) => {
 
         let imported = 0;
         let skipped = 0;
+        let updated = 0;
 
         for (const product of products) {
           const sourceUrl = buildAffiliateLink(product, feed.media_id, feed.program_id);
@@ -377,19 +379,32 @@ Deno.serve(async (req) => {
             continue;
           }
 
+          const propertyData = mapDaisyconToProperty(product, feed.name, sourceUrl);
+
           // Check if already exists by source_url
           const { data: existing } = await supabase
             .from("properties")
-            .select("id")
+            .select("id, images")
             .eq("source_url", sourceUrl)
             .maybeSingle();
 
           if (existing) {
-            skipped++;
+            // Update existing property if it has no images but new data does
+            const existingImages = existing.images || [];
+            if (existingImages.length === 0 && propertyData.images.length > 0) {
+              await supabase
+                .from("properties")
+                .update({ images: propertyData.images, updated_at: new Date().toISOString() })
+                .eq("id", existing.id);
+              updated++;
+              console.log(`Updated images for "${propertyData.title}": ${propertyData.images.length} images`);
+            } else {
+              skipped++;
+            }
             continue;
           }
 
-          const propertyData = mapDaisyconToProperty(product, feed.name, sourceUrl);
+          console.log(`Inserting "${propertyData.title}" with ${propertyData.images.length} images`);
 
           const { error: insertErr } = await supabase
             .from("properties")
@@ -415,9 +430,10 @@ Deno.serve(async (req) => {
 
         totalImported += imported;
         totalSkipped += skipped;
-        results.push({ feed: feed.name, imported, skipped });
+        totalUpdated += updated;
+        results.push({ feed: feed.name, imported, updated, skipped });
 
-        console.log(`Feed ${feed.name}: ${imported} imported, ${skipped} skipped`);
+        console.log(`Feed ${feed.name}: ${imported} imported, ${updated} updated with images, ${skipped} skipped`);
       } catch (feedErr) {
         const msg = feedErr instanceof Error ? feedErr.message : "Unknown error";
         console.error(`Error processing feed ${feed.name}:`, msg);
@@ -429,6 +445,7 @@ Deno.serve(async (req) => {
       JSON.stringify({
         success: true,
         total_imported: totalImported,
+        total_updated: totalUpdated,
         total_skipped: totalSkipped,
         results,
       }),
