@@ -7,7 +7,7 @@ import Breadcrumbs from "@/components/seo/Breadcrumbs";
 import SEOHead from "@/components/seo/SEOHead";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useProperties } from "@/hooks/useProperties";
+import { useProperties, useFilterFacets } from "@/hooks/useProperties";
 import { Search, SlidersHorizontal, List, Map } from "lucide-react";
 import ExploreMap from "@/components/explore/ExploreMap";
 import {
