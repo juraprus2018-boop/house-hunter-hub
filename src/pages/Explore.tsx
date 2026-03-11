@@ -148,6 +148,21 @@ const ExplorePage = () => {
   }, [citySourceProperties]);
 
   const [hoveredPropertyId, setHoveredPropertyId] = useState<string | null>(null);
+  const [listPage, setListPage] = useState(1);
+
+  const totalListPages = Math.max(1, Math.ceil(filteredProperties.length / LIST_PAGE_SIZE));
+  const paginatedProperties = useMemo(() => {
+    const from = (listPage - 1) * LIST_PAGE_SIZE;
+    return filteredProperties.slice(from, from + LIST_PAGE_SIZE);
+  }, [filteredProperties, listPage]);
+
+  useEffect(() => {
+    setListPage(1);
+  }, [selectedCity, listingType, selectedSource, debouncedPostcode, distanceKm]);
+
+  useEffect(() => {
+    if (listPage > totalListPages) setListPage(totalListPages);
+  }, [listPage, totalListPages]);
 
   const clearPostcode = useCallback(() => {
     setPostcode("");
