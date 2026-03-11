@@ -239,7 +239,7 @@ const AdminProperties = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredProperties?.map((property) => (
+                {properties?.map((property) => (
                   <TableRow key={property.id}>
                     <TableCell className="font-medium max-w-[200px] truncate">
                       {property.title}
