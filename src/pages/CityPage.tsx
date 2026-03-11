@@ -132,7 +132,7 @@ const CityPage = () => {
         itemListElement: filteredProperties.slice(0, 10).map((property, index) => ({
           "@type": "ListItem",
           position: index + 1,
-          url: `https://woonpeek.nl/woning/${property.slug || property.id}`,
+          url: `https://www.woonpeek.nl/woning/${property.slug || property.id}`,
           name: property.title,
         })),
       },

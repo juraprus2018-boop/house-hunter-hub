@@ -91,7 +91,7 @@ const NewListings = () => {
     itemListElement: properties.slice(0, 10).map((p, i) => ({
       "@type": "ListItem",
       position: i + 1,
-      url: `https://woonpeek.nl/woning/${p.slug || p.id}`,
+      url: `https://www.woonpeek.nl/woning/${p.slug || p.id}`,
     })),
   };
 
