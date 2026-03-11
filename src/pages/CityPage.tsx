@@ -112,7 +112,7 @@ const CityPage = () => {
 
   const pageTitle = `Woningen in ${cityName} | WoonPeek`;
   const pageDescription = `Bekijk ${totalCount} woningen in ${cityName}, filter direct op type en prijs en ontdek het complete aanbod op WoonPeek.`;
-  const canonical = `https://woonpeek.nl${cityPath(cityName)}`;
+  const canonical = `https://www.woonpeek.nl${cityPath(cityName)}`;
 
   const jsonLd = useMemo(
     () => ({
