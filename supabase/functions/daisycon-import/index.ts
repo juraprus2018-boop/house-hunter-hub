@@ -398,7 +398,10 @@ Deno.serve(async (req) => {
     let totalImported = 0;
     let totalSkipped = 0;
     let totalUpdated = 0;
-    const results: { feed: string; imported: number; updated: number; skipped: number; error?: string }[] = [];
+    let totalDeactivated = 0;
+    const results: { feed: string; imported: number; updated: number; skipped: number; deactivated: number; error?: string }[] = [];
+    // Collect all active source URLs across all feeds for deactivation check
+    const allActiveSourceUrls = new Set<string>();
 
     for (let feedIndex = 0; feedIndex < feeds.length; feedIndex++) {
       const feed = feeds[feedIndex];
@@ -510,25 +513,27 @@ Deno.serve(async (req) => {
             skipped++;
             continue;
           }
-          allPropertyData.push(mapDaisyconToProperty(product, feed.name, sourceUrl));
+          const propData = mapDaisyconToProperty(product, feed.name, sourceUrl);
+          allPropertyData.push(propData);
+          allActiveSourceUrls.add(sourceUrl);
         }
 
         console.log(`Feed ${feed.name}: ${allPropertyData.length} valid products to process`);
 
         // Get all existing source_urls for this feed in one query
         const sourceUrls = allPropertyData.map(p => p.source_url);
-        const existingMap = new Map<string, { id: string; images: string[]; title: string; latitude: number | null; longitude: number | null; build_year: number | null; energy_label: string | null }>();
+        const existingMap = new Map<string, { id: string; status: string; images: string[]; title: string; latitude: number | null; longitude: number | null; build_year: number | null; energy_label: string | null }>();
         
         // Query in batches of 500 (Supabase IN filter limit)
         for (let i = 0; i < sourceUrls.length; i += 500) {
           const batch = sourceUrls.slice(i, i + 500);
           const { data: existingRows } = await supabase
             .from("properties")
-            .select("id, source_url, images, title, latitude, longitude, build_year, energy_label")
+            .select("id, source_url, status, images, title, latitude, longitude, build_year, energy_label")
             .in("source_url", batch);
           if (existingRows) {
             for (const row of existingRows) {
-              existingMap.set(row.source_url!, { id: row.id, images: row.images || [], title: row.title, latitude: row.latitude, longitude: row.longitude, build_year: row.build_year, energy_label: row.energy_label });
+              existingMap.set(row.source_url!, { id: row.id, status: row.status, images: row.images || [], title: row.title, latitude: row.latitude, longitude: row.longitude, build_year: row.build_year, energy_label: row.energy_label });
             }
           }
         }
@@ -543,6 +548,10 @@ Deno.serve(async (req) => {
           const existing = existingMap.get(propData.source_url);
           if (existing) {
             const updates: Record<string, any> = {};
+            // Reactivate if inactive
+            if (existing.status === "inactief") {
+              updates.status = "actief";
+            }
             const hasNoImages = existing.images.length === 0 || 
               (existing.images.length === 1 && existing.images[0] === "");
             if (hasNoImages && propData.images.length > 0) {
@@ -551,7 +560,6 @@ Deno.serve(async (req) => {
             if (existing.title && genericTitles.includes(existing.title.trim().toLowerCase())) {
               updates.title = propData.title;
             }
-            // Fill in missing geo/building data
             if (!existing.latitude && propData.latitude) {
               updates.latitude = propData.latitude;
               updates.longitude = propData.longitude;
@@ -623,15 +631,46 @@ Deno.serve(async (req) => {
         totalImported += imported;
         totalSkipped += skipped;
         totalUpdated += updated;
-        results.push({ feed: feed.name, imported, updated, skipped });
+        results.push({ feed: feed.name, imported, updated, skipped, deactivated: 0 });
 
-        console.log(`Feed ${feed.name}: ${imported} imported, ${updated} updated with images, ${skipped} skipped`);
+        console.log(`Feed ${feed.name}: ${imported} imported, ${updated} updated, ${skipped} skipped`);
       } catch (feedErr) {
         const msg = feedErr instanceof Error ? feedErr.message : "Unknown error";
         console.error(`Error processing feed ${feed.name}:`, msg);
-        results.push({ feed: feed.name, imported: 0, skipped: 0, error: msg });
+        results.push({ feed: feed.name, imported: 0, skipped: 0, deactivated: 0, error: msg });
       }
     }
+
+    // Deactivate Daisycon properties no longer in any feed
+    console.log(`Deactivating properties not in feed. Active source URLs: ${allActiveSourceUrls.size}`);
+    const feedNames = feeds.map((f: any) => f.name);
+    const pageSize = 1000;
+    let from = 0;
+    while (true) {
+      const { data: existingProps, error: fetchErr } = await supabase
+        .from("properties")
+        .select("id, source_url")
+        .in("source_site", feedNames)
+        .eq("status", "actief")
+        .range(from, from + pageSize - 1);
+
+      if (fetchErr || !existingProps || existingProps.length === 0) break;
+
+      for (const prop of existingProps) {
+        if (prop.source_url && !allActiveSourceUrls.has(prop.source_url)) {
+          await supabase
+            .from("properties")
+            .update({ status: "inactief", updated_at: new Date().toISOString() })
+            .eq("id", prop.id);
+          totalDeactivated++;
+        }
+      }
+
+      if (existingProps.length < pageSize) break;
+      from += pageSize;
+    }
+
+    console.log(`Deactivated ${totalDeactivated} properties no longer in feeds`);
 
     // Mark job as completed
     if (jobId) {
@@ -641,7 +680,7 @@ Deno.serve(async (req) => {
         imported: totalImported,
         updated: totalUpdated,
         skipped: totalSkipped,
-        message: `Klaar: ${totalImported} nieuw, ${totalUpdated} bijgewerkt, ${totalSkipped} overgeslagen`,
+        message: `Klaar: ${totalImported} nieuw, ${totalUpdated} bijgewerkt, ${totalSkipped} overgeslagen, ${totalDeactivated} gedeactiveerd`,
         completed_at: new Date().toISOString(),
       }).eq("id", jobId);
     }
@@ -652,6 +691,7 @@ Deno.serve(async (req) => {
         total_imported: totalImported,
         total_updated: totalUpdated,
         total_skipped: totalSkipped,
+        total_deactivated: totalDeactivated,
         job_id: jobId,
         results,
       }),

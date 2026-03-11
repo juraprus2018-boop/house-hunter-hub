@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX IF NOT EXISTS idx_properties_source_url_unique ON properties (source_url) WHERE source_url IS NOT NULL;
