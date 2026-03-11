@@ -121,7 +121,7 @@ const ExplorePage = () => {
   const { data: citySourceData } = useProperties({
     listingType: listingType || undefined,
     sourceSite: selectedSource || undefined,
-    pageSize: 1000,
+    disablePagination: true,
   });
   const citySourceProperties = citySourceData?.properties;
   const cities = useMemo(() => {
