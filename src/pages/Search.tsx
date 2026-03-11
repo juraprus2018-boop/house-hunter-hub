@@ -65,6 +65,13 @@ const SearchPage = () => {
     setSearchParams(params, { replace: true });
   }, [debouncedCity, filters.propertyType, filters.listingType, filters.maxPrice, setSearchParams]);
 
+  const { data: facets } = useFilterFacets({
+    city: debouncedCity || undefined,
+    propertyType: filters.propertyType || undefined,
+    listingType: filters.listingType || undefined,
+    includeInactive: filters.includeInactive,
+  });
+
   const { data, isLoading } = useProperties({
     city: debouncedCity || undefined,
     propertyType: filters.propertyType || undefined,
