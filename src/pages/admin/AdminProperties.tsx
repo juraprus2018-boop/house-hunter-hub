@@ -321,7 +321,7 @@ const AdminProperties = () => {
                     </TableCell>
                   </TableRow>
                 ))}
-                {(!filteredProperties || filteredProperties.length === 0) && (
+                {(!properties || properties.length === 0) && (
                   <TableRow>
                     <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                       Geen woningen gevonden
@@ -330,6 +330,35 @@ const AdminProperties = () => {
                 )}
               </TableBody>
             </Table>
+
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between pt-4 border-t mt-4">
+                <p className="text-sm text-muted-foreground">
+                  {currentPage * PAGE_SIZE + 1}–{Math.min((currentPage + 1) * PAGE_SIZE, totalCount)} van {totalCount}
+                </p>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={currentPage === 0}
+                    onClick={() => setCurrentPage((p) => p - 1)}
+                  >
+                    <ChevronLeft className="h-4 w-4 mr-1" />
+                    Vorige
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={currentPage >= totalPages - 1}
+                    onClick={() => setCurrentPage((p) => p + 1)}
+                  >
+                    Volgende
+                    <ChevronRight className="h-4 w-4 ml-1" />
+                  </Button>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
