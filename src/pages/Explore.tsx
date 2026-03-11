@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useProperties } from "@/hooks/useProperties";
+import { useProperties, useMapProperties } from "@/hooks/useProperties";
 import { Loader2, MapPin, ChevronRight, SlidersHorizontal, X, Navigation } from "lucide-react";
 import { cn } from "@/lib/utils";
 import ExploreMap from "@/components/explore/ExploreMap";
