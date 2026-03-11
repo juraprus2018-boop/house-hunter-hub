@@ -390,7 +390,7 @@ const ExplorePage = () => {
                 </div>
               ) : (
                 <ExploreMap
-                  properties={filteredProperties}
+                  properties={filteredMapProperties as any}
                   hoveredPropertyId={hoveredPropertyId}
                 />
               )}
