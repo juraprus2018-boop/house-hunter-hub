@@ -15,8 +15,8 @@ const Index = () => {
     "@context": "https://schema.org",
     "@type": "Organization",
     name: "WoonPeek",
-    url: "https://woonpeek.nl",
-    logo: "https://woonpeek.nl/favicon.png",
+    url: "https://www.woonpeek.nl",
+    logo: "https://www.woonpeek.nl/favicon.png",
     sameAs: ["https://www.facebook.com/woonpeek"],
     description:
       "WoonPeek verzamelt dagelijks het nieuwste woningaanbod uit heel Nederland op één plek.",
