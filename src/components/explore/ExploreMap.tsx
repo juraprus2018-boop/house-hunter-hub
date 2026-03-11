@@ -113,6 +113,10 @@ const ExploreMap = ({ properties, hoveredPropertyId }: ExploreMapProps) => {
       spiderfyOnMaxZoom: true,
       showCoverageOnHover: false,
       zoomToBoundsOnClick: true,
+      chunkedLoading: true,
+      chunkInterval: 120,
+      chunkDelay: 40,
+      removeOutsideVisibleBounds: true,
       iconCreateFunction: (cluster: any) => {
         const count = cluster.getChildCount();
         let size = "small";
