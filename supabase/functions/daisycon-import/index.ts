@@ -339,12 +339,39 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Create import job for progress tracking
+    const { data: job } = await supabase
+      .from("import_jobs")
+      .insert({
+        type: "daisycon",
+        status: "running",
+        feed_id: feedId || null,
+        total_feeds: feeds.length,
+        processed_feeds: 0,
+        message: `Importeren van ${feeds.length} feed(s)...`,
+      })
+      .select("id")
+      .single();
+    const jobId = job?.id;
+
     let totalImported = 0;
     let totalSkipped = 0;
     let totalUpdated = 0;
     const results: { feed: string; imported: number; updated: number; skipped: number; error?: string }[] = [];
 
-    for (const feed of feeds) {
+    for (let feedIndex = 0; feedIndex < feeds.length; feedIndex++) {
+      const feed = feeds[feedIndex];
+      // Update job progress
+      if (jobId) {
+        await supabase.from("import_jobs").update({
+          processed_feeds: feedIndex,
+          feed_name: feed.name,
+          message: `Bezig met feed "${feed.name}" (${feedIndex + 1}/${feeds.length})...`,
+          imported: totalImported,
+          updated: totalUpdated,
+          skipped: totalSkipped,
+        }).eq("id", jobId);
+      }
       try {
         let feedUrl = feed.feed_url;
         let responseText = "";
@@ -453,8 +480,10 @@ Deno.serve(async (req) => {
             const existingImages = existing.images || [];
             const updates: Record<string, any> = {};
 
-            // Update images if missing
-            if (existingImages.length === 0 && propertyData.images.length > 0) {
+            // Update images if missing or empty default array
+            const hasNoImages = existingImages.length === 0 || 
+              (existingImages.length === 1 && existingImages[0] === "");
+            if (hasNoImages && propertyData.images.length > 0) {
               updates.images = propertyData.images;
             }
 
@@ -512,12 +541,26 @@ Deno.serve(async (req) => {
       }
     }
 
+    // Mark job as completed
+    if (jobId) {
+      await supabase.from("import_jobs").update({
+        status: "completed",
+        processed_feeds: feeds.length,
+        imported: totalImported,
+        updated: totalUpdated,
+        skipped: totalSkipped,
+        message: `Klaar: ${totalImported} nieuw, ${totalUpdated} bijgewerkt, ${totalSkipped} overgeslagen`,
+        completed_at: new Date().toISOString(),
+      }).eq("id", jobId);
+    }
+
     return new Response(
       JSON.stringify({
         success: true,
         total_imported: totalImported,
         total_updated: totalUpdated,
         total_skipped: totalSkipped,
+        job_id: jobId,
         results,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
