@@ -218,15 +218,48 @@ function mapDaisyconToProperty(product: DaisyconProduct, sourceSite: string, sou
 
   // Collect images - check many common Daisycon field naming patterns
   const images: string[] = [];
-  const mainImage = product.image_large || product.image_url_large || product.image_url;
-  if (mainImage && typeof mainImage === "string") images.push(mainImage);
-  if (product.additional_image_urls && Array.isArray(product.additional_image_urls)) {
-    images.push(...product.additional_image_urls.filter((u: unknown) => typeof u === "string" && u).slice(0, 9));
+  
+  // Handle "images" field (Daisycon standard_id=20 format)
+  let rawImages: any = product.images;
+  if (rawImages) {
+    // Unwrap { img: [...] } or { img: { location: "..." } } format
+    if (!Array.isArray(rawImages) && typeof rawImages === "object" && rawImages.img) {
+      rawImages = Array.isArray(rawImages.img) ? rawImages.img : [rawImages.img];
+    }
+    
+    if (Array.isArray(rawImages)) {
+      for (const img of rawImages) {
+        if (typeof img === "string" && img) {
+          images.push(img);
+        } else if (img && typeof img === "object") {
+          // Daisycon format: { location: "https://...", size: "large", tag: "detail" }
+          const imgUrl = (img as any).location || (img as any).url || (img as any).image || 
+                         (img as any).src || (img as any).image_url;
+          if (typeof imgUrl === "string" && imgUrl) images.push(imgUrl);
+        }
+      }
+    } else if (typeof rawImages === "string" && rawImages) {
+      const urls = rawImages.includes(",") ? rawImages.split(",") : 
+                   rawImages.includes("|") ? rawImages.split("|") : [rawImages];
+      for (const u of urls) {
+        const trimmed = u.trim();
+        if (trimmed) images.push(trimmed);
+      }
+    }
   }
-  // Check image_url_1..20, extra_image_url_1..20, image_1..20
-  for (let i = 1; i <= 20; i++) {
-    const extraImg = product[`image_url_${i}`] || product[`extra_image_url_${i}`] || product[`image_${i}`];
-    if (typeof extraImg === "string" && extraImg && !images.includes(extraImg)) images.push(extraImg);
+
+  // Fallback: check individual image fields
+  if (images.length === 0) {
+    const mainImage = product.image_large || product.image_url_large || product.image_url;
+    if (mainImage && typeof mainImage === "string") images.push(mainImage);
+    if (product.additional_image_urls && Array.isArray(product.additional_image_urls)) {
+      images.push(...product.additional_image_urls.filter((u: unknown) => typeof u === "string" && u).slice(0, 9));
+    }
+    // Check image_url_1..20, extra_image_url_1..20, image_1..20
+    for (let i = 1; i <= 20; i++) {
+      const extraImg = product[`image_url_${i}`] || product[`extra_image_url_${i}`] || product[`image_${i}`];
+      if (typeof extraImg === "string" && extraImg && !images.includes(extraImg)) images.push(extraImg);
+    }
   }
 
   const title = product.title || `${street} ${houseNumber}, ${city}`.trim();
@@ -358,7 +391,16 @@ Deno.serve(async (req) => {
 
         console.log(`Feed ${feed.name}: ${products.length} products found`);
         if (products.length > 0) {
-          console.log(`Feed ${feed.name}: Sample product keys: ${Object.keys(products[0]).join(", ")}`);
+          const sampleKeys = Object.keys(products[0]);
+          console.log(`Feed ${feed.name}: Sample product keys: ${sampleKeys.join(", ")}`);
+          // Log all keys containing image/img/photo and their values
+          const imageKeys = sampleKeys.filter(k => /image|img|photo|picture|foto/i.test(k));
+          console.log(`Feed ${feed.name}: Image-related keys: ${JSON.stringify(imageKeys)}`);
+          for (const k of imageKeys) {
+            console.log(`Feed ${feed.name}: ${k} = ${JSON.stringify(products[0][k])}`);
+          }
+          // Also log first 2000 chars of first product
+          console.log(`Feed ${feed.name}: First product sample: ${JSON.stringify(products[0]).substring(0, 2000)}`);
         }
 
         if (products.length === 0) {
