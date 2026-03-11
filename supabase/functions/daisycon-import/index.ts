@@ -262,7 +262,25 @@ function mapDaisyconToProperty(product: DaisyconProduct, sourceSite: string, sou
     }
   }
 
-  const title = product.title || `${street} ${houseNumber}, ${city}`.trim();
+  // Build a descriptive title instead of using generic ones like "appartement"
+  const rawTitle = product.title || "";
+  const genericTitles = ["appartement", "huis", "studio", "kamer", "woning", "room", "house", "apartment"];
+  const isGeneric = !rawTitle || genericTitles.includes(rawTitle.trim().toLowerCase());
+
+  let title: string;
+  if (isGeneric) {
+    const typeLabel = propertyType === "huis" ? "Huis" : propertyType === "studio" ? "Studio" : propertyType === "kamer" ? "Kamer" : "Appartement";
+    const actionLabel = listingType === "koop" ? "te koop" : "te huur";
+    if (street && city) {
+      title = `${typeLabel} ${actionLabel} aan ${street}${houseNumber ? ` ${houseNumber}` : ""}, ${city}`;
+    } else if (city) {
+      title = `${typeLabel} ${actionLabel} in ${city}`;
+    } else {
+      title = `${typeLabel} ${actionLabel}`;
+    }
+  } else {
+    title = rawTitle;
+  }
 
   return {
     title,
@@ -427,20 +445,30 @@ Deno.serve(async (req) => {
           // Check if already exists by source_url
           const { data: existing } = await supabase
             .from("properties")
-            .select("id, images")
+            .select("id, images, title")
             .eq("source_url", sourceUrl)
             .maybeSingle();
 
           if (existing) {
-            // Update existing property if it has no images but new data does
             const existingImages = existing.images || [];
+            const updates: Record<string, any> = {};
+
+            // Update images if missing
             if (existingImages.length === 0 && propertyData.images.length > 0) {
-              await supabase
-                .from("properties")
-                .update({ images: propertyData.images, updated_at: new Date().toISOString() })
-                .eq("id", existing.id);
+              updates.images = propertyData.images;
+            }
+
+            // Update generic titles
+            const genericTitles = ["appartement", "huis", "studio", "kamer", "woning", "room", "house", "apartment"];
+            if (existing.title && genericTitles.includes(existing.title.trim().toLowerCase())) {
+              updates.title = propertyData.title;
+            }
+
+            if (Object.keys(updates).length > 0) {
+              updates.updated_at = new Date().toISOString();
+              await supabase.from("properties").update(updates).eq("id", existing.id);
               updated++;
-              console.log(`Updated images for "${propertyData.title}": ${propertyData.images.length} images`);
+              console.log(`Updated "${existing.id}": ${Object.keys(updates).join(", ")}`);
             } else {
               skipped++;
             }
