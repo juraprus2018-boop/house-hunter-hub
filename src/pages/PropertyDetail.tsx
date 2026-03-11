@@ -8,6 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { useProperty, useSimilarProperties } from "@/hooks/useProperties";
 import { useToggleFavorite } from "@/hooks/useFavorites";
+import { useFeedLogos } from "@/hooks/useFeedLogos";
 import { useAuth } from "@/contexts/AuthContext";
 import PropertyMap from "@/components/properties/PropertyMap";
 import SEOHead from "@/components/seo/SEOHead";
