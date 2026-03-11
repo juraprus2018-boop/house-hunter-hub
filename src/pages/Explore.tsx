@@ -44,6 +44,7 @@ const ExplorePage = () => {
   const [listingType, setListingType] = useState<ListingType | null>(null);
   const [selectedSource, setSelectedSource] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [mobileView, setMobileView] = useState<"list" | "map">("list");
   const isMobile = useIsMobile();
 
   // Postcode + distance state
