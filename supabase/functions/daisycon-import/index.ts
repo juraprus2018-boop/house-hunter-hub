@@ -522,18 +522,18 @@ Deno.serve(async (req) => {
 
         // Get all existing source_urls for this feed in one query
         const sourceUrls = allPropertyData.map(p => p.source_url);
-        const existingMap = new Map<string, { id: string; images: string[]; title: string; latitude: number | null; longitude: number | null; build_year: number | null; energy_label: string | null }>();
+        const existingMap = new Map<string, { id: string; status: string; images: string[]; title: string; latitude: number | null; longitude: number | null; build_year: number | null; energy_label: string | null }>();
         
         // Query in batches of 500 (Supabase IN filter limit)
         for (let i = 0; i < sourceUrls.length; i += 500) {
           const batch = sourceUrls.slice(i, i + 500);
           const { data: existingRows } = await supabase
             .from("properties")
-            .select("id, source_url, images, title, latitude, longitude, build_year, energy_label")
+            .select("id, source_url, status, images, title, latitude, longitude, build_year, energy_label")
             .in("source_url", batch);
           if (existingRows) {
             for (const row of existingRows) {
-              existingMap.set(row.source_url!, { id: row.id, images: row.images || [], title: row.title, latitude: row.latitude, longitude: row.longitude, build_year: row.build_year, energy_label: row.energy_label });
+              existingMap.set(row.source_url!, { id: row.id, status: row.status, images: row.images || [], title: row.title, latitude: row.latitude, longitude: row.longitude, build_year: row.build_year, energy_label: row.energy_label });
             }
           }
         }
