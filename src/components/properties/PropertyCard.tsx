@@ -33,7 +33,7 @@ const PropertyCard = ({ property }: PropertyCardProps) => {
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
     }).format(price);
-    return listingType === "huur" ? `${formatted}/mnd` : formatted;
+    return listingType === "huur" ? `${formatted} per maand` : formatted;
   };
 
   const handleFavoriteClick = (e: React.MouseEvent) => {
@@ -105,7 +105,7 @@ const PropertyCard = ({ property }: PropertyCardProps) => {
         </div>
         <CardContent className="p-4">
           <div className="mb-2 flex items-start justify-between gap-2">
-            <h3 className="font-display text-lg font-semibold leading-tight text-foreground line-clamp-1">
+            <h3 className="font-display text-lg leading-tight text-foreground line-clamp-1" style={{ fontWeight: 600 }}>
               {property.title}
             </h3>
           </div>
