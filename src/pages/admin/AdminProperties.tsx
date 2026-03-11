@@ -218,8 +218,11 @@ const AdminProperties = () => {
         {/* Table */}
         <Card>
           <CardHeader>
-            <CardTitle>
-              {filteredProperties?.length || 0} woningen gevonden
+            <CardTitle className="flex items-center justify-between">
+              <span>{totalCount} woningen gevonden</span>
+              <span className="text-sm font-normal text-muted-foreground">
+                Pagina {currentPage + 1} van {totalPages}
+              </span>
             </CardTitle>
           </CardHeader>
           <CardContent>
