@@ -121,7 +121,7 @@ const SearchPage = () => {
     if (debouncedCity) params.set("locatie", debouncedCity);
     if (filters.listingType) params.set("aanbod", filters.listingType);
     const qs = params.toString();
-    return `https://woonpeek.nl/zoeken${qs ? `?${qs}` : ""}`;
+    return `https://www.woonpeek.nl/zoeken${qs ? `?${qs}` : ""}`;
   }, [debouncedCity, filters.listingType]);
 
   return (

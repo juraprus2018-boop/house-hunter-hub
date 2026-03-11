@@ -112,7 +112,7 @@ const CityPage = () => {
 
   const pageTitle = `Woningen in ${cityName} | WoonPeek`;
   const pageDescription = `Bekijk ${totalCount} woningen in ${cityName}, filter direct op type en prijs en ontdek het complete aanbod op WoonPeek.`;
-  const canonical = `https://woonpeek.nl${cityPath(cityName)}`;
+  const canonical = `https://www.woonpeek.nl${cityPath(cityName)}`;
 
   const jsonLd = useMemo(
     () => ({
@@ -124,7 +124,7 @@ const CityPage = () => {
       isPartOf: {
         "@type": "WebSite",
         name: "WoonPeek",
-        url: "https://woonpeek.nl",
+        url: "https://www.woonpeek.nl",
       },
       mainEntity: {
         "@type": "ItemList",
@@ -132,7 +132,7 @@ const CityPage = () => {
         itemListElement: filteredProperties.slice(0, 10).map((property, index) => ({
           "@type": "ListItem",
           position: index + 1,
-          url: `https://woonpeek.nl/woning/${property.slug || property.id}`,
+          url: `https://www.woonpeek.nl/woning/${property.slug || property.id}`,
           name: property.title,
         })),
       },

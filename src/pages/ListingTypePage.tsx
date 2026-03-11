@@ -63,8 +63,8 @@ const ListingTypePage = ({ listingType }: ListingTypePageProps) => {
     : `Bekijk ${totalCount} ${label.plural.toLowerCase()} in heel Nederland. Vind jouw ${label.singular} op WoonPeek.`;
 
   const canonical = cityName
-    ? `https://woonpeek.nl/${label.slug}/${citySlug}`
-    : `https://woonpeek.nl/${label.slug}`;
+    ? `https://www.woonpeek.nl/${label.slug}/${citySlug}`
+    : `https://www.woonpeek.nl/${label.slug}`;
 
   const breadcrumbs = [
     { label: "Home", href: "/" },
@@ -85,7 +85,7 @@ const ListingTypePage = ({ listingType }: ListingTypePageProps) => {
     itemListElement: properties.slice(0, 10).map((p, i) => ({
       "@type": "ListItem",
       position: i + 1,
-      url: `https://woonpeek.nl/woning/${p.slug || p.id}`,
+      url: `https://www.woonpeek.nl/woning/${p.slug || p.id}`,
     })),
   };
 

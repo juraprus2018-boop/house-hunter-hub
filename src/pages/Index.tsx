@@ -15,8 +15,8 @@ const Index = () => {
     "@context": "https://schema.org",
     "@type": "Organization",
     name: "WoonPeek",
-    url: "https://woonpeek.nl",
-    logo: "https://woonpeek.nl/favicon.png",
+    url: "https://www.woonpeek.nl",
+    logo: "https://www.woonpeek.nl/favicon.png",
     sameAs: ["https://www.facebook.com/woonpeek"],
     description:
       "WoonPeek verzamelt dagelijks het nieuwste woningaanbod uit heel Nederland op één plek.",
@@ -26,12 +26,12 @@ const Index = () => {
     "@context": "https://schema.org",
     "@type": "WebSite",
     name: "WoonPeek",
-    url: "https://woonpeek.nl",
+    url: "https://www.woonpeek.nl",
     potentialAction: {
       "@type": "SearchAction",
       target: {
         "@type": "EntryPoint",
-        urlTemplate: "https://woonpeek.nl/zoeken?city={search_term_string}",
+        urlTemplate: "https://www.woonpeek.nl/zoeken?city={search_term_string}",
       },
       "query-input": "required name=search_term_string",
     },
@@ -42,7 +42,7 @@ const Index = () => {
       <SEOHead
         title="WoonPeek – Vind woningen in heel Nederland | Huurwoningen & koopwoningen"
         description="Zoek huurwoningen, appartementen, studio's en koopwoningen in heel Nederland. WoonPeek verzamelt dagelijks het nieuwste woningaanbod op één plek."
-        canonical="https://woonpeek.nl"
+        canonical="https://www.woonpeek.nl"
       />
       <script
         type="application/ld+json"

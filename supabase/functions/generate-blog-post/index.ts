@@ -330,7 +330,7 @@ Zorg dat het artikel actueel aanvoelt, praktische tips bevat, en relevant is voo
       const PAGE_ACCESS_TOKEN = Deno.env.get("FACEBOOK_PAGE_ACCESS_TOKEN");
       let PAGE_ID = Deno.env.get("FACEBOOK_PAGE_ID");
       const GRAPH_API = "https://graph.facebook.com/v21.0";
-      const siteUrl = "https://woonpeek.nl";
+      const siteUrl = "https://www.woonpeek.nl";
 
       if (PAGE_ACCESS_TOKEN) {
         // Auto-detect Page ID if needed

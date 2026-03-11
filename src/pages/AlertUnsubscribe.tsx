@@ -52,7 +52,7 @@ const AlertUnsubscribe = () => {
       <SEOHead
         title="Alert afmelden | WoonPeek"
         description="Meld je af voor dagelijkse e-mailalerts van WoonPeek."
-        canonical="https://woonpeek.nl/alerts/afmelden"
+        canonical="https://www.woonpeek.nl/alerts/afmelden"
       />
       <Header />
       <main className="flex flex-1 items-center justify-center p-4">

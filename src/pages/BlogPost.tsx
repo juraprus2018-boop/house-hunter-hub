@@ -88,7 +88,7 @@ const BlogPostPage = () => {
     publisher: {
       "@type": "Organization",
       name: "WoonPeek",
-      url: "https://woonpeek.nl",
+      url: "https://www.woonpeek.nl",
     },
     ...(post.cover_image ? { image: post.cover_image } : {}),
   };
@@ -98,7 +98,7 @@ const BlogPostPage = () => {
       <SEOHead
         title={post.meta_title || `${post.title} | WoonPeek Blog`}
         description={post.meta_description || post.excerpt || post.title}
-        canonical={`https://woonpeek.nl/blog/${post.slug}`}
+        canonical={`https://www.woonpeek.nl/blog/${post.slug}`}
         ogImage={post.cover_image || undefined}
         ogType="article"
       />
