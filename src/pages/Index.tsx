@@ -31,7 +31,7 @@ const Index = () => {
       "@type": "SearchAction",
       target: {
         "@type": "EntryPoint",
-        urlTemplate: "https://woonpeek.nl/zoeken?city={search_term_string}",
+        urlTemplate: "https://www.woonpeek.nl/zoeken?city={search_term_string}",
       },
       "query-input": "required name=search_term_string",
     },
