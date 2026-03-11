@@ -276,7 +276,7 @@ export const useFilterFacets = (filters: FacetFilters) => {
         }
       }
 
-      const { data, error } = await query;
+      const { data, error } = await query.limit(10000);
       if (error) throw error;
 
       const propertyTypes: Record<string, number> = {};
