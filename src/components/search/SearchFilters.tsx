@@ -56,6 +56,12 @@ const SearchFilters = ({ filters, onChange, onClear, hideLocation = false, facet
   const bedroomOptions = [1, 2, 3, 4];
   const surfaceOptions = [25, 50, 75, 100];
 
+  // Count how many options have results for each filter group
+  const availablePropertyTypes = facets ? propertyTypes.filter(t => (facets.propertyTypes[t] || 0) > 0) : propertyTypes;
+  const availableListingTypes = facets ? listingTypes.filter(t => (facets.listingTypes[t] || 0) > 0) : listingTypes;
+  const availableBedrooms = facets ? bedroomOptions.filter(n => (facets.bedroomCounts[String(n)] || 0) > 0) : bedroomOptions;
+  const availableSurfaces = facets ? surfaceOptions.filter(n => (facets.surfaceRanges[String(n)] || 0) > 0) : surfaceOptions;
+
   return (
     <div className="space-y-6">
       {!hideLocation && (
@@ -73,57 +79,59 @@ const SearchFilters = ({ filters, onChange, onClear, hideLocation = false, facet
         </div>
       )}
 
-      <div className="space-y-2">
-        <Label>Type woning</Label>
-        <Select
-          value={filters.propertyType}
-          onValueChange={(value: PropertyType | "") => update({ propertyType: value })}
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="Alle types" />
-          </SelectTrigger>
-          <SelectContent>
-            {propertyTypes.map((type) => {
-              const count = facets?.propertyTypes[type];
-              if (facets && (count === undefined || count === 0)) return null;
-              return (
-                <SelectItem key={type} value={type}>
-                  {propertyTypeLabels[type]}
-                  {count !== undefined && (
-                    <span className="ml-1 text-muted-foreground">({count.toLocaleString("nl-NL")})</span>
-                  )}
-                </SelectItem>
-              );
-            })}
-          </SelectContent>
-        </Select>
-      </div>
+      {availablePropertyTypes.length > 1 && (
+        <div className="space-y-2">
+          <Label>Type woning</Label>
+          <Select
+            value={filters.propertyType}
+            onValueChange={(value: PropertyType | "") => update({ propertyType: value })}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Alle types" />
+            </SelectTrigger>
+            <SelectContent>
+              {availablePropertyTypes.map((type) => {
+                const count = facets?.propertyTypes[type];
+                return (
+                  <SelectItem key={type} value={type}>
+                    {propertyTypeLabels[type]}
+                    {count !== undefined && (
+                      <span className="ml-1 text-muted-foreground">({count.toLocaleString("nl-NL")})</span>
+                    )}
+                  </SelectItem>
+                );
+              })}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
 
-      <div className="space-y-2">
-        <Label>Aanbod</Label>
-        <Select
-          value={filters.listingType}
-          onValueChange={(value: ListingType | "") => update({ listingType: value })}
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="Koop & Huur" />
-          </SelectTrigger>
-          <SelectContent>
-            {listingTypes.map((type) => {
-              const count = facets?.listingTypes[type];
-              if (facets && (count === undefined || count === 0)) return null;
-              return (
-                <SelectItem key={type} value={type}>
-                  {listingTypeLabels[type]}
-                  {count !== undefined && (
-                    <span className="ml-1 text-muted-foreground">({count.toLocaleString("nl-NL")})</span>
-                  )}
-                </SelectItem>
-              );
-            })}
-          </SelectContent>
-        </Select>
-      </div>
+      {availableListingTypes.length > 1 && (
+        <div className="space-y-2">
+          <Label>Aanbod</Label>
+          <Select
+            value={filters.listingType}
+            onValueChange={(value: ListingType | "") => update({ listingType: value })}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Koop & Huur" />
+            </SelectTrigger>
+            <SelectContent>
+              {availableListingTypes.map((type) => {
+                const count = facets?.listingTypes[type];
+                return (
+                  <SelectItem key={type} value={type}>
+                    {listingTypeLabels[type]}
+                    {count !== undefined && (
+                      <span className="ml-1 text-muted-foreground">({count.toLocaleString("nl-NL")})</span>
+                    )}
+                  </SelectItem>
+                );
+              })}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
 
       <div className="space-y-2">
         <Label>Max. prijs: {filters.maxPrice ? `€${filters.maxPrice.toLocaleString("nl-NL")}` : "Geen limiet"}</Label>
@@ -136,57 +144,59 @@ const SearchFilters = ({ filters, onChange, onClear, hideLocation = false, facet
         />
       </div>
 
-      <div className="space-y-2">
-        <Label>Min. slaapkamers</Label>
-        <Select
-          value={filters.minBedrooms?.toString() || ""}
-          onValueChange={(value) => update({ minBedrooms: value ? Number(value) : undefined })}
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="Geen minimum" />
-          </SelectTrigger>
-          <SelectContent>
-            {bedroomOptions.map((num) => {
-              const count = facets?.bedroomCounts[String(num)];
-              if (facets && (count === undefined || count === 0)) return null;
-              return (
-                <SelectItem key={num} value={String(num)}>
-                  {num}+
-                  {count !== undefined && (
-                    <span className="ml-1 text-muted-foreground">({count.toLocaleString("nl-NL")})</span>
-                  )}
-                </SelectItem>
-              );
-            })}
-          </SelectContent>
-        </Select>
-      </div>
+      {availableBedrooms.length > 0 && (
+        <div className="space-y-2">
+          <Label>Min. slaapkamers</Label>
+          <Select
+            value={filters.minBedrooms?.toString() || ""}
+            onValueChange={(value) => update({ minBedrooms: value ? Number(value) : undefined })}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Geen minimum" />
+            </SelectTrigger>
+            <SelectContent>
+              {availableBedrooms.map((num) => {
+                const count = facets?.bedroomCounts[String(num)];
+                return (
+                  <SelectItem key={num} value={String(num)}>
+                    {num}+
+                    {count !== undefined && (
+                      <span className="ml-1 text-muted-foreground">({count.toLocaleString("nl-NL")})</span>
+                    )}
+                  </SelectItem>
+                );
+              })}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
 
-      <div className="space-y-2">
-        <Label>Min. oppervlakte</Label>
-        <Select
-          value={filters.minSurface?.toString() || ""}
-          onValueChange={(value) => update({ minSurface: value ? Number(value) : undefined })}
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="Geen minimum" />
-          </SelectTrigger>
-          <SelectContent>
-            {surfaceOptions.map((num) => {
-              const count = facets?.surfaceRanges[String(num)];
-              if (facets && (count === undefined || count === 0)) return null;
-              return (
-                <SelectItem key={num} value={String(num)}>
-                  {num}+ m²
-                  {count !== undefined && (
-                    <span className="ml-1 text-muted-foreground">({count.toLocaleString("nl-NL")})</span>
-                  )}
-                </SelectItem>
-              );
-            })}
-          </SelectContent>
-        </Select>
-      </div>
+      {availableSurfaces.length > 0 && (
+        <div className="space-y-2">
+          <Label>Min. oppervlakte</Label>
+          <Select
+            value={filters.minSurface?.toString() || ""}
+            onValueChange={(value) => update({ minSurface: value ? Number(value) : undefined })}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Geen minimum" />
+            </SelectTrigger>
+            <SelectContent>
+              {availableSurfaces.map((num) => {
+                const count = facets?.surfaceRanges[String(num)];
+                return (
+                  <SelectItem key={num} value={String(num)}>
+                    {num}+ m²
+                    {count !== undefined && (
+                      <span className="ml-1 text-muted-foreground">({count.toLocaleString("nl-NL")})</span>
+                    )}
+                  </SelectItem>
+                );
+              })}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
 
       <div className="flex items-center justify-between">
         <Label htmlFor="include-inactive">Toon inactieve woningen</Label>
