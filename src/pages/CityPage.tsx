@@ -138,35 +138,33 @@ const CityPage = () => {
               />
             </div>
 
-            <div>
-              <div className="max-w-3xl">
-                <h1 className="font-display text-3xl font-bold text-foreground md:text-4xl">
-                  Woningen in {cityName}
-                </h1>
-                <p className="mt-2 text-base text-muted-foreground">
-                  Bekijk alle woningen van {cityName}, gebruik filters om sneller te zoeken en ontdek direct het actuele aanbod.
-                </p>
-                <div className="mt-4 flex flex-wrap gap-3">
-                  <div className="rounded-full bg-card px-4 py-2 text-sm text-foreground shadow-sm">
-                    {totalCount} totaal aanbod
-                  </div>
-                  <Link to={`/huurwoningen/${citySlug}`}>
-                    <Button variant="outline" size="sm" className="gap-2">
-                      Huurwoningen
-                      <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
-                        {huurCount}
-                      </span>
-                    </Button>
-                  </Link>
-                  <Link to={`/koopwoningen/${citySlug}`}>
-                    <Button variant="outline" size="sm" className="gap-2">
-                      Koopwoningen
-                      <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
-                        {koopCount}
-                      </span>
-                    </Button>
-                  </Link>
+            <div className="max-w-3xl">
+              <h1 className="font-display text-3xl font-bold text-foreground md:text-4xl">
+                Woningen in {cityName}
+              </h1>
+              <p className="mt-2 text-base text-muted-foreground">
+                Bekijk alle woningen van {cityName}, gebruik filters om sneller te zoeken en ontdek direct het actuele aanbod.
+              </p>
+              <div className="mt-4 flex flex-wrap gap-3">
+                <div className="rounded-full bg-card px-4 py-2 text-sm text-foreground shadow-sm">
+                  {totalCount} totaal aanbod
                 </div>
+                <Link to={`/huurwoningen/${citySlug}`}>
+                  <Button variant="outline" size="sm" className="gap-2">
+                    Huurwoningen
+                    <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+                      {huurCount}
+                    </span>
+                  </Button>
+                </Link>
+                <Link to={`/koopwoningen/${citySlug}`}>
+                  <Button variant="outline" size="sm" className="gap-2">
+                    Koopwoningen
+                    <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+                      {koopCount}
+                    </span>
+                  </Button>
+                </Link>
               </div>
             </div>
           </div>
