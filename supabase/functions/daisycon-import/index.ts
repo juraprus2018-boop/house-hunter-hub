@@ -691,6 +691,7 @@ Deno.serve(async (req) => {
         total_imported: totalImported,
         total_updated: totalUpdated,
         total_skipped: totalSkipped,
+        total_deactivated: totalDeactivated,
         job_id: jobId,
         results,
       }),
