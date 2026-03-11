@@ -339,6 +339,21 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Create import job for progress tracking
+    const { data: job } = await supabase
+      .from("import_jobs")
+      .insert({
+        type: "daisycon",
+        status: "running",
+        feed_id: feedId || null,
+        total_feeds: feeds.length,
+        processed_feeds: 0,
+        message: `Importeren van ${feeds.length} feed(s)...`,
+      })
+      .select("id")
+      .single();
+    const jobId = job?.id;
+
     let totalImported = 0;
     let totalSkipped = 0;
     let totalUpdated = 0;
