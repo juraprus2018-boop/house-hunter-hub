@@ -159,6 +159,9 @@ const PropertyDetail = () => {
   const sourceMeta = sourceInfo.source_site
     ? SOURCE_SITE_META[sourceInfo.source_site] || { label: sourceInfo.source_site, color: "hsl(var(--primary))" }
     : null;
+  const sourceLogo = feedLogos && sourceInfo.source_site
+    ? feedLogos[sourceInfo.source_site.toLowerCase()]
+    : undefined;
 
   const formatPrice = (price: number, listingType: string) => {
     const formatted = new Intl.NumberFormat("nl-NL", { style: "currency", currency: "EUR", minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(price);
