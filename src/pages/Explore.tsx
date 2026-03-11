@@ -26,6 +26,7 @@ const SOURCE_SITE_LABELS: Record<string, string> = {
 };
 
 const DISTANCE_OPTIONS = [5, 10, 15, 25, 50];
+const LIST_PAGE_SIZE = 48;
 
 // Haversine distance in km
 const haversineKm = (lat1: number, lon1: number, lat2: number, lon2: number) => {
