@@ -1,5 +1,7 @@
 import { useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Link, useParams } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import PropertyCard from "@/components/properties/PropertyCard";
@@ -77,8 +79,27 @@ const CityPage = () => {
   const filteredCount = filteredPropertiesQuery.data?.totalCount || 0;
   const isLoading = allPropertiesQuery.isLoading || filteredPropertiesQuery.isLoading;
 
-  const huurCount = allProperties.filter((property) => property.listing_type === "huur").length;
-  const koopCount = allProperties.filter((property) => property.listing_type === "koop").length;
+  // Query counts separately to avoid the row limit issue
+  const { data: countData } = useQuery({
+    queryKey: ["city-listing-counts", cityName],
+    queryFn: async () => {
+      const { count: huur } = await supabase
+        .from("properties")
+        .select("id", { count: "exact", head: true })
+        .eq("status", "actief")
+        .ilike("city", `%${cityName}%`)
+        .eq("listing_type", "huur");
+      const { count: koop } = await supabase
+        .from("properties")
+        .select("id", { count: "exact", head: true })
+        .eq("status", "actief")
+        .ilike("city", `%${cityName}%`)
+        .eq("listing_type", "koop");
+      return { huur: huur || 0, koop: koop || 0 };
+    },
+  });
+  const huurCount = countData?.huur || 0;
+  const koopCount = countData?.koop || 0;
 
   const hasActiveFilters = Boolean(
     filters.propertyType ||
