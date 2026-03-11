@@ -358,7 +358,16 @@ Deno.serve(async (req) => {
 
         console.log(`Feed ${feed.name}: ${products.length} products found`);
         if (products.length > 0) {
-          console.log(`Feed ${feed.name}: Sample product keys: ${Object.keys(products[0]).join(", ")}`);
+          const sampleKeys = Object.keys(products[0]);
+          console.log(`Feed ${feed.name}: Sample product keys: ${sampleKeys.join(", ")}`);
+          // Log all keys containing image/img/photo and their values
+          const imageKeys = sampleKeys.filter(k => /image|img|photo|picture|foto/i.test(k));
+          console.log(`Feed ${feed.name}: Image-related keys: ${JSON.stringify(imageKeys)}`);
+          for (const k of imageKeys) {
+            console.log(`Feed ${feed.name}: ${k} = ${JSON.stringify(products[0][k])}`);
+          }
+          // Also log first 2000 chars of first product
+          console.log(`Feed ${feed.name}: First product sample: ${JSON.stringify(products[0]).substring(0, 2000)}`);
         }
 
         if (products.length === 0) {
