@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useProperties } from "@/hooks/useProperties";
+import { useProperties, useMapProperties } from "@/hooks/useProperties";
 import { Loader2, MapPin, ChevronRight, SlidersHorizontal, X, Navigation } from "lucide-react";
 import { cn } from "@/lib/utils";
 import ExploreMap from "@/components/explore/ExploreMap";
@@ -97,9 +97,16 @@ const ExplorePage = () => {
     city: selectedCity || undefined,
     listingType: listingType || undefined,
     sourceSite: selectedSource || undefined,
-    pageSize: 1000,
+    disablePagination: true,
   });
   const allProperties = allData?.properties;
+
+  // Separate optimized query for map markers (only properties with coords)
+  const { data: mapProps } = useMapProperties({
+    city: selectedCity || undefined,
+    listingType: listingType || undefined,
+    sourceSite: selectedSource || undefined,
+  });
 
   // Filter by distance from postcode
   const filteredProperties = useMemo(() => {
@@ -111,10 +118,19 @@ const ExplorePage = () => {
     });
   }, [allProperties, postcodeCoords, distanceKm]);
 
+  // Filter map properties by distance too
+  const filteredMapProperties = useMemo(() => {
+    if (!mapProps) return [];
+    if (!postcodeCoords) return mapProps;
+    return mapProps.filter((p) => {
+      return haversineKm(postcodeCoords.lat, postcodeCoords.lng, Number(p.latitude), Number(p.longitude)) <= distanceKm;
+    });
+  }, [mapProps, postcodeCoords, distanceKm]);
+
   const { data: citySourceData } = useProperties({
     listingType: listingType || undefined,
     sourceSite: selectedSource || undefined,
-    pageSize: 1000,
+    disablePagination: true,
   });
   const citySourceProperties = citySourceData?.properties;
   const cities = useMemo(() => {
@@ -374,7 +390,7 @@ const ExplorePage = () => {
                 </div>
               ) : (
                 <ExploreMap
-                  properties={filteredProperties}
+                  properties={filteredMapProperties as any}
                   hoveredPropertyId={hoveredPropertyId}
                 />
               )}
