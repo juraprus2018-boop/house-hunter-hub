@@ -124,7 +124,7 @@ const CityPage = () => {
       isPartOf: {
         "@type": "WebSite",
         name: "WoonPeek",
-        url: "https://woonpeek.nl",
+        url: "https://www.woonpeek.nl",
       },
       mainEntity: {
         "@type": "ItemList",
