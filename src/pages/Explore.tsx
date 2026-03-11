@@ -118,6 +118,15 @@ const ExplorePage = () => {
     });
   }, [allProperties, postcodeCoords, distanceKm]);
 
+  // Filter map properties by distance too
+  const filteredMapProperties = useMemo(() => {
+    if (!mapProps) return [];
+    if (!postcodeCoords) return mapProps;
+    return mapProps.filter((p) => {
+      return haversineKm(postcodeCoords.lat, postcodeCoords.lng, Number(p.latitude), Number(p.longitude)) <= distanceKm;
+    });
+  }, [mapProps, postcodeCoords, distanceKm]);
+
   const { data: citySourceData } = useProperties({
     listingType: listingType || undefined,
     sourceSite: selectedSource || undefined,
