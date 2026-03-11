@@ -7,7 +7,7 @@ import Breadcrumbs from "@/components/seo/Breadcrumbs";
 import SEOHead from "@/components/seo/SEOHead";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useProperties } from "@/hooks/useProperties";
+import { useProperties, useFilterFacets } from "@/hooks/useProperties";
 import { Search, SlidersHorizontal, List, Map } from "lucide-react";
 import ExploreMap from "@/components/explore/ExploreMap";
 import {
@@ -64,6 +64,13 @@ const SearchPage = () => {
     if (filters.maxPrice) params.set("maxPrijs", String(filters.maxPrice));
     setSearchParams(params, { replace: true });
   }, [debouncedCity, filters.propertyType, filters.listingType, filters.maxPrice, setSearchParams]);
+
+  const { data: facets } = useFilterFacets({
+    city: debouncedCity || undefined,
+    propertyType: filters.propertyType || undefined,
+    listingType: filters.listingType || undefined,
+    includeInactive: filters.includeInactive,
+  });
 
   const { data, isLoading } = useProperties({
     city: debouncedCity || undefined,
@@ -161,7 +168,7 @@ const SearchPage = () => {
                       <SheetDescription>Verfijn je zoekopdracht</SheetDescription>
                     </SheetHeader>
                     <div className="mt-6">
-                      <SearchFilters filters={filters} onChange={handleFilterChange} onClear={clearFilters} />
+                      <SearchFilters filters={filters} onChange={handleFilterChange} onClear={clearFilters} facets={facets} />
                     </div>
                   </SheetContent>
                 </Sheet>
@@ -196,7 +203,7 @@ const SearchPage = () => {
             <aside className="hidden w-72 shrink-0 md:block">
               <div className="sticky top-24 rounded-lg border bg-card p-6">
                 <h2 className="mb-4 font-display text-lg font-semibold">Filters</h2>
-                <SearchFilters filters={filters} onChange={handleFilterChange} onClear={clearFilters} />
+                <SearchFilters filters={filters} onChange={handleFilterChange} onClear={clearFilters} facets={facets} />
               </div>
             </aside>
 

@@ -8,7 +8,7 @@ import SEOHead from "@/components/seo/SEOHead";
 import SearchFilters, { type SearchFilterValues } from "@/components/search/SearchFilters";
 import RelatedCities from "@/components/city/RelatedCities";
 import SimilarProperties from "@/components/city/SimilarProperties";
-import { useProperties } from "@/hooks/useProperties";
+import { useProperties, useFilterFacets } from "@/hooks/useProperties";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
@@ -47,6 +47,13 @@ const CityPage = () => {
     : rawCitySlug;
   const cityName = citySlugToName(citySlug);
   const [filters, setFilters] = useState<SearchFilterValues>(EMPTY_FILTERS);
+
+  const { data: facets } = useFilterFacets({
+    city: cityName,
+    propertyType: filters.propertyType || undefined,
+    listingType: filters.listingType || undefined,
+    includeInactive: filters.includeInactive,
+  });
 
   const allPropertiesQuery = useProperties({
     city: cityName,
@@ -205,6 +212,7 @@ const CityPage = () => {
                   onChange={setFilters}
                   onClear={() => setFilters(EMPTY_FILTERS)}
                   hideLocation
+                  facets={facets}
                 />
               </div>
             </aside>
@@ -242,6 +250,7 @@ const CityPage = () => {
                         onChange={setFilters}
                         onClear={() => setFilters(EMPTY_FILTERS)}
                         hideLocation
+                        facets={facets}
                       />
                     </div>
                   </SheetContent>
