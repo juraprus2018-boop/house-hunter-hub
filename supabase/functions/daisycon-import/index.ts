@@ -116,6 +116,23 @@ interface DaisyconProduct {
   sku?: string;
   daisycon_unique_id?: string;
   province?: string;
+  latitude?: number | string;
+  longitude?: number | string;
+  lat?: number | string;
+  lng?: number | string;
+  lon?: number | string;
+  geo_lat?: number | string;
+  geo_lng?: number | string;
+  geo_latitude?: number | string;
+  geo_longitude?: number | string;
+  build_year?: number | string;
+  construction_year?: number | string;
+  bouwjaar?: number | string;
+  year_built?: number | string;
+  energy_label?: string;
+  energy_class?: string;
+  energielabel?: string;
+  energy_rating?: string;
   [key: string]: unknown;
 }
 
