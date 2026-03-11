@@ -116,6 +116,23 @@ interface DaisyconProduct {
   sku?: string;
   daisycon_unique_id?: string;
   province?: string;
+  latitude?: number | string;
+  longitude?: number | string;
+  lat?: number | string;
+  lng?: number | string;
+  lon?: number | string;
+  geo_lat?: number | string;
+  geo_lng?: number | string;
+  geo_latitude?: number | string;
+  geo_longitude?: number | string;
+  build_year?: number | string;
+  construction_year?: number | string;
+  bouwjaar?: number | string;
+  year_built?: number | string;
+  energy_label?: string;
+  energy_class?: string;
+  energielabel?: string;
+  energy_rating?: string;
   [key: string]: unknown;
 }
 
@@ -192,6 +209,26 @@ function mapDaisyconToProperty(product: DaisyconProduct, sourceSite: string, sou
     product.number_of_rooms || product.rooms || "0"
   )) || null;
   const bathrooms = parseInt(String(product.bathrooms || "0")) || null;
+
+  // Extract coordinates
+  const lat = parseFloat(String(
+    product.latitude || product.lat || product.geo_lat || product.geo_latitude || "0"
+  )) || null;
+  const lng = parseFloat(String(
+    product.longitude || product.lng || product.lon || product.geo_lng || product.geo_longitude || "0"
+  )) || null;
+
+  // Extract build year
+  const buildYear = parseInt(String(
+    product.build_year || product.construction_year || product.bouwjaar || product.year_built || "0"
+  )) || null;
+
+  // Extract energy label
+  const rawEnergy = String(
+    product.energy_label || product.energy_class || product.energielabel || product.energy_rating || ""
+  ).toUpperCase().trim();
+  const validLabels = ["A++", "A+", "A", "B", "C", "D", "E", "F", "G"];
+  const energyLabel = validLabels.includes(rawEnergy) ? rawEnergy : null;
 
   // Determine listing type
   let listingType: "huur" | "koop" = "huur";
@@ -294,6 +331,10 @@ function mapDaisyconToProperty(product: DaisyconProduct, sourceSite: string, sou
     surface_area: surface,
     bedrooms,
     bathrooms,
+    latitude: lat,
+    longitude: lng,
+    build_year: buildYear,
+    energy_label: energyLabel,
     description: product.description || null,
     images,
     source_url: sourceUrl,
@@ -438,14 +479,17 @@ Deno.serve(async (req) => {
         if (products.length > 0) {
           const sampleKeys = Object.keys(products[0]);
           console.log(`Feed ${feed.name}: Sample product keys: ${sampleKeys.join(", ")}`);
-          // Log all keys containing image/img/photo and their values
-          const imageKeys = sampleKeys.filter(k => /image|img|photo|picture|foto/i.test(k));
-          console.log(`Feed ${feed.name}: Image-related keys: ${JSON.stringify(imageKeys)}`);
-          for (const k of imageKeys) {
+          // Log geo/building related keys
+          const geoKeys = sampleKeys.filter(k => /lat|lng|lon|geo|coord|build|year|bouw|energy|energi|label/i.test(k));
+          console.log(`Feed ${feed.name}: Geo/building keys: ${JSON.stringify(geoKeys)}`);
+          for (const k of geoKeys) {
             console.log(`Feed ${feed.name}: ${k} = ${JSON.stringify(products[0][k])}`);
           }
-          // Also log first 2000 chars of first product
-          console.log(`Feed ${feed.name}: First product sample: ${JSON.stringify(products[0]).substring(0, 2000)}`);
+          // Log image and all keys
+          const imageKeys = sampleKeys.filter(k => /image|img|photo|picture|foto/i.test(k));
+          console.log(`Feed ${feed.name}: Image-related keys: ${JSON.stringify(imageKeys)}`);
+          // Log first 3000 chars of first product to see ALL available fields
+          console.log(`Feed ${feed.name}: First product sample: ${JSON.stringify(products[0]).substring(0, 3000)}`);
         }
 
         if (products.length === 0) {
@@ -473,18 +517,18 @@ Deno.serve(async (req) => {
 
         // Get all existing source_urls for this feed in one query
         const sourceUrls = allPropertyData.map(p => p.source_url);
-        const existingMap = new Map<string, { id: string; images: string[]; title: string }>();
+        const existingMap = new Map<string, { id: string; images: string[]; title: string; latitude: number | null; longitude: number | null; build_year: number | null; energy_label: string | null }>();
         
         // Query in batches of 500 (Supabase IN filter limit)
         for (let i = 0; i < sourceUrls.length; i += 500) {
           const batch = sourceUrls.slice(i, i + 500);
           const { data: existingRows } = await supabase
             .from("properties")
-            .select("id, source_url, images, title")
+            .select("id, source_url, images, title, latitude, longitude, build_year, energy_label")
             .in("source_url", batch);
           if (existingRows) {
             for (const row of existingRows) {
-              existingMap.set(row.source_url!, { id: row.id, images: row.images || [], title: row.title });
+              existingMap.set(row.source_url!, { id: row.id, images: row.images || [], title: row.title, latitude: row.latitude, longitude: row.longitude, build_year: row.build_year, energy_label: row.energy_label });
             }
           }
         }
@@ -506,6 +550,17 @@ Deno.serve(async (req) => {
             }
             if (existing.title && genericTitles.includes(existing.title.trim().toLowerCase())) {
               updates.title = propData.title;
+            }
+            // Fill in missing geo/building data
+            if (!existing.latitude && propData.latitude) {
+              updates.latitude = propData.latitude;
+              updates.longitude = propData.longitude;
+            }
+            if (!existing.build_year && propData.build_year) {
+              updates.build_year = propData.build_year;
+            }
+            if (!existing.energy_label && propData.energy_label) {
+              updates.energy_label = propData.energy_label;
             }
             if (Object.keys(updates).length > 0) {
               updates.updated_at = new Date().toISOString();
