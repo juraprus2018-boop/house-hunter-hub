@@ -88,7 +88,7 @@ const BlogPostPage = () => {
     publisher: {
       "@type": "Organization",
       name: "WoonPeek",
-      url: "https://woonpeek.nl",
+      url: "https://www.woonpeek.nl",
     },
     ...(post.cover_image ? { image: post.cover_image } : {}),
   };
