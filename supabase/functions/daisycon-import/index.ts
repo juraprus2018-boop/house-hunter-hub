@@ -398,7 +398,10 @@ Deno.serve(async (req) => {
     let totalImported = 0;
     let totalSkipped = 0;
     let totalUpdated = 0;
-    const results: { feed: string; imported: number; updated: number; skipped: number; error?: string }[] = [];
+    let totalDeactivated = 0;
+    const results: { feed: string; imported: number; updated: number; skipped: number; deactivated: number; error?: string }[] = [];
+    // Collect all active source URLs across all feeds for deactivation check
+    const allActiveSourceUrls = new Set<string>();
 
     for (let feedIndex = 0; feedIndex < feeds.length; feedIndex++) {
       const feed = feeds[feedIndex];
