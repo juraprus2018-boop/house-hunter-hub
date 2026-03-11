@@ -95,45 +95,33 @@ const ExplorePage = () => {
   }, [debouncedPostcode]);
 
   const { data: allData, isLoading } = useProperties({
-    city: selectedCity || undefined,
     listingType: listingType || undefined,
     sourceSite: selectedSource || undefined,
     disablePagination: true,
   });
-  const allProperties = allData?.properties;
+  const allProperties = allData?.properties || [];
 
-  // Separate optimized query for map markers (only properties with coords)
-  const { data: mapProps } = useMapProperties({
-    city: selectedCity || undefined,
-    listingType: listingType || undefined,
-    sourceSite: selectedSource || undefined,
-  });
-
-  // Filter by distance from postcode
+  // Filter by city + optional distance from postcode
   const filteredProperties = useMemo(() => {
-    if (!allProperties) return [];
-    if (!postcodeCoords) return allProperties;
-    return allProperties.filter((p) => {
+    const cityFiltered = selectedCity
+      ? allProperties.filter((p) => p.city === selectedCity)
+      : allProperties;
+
+    if (!postcodeCoords) return cityFiltered;
+
+    return cityFiltered.filter((p) => {
       if (!p.latitude || !p.longitude) return false;
       return haversineKm(postcodeCoords.lat, postcodeCoords.lng, Number(p.latitude), Number(p.longitude)) <= distanceKm;
     });
-  }, [allProperties, postcodeCoords, distanceKm]);
+  }, [allProperties, selectedCity, postcodeCoords, distanceKm]);
 
-  // Filter map properties by distance too
-  const filteredMapProperties = useMemo(() => {
-    if (!mapProps) return [];
-    if (!postcodeCoords) return mapProps;
-    return mapProps.filter((p) => {
-      return haversineKm(postcodeCoords.lat, postcodeCoords.lng, Number(p.latitude), Number(p.longitude)) <= distanceKm;
-    });
-  }, [mapProps, postcodeCoords, distanceKm]);
+  // Map receives all filtered properties that have coordinates (no hard cap)
+  const filteredMapProperties = useMemo(
+    () => filteredProperties.filter((p) => p.latitude && p.longitude),
+    [filteredProperties]
+  );
 
-  const { data: citySourceData } = useProperties({
-    listingType: listingType || undefined,
-    sourceSite: selectedSource || undefined,
-    disablePagination: true,
-  });
-  const citySourceProperties = citySourceData?.properties;
+  const citySourceProperties = allProperties;
   const cities = useMemo(() => {
     if (!citySourceProperties) return [];
     const cityCount = new Map<string, number>();
