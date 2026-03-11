@@ -214,13 +214,23 @@ Deno.serve(async (req) => {
     }
 
     // Fetch data for cities/properties
-    if (type === "steden" || type === "woningen") {
-      const { data: properties, error } = await supabase
-        .from("properties")
-        .select("slug, id, city, updated_at, listing_type")
-        .eq("status", "actief")
-        .order("updated_at", { ascending: false });
-      if (error) throw error;
+      const pageSize = 1000;
+      let from = 0;
+      const allProperties: Array<{ slug: string | null; id: string; city: string; updated_at: string; listing_type: string }> = [];
+      while (true) {
+        const { data, error } = await supabase
+          .from("properties")
+          .select("slug, id, city, updated_at, listing_type")
+          .eq("status", "actief")
+          .order("updated_at", { ascending: false })
+          .range(from, from + pageSize - 1);
+        if (error) throw error;
+        if (!data || data.length === 0) break;
+        allProperties.push(...data);
+        if (data.length < pageSize) break;
+        from += pageSize;
+      }
+      const properties = allProperties;
 
       if (type === "steden") {
         return new Response(buildCitiesSitemap(properties || []), {
