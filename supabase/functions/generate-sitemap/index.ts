@@ -8,24 +8,30 @@ const corsHeaders = {
 
 const SITE_URL = "https://woonpeek.nl";
 
-function buildSitemapXml(
-  properties: Array<{ slug: string | null; id: string; city: string; updated_at: string; listing_type: string }>,
-  blogPosts: Array<{ slug: string; updated_at: string }>,
-): string {
-  const cityMap = new Map<string, { count: number; lastMod: string }>();
-  for (const p of properties) {
-    const citySlug = p.city.toLowerCase().replace(/\s+/g, "-");
-    const existing = cityMap.get(citySlug);
-    if (!existing || p.updated_at > existing.lastMod) {
-      cityMap.set(citySlug, { count: (existing?.count || 0) + 1, lastMod: p.updated_at });
-    } else {
-      existing.count++;
-    }
-  }
+function buildSitemapIndex(lastmod: string): string {
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <sitemap>
+    <loc>${SITE_URL}/sitemap-pages.xml</loc>
+    <lastmod>${lastmod}</lastmod>
+  </sitemap>
+  <sitemap>
+    <loc>${SITE_URL}/sitemap-steden.xml</loc>
+    <lastmod>${lastmod}</lastmod>
+  </sitemap>
+  <sitemap>
+    <loc>${SITE_URL}/sitemap-woningen.xml</loc>
+    <lastmod>${lastmod}</lastmod>
+  </sitemap>
+  <sitemap>
+    <loc>${SITE_URL}/sitemap-blog.xml</loc>
+    <lastmod>${lastmod}</lastmod>
+  </sitemap>
+</sitemapindex>`;
+}
 
-  const now = new Date().toISOString().split("T")[0];
-
-  let xml = `<?xml version="1.0" encoding="UTF-8"?>
+function buildPagesSitemap(now: string): string {
+  return `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>${SITE_URL}/</loc>
@@ -40,6 +46,12 @@ function buildSitemapXml(
     <priority>0.9</priority>
   </url>
   <url>
+    <loc>${SITE_URL}/steden</loc>
+    <lastmod>${now}</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>${SITE_URL}/verkennen</loc>
     <lastmod>${now}</lastmod>
     <changefreq>daily</changefreq>
@@ -47,6 +59,18 @@ function buildSitemapXml(
   </url>
   <url>
     <loc>${SITE_URL}/nieuw-aanbod</loc>
+    <lastmod>${now}</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>${SITE_URL}/huurwoningen</loc>
+    <lastmod>${now}</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>${SITE_URL}/koopwoningen</loc>
     <lastmod>${now}</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
@@ -63,18 +87,72 @@ function buildSitemapXml(
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
-`;
+  <url>
+    <loc>${SITE_URL}/dagelijkse-alert</loc>
+    <lastmod>${now}</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>${SITE_URL}/veelgestelde-vragen</loc>
+    <lastmod>${now}</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+</urlset>`;
+}
 
-  for (const [citySlug, info] of cityMap) {
+function buildCitiesSitemap(
+  properties: Array<{ city: string; updated_at: string; listing_type: string }>,
+): string {
+  const cityMap = new Map<string, string>();
+  for (const p of properties) {
+    const citySlug = p.city.trim().toLowerCase().replace(/\s+/g, "-");
+    const existing = cityMap.get(citySlug);
+    if (!existing || p.updated_at > existing) {
+      cityMap.set(citySlug, p.updated_at);
+    }
+  }
+
+  let xml = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+`;
+  for (const [citySlug, lastMod] of cityMap) {
+    // City landing page
     xml += `  <url>
     <loc>${SITE_URL}/woningen-${citySlug}</loc>
-    <lastmod>${info.lastMod.split("T")[0]}</lastmod>
+    <lastmod>${lastMod.split("T")[0]}</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
 `;
+    // Huurwoningen per city
+    xml += `  <url>
+    <loc>${SITE_URL}/huurwoningen/${citySlug}</loc>
+    <lastmod>${lastMod.split("T")[0]}</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.7</priority>
+  </url>
+`;
+    // Koopwoningen per city
+    xml += `  <url>
+    <loc>${SITE_URL}/koopwoningen/${citySlug}</loc>
+    <lastmod>${lastMod.split("T")[0]}</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.7</priority>
+  </url>
+`;
   }
+  xml += `</urlset>`;
+  return xml;
+}
 
+function buildPropertiesSitemap(
+  properties: Array<{ slug: string | null; id: string; updated_at: string }>,
+): string {
+  let xml = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+`;
   for (const p of properties) {
     xml += `  <url>
     <loc>${SITE_URL}/woning/${p.slug || p.id}</loc>
@@ -84,7 +162,16 @@ function buildSitemapXml(
   </url>
 `;
   }
+  xml += `</urlset>`;
+  return xml;
+}
 
+function buildBlogSitemap(
+  blogPosts: Array<{ slug: string; updated_at: string }>,
+): string {
+  let xml = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+`;
   for (const b of blogPosts) {
     xml += `  <url>
     <loc>${SITE_URL}/blog/${b.slug}</loc>
@@ -94,7 +181,6 @@ function buildSitemapXml(
   </url>
 `;
   }
-
   xml += `</urlset>`;
   return xml;
 }
@@ -108,64 +194,66 @@ Deno.serve(async (req) => {
   const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
   const supabase = createClient(supabaseUrl, supabaseKey);
 
+  const url = new URL(req.url);
+  const type = url.searchParams.get("type") || "index";
+
   try {
-    const [propResult, blogResult] = await Promise.all([
-      supabase
-        .from("properties")
-        .select("slug, id, city, updated_at, listing_type")
-        .eq("status", "actief")
-        .order("updated_at", { ascending: false }),
-      supabase
-        .from("blog_posts")
-        .select("slug, updated_at")
-        .eq("status", "published")
-        .order("published_at", { ascending: false }),
-    ]);
+    const now = new Date().toISOString().split("T")[0];
 
-    if (propResult.error) throw propResult.error;
-    if (blogResult.error) throw blogResult.error;
-
-    const properties = propResult.data || [];
-    const blogPosts = blogResult.data || [];
-
-    const xml = buildSitemapXml(properties, blogPosts);
-
-    // GET = serve XML directly, POST = regenerate & store
-    if (req.method === "GET") {
-      return new Response(xml, {
-        headers: {
-          ...corsHeaders,
-          "Content-Type": "application/xml; charset=utf-8",
-          "Cache-Control": "public, max-age=3600",
-        },
+    // For index, just return the sitemap index
+    if (type === "index") {
+      return new Response(buildSitemapIndex(now), {
+        headers: { ...corsHeaders, "Content-Type": "application/xml; charset=utf-8", "Cache-Control": "public, max-age=3600" },
       });
     }
 
-    // POST: also upload to storage for persistence
-    await supabase.storage
-      .from("property-images")
-      .upload("sitemap.xml", new TextEncoder().encode(xml), {
-        contentType: "application/xml",
-        upsert: true,
+    if (type === "pages") {
+      return new Response(buildPagesSitemap(now), {
+        headers: { ...corsHeaders, "Content-Type": "application/xml; charset=utf-8", "Cache-Control": "public, max-age=3600" },
       });
+    }
 
-    const cityCount = new Set((properties || []).map(p => p.city.toLowerCase().replace(/\s+/g, "-"))).size;
+    // Fetch data for cities/properties
+    if (type === "steden" || type === "woningen") {
+      const { data: properties, error } = await supabase
+        .from("properties")
+        .select("slug, id, city, updated_at, listing_type")
+        .eq("status", "actief")
+        .order("updated_at", { ascending: false });
+      if (error) throw error;
 
-    return new Response(
-      JSON.stringify({
-        success: true,
-        properties_count: properties.length,
-        blog_posts_count: blogPosts.length,
-        cities_count: cityCount,
-        sitemap_url: `${supabaseUrl}/storage/v1/object/public/property-images/sitemap.xml`,
-      }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+      if (type === "steden") {
+        return new Response(buildCitiesSitemap(properties || []), {
+          headers: { ...corsHeaders, "Content-Type": "application/xml; charset=utf-8", "Cache-Control": "public, max-age=3600" },
+        });
+      }
+
+      return new Response(buildPropertiesSitemap(properties || []), {
+        headers: { ...corsHeaders, "Content-Type": "application/xml; charset=utf-8", "Cache-Control": "public, max-age=3600" },
+      });
+    }
+
+    if (type === "blog") {
+      const { data: blogPosts, error } = await supabase
+        .from("blog_posts")
+        .select("slug, updated_at")
+        .eq("status", "published")
+        .order("published_at", { ascending: false });
+      if (error) throw error;
+
+      return new Response(buildBlogSitemap(blogPosts || []), {
+        headers: { ...corsHeaders, "Content-Type": "application/xml; charset=utf-8", "Cache-Control": "public, max-age=3600" },
+      });
+    }
+
+    return new Response(buildSitemapIndex(now), {
+      headers: { ...corsHeaders, "Content-Type": "application/xml; charset=utf-8", "Cache-Control": "public, max-age=3600" },
+    });
   } catch (error) {
     console.error("Sitemap generation error:", error);
     return new Response(
       JSON.stringify({ error: error instanceof Error ? error.message : "Unknown error" }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   }
 });
