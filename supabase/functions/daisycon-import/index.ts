@@ -210,6 +210,26 @@ function mapDaisyconToProperty(product: DaisyconProduct, sourceSite: string, sou
   )) || null;
   const bathrooms = parseInt(String(product.bathrooms || "0")) || null;
 
+  // Extract coordinates
+  const lat = parseFloat(String(
+    product.latitude || product.lat || product.geo_lat || product.geo_latitude || "0"
+  )) || null;
+  const lng = parseFloat(String(
+    product.longitude || product.lng || product.lon || product.geo_lng || product.geo_longitude || "0"
+  )) || null;
+
+  // Extract build year
+  const buildYear = parseInt(String(
+    product.build_year || product.construction_year || product.bouwjaar || product.year_built || "0"
+  )) || null;
+
+  // Extract energy label
+  const rawEnergy = String(
+    product.energy_label || product.energy_class || product.energielabel || product.energy_rating || ""
+  ).toUpperCase().trim();
+  const validLabels = ["A++", "A+", "A", "B", "C", "D", "E", "F", "G"];
+  const energyLabel = validLabels.includes(rawEnergy) ? rawEnergy : null;
+
   // Determine listing type
   let listingType: "huur" | "koop" = "huur";
   const rentBuy = String(
