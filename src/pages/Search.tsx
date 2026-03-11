@@ -168,7 +168,7 @@ const SearchPage = () => {
                       <SheetDescription>Verfijn je zoekopdracht</SheetDescription>
                     </SheetHeader>
                     <div className="mt-6">
-                      <SearchFilters filters={filters} onChange={handleFilterChange} onClear={clearFilters} />
+                      <SearchFilters filters={filters} onChange={handleFilterChange} onClear={clearFilters} facets={facets} />
                     </div>
                   </SheetContent>
                 </Sheet>
