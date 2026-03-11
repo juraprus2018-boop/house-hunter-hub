@@ -48,6 +48,13 @@ const CityPage = () => {
   const cityName = citySlugToName(citySlug);
   const [filters, setFilters] = useState<SearchFilterValues>(EMPTY_FILTERS);
 
+  const { data: facets } = useFilterFacets({
+    city: cityName,
+    propertyType: filters.propertyType || undefined,
+    listingType: filters.listingType || undefined,
+    includeInactive: filters.includeInactive,
+  });
+
   const allPropertiesQuery = useProperties({
     city: cityName,
     disablePagination: true,
