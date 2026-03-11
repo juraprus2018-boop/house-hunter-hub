@@ -514,18 +514,18 @@ Deno.serve(async (req) => {
 
         // Get all existing source_urls for this feed in one query
         const sourceUrls = allPropertyData.map(p => p.source_url);
-        const existingMap = new Map<string, { id: string; images: string[]; title: string }>();
+        const existingMap = new Map<string, { id: string; images: string[]; title: string; latitude: number | null; longitude: number | null; build_year: number | null; energy_label: string | null }>();
         
         // Query in batches of 500 (Supabase IN filter limit)
         for (let i = 0; i < sourceUrls.length; i += 500) {
           const batch = sourceUrls.slice(i, i + 500);
           const { data: existingRows } = await supabase
             .from("properties")
-            .select("id, source_url, images, title")
+            .select("id, source_url, images, title, latitude, longitude, build_year, energy_label")
             .in("source_url", batch);
           if (existingRows) {
             for (const row of existingRows) {
-              existingMap.set(row.source_url!, { id: row.id, images: row.images || [], title: row.title });
+              existingMap.set(row.source_url!, { id: row.id, images: row.images || [], title: row.title, latitude: row.latitude, longitude: row.longitude, build_year: row.build_year, energy_label: row.energy_label });
             }
           }
         }
@@ -547,6 +547,17 @@ Deno.serve(async (req) => {
             }
             if (existing.title && genericTitles.includes(existing.title.trim().toLowerCase())) {
               updates.title = propData.title;
+            }
+            // Fill in missing geo/building data
+            if (!existing.latitude && propData.latitude) {
+              updates.latitude = propData.latitude;
+              updates.longitude = propData.longitude;
+            }
+            if (!existing.build_year && propData.build_year) {
+              updates.build_year = propData.build_year;
+            }
+            if (!existing.energy_label && propData.energy_label) {
+              updates.energy_label = propData.energy_label;
             }
             if (Object.keys(updates).length > 0) {
               updates.updated_at = new Date().toISOString();
