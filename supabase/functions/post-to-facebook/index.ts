@@ -7,7 +7,7 @@ const corsHeaders = {
 };
 
 const GRAPH_API = "https://graph.facebook.com/v21.0";
-const SITE_URL = "https://woonpeek.nl";
+const SITE_URL = "https://www.woonpeek.nl";
 
 interface Property {
   id: string;

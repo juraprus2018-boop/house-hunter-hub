@@ -6,7 +6,7 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const SITE_URL = "https://woonpeek.nl";
+const SITE_URL = "https://www.woonpeek.nl";
 
 function buildSitemapIndex(lastmod: string): string {
   return `<?xml version="1.0" encoding="UTF-8"?>
