@@ -79,6 +79,7 @@ const PropertyDetail = () => {
   );
   const { user } = useAuth();
   const { toggle, isFavorite, isLoading: favoriteLoading } = useToggleFavorite();
+  const { data: feedLogos } = useFeedLogos();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [contactOpen, setContactOpen] = useState(false);
