@@ -368,6 +368,7 @@ Deno.serve(async (req) => {
 
         let imported = 0;
         let skipped = 0;
+        let updated = 0;
 
         for (const product of products) {
           const sourceUrl = buildAffiliateLink(product, feed.media_id, feed.program_id);
@@ -378,19 +379,32 @@ Deno.serve(async (req) => {
             continue;
           }
 
+          const propertyData = mapDaisyconToProperty(product, feed.name, sourceUrl);
+
           // Check if already exists by source_url
           const { data: existing } = await supabase
             .from("properties")
-            .select("id")
+            .select("id, images")
             .eq("source_url", sourceUrl)
             .maybeSingle();
 
           if (existing) {
-            skipped++;
+            // Update existing property if it has no images but new data does
+            const existingImages = existing.images || [];
+            if (existingImages.length === 0 && propertyData.images.length > 0) {
+              await supabase
+                .from("properties")
+                .update({ images: propertyData.images, updated_at: new Date().toISOString() })
+                .eq("id", existing.id);
+              updated++;
+              console.log(`Updated images for "${propertyData.title}": ${propertyData.images.length} images`);
+            } else {
+              skipped++;
+            }
             continue;
           }
 
-          const propertyData = mapDaisyconToProperty(product, feed.name, sourceUrl);
+          console.log(`Inserting "${propertyData.title}" with ${propertyData.images.length} images`);
 
           const { error: insertErr } = await supabase
             .from("properties")
