@@ -6,6 +6,8 @@ import PropertyCard from "@/components/properties/PropertyCard";
 import Breadcrumbs from "@/components/seo/Breadcrumbs";
 import SEOHead from "@/components/seo/SEOHead";
 import SearchFilters, { type SearchFilterValues } from "@/components/search/SearchFilters";
+import RelatedCities from "@/components/city/RelatedCities";
+import SimilarProperties from "@/components/city/SimilarProperties";
 import { useProperties } from "@/hooks/useProperties";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
