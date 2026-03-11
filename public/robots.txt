@@ -13,4 +13,4 @@ Allow: /
 User-agent: *
 Allow: /
 
-Sitemap: https://woonpeek.nl/sitemap.xml
+Sitemap: https://www.woonpeek.nl/sitemap.xml
