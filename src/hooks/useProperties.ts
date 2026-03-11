@@ -76,6 +76,9 @@ export const useProperties = (filters?: PropertyFilters) => {
         const from = (page - 1) * pageSize;
         const to = from + pageSize - 1;
         query = query.range(from, to);
+      } else {
+        // Supabase default limit is 1000, explicitly set higher to get all results
+        query = query.limit(10000);
       }
 
       const { data, error, count } = await query;

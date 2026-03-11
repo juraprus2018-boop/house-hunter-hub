@@ -138,10 +138,7 @@ const CityPage = () => {
               />
             </div>
 
-            <div className="flex items-start gap-4">
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary/10">
-                <MapPin className="h-6 w-6 text-primary" />
-              </div>
+            <div>
               <div className="max-w-3xl">
                 <h1 className="font-display text-3xl font-bold text-foreground md:text-4xl">
                   Woningen in {cityName}
