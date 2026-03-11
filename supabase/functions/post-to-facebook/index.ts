@@ -31,7 +31,7 @@ interface Property {
 // ─── Caption Builder ────────────────────────────────────────────────
 
 function buildCaption(property: Property): string {
-  const typeLabel = capitalize(property.type_display());
+  const typeLabel = capitalize(property.property_type);
   const priceFormatted = formatPrice(property.price, property.listing_type);
   const propertyUrl = `${SITE_URL}/woning/${property.slug || property.id}`;
 
