@@ -452,7 +452,7 @@ const ExplorePage = () => {
                   onClick={() => setMobileView("map")}
                   className="rounded-none h-8 px-3 gap-1.5"
                 >
-                  <Map className="h-3.5 w-3.5" />
+                  <MapIcon className="h-3.5 w-3.5" />
                   Kaart
                 </Button>
               </div>
