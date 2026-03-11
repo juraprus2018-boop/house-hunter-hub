@@ -14,6 +14,7 @@ import PropertyMap from "@/components/properties/PropertyMap";
 import SEOHead from "@/components/seo/SEOHead";
 import Breadcrumbs from "@/components/seo/Breadcrumbs";
 import PropertyCard from "@/components/properties/PropertyCard";
+import PriceAnalysis from "@/components/properties/PriceAnalysis";
 import {
   Heart,
   Share2,
