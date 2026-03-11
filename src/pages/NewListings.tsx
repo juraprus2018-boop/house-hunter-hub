@@ -80,7 +80,7 @@ const NewListings = () => {
 
   const title = "Nieuw aanbod vandaag | WoonPeek";
   const description = `Bekijk ${totalCount} nieuwe actieve woningen van vandaag (${dateLabel}) op WoonPeek.`;
-  const canonical = "https://woonpeek.nl/nieuw-aanbod";
+  const canonical = "https://www.woonpeek.nl/nieuw-aanbod";
 
   const jsonLd = {
     "@context": "https://schema.org",
