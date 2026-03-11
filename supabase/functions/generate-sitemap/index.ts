@@ -214,6 +214,7 @@ Deno.serve(async (req) => {
     }
 
     // Fetch data for cities/properties
+    if (type === "steden" || type === "woningen") {
       const pageSize = 1000;
       let from = 0;
       const allProperties: Array<{ slug: string | null; id: string; city: string; updated_at: string; listing_type: string }> = [];
@@ -233,14 +234,15 @@ Deno.serve(async (req) => {
       const properties = allProperties;
 
       if (type === "steden") {
-        return new Response(buildCitiesSitemap(properties || []), {
+        return new Response(buildCitiesSitemap(properties), {
           headers: { ...corsHeaders, "Content-Type": "application/xml; charset=utf-8", "Cache-Control": "public, max-age=3600" },
         });
       }
 
-      return new Response(buildPropertiesSitemap(properties || []), {
+      return new Response(buildPropertiesSitemap(properties), {
         headers: { ...corsHeaders, "Content-Type": "application/xml; charset=utf-8", "Cache-Control": "public, max-age=3600" },
       });
+    }
     }
 
     if (type === "blog") {
