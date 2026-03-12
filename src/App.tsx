@@ -35,6 +35,7 @@ import AdminBlog from "./pages/admin/AdminBlog";
 import AdminUsers from "./pages/admin/AdminUsers";
 import AdminDailyActivity from "./pages/admin/AdminDailyActivity";
 import ListingTypePage from "./pages/ListingTypePage";
+import PropertyTypeCityPage from "./pages/PropertyTypeCityPage";
 import NewListings from "./pages/NewListings";
 import PostPropertyStart from "./pages/PostPropertyStart";
 import AlertUnsubscribe from "./pages/AlertUnsubscribe";
