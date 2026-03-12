@@ -101,6 +101,7 @@ const App = () => (
             <Route path="/huizen/:city?" element={<PropertyTypeCityPage propertyType="huis" />} />
             <Route path="/studios/:city?" element={<PropertyTypeCityPage propertyType="studio" />} />
             <Route path="/kamers/:city?" element={<PropertyTypeCityPage propertyType="kamer" />} />
+            <Route path="/woningen/:city/:filter" element={<FilteredLandingPage />} />
             <Route path="/:city" element={<LegacyCityRedirect />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
