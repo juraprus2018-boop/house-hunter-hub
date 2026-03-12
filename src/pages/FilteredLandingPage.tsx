@@ -10,7 +10,7 @@ import RelatedCities from "@/components/city/RelatedCities";
 import { useProperties } from "@/hooks/useProperties";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowRight, MapPin, Search } from "lucide-react";
+import { ArrowRight, ChevronRight, MapPin, Search } from "lucide-react";
 import { cityPath, citySlugToName } from "@/lib/cities";
 import type { Database } from "@/integrations/supabase/types";
 
