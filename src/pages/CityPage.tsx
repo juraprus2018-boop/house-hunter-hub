@@ -115,19 +115,23 @@ const CityPage = () => {
   const canonical = `https://www.woonpeek.nl${cityPath(cityName)}`;
 
   const jsonLd = useMemo(
-    () => ({
-      "@context": "https://schema.org",
-      "@type": "CollectionPage",
-      name: `Woningen in ${cityName}`,
-      description: pageDescription,
-      url: canonical,
-      isPartOf: {
-        "@type": "WebSite",
-        name: "WoonPeek",
-        url: "https://www.woonpeek.nl",
+    () => [
+      {
+        "@context": "https://schema.org",
+        "@type": "CollectionPage",
+        name: `Woningen in ${cityName}`,
+        description: pageDescription,
+        url: canonical,
+        isPartOf: {
+          "@type": "WebSite",
+          name: "WoonPeek",
+          url: "https://www.woonpeek.nl",
+        },
       },
-      mainEntity: {
+      {
+        "@context": "https://schema.org",
         "@type": "ItemList",
+        name: `Woningen in ${cityName}`,
         numberOfItems: filteredCount,
         itemListElement: filteredProperties.slice(0, 10).map((property, index) => ({
           "@type": "ListItem",
@@ -136,7 +140,7 @@ const CityPage = () => {
           name: property.title,
         })),
       },
-    }),
+    ],
     [cityName, filteredCount, filteredProperties, pageDescription, canonical]
   );
 
@@ -145,7 +149,9 @@ const CityPage = () => {
       <SEOHead title={pageTitle} description={pageDescription} canonical={canonical} />
       <Header />
       <main className="flex-1">
-        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+        {jsonLd.map((schema, i) => (
+          <script key={i} type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }} />
+        ))}
 
         <section className="border-b bg-gradient-to-b from-primary/5 to-background py-12">
           <div className="container">

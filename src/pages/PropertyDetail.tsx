@@ -334,7 +334,6 @@ const PropertyDetail = () => {
           {/* Breadcrumbs */}
           <Breadcrumbs items={[
             { label: "Home", href: "/" },
-            { label: typeLabel },
             { label: property.city, href: cityPath(property.city) },
             { label: `${property.street} ${property.house_number}` },
           ]} />
