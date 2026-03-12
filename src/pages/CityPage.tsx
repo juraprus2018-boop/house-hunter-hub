@@ -110,8 +110,8 @@ const CityPage = () => {
       filters.includeInactive
   );
 
-  const pageTitle = `Woningen in ${cityName} | WoonPeek`;
-  const pageDescription = `Bekijk ${totalCount} woningen in ${cityName}, filter direct op type en prijs en ontdek het complete aanbod op WoonPeek.`;
+  const pageTitle = `Woningen in ${cityName} – huurhuizen, appartementen en kamers | WoonPeek`;
+  const pageDescription = `Bekijk ${totalCount} huurwoningen en koopwoningen in ${cityName}. Vind appartementen, huizen, studio's en kamers. Dagelijks bijgewerkt op WoonPeek.`;
   const canonical = `https://www.woonpeek.nl${cityPath(cityName)}`;
 
   // ── City FAQ items ──
