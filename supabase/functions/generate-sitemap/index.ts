@@ -31,75 +31,38 @@ function buildSitemapIndex(lastmod: string): string {
 }
 
 function buildPagesSitemap(now: string): string {
-  return `<?xml version="1.0" encoding="UTF-8"?>
+  const staticPages = [
+    { loc: "/", changefreq: "daily", priority: "1.0" },
+    { loc: "/zoeken", changefreq: "daily", priority: "0.9" },
+    { loc: "/steden", changefreq: "daily", priority: "0.8" },
+    { loc: "/verkennen", changefreq: "daily", priority: "0.7" },
+    { loc: "/nieuw-aanbod", changefreq: "daily", priority: "0.8" },
+    { loc: "/huurwoningen", changefreq: "daily", priority: "0.8" },
+    { loc: "/koopwoningen", changefreq: "daily", priority: "0.8" },
+    { loc: "/appartementen", changefreq: "daily", priority: "0.7" },
+    { loc: "/huizen", changefreq: "daily", priority: "0.7" },
+    { loc: "/studios", changefreq: "daily", priority: "0.7" },
+    { loc: "/kamers", changefreq: "daily", priority: "0.7" },
+    { loc: "/woning-plaatsen", changefreq: "weekly", priority: "0.7" },
+    { loc: "/blog", changefreq: "daily", priority: "0.8" },
+    { loc: "/dagelijkse-alert", changefreq: "monthly", priority: "0.6" },
+    { loc: "/veelgestelde-vragen", changefreq: "monthly", priority: "0.5" },
+  ];
+
+  let xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url>
-    <loc>${SITE_URL}/</loc>
+`;
+  for (const page of staticPages) {
+    xml += `  <url>
+    <loc>${SITE_URL}${page.loc}</loc>
     <lastmod>${now}</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>1.0</priority>
+    <changefreq>${page.changefreq}</changefreq>
+    <priority>${page.priority}</priority>
   </url>
-  <url>
-    <loc>${SITE_URL}/zoeken</loc>
-    <lastmod>${now}</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.9</priority>
-  </url>
-  <url>
-    <loc>${SITE_URL}/steden</loc>
-    <lastmod>${now}</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>${SITE_URL}/verkennen</loc>
-    <lastmod>${now}</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>${SITE_URL}/nieuw-aanbod</loc>
-    <lastmod>${now}</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>${SITE_URL}/huurwoningen</loc>
-    <lastmod>${now}</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>${SITE_URL}/koopwoningen</loc>
-    <lastmod>${now}</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>${SITE_URL}/woning-plaatsen</loc>
-    <lastmod>${now}</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>${SITE_URL}/blog</loc>
-    <lastmod>${now}</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>${SITE_URL}/dagelijkse-alert</loc>
-    <lastmod>${now}</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
-    <loc>${SITE_URL}/veelgestelde-vragen</loc>
-    <lastmod>${now}</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
-  </url>
-</urlset>`;
+`;
+  }
+  xml += `</urlset>`;
+  return xml;
 }
 
 function buildCitiesSitemap(
