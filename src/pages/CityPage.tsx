@@ -110,8 +110,8 @@ const CityPage = () => {
       filters.includeInactive
   );
 
-  const pageTitle = `Woningen in ${cityName} – huurhuizen, appartementen en kamers | WoonPeek`;
-  const pageDescription = `Bekijk ${totalCount} huurwoningen en koopwoningen in ${cityName}. Vind appartementen, huizen, studio's en kamers. Dagelijks bijgewerkt op WoonPeek.`;
+  const pageTitle = `Woningen in ${cityName} – huurwoningen, appartementen en huizen | WoonPeek`;
+  const pageDescription = `Ben je op zoek naar een woning in ${cityName}? Bekijk ${totalCount} huurwoningen, appartementen, studio's en huizen in ${cityName}. Filter op prijs, kamers en oppervlakte.`;
   const canonical = `https://www.woonpeek.nl${cityPath(cityName)}`;
 
   // ── City FAQ items ──
@@ -208,10 +208,10 @@ const CityPage = () => {
 
             <div className="max-w-3xl">
               <h1 className="font-display text-3xl font-bold text-foreground md:text-4xl">
-                Huurwoningen en appartementen in {cityName}
+                Woningen in {cityName}
               </h1>
-              <p className="mt-2 text-base text-muted-foreground">
-                Ontdek {totalCount} huur- en koopwoningen in {cityName}. Filter op type, prijs en oppervlakte en vind direct jouw nieuwe woning.
+              <p className="mt-3 text-base leading-relaxed text-muted-foreground">
+                Ben je op zoek naar een woning in {cityName}? Op deze pagina vind je het actuele aanbod van huurwoningen, appartementen, studio's en huizen in {cityName}. Bekijk beschikbare woningen en ontdek welke woning bij jouw wensen past.
               </p>
               <div className="mt-4 flex flex-wrap gap-3">
                 <div className="rounded-full bg-card px-4 py-2 text-sm text-foreground shadow-sm">
@@ -246,16 +246,14 @@ const CityPage = () => {
               </h2>
               <div className="mt-4 space-y-3 text-sm leading-relaxed text-muted-foreground">
                 <p>
-                  Op deze stadspagina vind je het complete woningaanbod van {cityName}. Je ziet hier appartementen,
-                  huizen, studio&apos;s en kamers die nu actief beschikbaar zijn op WoonPeek.
+                  {cityName} biedt een divers aanbod aan huurwoningen en koopwoningen. Of je nu zoekt naar een 
+                  <strong> appartement in {cityName}</strong>, een ruim <strong>huis huren in {cityName}</strong> of een 
+                  compacte studio — op WoonPeek vind je het meest actuele overzicht.
                 </p>
                 <p>
-                  We combineren aanbod uit meerdere bronnen en tonen op dit moment {totalCount} woningen in {cityName}.
-                  Daarvan zijn {huurCount} woningen te huur en {koopCount} woningen te koop.
-                </p>
-                <p>
-                  Gebruik de filters hieronder om het aanbod van {cityName} direct te verfijnen op woningtype,
-                  aanbod, prijs, slaapkamers en oppervlakte.
+                  Op dit moment zijn er {totalCount} woningen beschikbaar in {cityName}, 
+                  waarvan {huurCount} huurwoningen en {koopCount} koopwoningen. Het aanbod wordt dagelijks bijgewerkt 
+                  zodat je altijd de nieuwste woningen ziet.
                 </p>
               </div>
             </div>
@@ -362,13 +360,13 @@ const CityPage = () => {
           </div>
         </section>
 
-        {/* Similar Properties */}
+        {/* Nieuwste woningen in [stad] */}
         <SimilarProperties
           cityName={cityName}
           excludeIds={filteredProperties.map((p) => p.id)}
         />
 
-        {/* Related Cities */}
+        {/* Andere steden */}
         <RelatedCities currentCity={cityName} />
 
         {/* FAQ Section */}
@@ -397,7 +395,7 @@ const CityPage = () => {
         <section className="border-t bg-muted/30 py-12">
           <div className="container max-w-4xl">
             <h2 className="font-display text-2xl font-bold text-foreground">
-              Alles over woningen in {cityName}
+              Wonen in {cityName}
             </h2>
             <div className="mt-4 space-y-4 text-sm leading-relaxed text-muted-foreground">
               <p>

@@ -27,10 +27,10 @@ const SimilarProperties = ({ cityName, excludeIds = [] }: SimilarPropertiesProps
     <section className="border-t py-12">
       <div className="container">
         <h2 className="font-display text-2xl font-bold text-foreground">
-          Vergelijkbare woningen in {cityName}
+          Nieuwste woningen in {cityName}
         </h2>
         <p className="mt-2 text-sm text-muted-foreground">
-          Populaire woningen uit het aanbod van {cityName}
+          Recent toegevoegde woningen uit het aanbod van {cityName}
         </p>
         <div className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {isLoading
