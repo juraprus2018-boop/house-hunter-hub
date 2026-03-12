@@ -173,8 +173,19 @@ const PropertyDetail = () => {
   const prevImage = () => setCurrentImageIndex((prev) => (prev - 1 + images.length) % images.length);
 
   const typeLabel = property.property_type.charAt(0).toUpperCase() + property.property_type.slice(1);
-  const seoTitle = `${typeLabel} te ${property.listing_type}: ${property.street} ${property.house_number}, ${property.city} | WoonPeek`;
-  const seoDescription = `${typeLabel} te ${property.listing_type} aan ${property.street} ${property.house_number}, ${property.postal_code} ${property.city}. ${property.surface_area ? property.surface_area + ' m²' : ''} ${property.bedrooms ? property.bedrooms + ' slaapkamers' : ''} voor ${formatPrice(Number(property.price), property.listing_type)}.`;
+  const listingLabel = property.listing_type === "huur" ? "te huur" : "te koop";
+  const bedroomsLabel = property.bedrooms ? `${property.bedrooms} kamers` : null;
+  const surfaceLabel = property.surface_area ? `${property.surface_area} m²` : null;
+  const priceFormatted = new Intl.NumberFormat("nl-NL", { style: "currency", currency: "EUR", minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(Number(property.price));
+
+  // Meta Title: [Woningtype] in [stad] – [kamers] – €[prijs]
+  const seoTitle = `${typeLabel} in ${property.city}${bedroomsLabel ? ` – ${bedroomsLabel}` : ""} – ${priceFormatted} | WoonPeek`;
+
+  // Meta Description
+  const seoDescription = `Bekijk deze ${property.property_type} in ${property.city}.${bedroomsLabel ? ` ${bedroomsLabel}` : ""}${surfaceLabel ? ` • ${surfaceLabel}` : ""} • ${priceFormatted}${property.listing_type === "huur" ? "/mnd" : ""}. Bekijk foto's, informatie en vraag direct meer info aan.`;
+
+  // H1: [Woningtype] te huur/koop in [stad] – [kamers]
+  const h1Title = `${typeLabel} ${listingLabel} in ${property.city}${bedroomsLabel ? ` – ${bedroomsLabel}` : ""}`;
 
   // ── Product schema (Google-supported rich result with price) ──
   const productJsonLd = {
@@ -421,7 +432,7 @@ const PropertyDetail = () => {
                   )}
                 </div>
                 <h1 className="font-display text-2xl font-bold leading-tight md:text-3xl lg:text-4xl">
-                  {property.title}
+                  {h1Title}
                 </h1>
                 <div className="mt-2 flex items-center gap-2 text-muted-foreground">
                   <MapPin className="h-4 w-4 shrink-0" />
@@ -518,7 +529,7 @@ const PropertyDetail = () => {
 
               {/* ── Kenmerken ── */}
               <section>
-                <h2 className="font-display text-xl font-semibold mb-4">Kenmerken</h2>
+                <h2 className="font-display text-xl font-semibold mb-4">Kenmerken van deze woning in {property.city}</h2>
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
                   {kenmerken.map(({ icon: Icon, label, value }) => (
                     <div key={label} className="flex flex-col items-center gap-2 rounded-xl border bg-card p-4 text-center">
@@ -557,20 +568,52 @@ const PropertyDetail = () => {
                 </section>
               )}
 
-              {/* ── Internal link to city ── */}
+              {/* ── Over wonen in [stad] ── */}
               <section className="rounded-xl border bg-muted/30 p-6">
-                <h3 className="font-display text-lg font-semibold mb-2">
+                <h2 className="font-display text-xl font-semibold mb-3">
+                  Over wonen in {property.city}
+                </h2>
+                <div className="space-y-3 text-sm leading-relaxed text-muted-foreground">
+                  <p>
+                    {property.city} biedt een divers woningaanbod, van appartementen en studio's tot ruime eengezinswoningen. 
+                    Of je nu op zoek bent naar een huurwoning of koopwoning in {property.city}, WoonPeek helpt je om het 
+                    actuele aanbod overzichtelijk te vergelijken.
+                  </p>
+                  <p>
+                    Bekijk alle beschikbare woningen in {property.city} en ontdek welke buurt het beste bij jou past. 
+                    Stel een dagelijkse alert in om als eerste op de hoogte te zijn van nieuwe woningen.
+                  </p>
+                </div>
+              </section>
+
+              {/* ── Meer woningen in [stad] ── */}
+              <section className="rounded-xl border bg-muted/30 p-6">
+                <h2 className="font-display text-xl font-semibold mb-3">
                   Meer woningen in {property.city}
-                </h3>
+                </h2>
                 <p className="text-sm text-muted-foreground mb-4">
                   Bekijk alle beschikbare huurwoningen en koopwoningen in {property.city} en omgeving.
                 </p>
-                <Button asChild variant="outline">
-                  <Link to={cityPath(property.city)}>
-                    Bekijk woningen in {property.city}
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Link>
-                </Button>
+                <div className="flex flex-wrap gap-3">
+                  <Button asChild variant="outline">
+                    <Link to={cityPath(property.city)}>
+                      Alle woningen in {property.city}
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    </Link>
+                  </Button>
+                  <Button asChild variant="outline">
+                    <Link to={`/huurwoningen/${property.city.toLowerCase().replace(/\s+/g, "-")}`}>
+                      Huurwoningen in {property.city}
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    </Link>
+                  </Button>
+                  <Button asChild variant="outline">
+                    <Link to={`/koopwoningen/${property.city.toLowerCase().replace(/\s+/g, "-")}`}>
+                      Koopwoningen in {property.city}
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    </Link>
+                  </Button>
+                </div>
               </section>
             </div>
 
