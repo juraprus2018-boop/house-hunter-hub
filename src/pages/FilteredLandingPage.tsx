@@ -94,6 +94,22 @@ const FilteredLandingPage = () => {
     { label: `Woningen ${filterLabel}` },
   ];
 
+  // FAQ items
+  const faqItems = useMemo(() => [
+    {
+      question: `Hoeveel woningen zijn er in ${cityName} ${filterLabel}?`,
+      answer: `Op dit moment zijn er ${totalCount} woningen beschikbaar in ${cityName} ${filterLabel}. Het aanbod wordt dagelijks bijgewerkt op WoonPeek.`,
+    },
+    {
+      question: `Hoe vind ik snel een woning in ${cityName} ${filterLabel}?`,
+      answer: `Gebruik de filters op deze pagina om te zoeken op woningtype, prijs en oppervlakte. Je kunt ook een dagelijkse alert instellen om als eerste op de hoogte te zijn van nieuwe woningen in ${cityName}.`,
+    },
+    {
+      question: `Wat voor soort woningen zijn er in ${cityName} ${filterLabel}?`,
+      answer: `In ${cityName} vind je appartementen, huizen, studio's en kamers. Filter op woningtype om direct het juiste aanbod te bekijken.`,
+    },
+  ], [cityName, filterLabel, totalCount]);
+
   const jsonLd = useMemo(
     () => [
       {
@@ -117,8 +133,17 @@ const FilteredLandingPage = () => {
           ...(p.images?.length ? { image: p.images[0] } : {}),
         })),
       },
+      {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        mainEntity: faqItems.map((faq) => ({
+          "@type": "Question",
+          name: faq.question,
+          acceptedAnswer: { "@type": "Answer", text: faq.answer },
+        })),
+      },
     ],
-    [h1, pageDescription, canonical, totalCount, properties]
+    [h1, pageDescription, canonical, totalCount, properties, faqItems]
   );
 
   return (
