@@ -14,7 +14,7 @@ import { useProperties, useFilterFacets } from "@/hooks/useProperties";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { ArrowRight, Search, SlidersHorizontal } from "lucide-react";
+import { ArrowRight, ChevronRight, Search, SlidersHorizontal } from "lucide-react";
 import { cityPath, citySlugToName } from "@/lib/cities";
 
 const EMPTY_FILTERS: SearchFilterValues = {
