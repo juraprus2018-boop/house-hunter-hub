@@ -42,10 +42,10 @@ const RelatedCities = ({ currentCity }: RelatedCitiesProps) => {
     <section className="border-t bg-card py-12">
       <div className="container">
         <h2 className="font-display text-2xl font-bold text-foreground">
-          Woningen in andere steden
+          Andere steden
         </h2>
         <p className="mt-2 text-sm text-muted-foreground">
-          Bekijk ook het woningaanbod in steden vergelijkbaar met {currentCity}
+          Bekijk ook het woningaanbod in andere steden van Nederland
         </p>
         <div className="mt-6 grid gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
           {cities.map(({ city, count }) => (
