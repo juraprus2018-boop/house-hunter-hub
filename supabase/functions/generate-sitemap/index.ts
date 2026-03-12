@@ -66,7 +66,7 @@ function buildPagesSitemap(now: string): string {
 }
 
 function buildCitiesSitemap(
-  properties: Array<{ city: string; updated_at: string; listing_type: string }>,
+  properties: Array<{ city: string; updated_at: string; listing_type: string; property_type: string }>,
 ): string {
   const cityMap = new Map<string, string>();
   for (const p of properties) {
@@ -77,14 +77,29 @@ function buildCitiesSitemap(
     }
   }
 
+  const propertyTypeSlugs = [
+    { slug: "appartementen", type: "appartement" },
+    { slug: "huizen", type: "huis" },
+    { slug: "studios", type: "studio" },
+    { slug: "kamers", type: "kamer" },
+  ];
+
+  // Track which property types exist per city
+  const cityTypeSet = new Set<string>();
+  for (const p of properties) {
+    const citySlug = p.city.trim().toLowerCase().replace(/\s+/g, "-");
+    cityTypeSet.add(`${citySlug}:${p.property_type}`);
+  }
+
   let xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 `;
   for (const [citySlug, lastMod] of cityMap) {
+    const date = lastMod.split("T")[0];
     // City landing page
     xml += `  <url>
     <loc>${SITE_URL}/woningen-${citySlug}</loc>
-    <lastmod>${lastMod.split("T")[0]}</lastmod>
+    <lastmod>${date}</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
@@ -92,7 +107,7 @@ function buildCitiesSitemap(
     // Huurwoningen per city
     xml += `  <url>
     <loc>${SITE_URL}/huurwoningen/${citySlug}</loc>
-    <lastmod>${lastMod.split("T")[0]}</lastmod>
+    <lastmod>${date}</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.7</priority>
   </url>
@@ -100,11 +115,23 @@ function buildCitiesSitemap(
     // Koopwoningen per city
     xml += `  <url>
     <loc>${SITE_URL}/koopwoningen/${citySlug}</loc>
-    <lastmod>${lastMod.split("T")[0]}</lastmod>
+    <lastmod>${date}</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.7</priority>
   </url>
 `;
+    // Property type per city (only if that type exists in the city)
+    for (const pt of propertyTypeSlugs) {
+      if (cityTypeSet.has(`${citySlug}:${pt.type}`)) {
+        xml += `  <url>
+    <loc>${SITE_URL}/${pt.slug}/${citySlug}</loc>
+    <lastmod>${date}</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.6</priority>
+  </url>
+`;
+      }
+    }
   }
   xml += `</urlset>`;
   return xml;
