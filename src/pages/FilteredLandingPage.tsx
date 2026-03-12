@@ -302,6 +302,28 @@ const FilteredLandingPage = () => {
           />
         )}
 
+        {/* FAQ */}
+        <section className="border-t py-12">
+          <div className="container max-w-3xl">
+            <h2 className="font-display text-2xl font-bold text-foreground mb-6">
+              Veelgestelde vragen over woningen in {cityName} {filterLabel}
+            </h2>
+            <div className="space-y-4">
+              {faqItems.map((faq, i) => (
+                <details key={i} className="group rounded-xl border bg-card">
+                  <summary className="cursor-pointer px-6 py-4 text-sm font-semibold text-foreground list-none flex items-center justify-between gap-4">
+                    {faq.question}
+                    <ChevronRight className="h-4 w-4 shrink-0 transition-transform group-open:rotate-90" />
+                  </summary>
+                  <div className="px-6 pb-5 text-sm leading-relaxed text-muted-foreground">
+                    {faq.answer}
+                  </div>
+                </details>
+              ))}
+            </div>
+          </div>
+        </section>
+
         {/* Andere steden */}
         {citySlug && <RelatedCities currentCity={cityName} />}
       </main>
