@@ -176,20 +176,34 @@ const PropertyDetail = () => {
   const seoTitle = `${typeLabel} te ${property.listing_type}: ${property.street} ${property.house_number}, ${property.city} | WoonPeek`;
   const seoDescription = `${typeLabel} te ${property.listing_type} aan ${property.street} ${property.house_number}, ${property.postal_code} ${property.city}. ${property.surface_area ? property.surface_area + ' m²' : ''} ${property.bedrooms ? property.bedrooms + ' slaapkamers' : ''} voor ${formatPrice(Number(property.price), property.listing_type)}.`;
 
-  const jsonLd = {
+  // ── Product schema (Google-supported rich result with price) ──
+  const productJsonLd = {
     "@context": "https://schema.org",
-    "@type": "RealEstateListing",
+    "@type": "Product",
     "name": property.title,
-    "description": property.description || `${typeLabel} te ${property.listing_type} in ${property.city}`,
+    "description": property.description || seoDescription,
     "url": `https://www.woonpeek.nl/woning/${property.slug}`,
-    "datePosted": property.created_at,
     "image": property.images?.length ? property.images : undefined,
+    "brand": { "@type": "Brand", "name": "WoonPeek" },
+    "category": `${typeLabel} te ${property.listing_type}`,
     "offers": {
       "@type": "Offer",
       "price": property.price,
       "priceCurrency": "EUR",
       "availability": property.status === "actief" ? "https://schema.org/InStock" : "https://schema.org/SoldOut",
+      "url": `https://www.woonpeek.nl/woning/${property.slug}`,
+      "validFrom": property.created_at,
     },
+    "additionalProperty": [
+      ...(property.surface_area ? [{ "@type": "PropertyValue", "name": "Oppervlakte", "value": `${property.surface_area} m²`, "unitCode": "MTK" }] : []),
+      ...(property.bedrooms ? [{ "@type": "PropertyValue", "name": "Slaapkamers", "value": property.bedrooms }] : []),
+      ...(property.bathrooms ? [{ "@type": "PropertyValue", "name": "Badkamers", "value": property.bathrooms }] : []),
+      ...(property.build_year ? [{ "@type": "PropertyValue", "name": "Bouwjaar", "value": property.build_year }] : []),
+      ...(property.energy_label ? [{ "@type": "PropertyValue", "name": "Energielabel", "value": property.energy_label }] : []),
+    ],
+    ...(property.latitude && property.longitude ? {
+      "geo": { "@type": "GeoCoordinates", "latitude": Number(property.latitude), "longitude": Number(property.longitude) }
+    } : {}),
     "address": {
       "@type": "PostalAddress",
       "streetAddress": `${property.street} ${property.house_number}`,
@@ -197,16 +211,53 @@ const PropertyDetail = () => {
       "addressLocality": property.city,
       "addressCountry": "NL",
     },
-    ...(property.latitude && property.longitude ? {
-      "geo": { "@type": "GeoCoordinates", "latitude": Number(property.latitude), "longitude": Number(property.longitude) }
-    } : {}),
-    "additionalProperty": [
-      ...(property.surface_area ? [{ "@type": "PropertyValue", "name": "Oppervlakte", "value": `${property.surface_area} m²` }] : []),
-      ...(property.bedrooms ? [{ "@type": "PropertyValue", "name": "Slaapkamers", "value": property.bedrooms }] : []),
-      ...(property.bathrooms ? [{ "@type": "PropertyValue", "name": "Badkamers", "value": property.bathrooms }] : []),
-      ...(property.build_year ? [{ "@type": "PropertyValue", "name": "Bouwjaar", "value": property.build_year }] : []),
-      ...(property.energy_label ? [{ "@type": "PropertyValue", "name": "Energielabel", "value": property.energy_label }] : []),
-    ],
+  };
+
+  // ── RealEstateListing schema (extra context) ──
+  const realEstateJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "RealEstateListing",
+    "name": property.title,
+    "description": property.description || `${typeLabel} te ${property.listing_type} in ${property.city}`,
+    "url": `https://www.woonpeek.nl/woning/${property.slug}`,
+    "datePosted": property.created_at,
+    "image": property.images?.length ? property.images : undefined,
+  };
+
+  // ── FAQ schema (Google-supported rich result) ──
+  const priceLabel = property.listing_type === "huur" ? "huur" : "koop";
+  const faqItems = [
+    {
+      question: `Wat is de ${priceLabel}prijs van ${property.street} ${property.house_number} in ${property.city}?`,
+      answer: `De ${priceLabel}prijs van deze ${property.property_type} aan ${property.street} ${property.house_number}, ${property.postal_code} ${property.city} is ${formatPrice(Number(property.price), property.listing_type)}.${property.surface_area ? ` De prijs per m² komt neer op €${Math.round(Number(property.price) / property.surface_area).toLocaleString("nl-NL")}.` : ""}`,
+    },
+    {
+      question: `Hoeveel kamers heeft ${property.street} ${property.house_number} in ${property.city}?`,
+      answer: `Deze ${property.property_type} heeft ${property.bedrooms ? property.bedrooms + " slaapkamer(s)" : "een onbekend aantal slaapkamers"}${property.bathrooms ? " en " + property.bathrooms + " badkamer(s)" : ""}.${property.surface_area ? ` De woonoppervlakte is ${property.surface_area} m².` : ""}`,
+    },
+    {
+      question: `Wat voor type woning is ${property.street} ${property.house_number}?`,
+      answer: `Dit is een ${property.property_type} die te ${property.listing_type} wordt aangeboden in ${property.city}.${property.energy_label ? ` Het energielabel is ${property.energy_label}.` : ""}${property.build_year ? ` Het bouwjaar is ${property.build_year}.` : ""}`,
+    },
+    {
+      question: `Is ${property.street} ${property.house_number} in ${property.city} nog beschikbaar?`,
+      answer: property.status === "actief"
+        ? `Ja, deze woning is momenteel actief beschikbaar op WoonPeek. De woning is geplaatst op ${new Date(property.created_at).toLocaleDateString("nl-NL", { day: "numeric", month: "long", year: "numeric" })}.`
+        : `Nee, deze woning is momenteel ${property.status}. Bekijk vergelijkbare woningen in ${property.city} op WoonPeek.`,
+    },
+  ];
+
+  const faqJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": faqItems.map((faq) => ({
+      "@type": "Question",
+      "name": faq.question,
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": faq.answer,
+      },
+    })),
   };
 
   const kenmerken = [
@@ -229,7 +280,9 @@ const PropertyDetail = () => {
         ogImage={property.images?.length ? property.images[0] : undefined}
         ogType="article"
       />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(productJsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(realEstateJsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
 
       <Header />
 
@@ -683,6 +736,28 @@ const PropertyDetail = () => {
             </div>
           </section>
         )}
+
+        {/* ── FAQ Section ── */}
+        <section className="border-t bg-muted/30 py-12 lg:py-16">
+          <div className="container max-w-3xl">
+            <h2 className="font-display text-2xl font-bold mb-6">
+              Veelgestelde vragen over {property.street} {property.house_number}
+            </h2>
+            <div className="space-y-4">
+              {faqItems.map((faq, i) => (
+                <details key={i} className="group rounded-xl border bg-card">
+                  <summary className="cursor-pointer px-6 py-4 text-sm font-semibold text-foreground list-none flex items-center justify-between gap-4">
+                    {faq.question}
+                    <ChevronRight className="h-4 w-4 shrink-0 transition-transform group-open:rotate-90" />
+                  </summary>
+                  <div className="px-6 pb-5 text-sm leading-relaxed text-muted-foreground">
+                    {faq.answer}
+                  </div>
+                </details>
+              ))}
+            </div>
+          </div>
+        </section>
 
         {/* ── Bottom CTA ── */}
         <section className="border-t py-12 lg:py-16">

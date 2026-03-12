@@ -14,7 +14,7 @@ import { useProperties, useFilterFacets } from "@/hooks/useProperties";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { ArrowRight, Search, SlidersHorizontal } from "lucide-react";
+import { ArrowRight, ChevronRight, Search, SlidersHorizontal } from "lucide-react";
 import { cityPath, citySlugToName } from "@/lib/cities";
 
 const EMPTY_FILTERS: SearchFilterValues = {
@@ -114,8 +114,34 @@ const CityPage = () => {
   const pageDescription = `Bekijk ${totalCount} woningen in ${cityName}, filter direct op type en prijs en ontdek het complete aanbod op WoonPeek.`;
   const canonical = `https://www.woonpeek.nl${cityPath(cityName)}`;
 
+  // ── City FAQ items ──
+  const cityFaqItems = useMemo(() => [
+    {
+      question: `Hoeveel woningen zijn er beschikbaar in ${cityName}?`,
+      answer: `Op dit moment staan er ${totalCount} woningen in ${cityName} op WoonPeek, waarvan ${huurCount} huurwoningen en ${koopCount} koopwoningen. Het aanbod wordt dagelijks bijgewerkt.`,
+    },
+    {
+      question: `Wat kost een huurwoning in ${cityName}?`,
+      answer: `De huurprijzen in ${cityName} variëren per woningtype en locatie. Gebruik de filters op deze pagina om te zoeken op jouw maximale budget. WoonPeek toont ${huurCount} huurwoningen in ${cityName}.`,
+    },
+    {
+      question: `Kan ik een woningalert instellen voor ${cityName}?`,
+      answer: `Ja, je kunt een gratis dagelijkse alert instellen voor ${cityName}. Zodra er nieuwe woningen beschikbaar komen ontvang je een e-mail. Stel je alert in via de alertpagina of gebruik de filters op deze stadspagina.`,
+    },
+    {
+      question: `Welke woningtypes zijn beschikbaar in ${cityName}?`,
+      answer: `In ${cityName} vind je appartementen, huizen, studio's en kamers. Filter op woningtype om direct het juiste aanbod te bekijken.`,
+    },
+    {
+      question: `Hoe vind ik snel een woning in ${cityName}?`,
+      answer: `WoonPeek verzamelt dagelijks nieuw woningaanbod uit meerdere bronnen. Stel een dagelijkse alert in om als eerste te reageren op nieuwe woningen in ${cityName}. Je kunt ook filteren op prijs, kamers en oppervlakte.`,
+    },
+  ], [cityName, totalCount, huurCount, koopCount]);
+
+  // ── JSON-LD Schemas ──
   const jsonLd = useMemo(
     () => [
+      // CollectionPage
       {
         "@context": "https://schema.org",
         "@type": "CollectionPage",
@@ -128,6 +154,7 @@ const CityPage = () => {
           url: "https://www.woonpeek.nl",
         },
       },
+      // ItemList / Carousel (Google-supported rich result)
       {
         "@context": "https://schema.org",
         "@type": "ItemList",
@@ -138,10 +165,24 @@ const CityPage = () => {
           position: index + 1,
           url: `https://www.woonpeek.nl/woning/${property.slug || property.id}`,
           name: property.title,
+          ...(property.images?.length ? { image: property.images[0] } : {}),
+        })),
+      },
+      // FAQPage (Google-supported rich result)
+      {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        mainEntity: cityFaqItems.map((faq) => ({
+          "@type": "Question",
+          name: faq.question,
+          acceptedAnswer: {
+            "@type": "Answer",
+            text: faq.answer,
+          },
         })),
       },
     ],
-    [cityName, filteredCount, filteredProperties, pageDescription, canonical]
+    [cityName, filteredCount, filteredProperties, pageDescription, canonical, cityFaqItems]
   );
 
   return (
@@ -329,6 +370,28 @@ const CityPage = () => {
 
         {/* Related Cities */}
         <RelatedCities currentCity={cityName} />
+
+        {/* FAQ Section */}
+        <section className="border-t py-12">
+          <div className="container max-w-3xl">
+            <h2 className="font-display text-2xl font-bold text-foreground mb-6">
+              Veelgestelde vragen over woningen in {cityName}
+            </h2>
+            <div className="space-y-4">
+              {cityFaqItems.map((faq, i) => (
+                <details key={i} className="group rounded-xl border bg-card">
+                  <summary className="cursor-pointer px-6 py-4 text-sm font-semibold text-foreground list-none flex items-center justify-between gap-4">
+                    {faq.question}
+                    <ChevronRight className="h-4 w-4 shrink-0 transition-transform group-open:rotate-90" />
+                  </summary>
+                  <div className="px-6 pb-5 text-sm leading-relaxed text-muted-foreground">
+                    {faq.answer}
+                  </div>
+                </details>
+              ))}
+            </div>
+          </div>
+        </section>
 
         {/* SEO Text */}
         <section className="border-t bg-muted/30 py-12">
