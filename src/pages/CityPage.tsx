@@ -110,8 +110,8 @@ const CityPage = () => {
       filters.includeInactive
   );
 
-  const pageTitle = `Woningen in ${cityName} | WoonPeek`;
-  const pageDescription = `Bekijk ${totalCount} woningen in ${cityName}, filter direct op type en prijs en ontdek het complete aanbod op WoonPeek.`;
+  const pageTitle = `Woningen in ${cityName} – huurhuizen, appartementen en kamers | WoonPeek`;
+  const pageDescription = `Bekijk ${totalCount} huurwoningen en koopwoningen in ${cityName}. Vind appartementen, huizen, studio's en kamers. Dagelijks bijgewerkt op WoonPeek.`;
   const canonical = `https://www.woonpeek.nl${cityPath(cityName)}`;
 
   // ── City FAQ items ──
@@ -208,10 +208,10 @@ const CityPage = () => {
 
             <div className="max-w-3xl">
               <h1 className="font-display text-3xl font-bold text-foreground md:text-4xl">
-                Woningen in {cityName}
+                Huurwoningen en appartementen in {cityName}
               </h1>
               <p className="mt-2 text-base text-muted-foreground">
-                Bekijk alle woningen van {cityName}, gebruik filters om sneller te zoeken en ontdek direct het actuele aanbod.
+                Ontdek {totalCount} huur- en koopwoningen in {cityName}. Filter op type, prijs en oppervlakte en vind direct jouw nieuwe woning.
               </p>
               <div className="mt-4 flex flex-wrap gap-3">
                 <div className="rounded-full bg-card px-4 py-2 text-sm text-foreground shadow-sm">
