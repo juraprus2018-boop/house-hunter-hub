@@ -207,11 +207,11 @@ Deno.serve(async (req) => {
     if (type === "steden" || type === "woningen") {
       const pageSize = 1000;
       let from = 0;
-      const allProperties: Array<{ slug: string | null; id: string; city: string; updated_at: string; listing_type: string }> = [];
+      const allProperties: Array<{ slug: string | null; id: string; city: string; updated_at: string; listing_type: string; property_type: string }> = [];
       while (true) {
         const { data, error } = await supabase
           .from("properties")
-          .select("slug, id, city, updated_at, listing_type")
+          .select("slug, id, city, updated_at, listing_type, property_type")
           .eq("status", "actief")
           .order("updated_at", { ascending: false })
           .range(from, from + pageSize - 1);
