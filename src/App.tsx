@@ -38,6 +38,8 @@ import ListingTypePage from "./pages/ListingTypePage";
 import PropertyTypeCityPage from "./pages/PropertyTypeCityPage";
 import FilteredLandingPage from "./pages/FilteredLandingPage";
 import NewListings from "./pages/NewListings";
+import NewListingsCity from "./pages/NewListingsCity";
+import NeighborhoodPage from "./pages/NeighborhoodPage";
 import PostPropertyStart from "./pages/PostPropertyStart";
 import AlertUnsubscribe from "./pages/AlertUnsubscribe";
 import DailyAlert from "./pages/DailyAlert";
@@ -93,6 +95,7 @@ const App = () => (
             <Route path="/profiel" element={<Profile />} />
             <Route path="/steden" element={<Cities />} />
             <Route path="/nieuw-aanbod" element={<NewListings />} />
+            <Route path="/nieuw-aanbod/:city" element={<NewListingsCity />} />
             <Route path="/dagelijkse-alert" element={<DailyAlert />} />
             <Route path="/alerts/afmelden/:token" element={<AlertUnsubscribe />} />
             <Route path="/huurwoningen/:city?" element={<ListingTypePage listingType="huur" />} />
@@ -102,6 +105,7 @@ const App = () => (
             <Route path="/studios/:city?" element={<PropertyTypeCityPage propertyType="studio" />} />
             <Route path="/kamers/:city?" element={<PropertyTypeCityPage propertyType="kamer" />} />
             <Route path="/woningen/:city/:filter" element={<FilteredLandingPage />} />
+            <Route path="/wijk/:city/:neighborhood" element={<NeighborhoodPage />} />
             <Route path="/:city" element={<LegacyCityRedirect />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />

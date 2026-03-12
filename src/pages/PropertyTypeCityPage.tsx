@@ -103,6 +103,26 @@ const PropertyTypeCityPage = ({ propertyType }: PropertyTypeCityPageProps) => {
       : [{ label: label.plural }]),
   ];
 
+  // FAQ items
+  const faqItems = useMemo(() => [
+    {
+      question: `Hoeveel ${label.plural.toLowerCase()} zijn er beschikbaar in ${locationLabel}?`,
+      answer: `Op dit moment staan er ${totalCount} ${label.plural.toLowerCase()} in ${locationLabel} op WoonPeek. Het aanbod wordt dagelijks bijgewerkt.`,
+    },
+    {
+      question: `Wat kost een ${label.singular} in ${locationLabel}?`,
+      answer: `De prijzen van ${label.plural.toLowerCase()} in ${locationLabel} variëren per locatie en grootte. Gebruik de filters op deze pagina om te zoeken op jouw maximale budget.`,
+    },
+    {
+      question: `Hoe vind ik snel een ${label.singular} in ${locationLabel}?`,
+      answer: `WoonPeek verzamelt dagelijks nieuw woningaanbod. Stel een dagelijkse alert in om als eerste te reageren op nieuwe ${label.plural.toLowerCase()} in ${locationLabel}.`,
+    },
+    {
+      question: `Kan ik een alert instellen voor ${label.plural.toLowerCase()} in ${locationLabel}?`,
+      answer: `Ja, je kunt een gratis dagelijkse alert instellen. Zodra er nieuwe ${label.plural.toLowerCase()} beschikbaar komen in ${locationLabel} ontvang je een e-mail.`,
+    },
+  ], [label, locationLabel, totalCount]);
+
   // JSON-LD
   const jsonLd = useMemo(
     () => [
@@ -127,8 +147,17 @@ const PropertyTypeCityPage = ({ propertyType }: PropertyTypeCityPageProps) => {
           ...(p.images?.length ? { image: p.images[0] } : {}),
         })),
       },
+      {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        mainEntity: faqItems.map((faq) => ({
+          "@type": "Question",
+          name: faq.question,
+          acceptedAnswer: { "@type": "Answer", text: faq.answer },
+        })),
+      },
     ],
-    [label.plural, locationLabel, pageDescription, canonical, totalCount, properties]
+    [label.plural, locationLabel, pageDescription, canonical, totalCount, properties, faqItems]
   );
 
   return (
@@ -321,6 +350,30 @@ const PropertyTypeCityPage = ({ propertyType }: PropertyTypeCityPageProps) => {
             cityName={cityName}
             excludeIds={properties.map((p) => p.id)}
           />
+        )}
+
+        {/* FAQ */}
+        {cityName && (
+          <section className="border-t py-12">
+            <div className="container max-w-3xl">
+              <h2 className="font-display text-2xl font-bold text-foreground mb-6">
+                Veelgestelde vragen over {label.plural.toLowerCase()} in {cityName}
+              </h2>
+              <div className="space-y-4">
+                {faqItems.map((faq, i) => (
+                  <details key={i} className="group rounded-xl border bg-card">
+                    <summary className="cursor-pointer px-6 py-4 text-sm font-semibold text-foreground list-none flex items-center justify-between gap-4">
+                      {faq.question}
+                      <ChevronRight className="h-4 w-4 shrink-0 transition-transform group-open:rotate-90" />
+                    </summary>
+                    <div className="px-6 pb-5 text-sm leading-relaxed text-muted-foreground">
+                      {faq.answer}
+                    </div>
+                  </details>
+                ))}
+              </div>
+            </div>
+          </section>
         )}
 
         {/* Andere steden */}

@@ -66,7 +66,7 @@ function buildPagesSitemap(now: string): string {
 }
 
 function buildCitiesSitemap(
-  properties: Array<{ city: string; updated_at: string; listing_type: string; property_type: string }>,
+  properties: Array<{ city: string; updated_at: string; listing_type: string; property_type: string; neighborhood: string | null }>,
 ): string {
   const cityMap = new Map<string, string>();
   for (const p of properties) {
@@ -86,9 +86,15 @@ function buildCitiesSitemap(
 
   // Track which property types exist per city
   const cityTypeSet = new Set<string>();
+  // Track neighborhoods per city
+  const cityNeighborhoods = new Map<string, Set<string>>();
   for (const p of properties) {
     const citySlug = p.city.trim().toLowerCase().replace(/\s+/g, "-");
     cityTypeSet.add(`${citySlug}:${p.property_type}`);
+    if (p.neighborhood) {
+      if (!cityNeighborhoods.has(citySlug)) cityNeighborhoods.set(citySlug, new Set());
+      cityNeighborhoods.get(citySlug)!.add(p.neighborhood.trim().toLowerCase().replace(/\s+/g, "-"));
+    }
   }
 
   let xml = `<?xml version="1.0" encoding="UTF-8"?>
@@ -120,7 +126,7 @@ function buildCitiesSitemap(
     <priority>0.7</priority>
   </url>
 `;
-    // Property type per city (only if that type exists in the city)
+    // Property type per city
     for (const pt of propertyTypeSlugs) {
       if (cityTypeSet.has(`${citySlug}:${pt.type}`)) {
         xml += `  <url>
@@ -151,6 +157,30 @@ function buildCitiesSitemap(
     <priority>0.5</priority>
   </url>
 `;
+    }
+    // Nieuw aanbod per city
+    xml += `  <url>
+    <loc>${SITE_URL}/nieuw-aanbod/${citySlug}</loc>
+    <lastmod>${date}</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.6</priority>
+  </url>
+`;
+    // Neighborhood pages per city (limit to 20 per city)
+    const neighborhoods = cityNeighborhoods.get(citySlug);
+    if (neighborhoods) {
+      let count = 0;
+      for (const nhSlug of neighborhoods) {
+        if (count >= 20) break;
+        xml += `  <url>
+    <loc>${SITE_URL}/wijk/${citySlug}/${nhSlug}</loc>
+    <lastmod>${date}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+`;
+        count++;
+      }
     }
   }
   xml += `</urlset>`;
@@ -227,11 +257,11 @@ Deno.serve(async (req) => {
     if (type === "steden" || type === "woningen") {
       const pageSize = 1000;
       let from = 0;
-      const allProperties: Array<{ slug: string | null; id: string; city: string; updated_at: string; listing_type: string; property_type: string }> = [];
+      const allProperties: Array<{ slug: string | null; id: string; city: string; updated_at: string; listing_type: string; property_type: string; neighborhood: string | null }> = [];
       while (true) {
         const { data, error } = await supabase
           .from("properties")
-          .select("slug, id, city, updated_at, listing_type, property_type")
+          .select("slug, id, city, updated_at, listing_type, property_type, neighborhood")
           .eq("status", "actief")
           .order("updated_at", { ascending: false })
           .range(from, from + pageSize - 1);

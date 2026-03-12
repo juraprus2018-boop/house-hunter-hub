@@ -10,7 +10,7 @@ import RelatedCities from "@/components/city/RelatedCities";
 import { useProperties } from "@/hooks/useProperties";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowRight, MapPin, Search } from "lucide-react";
+import { ArrowRight, ChevronRight, MapPin, Search } from "lucide-react";
 import { cityPath, citySlugToName } from "@/lib/cities";
 import type { Database } from "@/integrations/supabase/types";
 
@@ -94,6 +94,22 @@ const FilteredLandingPage = () => {
     { label: `Woningen ${filterLabel}` },
   ];
 
+  // FAQ items
+  const faqItems = useMemo(() => [
+    {
+      question: `Hoeveel woningen zijn er in ${cityName} ${filterLabel}?`,
+      answer: `Op dit moment zijn er ${totalCount} woningen beschikbaar in ${cityName} ${filterLabel}. Het aanbod wordt dagelijks bijgewerkt op WoonPeek.`,
+    },
+    {
+      question: `Hoe vind ik snel een woning in ${cityName} ${filterLabel}?`,
+      answer: `Gebruik de filters op deze pagina om te zoeken op woningtype, prijs en oppervlakte. Je kunt ook een dagelijkse alert instellen om als eerste op de hoogte te zijn van nieuwe woningen in ${cityName}.`,
+    },
+    {
+      question: `Wat voor soort woningen zijn er in ${cityName} ${filterLabel}?`,
+      answer: `In ${cityName} vind je appartementen, huizen, studio's en kamers. Filter op woningtype om direct het juiste aanbod te bekijken.`,
+    },
+  ], [cityName, filterLabel, totalCount]);
+
   const jsonLd = useMemo(
     () => [
       {
@@ -117,8 +133,17 @@ const FilteredLandingPage = () => {
           ...(p.images?.length ? { image: p.images[0] } : {}),
         })),
       },
+      {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        mainEntity: faqItems.map((faq) => ({
+          "@type": "Question",
+          name: faq.question,
+          acceptedAnswer: { "@type": "Answer", text: faq.answer },
+        })),
+      },
     ],
-    [h1, pageDescription, canonical, totalCount, properties]
+    [h1, pageDescription, canonical, totalCount, properties, faqItems]
   );
 
   return (
@@ -276,6 +301,28 @@ const FilteredLandingPage = () => {
             excludeIds={properties.map((p) => p.id)}
           />
         )}
+
+        {/* FAQ */}
+        <section className="border-t py-12">
+          <div className="container max-w-3xl">
+            <h2 className="font-display text-2xl font-bold text-foreground mb-6">
+              Veelgestelde vragen over woningen in {cityName} {filterLabel}
+            </h2>
+            <div className="space-y-4">
+              {faqItems.map((faq, i) => (
+                <details key={i} className="group rounded-xl border bg-card">
+                  <summary className="cursor-pointer px-6 py-4 text-sm font-semibold text-foreground list-none flex items-center justify-between gap-4">
+                    {faq.question}
+                    <ChevronRight className="h-4 w-4 shrink-0 transition-transform group-open:rotate-90" />
+                  </summary>
+                  <div className="px-6 pb-5 text-sm leading-relaxed text-muted-foreground">
+                    {faq.answer}
+                  </div>
+                </details>
+              ))}
+            </div>
+          </div>
+        </section>
 
         {/* Andere steden */}
         {citySlug && <RelatedCities currentCity={cityName} />}

@@ -10,6 +10,7 @@ import SEOHead from "@/components/seo/SEOHead";
 import SearchFilters, { type SearchFilterValues } from "@/components/search/SearchFilters";
 import RelatedCities from "@/components/city/RelatedCities";
 import SimilarProperties from "@/components/city/SimilarProperties";
+import CityPriceStats from "@/components/city/CityPriceStats";
 import { useProperties, useFilterFacets } from "@/hooks/useProperties";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -360,6 +361,9 @@ const CityPage = () => {
           </div>
         </section>
 
+        {/* Price stats */}
+        <CityPriceStats cityName={cityName} />
+
         {/* Nieuwste woningen in [stad] */}
         <SimilarProperties
           cityName={cityName}
@@ -411,6 +415,14 @@ const CityPage = () => {
                   {item.label} in {cityName}
                 </Link>
               ))}
+            </div>
+
+            {/* Nieuw aanbod link */}
+            <h3 className="font-display text-lg font-semibold text-foreground mb-3">Nieuw aanbod</h3>
+            <div className="grid gap-2 sm:grid-cols-2 md:grid-cols-3 mb-6">
+              <Link to={`/nieuw-aanbod/${citySlug}`} className="rounded-lg border bg-card px-4 py-3 text-sm font-medium text-foreground transition-shadow hover:shadow-md hover:text-primary">
+                Nieuw aanbod vandaag in {cityName}
+              </Link>
             </div>
 
             {/* By price */}
