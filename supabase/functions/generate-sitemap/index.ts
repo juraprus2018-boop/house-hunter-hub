@@ -132,6 +132,26 @@ function buildCitiesSitemap(
 `;
       }
     }
+    // Price-filtered pages per city
+    for (const price of [750, 1000, 1250, 1500, 2000]) {
+      xml += `  <url>
+    <loc>${SITE_URL}/woningen/${citySlug}/onder-${price}</loc>
+    <lastmod>${date}</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.5</priority>
+  </url>
+`;
+    }
+    // Bedroom-filtered pages per city
+    for (const beds of [1, 2, 3, 4]) {
+      xml += `  <url>
+    <loc>${SITE_URL}/woningen/${citySlug}/${beds}-kamers</loc>
+    <lastmod>${date}</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.5</priority>
+  </url>
+`;
+    }
   }
   xml += `</urlset>`;
   return xml;
