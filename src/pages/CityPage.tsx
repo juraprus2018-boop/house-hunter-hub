@@ -361,6 +361,9 @@ const CityPage = () => {
           </div>
         </section>
 
+        {/* Price stats */}
+        <CityPriceStats cityName={cityName} />
+
         {/* Nieuwste woningen in [stad] */}
         <SimilarProperties
           cityName={cityName}
