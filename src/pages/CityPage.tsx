@@ -360,13 +360,13 @@ const CityPage = () => {
           </div>
         </section>
 
-        {/* Similar Properties */}
+        {/* Nieuwste woningen in [stad] */}
         <SimilarProperties
           cityName={cityName}
           excludeIds={filteredProperties.map((p) => p.id)}
         />
 
-        {/* Related Cities */}
+        {/* Andere steden */}
         <RelatedCities currentCity={cityName} />
 
         {/* FAQ Section */}
