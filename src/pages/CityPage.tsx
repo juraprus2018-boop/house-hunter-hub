@@ -391,6 +391,50 @@ const CityPage = () => {
           </div>
         </section>
 
+        {/* Internal links hub */}
+        <section className="border-t py-12">
+          <div className="container max-w-4xl">
+            <h2 className="font-display text-2xl font-bold text-foreground mb-6">
+              Zoek woningen in {cityName}
+            </h2>
+
+            {/* By type */}
+            <h3 className="font-display text-lg font-semibold text-foreground mb-3">Op woningtype</h3>
+            <div className="grid gap-2 sm:grid-cols-2 md:grid-cols-4 mb-6">
+              {[
+                { label: "Appartementen", href: `/appartementen/${citySlug}` },
+                { label: "Huizen", href: `/huizen/${citySlug}` },
+                { label: "Studio's", href: `/studios/${citySlug}` },
+                { label: "Kamers", href: `/kamers/${citySlug}` },
+              ].map((item) => (
+                <Link key={item.href} to={item.href} className="rounded-lg border bg-card px-4 py-3 text-sm font-medium text-foreground transition-shadow hover:shadow-md hover:text-primary">
+                  {item.label} in {cityName}
+                </Link>
+              ))}
+            </div>
+
+            {/* By price */}
+            <h3 className="font-display text-lg font-semibold text-foreground mb-3">Op maximale prijs</h3>
+            <div className="grid gap-2 sm:grid-cols-2 md:grid-cols-3 mb-6">
+              {[750, 1000, 1250, 1500, 2000].map((price) => (
+                <Link key={price} to={`/woningen/${citySlug}/onder-${price}`} className="rounded-lg border bg-card px-4 py-3 text-sm font-medium text-foreground transition-shadow hover:shadow-md hover:text-primary">
+                  Woningen onder €{price.toLocaleString("nl-NL")}
+                </Link>
+              ))}
+            </div>
+
+            {/* By bedrooms */}
+            <h3 className="font-display text-lg font-semibold text-foreground mb-3">Op aantal kamers</h3>
+            <div className="grid gap-2 sm:grid-cols-2 md:grid-cols-4 mb-6">
+              {[1, 2, 3, 4].map((beds) => (
+                <Link key={beds} to={`/woningen/${citySlug}/${beds}-kamers`} className="rounded-lg border bg-card px-4 py-3 text-sm font-medium text-foreground transition-shadow hover:shadow-md hover:text-primary">
+                  {beds} {beds === 1 ? "kamer" : "kamers"} in {cityName}
+                </Link>
+              ))}
+            </div>
+          </div>
+        </section>
+
         {/* SEO Text */}
         <section className="border-t bg-muted/30 py-12">
           <div className="container max-w-4xl">
@@ -405,33 +449,25 @@ const CityPage = () => {
                 zodat jij niets mist.
               </p>
               <p>
-                Het aanbod op deze pagina bevat alle woningtypes: appartementen, eengezinswoningen, studio&apos;s en kamers.
-                Zoek je specifiek een <strong>woning huren {cityName}</strong>? Gebruik dan de filters hierboven om direct
-                te filteren op huur of koop, woningtype, prijs en oppervlakte. Momenteel staan er {totalCount} woningen
-                in {cityName} op WoonPeek, waarvan {huurCount} huurwoningen en {koopCount} koopwoningen.
+                Het aanbod bevat alle woningtypes: <Link to={`/appartementen/${citySlug}`} className="text-primary underline hover:no-underline">appartementen</Link>,{" "}
+                <Link to={`/huizen/${citySlug}`} className="text-primary underline hover:no-underline">huizen</Link>,{" "}
+                <Link to={`/studios/${citySlug}`} className="text-primary underline hover:no-underline">studio&apos;s</Link> en{" "}
+                <Link to={`/kamers/${citySlug}`} className="text-primary underline hover:no-underline">kamers</Link>.
+                Momenteel staan er {totalCount} woningen in {cityName} op WoonPeek, waarvan {huurCount} huurwoningen en {koopCount} koopwoningen.
               </p>
               <p>
-                <strong>Appartement huren {cityName}</strong> is populair bij starters en young professionals. Zoek je juist
-                een <strong>kamer huren {cityName}</strong>? Ook daarvoor bieden we uitgebreid aanbod. Daarnaast vind je hier
-                ook <strong>huizen te koop {cityName}</strong> als je liever wilt kopen dan huren.
-              </p>
-              <p>
-                Op zoek naar een <strong>goedkope huurwoning {cityName}</strong>? Sorteer op prijs en vind snel betaalbare
-                opties. Wil je een <strong>appartement huren {cityName} centrum</strong>? Filter op wijk of gebruik de
-                zoekpagina met kaartweergave. We tonen ook aanbod van particuliere verhuurders — ideaal als je een{" "}
-                <strong>huurwoning {cityName} particulier</strong> zoekt.
-              </p>
-              <p>
-                Veel woningzoekers vragen zich af of het mogelijk is een <strong>woning huren {cityName} zonder inschrijving</strong>.
-                Op WoonPeek tonen we aanbod van verschillende bronnen, waaronder particuliere aanbieders die soms geen
-                inschrijving vereisen. Zoek je een <strong>huis te koop {cityName} met tuin</strong>? Bekijk het koopwoningenaanbod
-                en filter op jouw wensen.
+                Op zoek naar een <strong>goedkope huurwoning {cityName}</strong>? Bekijk woningen{" "}
+                <Link to={`/woningen/${citySlug}/onder-1000`} className="text-primary underline hover:no-underline">onder €1.000</Link> of{" "}
+                <Link to={`/woningen/${citySlug}/onder-750`} className="text-primary underline hover:no-underline">onder €750</Link>.
+                Zoek je een woning met meer ruimte? Filter op{" "}
+                <Link to={`/woningen/${citySlug}/2-kamers`} className="text-primary underline hover:no-underline">2 kamers</Link> of{" "}
+                <Link to={`/woningen/${citySlug}/3-kamers`} className="text-primary underline hover:no-underline">3 kamers</Link>.
               </p>
               <p>
                 Bekijk ook de aparte overzichtspagina&apos;s
                 voor <Link to={`/huurwoningen/${citySlug}`} className="text-primary underline hover:no-underline">huurwoningen in {cityName}</Link> en{" "}
                 <Link to={`/koopwoningen/${citySlug}`} className="text-primary underline hover:no-underline">koopwoningen in {cityName}</Link>.
-                Het aanbod verandert doorlopend — stel een{" "}
+                Stel een{" "}
                 <Link to="/dagelijkse-alert" className="text-primary underline hover:no-underline">dagelijkse alert</Link>{" "}
                 in en mis geen enkel nieuw aanbod in {cityName}.
               </p>
