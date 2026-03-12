@@ -103,6 +103,26 @@ const PropertyTypeCityPage = ({ propertyType }: PropertyTypeCityPageProps) => {
       : [{ label: label.plural }]),
   ];
 
+  // FAQ items
+  const faqItems = useMemo(() => [
+    {
+      question: `Hoeveel ${label.plural.toLowerCase()} zijn er beschikbaar in ${locationLabel}?`,
+      answer: `Op dit moment staan er ${totalCount} ${label.plural.toLowerCase()} in ${locationLabel} op WoonPeek. Het aanbod wordt dagelijks bijgewerkt.`,
+    },
+    {
+      question: `Wat kost een ${label.singular} in ${locationLabel}?`,
+      answer: `De prijzen van ${label.plural.toLowerCase()} in ${locationLabel} variëren per locatie en grootte. Gebruik de filters op deze pagina om te zoeken op jouw maximale budget.`,
+    },
+    {
+      question: `Hoe vind ik snel een ${label.singular} in ${locationLabel}?`,
+      answer: `WoonPeek verzamelt dagelijks nieuw woningaanbod. Stel een dagelijkse alert in om als eerste te reageren op nieuwe ${label.plural.toLowerCase()} in ${locationLabel}.`,
+    },
+    {
+      question: `Kan ik een alert instellen voor ${label.plural.toLowerCase()} in ${locationLabel}?`,
+      answer: `Ja, je kunt een gratis dagelijkse alert instellen. Zodra er nieuwe ${label.plural.toLowerCase()} beschikbaar komen in ${locationLabel} ontvang je een e-mail.`,
+    },
+  ], [label, locationLabel, totalCount]);
+
   // JSON-LD
   const jsonLd = useMemo(
     () => [
@@ -127,8 +147,17 @@ const PropertyTypeCityPage = ({ propertyType }: PropertyTypeCityPageProps) => {
           ...(p.images?.length ? { image: p.images[0] } : {}),
         })),
       },
+      {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        mainEntity: faqItems.map((faq) => ({
+          "@type": "Question",
+          name: faq.question,
+          acceptedAnswer: { "@type": "Answer", text: faq.answer },
+        })),
+      },
     ],
-    [label.plural, locationLabel, pageDescription, canonical, totalCount, properties]
+    [label.plural, locationLabel, pageDescription, canonical, totalCount, properties, faqItems]
   );
 
   return (
