@@ -432,7 +432,7 @@ const PropertyDetail = () => {
                   )}
                 </div>
                 <h1 className="font-display text-2xl font-bold leading-tight md:text-3xl lg:text-4xl">
-                  {property.title}
+                  {h1Title}
                 </h1>
                 <div className="mt-2 flex items-center gap-2 text-muted-foreground">
                   <MapPin className="h-4 w-4 shrink-0" />
