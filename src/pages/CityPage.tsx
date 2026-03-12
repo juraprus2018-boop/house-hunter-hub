@@ -246,16 +246,14 @@ const CityPage = () => {
               </h2>
               <div className="mt-4 space-y-3 text-sm leading-relaxed text-muted-foreground">
                 <p>
-                  Op deze stadspagina vind je het complete woningaanbod van {cityName}. Je ziet hier appartementen,
-                  huizen, studio&apos;s en kamers die nu actief beschikbaar zijn op WoonPeek.
+                  {cityName} biedt een divers aanbod aan huurwoningen en koopwoningen. Of je nu zoekt naar een 
+                  <strong> appartement in {cityName}</strong>, een ruim <strong>huis huren in {cityName}</strong> of een 
+                  compacte studio — op WoonPeek vind je het meest actuele overzicht.
                 </p>
                 <p>
-                  We combineren aanbod uit meerdere bronnen en tonen op dit moment {totalCount} woningen in {cityName}.
-                  Daarvan zijn {huurCount} woningen te huur en {koopCount} woningen te koop.
-                </p>
-                <p>
-                  Gebruik de filters hieronder om het aanbod van {cityName} direct te verfijnen op woningtype,
-                  aanbod, prijs, slaapkamers en oppervlakte.
+                  Op dit moment zijn er {totalCount} woningen beschikbaar in {cityName}, 
+                  waarvan {huurCount} huurwoningen en {koopCount} koopwoningen. Het aanbod wordt dagelijks bijgewerkt 
+                  zodat je altijd de nieuwste woningen ziet.
                 </p>
               </div>
             </div>
