@@ -110,8 +110,8 @@ const CityPage = () => {
       filters.includeInactive
   );
 
-  const pageTitle = `Woningen in ${cityName} – huurhuizen, appartementen en kamers | WoonPeek`;
-  const pageDescription = `Bekijk ${totalCount} huurwoningen en koopwoningen in ${cityName}. Vind appartementen, huizen, studio's en kamers. Dagelijks bijgewerkt op WoonPeek.`;
+  const pageTitle = `Woningen in ${cityName} – huurwoningen, appartementen en huizen | WoonPeek`;
+  const pageDescription = `Ben je op zoek naar een woning in ${cityName}? Bekijk ${totalCount} huurwoningen, appartementen, studio's en huizen in ${cityName}. Filter op prijs, kamers en oppervlakte.`;
   const canonical = `https://www.woonpeek.nl${cityPath(cityName)}`;
 
   // ── City FAQ items ──
