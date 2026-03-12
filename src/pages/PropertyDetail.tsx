@@ -172,6 +172,7 @@ const PropertyDetail = () => {
   const nextImage = () => setCurrentImageIndex((prev) => (prev + 1) % images.length);
   const prevImage = () => setCurrentImageIndex((prev) => (prev - 1 + images.length) % images.length);
 
+  const citySlugVal = property.city.toLowerCase().replace(/\s+/g, "-");
   const typeLabel = property.property_type.charAt(0).toUpperCase() + property.property_type.slice(1);
   const listingLabel = property.listing_type === "huur" ? "te huur" : "te koop";
   const bedroomsLabel = property.bedrooms ? `${property.bedrooms} kamers` : null;
