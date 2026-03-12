@@ -173,8 +173,19 @@ const PropertyDetail = () => {
   const prevImage = () => setCurrentImageIndex((prev) => (prev - 1 + images.length) % images.length);
 
   const typeLabel = property.property_type.charAt(0).toUpperCase() + property.property_type.slice(1);
-  const seoTitle = `${typeLabel} te ${property.listing_type}: ${property.street} ${property.house_number}, ${property.city} | WoonPeek`;
-  const seoDescription = `${typeLabel} te ${property.listing_type} aan ${property.street} ${property.house_number}, ${property.postal_code} ${property.city}. ${property.surface_area ? property.surface_area + ' m²' : ''} ${property.bedrooms ? property.bedrooms + ' slaapkamers' : ''} voor ${formatPrice(Number(property.price), property.listing_type)}.`;
+  const listingLabel = property.listing_type === "huur" ? "te huur" : "te koop";
+  const bedroomsLabel = property.bedrooms ? `${property.bedrooms} kamers` : null;
+  const surfaceLabel = property.surface_area ? `${property.surface_area} m²` : null;
+  const priceFormatted = new Intl.NumberFormat("nl-NL", { style: "currency", currency: "EUR", minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(Number(property.price));
+
+  // Meta Title: [Woningtype] in [stad] – [kamers] – €[prijs]
+  const seoTitle = `${typeLabel} in ${property.city}${bedroomsLabel ? ` – ${bedroomsLabel}` : ""} – ${priceFormatted} | WoonPeek`;
+
+  // Meta Description
+  const seoDescription = `Bekijk deze ${property.property_type} in ${property.city}.${bedroomsLabel ? ` ${bedroomsLabel}` : ""}${surfaceLabel ? ` • ${surfaceLabel}` : ""} • ${priceFormatted}${property.listing_type === "huur" ? "/mnd" : ""}. Bekijk foto's, informatie en vraag direct meer info aan.`;
+
+  // H1: [Woningtype] te huur/koop in [stad] – [kamers]
+  const h1Title = `${typeLabel} ${listingLabel} in ${property.city}${bedroomsLabel ? ` – ${bedroomsLabel}` : ""}`;
 
   // ── Product schema (Google-supported rich result with price) ──
   const productJsonLd = {
