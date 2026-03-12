@@ -616,9 +616,7 @@ const PropertyDetail = () => {
                     </Link>
                   )}
                 </div>
-              </section>
-                </div>
-              </section>
+            </div>
             </div>
 
             {/* ── Sidebar ── */}
