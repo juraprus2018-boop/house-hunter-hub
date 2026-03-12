@@ -14,12 +14,21 @@ const Breadcrumbs = ({ items }: BreadcrumbsProps) => {
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
-    itemListElement: items.map((item, i) => ({
-      "@type": "ListItem",
-      position: i + 1,
-      name: item.label,
-      ...(item.href ? { item: `https://www.woonpeek.nl${item.href}` } : {}),
-    })),
+    itemListElement: items.map((item, i) => {
+      const entry: Record<string, unknown> = {
+        "@type": "ListItem",
+        position: i + 1,
+        name: item.label,
+      };
+      // Google requires `item` (URL) for every breadcrumb except the last
+      if (item.href) {
+        entry.item = `https://www.woonpeek.nl${item.href}`;
+      } else if (i < items.length - 1) {
+        // Non-last items without explicit href: use current page URL as fallback
+        entry.item = `https://www.woonpeek.nl`;
+      }
+      return entry;
+    }),
   };
 
   return (
