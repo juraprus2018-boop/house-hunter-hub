@@ -395,7 +395,7 @@ const CityPage = () => {
         <section className="border-t bg-muted/30 py-12">
           <div className="container max-w-4xl">
             <h2 className="font-display text-2xl font-bold text-foreground">
-              Alles over woningen in {cityName}
+              Wonen in {cityName}
             </h2>
             <div className="mt-4 space-y-4 text-sm leading-relaxed text-muted-foreground">
               <p>
