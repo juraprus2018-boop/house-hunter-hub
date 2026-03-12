@@ -594,25 +594,29 @@ const PropertyDetail = () => {
                 <p className="text-sm text-muted-foreground mb-4">
                   Bekijk alle beschikbare huurwoningen en koopwoningen in {property.city} en omgeving.
                 </p>
-                <div className="flex flex-wrap gap-3">
-                  <Button asChild variant="outline">
-                    <Link to={cityPath(property.city)}>
-                      Alle woningen in {property.city}
-                      <ArrowRight className="ml-2 h-4 w-4" />
+                <div className="grid gap-2 sm:grid-cols-2">
+                  <Link to={cityPath(property.city)} className="rounded-lg border bg-card px-4 py-3 text-sm font-medium text-foreground transition-shadow hover:shadow-md hover:text-primary">
+                    Alle woningen in {property.city}
+                  </Link>
+                  <Link to={`/huurwoningen/${citySlugVal}`} className="rounded-lg border bg-card px-4 py-3 text-sm font-medium text-foreground transition-shadow hover:shadow-md hover:text-primary">
+                    Huurwoningen in {property.city}
+                  </Link>
+                  <Link to={`/koopwoningen/${citySlugVal}`} className="rounded-lg border bg-card px-4 py-3 text-sm font-medium text-foreground transition-shadow hover:shadow-md hover:text-primary">
+                    Koopwoningen in {property.city}
+                  </Link>
+                  <Link to={`/appartementen/${citySlugVal}`} className="rounded-lg border bg-card px-4 py-3 text-sm font-medium text-foreground transition-shadow hover:shadow-md hover:text-primary">
+                    Appartementen in {property.city}
+                  </Link>
+                  <Link to={`/woningen/${citySlugVal}/onder-1000`} className="rounded-lg border bg-card px-4 py-3 text-sm font-medium text-foreground transition-shadow hover:shadow-md hover:text-primary">
+                    Woningen onder €1.000
+                  </Link>
+                  {property.bedrooms && (
+                    <Link to={`/woningen/${citySlugVal}/${property.bedrooms}-kamers`} className="rounded-lg border bg-card px-4 py-3 text-sm font-medium text-foreground transition-shadow hover:shadow-md hover:text-primary">
+                      {property.bedrooms} kamers in {property.city}
                     </Link>
-                  </Button>
-                  <Button asChild variant="outline">
-                    <Link to={`/huurwoningen/${property.city.toLowerCase().replace(/\s+/g, "-")}`}>
-                      Huurwoningen in {property.city}
-                      <ArrowRight className="ml-2 h-4 w-4" />
-                    </Link>
-                  </Button>
-                  <Button asChild variant="outline">
-                    <Link to={`/koopwoningen/${property.city.toLowerCase().replace(/\s+/g, "-")}`}>
-                      Koopwoningen in {property.city}
-                      <ArrowRight className="ml-2 h-4 w-4" />
-                    </Link>
-                  </Button>
+                  )}
+                </div>
+              </section>
                 </div>
               </section>
             </div>
