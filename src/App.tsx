@@ -95,6 +95,7 @@ const App = () => (
             <Route path="/profiel" element={<Profile />} />
             <Route path="/steden" element={<Cities />} />
             <Route path="/nieuw-aanbod" element={<NewListings />} />
+            <Route path="/nieuw-aanbod/:city" element={<NewListingsCity />} />
             <Route path="/dagelijkse-alert" element={<DailyAlert />} />
             <Route path="/alerts/afmelden/:token" element={<AlertUnsubscribe />} />
             <Route path="/huurwoningen/:city?" element={<ListingTypePage listingType="huur" />} />
