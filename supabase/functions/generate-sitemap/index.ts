@@ -31,79 +31,42 @@ function buildSitemapIndex(lastmod: string): string {
 }
 
 function buildPagesSitemap(now: string): string {
-  return `<?xml version="1.0" encoding="UTF-8"?>
+  const staticPages = [
+    { loc: "/", changefreq: "daily", priority: "1.0" },
+    { loc: "/zoeken", changefreq: "daily", priority: "0.9" },
+    { loc: "/steden", changefreq: "daily", priority: "0.8" },
+    { loc: "/verkennen", changefreq: "daily", priority: "0.7" },
+    { loc: "/nieuw-aanbod", changefreq: "daily", priority: "0.8" },
+    { loc: "/huurwoningen", changefreq: "daily", priority: "0.8" },
+    { loc: "/koopwoningen", changefreq: "daily", priority: "0.8" },
+    { loc: "/appartementen", changefreq: "daily", priority: "0.7" },
+    { loc: "/huizen", changefreq: "daily", priority: "0.7" },
+    { loc: "/studios", changefreq: "daily", priority: "0.7" },
+    { loc: "/kamers", changefreq: "daily", priority: "0.7" },
+    { loc: "/woning-plaatsen", changefreq: "weekly", priority: "0.7" },
+    { loc: "/blog", changefreq: "daily", priority: "0.8" },
+    { loc: "/dagelijkse-alert", changefreq: "monthly", priority: "0.6" },
+    { loc: "/veelgestelde-vragen", changefreq: "monthly", priority: "0.5" },
+  ];
+
+  let xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url>
-    <loc>${SITE_URL}/</loc>
+`;
+  for (const page of staticPages) {
+    xml += `  <url>
+    <loc>${SITE_URL}${page.loc}</loc>
     <lastmod>${now}</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>1.0</priority>
+    <changefreq>${page.changefreq}</changefreq>
+    <priority>${page.priority}</priority>
   </url>
-  <url>
-    <loc>${SITE_URL}/zoeken</loc>
-    <lastmod>${now}</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.9</priority>
-  </url>
-  <url>
-    <loc>${SITE_URL}/steden</loc>
-    <lastmod>${now}</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>${SITE_URL}/verkennen</loc>
-    <lastmod>${now}</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>${SITE_URL}/nieuw-aanbod</loc>
-    <lastmod>${now}</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>${SITE_URL}/huurwoningen</loc>
-    <lastmod>${now}</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>${SITE_URL}/koopwoningen</loc>
-    <lastmod>${now}</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>${SITE_URL}/woning-plaatsen</loc>
-    <lastmod>${now}</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>${SITE_URL}/blog</loc>
-    <lastmod>${now}</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>${SITE_URL}/dagelijkse-alert</loc>
-    <lastmod>${now}</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
-    <loc>${SITE_URL}/veelgestelde-vragen</loc>
-    <lastmod>${now}</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
-  </url>
-</urlset>`;
+`;
+  }
+  xml += `</urlset>`;
+  return xml;
 }
 
 function buildCitiesSitemap(
-  properties: Array<{ city: string; updated_at: string; listing_type: string }>,
+  properties: Array<{ city: string; updated_at: string; listing_type: string; property_type: string }>,
 ): string {
   const cityMap = new Map<string, string>();
   for (const p of properties) {
@@ -114,14 +77,29 @@ function buildCitiesSitemap(
     }
   }
 
+  const propertyTypeSlugs = [
+    { slug: "appartementen", type: "appartement" },
+    { slug: "huizen", type: "huis" },
+    { slug: "studios", type: "studio" },
+    { slug: "kamers", type: "kamer" },
+  ];
+
+  // Track which property types exist per city
+  const cityTypeSet = new Set<string>();
+  for (const p of properties) {
+    const citySlug = p.city.trim().toLowerCase().replace(/\s+/g, "-");
+    cityTypeSet.add(`${citySlug}:${p.property_type}`);
+  }
+
   let xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 `;
   for (const [citySlug, lastMod] of cityMap) {
+    const date = lastMod.split("T")[0];
     // City landing page
     xml += `  <url>
     <loc>${SITE_URL}/woningen-${citySlug}</loc>
-    <lastmod>${lastMod.split("T")[0]}</lastmod>
+    <lastmod>${date}</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
@@ -129,7 +107,7 @@ function buildCitiesSitemap(
     // Huurwoningen per city
     xml += `  <url>
     <loc>${SITE_URL}/huurwoningen/${citySlug}</loc>
-    <lastmod>${lastMod.split("T")[0]}</lastmod>
+    <lastmod>${date}</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.7</priority>
   </url>
@@ -137,11 +115,23 @@ function buildCitiesSitemap(
     // Koopwoningen per city
     xml += `  <url>
     <loc>${SITE_URL}/koopwoningen/${citySlug}</loc>
-    <lastmod>${lastMod.split("T")[0]}</lastmod>
+    <lastmod>${date}</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.7</priority>
   </url>
 `;
+    // Property type per city (only if that type exists in the city)
+    for (const pt of propertyTypeSlugs) {
+      if (cityTypeSet.has(`${citySlug}:${pt.type}`)) {
+        xml += `  <url>
+    <loc>${SITE_URL}/${pt.slug}/${citySlug}</loc>
+    <lastmod>${date}</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.6</priority>
+  </url>
+`;
+      }
+    }
   }
   xml += `</urlset>`;
   return xml;
@@ -217,11 +207,11 @@ Deno.serve(async (req) => {
     if (type === "steden" || type === "woningen") {
       const pageSize = 1000;
       let from = 0;
-      const allProperties: Array<{ slug: string | null; id: string; city: string; updated_at: string; listing_type: string }> = [];
+      const allProperties: Array<{ slug: string | null; id: string; city: string; updated_at: string; listing_type: string; property_type: string }> = [];
       while (true) {
         const { data, error } = await supabase
           .from("properties")
-          .select("slug, id, city, updated_at, listing_type")
+          .select("slug, id, city, updated_at, listing_type, property_type")
           .eq("status", "actief")
           .order("updated_at", { ascending: false })
           .range(from, from + pageSize - 1);
