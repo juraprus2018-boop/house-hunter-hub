@@ -96,6 +96,10 @@ const App = () => (
             <Route path="/alerts/afmelden/:token" element={<AlertUnsubscribe />} />
             <Route path="/huurwoningen/:city?" element={<ListingTypePage listingType="huur" />} />
             <Route path="/koopwoningen/:city?" element={<ListingTypePage listingType="koop" />} />
+            <Route path="/appartementen/:city?" element={<PropertyTypeCityPage propertyType="appartement" />} />
+            <Route path="/huizen/:city?" element={<PropertyTypeCityPage propertyType="huis" />} />
+            <Route path="/studios/:city?" element={<PropertyTypeCityPage propertyType="studio" />} />
+            <Route path="/kamers/:city?" element={<PropertyTypeCityPage propertyType="kamer" />} />
             <Route path="/:city" element={<LegacyCityRedirect />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
