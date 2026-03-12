@@ -149,7 +149,9 @@ const CityPage = () => {
       <SEOHead title={pageTitle} description={pageDescription} canonical={canonical} />
       <Header />
       <main className="flex-1">
-        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+        {jsonLd.map((schema, i) => (
+          <script key={i} type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }} />
+        ))}
 
         <section className="border-b bg-gradient-to-b from-primary/5 to-background py-12">
           <div className="container">
