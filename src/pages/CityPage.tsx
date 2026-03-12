@@ -417,6 +417,14 @@ const CityPage = () => {
               ))}
             </div>
 
+            {/* Nieuw aanbod link */}
+            <h3 className="font-display text-lg font-semibold text-foreground mb-3">Nieuw aanbod</h3>
+            <div className="grid gap-2 sm:grid-cols-2 md:grid-cols-3 mb-6">
+              <Link to={`/nieuw-aanbod/${citySlug}`} className="rounded-lg border bg-card px-4 py-3 text-sm font-medium text-foreground transition-shadow hover:shadow-md hover:text-primary">
+                Nieuw aanbod vandaag in {cityName}
+              </Link>
+            </div>
+
             {/* By price */}
             <h3 className="font-display text-lg font-semibold text-foreground mb-3">Op maximale prijs</h3>
             <div className="grid gap-2 sm:grid-cols-2 md:grid-cols-3 mb-6">
