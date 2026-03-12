@@ -209,7 +209,7 @@ const PropertyTypeCityPage = ({ propertyType }: PropertyTypeCityPageProps) => {
                         onChange={(f) => setFilters({ ...f, propertyType: propertyType })}
                         onClear={() => setFilters(EMPTY_FILTERS)}
                         hideLocation
-                        hidePropertyType
+                        
                         facets={facets}
                       />
                     </div>
