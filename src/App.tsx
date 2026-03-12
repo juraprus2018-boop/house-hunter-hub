@@ -38,6 +38,8 @@ import ListingTypePage from "./pages/ListingTypePage";
 import PropertyTypeCityPage from "./pages/PropertyTypeCityPage";
 import FilteredLandingPage from "./pages/FilteredLandingPage";
 import NewListings from "./pages/NewListings";
+import NewListingsCity from "./pages/NewListingsCity";
+import NeighborhoodPage from "./pages/NeighborhoodPage";
 import PostPropertyStart from "./pages/PostPropertyStart";
 import AlertUnsubscribe from "./pages/AlertUnsubscribe";
 import DailyAlert from "./pages/DailyAlert";
