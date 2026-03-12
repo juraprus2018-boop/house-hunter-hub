@@ -283,48 +283,33 @@ const PropertyTypeCityPage = ({ propertyType }: PropertyTypeCityPageProps) => {
               <h2 className="font-display text-2xl font-bold text-foreground mb-6">
                 Andere woningen in {cityName}
               </h2>
-              <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3">
-                <Link
-                  to={cityPath(cityName)}
-                  className="group flex items-center gap-3 rounded-xl border bg-card p-4 transition-shadow hover:shadow-md"
-                >
-                  <MapPin className="h-5 w-5 text-primary" />
-                  <span className="font-medium text-foreground group-hover:text-primary transition-colors">
-                    Woningen in {cityName}
-                  </span>
+              <div className="grid gap-2 sm:grid-cols-2 md:grid-cols-3">
+                <Link to={cityPath(cityName)} className="rounded-lg border bg-card px-4 py-3 text-sm font-medium text-foreground transition-shadow hover:shadow-md hover:text-primary">
+                  Alle woningen in {cityName}
                 </Link>
                 {(["appartement", "huis", "studio", "kamer"] as PropertyType[])
                   .filter((t) => t !== propertyType)
                   .map((t) => (
-                    <Link
-                      key={t}
-                      to={`/${TYPE_LABELS[t].slug}/${citySlug}`}
-                      className="group flex items-center gap-3 rounded-xl border bg-card p-4 transition-shadow hover:shadow-md"
-                    >
-                      <MapPin className="h-5 w-5 text-primary" />
-                      <span className="font-medium text-foreground group-hover:text-primary transition-colors">
-                        {TYPE_LABELS[t].plural} in {cityName}
-                      </span>
+                    <Link key={t} to={`/${TYPE_LABELS[t].slug}/${citySlug}`} className="rounded-lg border bg-card px-4 py-3 text-sm font-medium text-foreground transition-shadow hover:shadow-md hover:text-primary">
+                      {TYPE_LABELS[t].plural} in {cityName}
                     </Link>
                   ))}
-                <Link
-                  to={`/huurwoningen/${citySlug}`}
-                  className="group flex items-center gap-3 rounded-xl border bg-card p-4 transition-shadow hover:shadow-md"
-                >
-                  <MapPin className="h-5 w-5 text-primary" />
-                  <span className="font-medium text-foreground group-hover:text-primary transition-colors">
-                    Huurwoningen in {cityName}
-                  </span>
+                <Link to={`/huurwoningen/${citySlug}`} className="rounded-lg border bg-card px-4 py-3 text-sm font-medium text-foreground transition-shadow hover:shadow-md hover:text-primary">
+                  Huurwoningen in {cityName}
                 </Link>
-                <Link
-                  to={`/koopwoningen/${citySlug}`}
-                  className="group flex items-center gap-3 rounded-xl border bg-card p-4 transition-shadow hover:shadow-md"
-                >
-                  <MapPin className="h-5 w-5 text-primary" />
-                  <span className="font-medium text-foreground group-hover:text-primary transition-colors">
-                    Koopwoningen in {cityName}
-                  </span>
+                <Link to={`/koopwoningen/${citySlug}`} className="rounded-lg border bg-card px-4 py-3 text-sm font-medium text-foreground transition-shadow hover:shadow-md hover:text-primary">
+                  Koopwoningen in {cityName}
                 </Link>
+                {[750, 1000, 1500].map((price) => (
+                  <Link key={price} to={`/woningen/${citySlug}/onder-${price}`} className="rounded-lg border bg-card px-4 py-3 text-sm font-medium text-foreground transition-shadow hover:shadow-md hover:text-primary">
+                    Woningen onder €{price.toLocaleString("nl-NL")}
+                  </Link>
+                ))}
+                {[2, 3].map((beds) => (
+                  <Link key={beds} to={`/woningen/${citySlug}/${beds}-kamers`} className="rounded-lg border bg-card px-4 py-3 text-sm font-medium text-foreground transition-shadow hover:shadow-md hover:text-primary">
+                    {beds} kamers in {cityName}
+                  </Link>
+                ))}
               </div>
             </div>
           </section>

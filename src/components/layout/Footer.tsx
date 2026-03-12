@@ -22,51 +22,30 @@ const Footer = () => {
           <div className="space-y-4">
             <h4 className="font-display text-sm font-semibold">Snelle links</h4>
             <ul className="space-y-2 text-sm">
-              <li>
-                <Link to="/zoeken" className="text-muted-foreground transition-colors hover:text-foreground">
-                  Woningen zoeken
-                </Link>
-              </li>
-              <li>
-                <Link to="/huurwoningen" className="text-muted-foreground transition-colors hover:text-foreground">
-                  Huurwoningen
-                </Link>
-              </li>
-              <li>
-                <Link to="/koopwoningen" className="text-muted-foreground transition-colors hover:text-foreground">
-                  Koopwoningen
-                </Link>
-              </li>
-              <li>
-                <Link to="/woning-plaatsen" className="text-muted-foreground transition-colors hover:text-foreground">
-                  Woning plaatsen
-                </Link>
-              </li>
-              <li>
-                <Link to="/steden" className="text-muted-foreground transition-colors hover:text-foreground">
-                  Alle steden
-                </Link>
-              </li>
-              <li>
-                <Link to="/favorieten" className="text-muted-foreground transition-colors hover:text-foreground">
-                  Mijn favorieten
-                </Link>
-              </li>
-              <li>
-                <Link to="/zoekalerts" className="text-muted-foreground transition-colors hover:text-foreground">
-                  Zoekalerts
-                </Link>
-              </li>
-              <li>
-                <Link to="/nieuw-aanbod" className="text-muted-foreground transition-colors hover:text-foreground">
-                  Nieuw aanbod
-                </Link>
-              </li>
-              <li>
-                <Link to="/blog" className="text-muted-foreground transition-colors hover:text-foreground">
-                  Blog
-                </Link>
-              </li>
+              <li><Link to="/zoeken" className="text-muted-foreground transition-colors hover:text-foreground">Woningen zoeken</Link></li>
+              <li><Link to="/huurwoningen" className="text-muted-foreground transition-colors hover:text-foreground">Huurwoningen</Link></li>
+              <li><Link to="/koopwoningen" className="text-muted-foreground transition-colors hover:text-foreground">Koopwoningen</Link></li>
+              <li><Link to="/appartementen" className="text-muted-foreground transition-colors hover:text-foreground">Appartementen</Link></li>
+              <li><Link to="/kamers" className="text-muted-foreground transition-colors hover:text-foreground">Kamers</Link></li>
+              <li><Link to="/steden" className="text-muted-foreground transition-colors hover:text-foreground">Alle steden</Link></li>
+              <li><Link to="/nieuw-aanbod" className="text-muted-foreground transition-colors hover:text-foreground">Nieuw aanbod</Link></li>
+              <li><Link to="/woning-plaatsen" className="text-muted-foreground transition-colors hover:text-foreground">Woning plaatsen</Link></li>
+              <li><Link to="/blog" className="text-muted-foreground transition-colors hover:text-foreground">Blog</Link></li>
+            </ul>
+          </div>
+
+          {/* Popular searches */}
+          <div className="space-y-4">
+            <h4 className="font-display text-sm font-semibold">Populaire zoekopdrachten</h4>
+            <ul className="space-y-2 text-sm">
+              <li><Link to="/appartementen/amsterdam" className="text-muted-foreground transition-colors hover:text-foreground">Appartementen Amsterdam</Link></li>
+              <li><Link to="/huurwoningen/rotterdam" className="text-muted-foreground transition-colors hover:text-foreground">Huurwoningen Rotterdam</Link></li>
+              <li><Link to="/appartementen/utrecht" className="text-muted-foreground transition-colors hover:text-foreground">Appartementen Utrecht</Link></li>
+              <li><Link to="/kamers/eindhoven" className="text-muted-foreground transition-colors hover:text-foreground">Kamers Eindhoven</Link></li>
+              <li><Link to="/woningen/den-haag/onder-1000" className="text-muted-foreground transition-colors hover:text-foreground">Den Haag onder €1.000</Link></li>
+              <li><Link to="/woningen/amsterdam/2-kamers" className="text-muted-foreground transition-colors hover:text-foreground">Amsterdam 2 kamers</Link></li>
+              <li><Link to="/huurwoningen/groningen" className="text-muted-foreground transition-colors hover:text-foreground">Huurwoningen Groningen</Link></li>
+              <li><Link to="/dagelijkse-alert" className="text-muted-foreground transition-colors hover:text-foreground">Dagelijkse alert</Link></li>
             </ul>
           </div>
 

@@ -89,10 +89,28 @@ const PopularCities = () => {
           ))}
         </div>
 
-        <div className="mt-8 text-center">
+        <div className="mt-8 flex flex-wrap justify-center gap-3">
           <Link to="/steden">
             <Button variant="outline" className="gap-2">
               Bekijk alle steden
+              <ArrowRight className="h-4 w-4" />
+            </Button>
+          </Link>
+          <Link to="/huurwoningen">
+            <Button variant="outline" className="gap-2">
+              Huurwoningen
+              <ArrowRight className="h-4 w-4" />
+            </Button>
+          </Link>
+          <Link to="/appartementen">
+            <Button variant="outline" className="gap-2">
+              Appartementen
+              <ArrowRight className="h-4 w-4" />
+            </Button>
+          </Link>
+          <Link to="/kamers">
+            <Button variant="outline" className="gap-2">
+              Kamers
               <ArrowRight className="h-4 w-4" />
             </Button>
           </Link>
