@@ -263,12 +263,37 @@ const AdminFacebookQueue = () => {
     setCopiedKey(`${property.id}-${group.id}`);
     setTimeout(() => setCopiedKey(null), 3000);
 
+    // Auto-expand to show images
+    setExpandedId(property.id);
+
     toast({
       title: "✅ Tekst gekopieerd!",
-      description: `Klik nu op \"Open groep\" voor \"${group.name}\".`,
+      description: `Sla nu de foto's op en plak de tekst in de groep.`,
     });
 
     await markPosted.mutateAsync(property.id);
+  };
+
+  const handleDownloadImages = async (images: string[], propertyTitle: string) => {
+    for (let i = 0; i < images.length; i++) {
+      try {
+        const response = await fetch(images[i]);
+        const blob = await response.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `${propertyTitle.replace(/[^a-z0-9]/gi, "-").toLowerCase()}-foto-${i + 1}.jpg`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        // Small delay between downloads
+        if (i < images.length - 1) await new Promise(r => setTimeout(r, 300));
+      } catch {
+        console.error(`Failed to download image ${i + 1}`);
+      }
+    }
+    toast({ title: `${images.length} foto's worden gedownload` });
   };
 
   const getImages = (images: string[] | null): string[] => {
