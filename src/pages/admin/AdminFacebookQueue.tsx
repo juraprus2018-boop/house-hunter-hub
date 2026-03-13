@@ -124,6 +124,7 @@ const AdminFacebookQueue = () => {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
+  const [showQueue, setShowQueue] = useState(false);
   const [showAddGroup, setShowAddGroup] = useState(false);
   const [newGroupName, setNewGroupName] = useState("");
   const [newGroupUrl, setNewGroupUrl] = useState("");
