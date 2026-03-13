@@ -222,20 +222,13 @@ const AdminFacebookQueue = () => {
     },
   });
 
+  const normalizeGroupUrl = (url: string): string => {
+    if (/^https?:\/\//i.test(url)) return url;
+    return `https://${url}`;
+  };
+
   const handleCopyAndOpen = async (property: Property, group: FacebookGroup) => {
     const text = buildPostText(property);
-    const popup = window.open(group.group_url, "_blank");
-
-    if (!popup) {
-      toast({
-        title: "Popup geblokkeerd",
-        description: "Sta pop-ups toe voor deze site en probeer opnieuw.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    popup.opener = null;
 
     let copied = false;
 
@@ -260,16 +253,18 @@ const AdminFacebookQueue = () => {
       window.prompt("Kopiëren lukte niet automatisch. Kopieer handmatig:", text);
       toast({
         title: "Handmatig kopiëren",
-        description: "De groep is geopend. Kopieer de tekst uit de popup en plak in Facebook.",
+        description: "Gebruik de gekopieerde tekst en klik daarna op Open groep.",
       });
-    } else {
-      setCopiedKey(`${property.id}-${group.id}`);
-      setTimeout(() => setCopiedKey(null), 3000);
-      toast({
-        title: "✅ Post gekopieerd!",
-        description: `Plak het bericht in "${group.name}" met Ctrl+V / ⌘+V.`,
-      });
+      return;
     }
+
+    setCopiedKey(`${property.id}-${group.id}`);
+    setTimeout(() => setCopiedKey(null), 3000);
+
+    toast({
+      title: "✅ Tekst gekopieerd!",
+      description: `Klik nu op \"Open groep\" voor \"${group.name}\".`,
+    });
 
     await markPosted.mutateAsync(property.id);
   };
