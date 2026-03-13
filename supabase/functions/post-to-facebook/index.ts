@@ -588,18 +588,41 @@ Deno.serve(async (req) => {
         );
       }
 
-      const result = await postPropertyToFacebook(property as Property, PAGE_ID, PAGE_ACCESS_TOKEN);
-      if (result.success) {
+      const channelResults: Array<{ channel: "page" | "group"; success: boolean; postId?: string; error?: string }> = [];
+
+      if (shouldPostGroup && groupId) {
+        const groupResult = await postPropertyToFacebookGroup(property as Property, groupId, groupAccessToken);
+        channelResults.push({ channel: "group", ...groupResult });
+      }
+
+      if (shouldPostPage) {
+        const pageResult = await postPropertyToFacebook(property as Property, PAGE_ID, PAGE_ACCESS_TOKEN);
+        channelResults.push({ channel: "page", ...pageResult });
+      }
+
+      const firstSuccess = channelResults.find((r) => r.success);
+      const success = Boolean(firstSuccess);
+      const errorMessages = channelResults.filter((r) => !r.success && r.error).map((r) => `[${r.channel}] ${r.error}`);
+
+      if (success) {
         await supabase
           .from("properties")
           .update({ facebook_posted_at: new Date().toISOString() })
           .eq("id", property_id);
       }
 
-      return new Response(JSON.stringify(result), {
-        status: result.success ? 200 : 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return new Response(
+        JSON.stringify({
+          success,
+          postId: firstSuccess?.postId,
+          error: success ? undefined : errorMessages.join(" | ") || "Posten mislukt",
+          channels: channelResults,
+        }),
+        {
+          status: success ? 200 : 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
     }
 
     return new Response(
