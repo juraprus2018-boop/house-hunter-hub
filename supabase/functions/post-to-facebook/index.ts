@@ -300,6 +300,54 @@ async function postPropertyToFacebook(
   }
 }
 
+async function postPropertyToFacebookGroup(
+  property: Property,
+  groupId: string,
+  accessToken: string
+): Promise<{ success: boolean; postId?: string; error?: string }> {
+  const message = buildCaption(property);
+  const images = getUniqueImages(property.images, 10);
+
+  try {
+    if (images.length > 0) {
+      const photoRes = await fetch(`${GRAPH_API}/${groupId}/photos`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          url: images[0],
+          message,
+          access_token: accessToken,
+        }),
+      });
+      const photoData = await photoRes.json();
+      if (!photoData.error) {
+        return { success: true, postId: photoData.post_id || photoData.id };
+      }
+      console.warn("Group photo post failed, falling back to feed:", photoData.error.message);
+    }
+
+    const feedRes = await fetch(`${GRAPH_API}/${groupId}/feed`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        message,
+        link: `${SITE_URL}/woning/${property.slug || property.id}`,
+        access_token: accessToken,
+      }),
+    });
+    const feedData = await feedRes.json();
+
+    if (feedData.error) {
+      return { success: false, error: feedData.error.message };
+    }
+
+    return { success: true, postId: feedData.id };
+  } catch (err) {
+    console.error("Facebook Group API error:", err);
+    return { success: false, error: String(err) };
+  }
+}
+
 // ─── Main Handler ───────────────────────────────────────────────────
 
 Deno.serve(async (req) => {
