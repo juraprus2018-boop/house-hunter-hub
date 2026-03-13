@@ -167,7 +167,7 @@ const AdminFacebookQueue = () => {
       if (error) throw error;
       return (data || []) as Property[];
     },
-    enabled: !!selectedGroup,
+    enabled: !!selectedGroup && showQueue,
   });
 
   // Add group
