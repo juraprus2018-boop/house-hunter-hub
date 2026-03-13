@@ -401,7 +401,27 @@ Deno.serve(async (req) => {
       title,
       excerpt,
       slug,
+      group_id,
+      target: rawTarget,
     } = body;
+
+    const target: PostTarget = ["page", "group", "both"].includes(rawTarget)
+      ? rawTarget
+      : auto_post
+      ? "group"
+      : "page";
+
+    const shouldPostGroup = target === "group" || target === "both";
+    const shouldPostPage = target === "page" || target === "both";
+    const groupId = group_id || Deno.env.get("FACEBOOK_GROUP_ID");
+    const groupAccessToken = Deno.env.get("FACEBOOK_GROUP_ACCESS_TOKEN") || PAGE_ACCESS_TOKEN;
+
+    if (shouldPostGroup && !groupId) {
+      return new Response(
+        JSON.stringify({ error: "FACEBOOK_GROUP_ID ontbreekt. Voeg deze secret toe om automatisch naar groepen te posten." }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
     // ─── Debug Mode ─────────────────────────────────────────
     if (debug) {
