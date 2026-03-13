@@ -225,16 +225,16 @@ const AdminFacebookQueue = () => {
     },
   });
 
-  // Mark as posted
-  const markPosted = useMutation({
-    mutationFn: async (propertyId: string) => {
+  // Mark as posted to specific group
+  const markPostedToGroup = useMutation({
+    mutationFn: async ({ propertyId, groupId }: { propertyId: string; groupId: string }) => {
       const { error } = await supabase
-        .from("properties")
-        .update({ facebook_posted_at: new Date().toISOString() })
-        .eq("id", propertyId);
+        .from("facebook_group_posts")
+        .insert({ group_id: groupId, property_id: propertyId });
       if (error) throw error;
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["facebook-group-posts"] });
       queryClient.invalidateQueries({ queryKey: ["facebook-queue"] });
     },
   });
