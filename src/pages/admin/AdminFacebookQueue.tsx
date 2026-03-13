@@ -568,9 +568,19 @@ const AdminFacebookQueue = () => {
 
                             {images.length > 0 && (
                               <div>
-                                <p className="text-xs font-medium text-muted-foreground mb-2">
-                                  FOTO'S (rechtermuisknop → "Afbeelding opslaan als"):
-                                </p>
+                                <div className="flex items-center justify-between mb-2">
+                                  <p className="text-xs font-medium text-muted-foreground">
+                                    FOTO'S — sla op en upload naar Facebook:
+                                  </p>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => handleDownloadImages(images, property.title)}
+                                  >
+                                    <ImageIcon className="h-4 w-4 mr-2" />
+                                    Download alle foto's ({images.length})
+                                  </Button>
+                                </div>
                                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
                                   {images.map((img, i) => (
                                     <a
