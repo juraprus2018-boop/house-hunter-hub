@@ -85,6 +85,50 @@ const AdminProperties = () => {
     return listingType === "huur" ? `${formatted}/mnd` : formatted;
   };
 
+  const buildFacebookGroupPostText = (property: NonNullable<typeof properties>[number]) => {
+    const propertyUrl = `${window.location.origin}/woning/${property.slug || property.id}`;
+    const cityTag = property.city ? `#${property.city.replace(/\s+/g, "")}` : "";
+    const listingTag = property.listing_type === "huur" ? "#huurwoning" : "#koopwoning";
+    const description = (property.description || "").trim();
+    const shortDescription = description.length > 280 ? `${description.slice(0, 277)}...` : description;
+
+    return [
+      `🏡 ${property.title}`,
+      `📍 ${property.street} ${property.house_number}, ${property.postal_code} ${property.city}`,
+      `💶 ${formatPrice(Number(property.price), property.listing_type)}`,
+      property.bedrooms ? `🛏️ ${property.bedrooms} slaapkamers` : null,
+      property.bathrooms ? `🛁 ${property.bathrooms} badkamers` : null,
+      property.surface_area ? `📐 ${property.surface_area} m²` : null,
+      shortDescription ? `\n${shortDescription}` : null,
+      `\n🔗 Bekijk de woning: ${propertyUrl}`,
+      ["#woonpeek", listingTag, cityTag].filter(Boolean).join(" "),
+    ]
+      .filter(Boolean)
+      .join("\n");
+  };
+
+  const handleFacebookGroupShare = async (property: NonNullable<typeof properties>[number]) => {
+    try {
+      if (!navigator.clipboard?.writeText) {
+        throw new Error("Clipboard niet beschikbaar");
+      }
+
+      await navigator.clipboard.writeText(buildFacebookGroupPostText(property));
+      window.open("https://www.facebook.com/groups/feed/", "_blank", "noopener,noreferrer");
+
+      toast({
+        title: "Groepspost gekopieerd",
+        description: "Facebook Groups is geopend. Plak daar je bericht met Ctrl/Cmd + V.",
+      });
+    } catch {
+      toast({
+        title: "Kopiëren mislukt",
+        description: "Kopiëren naar klembord lukte niet. Probeer het opnieuw.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleEdit = (property: NonNullable<typeof properties>[number]) => {
     setEditingProperty(property);
     setFormData({
