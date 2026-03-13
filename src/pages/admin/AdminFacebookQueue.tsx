@@ -205,6 +205,7 @@ const AdminFacebookQueue = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["facebook-groups"] });
       setSelectedGroupId(null);
+      setShowQueue(false);
       toast({ title: "Groep verwijderd" });
     },
   });
