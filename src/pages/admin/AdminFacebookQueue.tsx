@@ -379,9 +379,17 @@ const AdminFacebookQueue = () => {
                 {groups.map((group) => (
                   <div key={group.id} className="flex items-center gap-1">
                     <Button
-                      variant={selectedGroup?.id === group.id ? "default" : "outline"}
+                      variant={selectedGroup?.id === group.id && showQueue ? "default" : "outline"}
                       size="sm"
-                      onClick={() => setSelectedGroupId(group.id)}
+                      onClick={() => {
+                        if (selectedGroupId === group.id && showQueue) {
+                          setShowQueue(false);
+                          setSelectedGroupId(null);
+                        } else {
+                          setSelectedGroupId(group.id);
+                          setShowQueue(true);
+                        }
+                      }}
                       className="gap-2"
                     >
                       <Facebook className="h-3.5 w-3.5" />
