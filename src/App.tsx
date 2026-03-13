@@ -34,6 +34,7 @@ import BlogPostPage from "./pages/BlogPost";
 import AdminBlog from "./pages/admin/AdminBlog";
 import AdminUsers from "./pages/admin/AdminUsers";
 import AdminDailyActivity from "./pages/admin/AdminDailyActivity";
+import AdminFacebookQueue from "./pages/admin/AdminFacebookQueue";
 import ListingTypePage from "./pages/ListingTypePage";
 import PropertyTypeCityPage from "./pages/PropertyTypeCityPage";
 import FilteredLandingPage from "./pages/FilteredLandingPage";
