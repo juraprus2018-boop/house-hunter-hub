@@ -433,7 +433,13 @@ Deno.serve(async (req) => {
       const meData = await meRes.json();
 
       return new Response(
-        JSON.stringify({ token_info: debugData, me: meData, page_id_configured: PAGE_ID }),
+        JSON.stringify({
+          token_info: debugData,
+          me: meData,
+          page_id_configured: PAGE_ID,
+          group_id_configured: groupId || null,
+          target,
+        }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
