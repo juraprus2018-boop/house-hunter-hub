@@ -552,6 +552,23 @@ const AdminFacebookQueue = () => {
                                 </>
                               )}
                             </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="border-emerald-300 text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800"
+                              disabled={markPostedToGroup.isPending}
+                              onClick={() => {
+                                markPostedToGroup.mutate({ propertyId: property.id, groupId: selectedGroup.id });
+                                toast({ title: "✅ Gemarkeerd als geplaatst" });
+                              }}
+                            >
+                              {markPostedToGroup.isPending ? (
+                                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                              ) : (
+                                <Check className="h-4 w-4 mr-2" />
+                              )}
+                              Geplaatst ✓
+                            </Button>
                           </div>
                         </div>
                       </CardHeader>
