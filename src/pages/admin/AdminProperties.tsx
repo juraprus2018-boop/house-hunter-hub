@@ -30,7 +30,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useAdminPropertiesPaginated, useUpdatePropertyAdmin, useDeletePropertyAdmin, usePostToFacebook } from "@/hooks/useAdmin";
-import { Search, Pencil, Trash2, Loader2, ExternalLink, Filter, Facebook, CheckCircle, ChevronLeft, ChevronRight } from "lucide-react";
+import { Search, Pencil, Trash2, Loader2, ExternalLink, Filter, Facebook, CheckCircle, ChevronLeft, ChevronRight, Copy } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { nl } from "date-fns/locale";
@@ -83,6 +83,50 @@ const AdminProperties = () => {
       minimumFractionDigits: 0,
     }).format(price);
     return listingType === "huur" ? `${formatted}/mnd` : formatted;
+  };
+
+  const buildFacebookGroupPostText = (property: NonNullable<typeof properties>[number]) => {
+    const propertyUrl = `${window.location.origin}/woning/${property.slug || property.id}`;
+    const cityTag = property.city ? `#${property.city.replace(/\s+/g, "")}` : "";
+    const listingTag = property.listing_type === "huur" ? "#huurwoning" : "#koopwoning";
+    const description = (property.description || "").trim();
+    const shortDescription = description.length > 280 ? `${description.slice(0, 277)}...` : description;
+
+    return [
+      `🏡 ${property.title}`,
+      `📍 ${property.street} ${property.house_number}, ${property.postal_code} ${property.city}`,
+      `💶 ${formatPrice(Number(property.price), property.listing_type)}`,
+      property.bedrooms ? `🛏️ ${property.bedrooms} slaapkamers` : null,
+      property.bathrooms ? `🛁 ${property.bathrooms} badkamers` : null,
+      property.surface_area ? `📐 ${property.surface_area} m²` : null,
+      shortDescription ? `\n${shortDescription}` : null,
+      `\n🔗 Bekijk de woning: ${propertyUrl}`,
+      ["#woonpeek", listingTag, cityTag].filter(Boolean).join(" "),
+    ]
+      .filter(Boolean)
+      .join("\n");
+  };
+
+  const handleFacebookGroupShare = async (property: NonNullable<typeof properties>[number]) => {
+    try {
+      if (!navigator.clipboard?.writeText) {
+        throw new Error("Clipboard niet beschikbaar");
+      }
+
+      await navigator.clipboard.writeText(buildFacebookGroupPostText(property));
+      window.open("https://www.facebook.com/groups/feed/", "_blank", "noopener,noreferrer");
+
+      toast({
+        title: "Groepspost gekopieerd",
+        description: "Facebook Groups is geopend. Plak daar je bericht met Ctrl/Cmd + V.",
+      });
+    } catch {
+      toast({
+        title: "Kopiëren mislukt",
+        description: "Kopiëren naar klembord lukte niet. Probeer het opnieuw.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleEdit = (property: NonNullable<typeof properties>[number]) => {
@@ -294,6 +338,14 @@ const AdminProperties = () => {
                           ) : (
                             <Facebook className="h-4 w-4 text-blue-600" />
                           )}
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          title="Kopieer post voor Facebook-groep"
+                          onClick={() => void handleFacebookGroupShare(property)}
+                        >
+                          <Copy className="h-4 w-4 text-muted-foreground" />
                         </Button>
                         <Button
                           variant="ghost"
