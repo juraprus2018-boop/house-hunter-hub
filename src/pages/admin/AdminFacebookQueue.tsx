@@ -223,37 +223,59 @@ const AdminFacebookQueue = () => {
   });
 
   const handleCopyAndOpen = async (property: Property, group: FacebookGroup) => {
-    const popup = window.open("about:blank", "_blank");
+    const text = buildPostText(property);
 
-    try {
-      const text = buildPostText(property);
-      await navigator.clipboard.writeText(text);
+    const copyPromise = (async () => {
+      try {
+        await navigator.clipboard.writeText(text);
+        return true;
+      } catch {
+        const textarea = document.createElement("textarea");
+        textarea.value = text;
+        textarea.setAttribute("readonly", "");
+        textarea.style.position = "fixed";
+        textarea.style.top = "-9999px";
+        textarea.style.opacity = "0";
+        document.body.appendChild(textarea);
+        textarea.focus();
+        textarea.select();
 
-      if (!popup) {
-        toast({
-          title: "Popup geblokkeerd",
-          description: "Sta pop-ups toe of open de groep handmatig via de groepsknop.",
-          variant: "destructive",
-        });
-        return;
+        const didCopy = document.execCommand("copy");
+        document.body.removeChild(textarea);
+        return didCopy;
       }
+    })();
 
-      popup.opener = null;
-      popup.location.href = group.group_url;
+    const popup = window.open("about:blank", "_blank");
+    const copied = await copyPromise;
 
-      setCopiedKey(`${property.id}-${group.id}`);
-      setTimeout(() => setCopiedKey(null), 3000);
-
-      toast({
-        title: "✅ Post gekopieerd!",
-        description: `Plak het bericht in "${group.name}" met Ctrl+V / ⌘+V.`,
-      });
-
-      await markPosted.mutateAsync(property.id);
-    } catch {
+    if (!copied) {
       popup?.close();
       toast({ title: "Kopiëren mislukt", variant: "destructive" });
+      return;
     }
+
+    if (!popup) {
+      toast({
+        title: "Popup geblokkeerd",
+        description: "Sta pop-ups toe of open de groep handmatig via de groepsknop.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    popup.opener = null;
+    popup.location.href = group.group_url;
+
+    setCopiedKey(`${property.id}-${group.id}`);
+    setTimeout(() => setCopiedKey(null), 3000);
+
+    toast({
+      title: "✅ Post gekopieerd!",
+      description: `Plak het bericht in "${group.name}" met Ctrl+V / ⌘+V.`,
+    });
+
+    await markPosted.mutateAsync(property.id);
   };
 
   const getImages = (images: string[] | null): string[] => {
