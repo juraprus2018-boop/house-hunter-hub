@@ -439,7 +439,7 @@ const AdminFacebookQueue = () => {
         )}
 
         {/* Queue */}
-        {selectedGroup && (
+        {selectedGroup && showQueue && (
           <>
             <div className="flex items-center gap-2">
               <Badge variant="secondary" className="text-sm">
