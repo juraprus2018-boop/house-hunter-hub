@@ -420,8 +420,8 @@ const AdminFacebookQueue = () => {
             <CardContent className="pt-6">
               <h3 className="font-semibold text-foreground mb-2">Hoe werkt het?</h3>
               <ol className="list-decimal list-inside space-y-1 text-sm text-muted-foreground">
-                <li>Klik op <strong>"Kopieer & Open Groep"</strong> bij een woning</li>
-                <li>De tekst wordt gekopieerd en de groep <strong>"{selectedGroup.name}"</strong> opent</li>
+                <li>Klik op <strong>"Kopieer tekst"</strong> bij een woning</li>
+                <li>Klik daarna op <strong>"Open groep"</strong> om Facebook te openen</li>
                 <li>Plak de tekst met <kbd className="px-1.5 py-0.5 rounded bg-muted text-xs font-mono">Ctrl+V</kbd></li>
                 <li>Voeg eventueel foto's toe en klik op "Plaatsen"</li>
               </ol>
