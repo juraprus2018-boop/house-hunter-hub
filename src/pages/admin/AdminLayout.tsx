@@ -14,6 +14,7 @@ import {
   FileText,
   Users,
   CalendarDays,
+  Facebook,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -65,6 +66,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
     { to: "/admin/woningen", label: "Woningen", icon: HomeIcon },
     { to: "/admin/scrapers", label: "Daisycon", icon: Activity },
     { to: "/admin/blog", label: "Blog", icon: FileText },
+    { to: "/admin/facebook", label: "Facebook Groep", icon: Facebook },
     { to: "/admin/instellingen", label: "Instellingen", icon: Settings },
   ];
 
