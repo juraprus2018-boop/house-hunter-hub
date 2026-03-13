@@ -222,20 +222,13 @@ const AdminFacebookQueue = () => {
     },
   });
 
+  const normalizeGroupUrl = (url: string): string => {
+    if (/^https?:\/\//i.test(url)) return url;
+    return `https://${url}`;
+  };
+
   const handleCopyAndOpen = async (property: Property, group: FacebookGroup) => {
     const text = buildPostText(property);
-    const popup = window.open(group.group_url, "_blank");
-
-    if (!popup) {
-      toast({
-        title: "Popup geblokkeerd",
-        description: "Sta pop-ups toe voor deze site en probeer opnieuw.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    popup.opener = null;
 
     let copied = false;
 
@@ -260,16 +253,18 @@ const AdminFacebookQueue = () => {
       window.prompt("Kopiëren lukte niet automatisch. Kopieer handmatig:", text);
       toast({
         title: "Handmatig kopiëren",
-        description: "De groep is geopend. Kopieer de tekst uit de popup en plak in Facebook.",
+        description: "Gebruik de gekopieerde tekst en klik daarna op Open groep.",
       });
-    } else {
-      setCopiedKey(`${property.id}-${group.id}`);
-      setTimeout(() => setCopiedKey(null), 3000);
-      toast({
-        title: "✅ Post gekopieerd!",
-        description: `Plak het bericht in "${group.name}" met Ctrl+V / ⌘+V.`,
-      });
+      return;
     }
+
+    setCopiedKey(`${property.id}-${group.id}`);
+    setTimeout(() => setCopiedKey(null), 3000);
+
+    toast({
+      title: "✅ Tekst gekopieerd!",
+      description: `Klik nu op \"Open groep\" voor \"${group.name}\".`,
+    });
 
     await markPosted.mutateAsync(property.id);
   };
@@ -425,8 +420,8 @@ const AdminFacebookQueue = () => {
             <CardContent className="pt-6">
               <h3 className="font-semibold text-foreground mb-2">Hoe werkt het?</h3>
               <ol className="list-decimal list-inside space-y-1 text-sm text-muted-foreground">
-                <li>Klik op <strong>"Kopieer & Open Groep"</strong> bij een woning</li>
-                <li>De tekst wordt gekopieerd en de groep <strong>"{selectedGroup.name}"</strong> opent</li>
+                <li>Klik op <strong>"Kopieer tekst"</strong> bij een woning</li>
+                <li>Klik daarna op <strong>"Open groep"</strong> om Facebook te openen</li>
                 <li>Plak de tekst met <kbd className="px-1.5 py-0.5 rounded bg-muted text-xs font-mono">Ctrl+V</kbd></li>
                 <li>Voeg eventueel foto's toe en klik op "Plaatsen"</li>
               </ol>
@@ -486,6 +481,12 @@ const AdminFacebookQueue = () => {
                             >
                               <ExternalLink className="h-4 w-4" />
                             </Button>
+                            <Button asChild variant="outline" size="sm">
+                              <a href={normalizeGroupUrl(selectedGroup.group_url)} target="_blank" rel="noopener noreferrer">
+                                <Facebook className="h-4 w-4 mr-2" />
+                                Open groep
+                              </a>
+                            </Button>
                             <Button
                               onClick={() => handleCopyAndOpen(property, selectedGroup)}
                               disabled={isCopied}
@@ -499,7 +500,7 @@ const AdminFacebookQueue = () => {
                               ) : (
                                 <>
                                   <Copy className="h-4 w-4 mr-2" />
-                                  Kopieer & Open Groep
+                                  Kopieer tekst
                                 </>
                               )}
                             </Button>
