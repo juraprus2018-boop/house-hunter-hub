@@ -2,36 +2,55 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "GET",
+  "Access-Control-Allow-Methods": "GET, OPTIONS",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
 const SITE_URL = "https://www.woonpeek.nl";
 
 Deno.serve(async (req) => {
-  const url = new URL(req.url);
-  const slug = url.searchParams.get("slug");
-
-  if (!slug) {
-    return new Response("Missing slug", { status: 400 });
+  if (req.method === "OPTIONS") {
+    return new Response("ok", { headers: corsHeaders });
   }
+
+  const url = new URL(req.url);
+  const slugParam = url.searchParams.get("slug");
+
+  if (!slugParam) {
+    return new Response("Missing slug", {
+      status: 400,
+      headers: corsHeaders,
+    });
+  }
+
+  const slugOrId = decodeURIComponent(slugParam).trim();
+  const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(slugOrId);
 
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
   const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
   const supabase = createClient(supabaseUrl, supabaseKey);
 
-  const { data: property } = await supabase
+  const { data: property, error } = await supabase
     .from("properties")
-    .select("title, description, images, city, street, house_number, price, listing_type, slug, property_type, surface_area, bedrooms")
-    .eq("slug", slug)
-    .single();
+    .select("title, images, city, street, house_number, price, listing_type, slug, id, surface_area, bedrooms")
+    .eq(isUuid ? "id" : "slug", slugOrId)
+    .maybeSingle();
 
-  if (!property) {
-    return Response.redirect(`${SITE_URL}/woning/${slug}`, 302);
+  if (error) {
+    return new Response("Failed to load property", {
+      status: 500,
+      headers: corsHeaders,
+    });
   }
 
-  const pageUrl = `${SITE_URL}/woning/${property.slug}`;
-  const ogImage = property.images?.length ? property.images[0] : `${SITE_URL}/favicon.png`;
-  
+  if (!property) {
+    return Response.redirect(`${SITE_URL}/woning/${encodeURIComponent(slugOrId)}`, 302);
+  }
+
+  const canonicalSlug = property.slug || property.id;
+  const pageUrl = `${SITE_URL}/woning/${canonicalSlug}`;
+  const ogImage = property.images?.find((img) => typeof img === "string" && img.trim() !== "") || `${SITE_URL}/facebook-cover.png`;
+
   const priceFormatted = new Intl.NumberFormat("nl-NL", {
     style: "currency",
     currency: "EUR",
@@ -54,12 +73,15 @@ Deno.serve(async (req) => {
   <meta property="og:title" content="${escapeHtml(title)}">
   <meta property="og:description" content="${escapeHtml(description)}">
   <meta property="og:image" content="${escapeHtml(ogImage)}">
+  <meta property="og:image:secure_url" content="${escapeHtml(ogImage)}">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
   <meta property="og:url" content="${escapeHtml(pageUrl)}">
   <meta property="og:type" content="article">
   <meta property="og:site_name" content="WoonPeek">
   <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="${escapeHtml(title)}">
+  <meta name="twitter:description" content="${escapeHtml(description)}">
   <meta name="twitter:image" content="${escapeHtml(ogImage)}">
   <meta http-equiv="refresh" content="0;url=${escapeHtml(pageUrl)}">
   <link rel="canonical" href="${escapeHtml(pageUrl)}">

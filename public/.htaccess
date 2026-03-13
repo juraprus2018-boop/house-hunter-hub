@@ -16,6 +16,11 @@ RewriteRule ^sitemap-steden\.xml$ https://uszlfqgxjvceugrpavde.supabase.co/funct
 RewriteRule ^sitemap-woningen\.xml$ https://uszlfqgxjvceugrpavde.supabase.co/functions/v1/generate-sitemap?type=woningen [R=301,L]
 RewriteRule ^sitemap-blog\.xml$ https://uszlfqgxjvceugrpavde.supabase.co/functions/v1/generate-sitemap?type=blog [R=301,L]
 
+# Social crawlers (Facebook/WhatsApp/etc.) krijgen server-side OG metadata per woning
+RewriteCond %{REQUEST_URI} ^/woning/[^/]+$ [NC]
+RewriteCond %{HTTP_USER_AGENT} (facebookexternalhit|Facebot|meta-externalagent|Twitterbot|LinkedInBot|Slackbot|Discordbot|WhatsApp|TelegramBot) [NC]
+RewriteRule ^woning/([^/?]+)$ https://uszlfqgxjvceugrpavde.supabase.co/functions/v1/og-property?slug=$1 [R=302,L]
+
 # SPA fallback - send all requests to index.html
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
