@@ -559,7 +559,8 @@ Deno.serve(async (req) => {
       const successCount = results.filter((r) => r.success).length;
       return new Response(
         JSON.stringify({
-          summary: `${successCount}/${results.length} woningen succesvol gepost`,
+          summary: `${successCount}/${results.length} woningen succesvol gepost (${target})`,
+          target,
           results,
         }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
