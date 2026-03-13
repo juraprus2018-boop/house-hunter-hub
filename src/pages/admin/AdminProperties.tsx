@@ -342,6 +342,14 @@ const AdminProperties = () => {
                         <Button
                           variant="ghost"
                           size="icon"
+                          title="Kopieer post voor Facebook-groep"
+                          onClick={() => void handleFacebookGroupShare(property)}
+                        >
+                          <Copy className="h-4 w-4 text-muted-foreground" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
                           onClick={() => window.open(`/woning/${property.slug || property.id}`, "_blank")}
                         >
                           <ExternalLink className="h-4 w-4" />
