@@ -486,8 +486,11 @@ Deno.serve(async (req) => {
 
     // ─── Auto Post (daily batch) ────────────────────────────
     if (auto_post) {
-      // Prioritize newest unposted properties
-      const { data: properties, error } = await supabase
+      // Get the city filter for group posts (default: Eindhoven)
+      const groupCity = body.group_city || Deno.env.get("FACEBOOK_GROUP_CITY") || "Eindhoven";
+
+      // Fetch unposted properties - for group posts, filter by city
+      let query = supabase
         .from("properties")
         .select("id, title, price, listing_type, city, street, house_number, surface_area, bedrooms, bathrooms, images, slug, property_type, description, energy_label, build_year")
         .eq("status", "actief")
@@ -495,10 +498,18 @@ Deno.serve(async (req) => {
         .order("created_at", { ascending: false })
         .limit(50);
 
+      // When posting to group (or both), only select properties from the target city
+      if (shouldPostGroup) {
+        query = query.ilike("city", groupCity);
+        console.log(`Filtering properties for group by city: ${groupCity}`);
+      }
+
+      const { data: properties, error } = await query;
+
       if (error) throw error;
       if (!properties || properties.length === 0) {
         return new Response(
-          JSON.stringify({ message: "No new properties to post" }),
+          JSON.stringify({ message: `No new properties to post${shouldPostGroup ? ` for ${groupCity}` : ""}` }),
           { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
