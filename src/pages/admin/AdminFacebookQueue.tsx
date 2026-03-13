@@ -424,7 +424,7 @@ const AdminFacebookQueue = () => {
         </Card>
 
         {/* Instructions */}
-        {selectedGroup && (
+        {selectedGroup && showQueue && (
           <Card className="border-blue-200 bg-blue-50/50">
             <CardContent className="pt-6">
               <h3 className="font-semibold text-foreground mb-2">Hoe werkt het?</h3>
