@@ -229,7 +229,7 @@ const AdminFacebookQueue = () => {
       setCopiedKey(`${property.id}-${group.id}`);
       setTimeout(() => setCopiedKey(null), 3000);
 
-      window.open(group.group_url, "_blank", "noopener,noreferrer");
+      window.open(group.group_url, "_blank");
 
       toast({
         title: "✅ Post gekopieerd!",
