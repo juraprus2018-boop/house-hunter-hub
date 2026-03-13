@@ -28,6 +28,8 @@ interface Property {
   build_year: number | null;
 }
 
+type PostTarget = "page" | "group" | "both";
+
 // ─── Caption Builder ────────────────────────────────────────────────
 
 function buildCaption(property: Property): string {
@@ -298,6 +300,54 @@ async function postPropertyToFacebook(
   }
 }
 
+async function postPropertyToFacebookGroup(
+  property: Property,
+  groupId: string,
+  accessToken: string
+): Promise<{ success: boolean; postId?: string; error?: string }> {
+  const message = buildCaption(property);
+  const images = getUniqueImages(property.images, 10);
+
+  try {
+    if (images.length > 0) {
+      const photoRes = await fetch(`${GRAPH_API}/${groupId}/photos`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          url: images[0],
+          message,
+          access_token: accessToken,
+        }),
+      });
+      const photoData = await photoRes.json();
+      if (!photoData.error) {
+        return { success: true, postId: photoData.post_id || photoData.id };
+      }
+      console.warn("Group photo post failed, falling back to feed:", photoData.error.message);
+    }
+
+    const feedRes = await fetch(`${GRAPH_API}/${groupId}/feed`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        message,
+        link: `${SITE_URL}/woning/${property.slug || property.id}`,
+        access_token: accessToken,
+      }),
+    });
+    const feedData = await feedRes.json();
+
+    if (feedData.error) {
+      return { success: false, error: feedData.error.message };
+    }
+
+    return { success: true, postId: feedData.id };
+  } catch (err) {
+    console.error("Facebook Group API error:", err);
+    return { success: false, error: String(err) };
+  }
+}
+
 // ─── Main Handler ───────────────────────────────────────────────────
 
 Deno.serve(async (req) => {
@@ -351,7 +401,27 @@ Deno.serve(async (req) => {
       title,
       excerpt,
       slug,
+      group_id,
+      target: rawTarget,
     } = body;
+
+    const target: PostTarget = ["page", "group", "both"].includes(rawTarget)
+      ? rawTarget
+      : auto_post
+      ? "group"
+      : "page";
+
+    const shouldPostGroup = target === "group" || target === "both";
+    const shouldPostPage = target === "page" || target === "both";
+    const groupId = group_id || Deno.env.get("FACEBOOK_GROUP_ID");
+    const groupAccessToken = Deno.env.get("FACEBOOK_GROUP_ACCESS_TOKEN") || PAGE_ACCESS_TOKEN;
+
+    if (shouldPostGroup && !groupId) {
+      return new Response(
+        JSON.stringify({ error: "FACEBOOK_GROUP_ID ontbreekt. Voeg deze secret toe om automatisch naar groepen te posten." }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
     // ─── Debug Mode ─────────────────────────────────────────
     if (debug) {
@@ -363,7 +433,13 @@ Deno.serve(async (req) => {
       const meData = await meRes.json();
 
       return new Response(
-        JSON.stringify({ token_info: debugData, me: meData, page_id_configured: PAGE_ID }),
+        JSON.stringify({
+          token_info: debugData,
+          me: meData,
+          page_id_configured: PAGE_ID,
+          group_id_configured: groupId || null,
+          target,
+        }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -443,19 +519,39 @@ Deno.serve(async (req) => {
       const results = [];
 
       for (const prop of sorted) {
-        const result = await postPropertyToFacebook(prop as Property, PAGE_ID, PAGE_ACCESS_TOKEN);
+        const channelResults: Array<{ channel: "page" | "group"; success: boolean; postId?: string; error?: string }> = [];
+
+        if (shouldPostGroup && groupId) {
+          const groupResult = await postPropertyToFacebookGroup(prop as Property, groupId, groupAccessToken);
+          channelResults.push({ channel: "group", ...groupResult });
+        }
+
+        if (shouldPostPage) {
+          const pageResult = await postPropertyToFacebook(prop as Property, PAGE_ID, PAGE_ACCESS_TOKEN);
+          channelResults.push({ channel: "page", ...pageResult });
+        }
+
+        const firstSuccess = channelResults.find((r) => r.success);
+        const success = Boolean(firstSuccess);
+        const errorMessages = channelResults.filter((r) => !r.success && r.error).map((r) => `[${r.channel}] ${r.error}`);
+
         results.push({
           property_id: prop.id,
           title: prop.title,
           images_used: getUniqueImages(prop.images).length,
-          ...result,
+          success,
+          postId: firstSuccess?.postId,
+          error: success ? undefined : errorMessages.join(" | ") || "Posten mislukt",
+          channels: channelResults,
         });
-        if (result.success) {
+
+        if (success) {
           await supabase
             .from("properties")
             .update({ facebook_posted_at: new Date().toISOString() })
             .eq("id", prop.id);
         }
+
         // Delay between posts to avoid rate limiting
         await new Promise((r) => setTimeout(r, 3000));
       }
@@ -463,7 +559,8 @@ Deno.serve(async (req) => {
       const successCount = results.filter((r) => r.success).length;
       return new Response(
         JSON.stringify({
-          summary: `${successCount}/${results.length} woningen succesvol gepost`,
+          summary: `${successCount}/${results.length} woningen succesvol gepost (${target})`,
+          target,
           results,
         }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -492,22 +589,45 @@ Deno.serve(async (req) => {
         );
       }
 
-      const result = await postPropertyToFacebook(property as Property, PAGE_ID, PAGE_ACCESS_TOKEN);
-      if (result.success) {
+      const channelResults: Array<{ channel: "page" | "group"; success: boolean; postId?: string; error?: string }> = [];
+
+      if (shouldPostGroup && groupId) {
+        const groupResult = await postPropertyToFacebookGroup(property as Property, groupId, groupAccessToken);
+        channelResults.push({ channel: "group", ...groupResult });
+      }
+
+      if (shouldPostPage) {
+        const pageResult = await postPropertyToFacebook(property as Property, PAGE_ID, PAGE_ACCESS_TOKEN);
+        channelResults.push({ channel: "page", ...pageResult });
+      }
+
+      const firstSuccess = channelResults.find((r) => r.success);
+      const success = Boolean(firstSuccess);
+      const errorMessages = channelResults.filter((r) => !r.success && r.error).map((r) => `[${r.channel}] ${r.error}`);
+
+      if (success) {
         await supabase
           .from("properties")
           .update({ facebook_posted_at: new Date().toISOString() })
           .eq("id", property_id);
       }
 
-      return new Response(JSON.stringify(result), {
-        status: result.success ? 200 : 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return new Response(
+        JSON.stringify({
+          success,
+          postId: firstSuccess?.postId,
+          error: success ? undefined : errorMessages.join(" | ") || "Posten mislukt",
+          channels: channelResults,
+        }),
+        {
+          status: success ? 200 : 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
     }
 
     return new Response(
-      JSON.stringify({ error: "Provide property_id, auto_post=true, or blog_post=true" }),
+      JSON.stringify({ error: "Provide property_id, auto_post=true, or blog_post=true. Optional: target=page|group|both" }),
       { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (err) {
