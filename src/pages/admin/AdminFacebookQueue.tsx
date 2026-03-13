@@ -263,12 +263,37 @@ const AdminFacebookQueue = () => {
     setCopiedKey(`${property.id}-${group.id}`);
     setTimeout(() => setCopiedKey(null), 3000);
 
+    // Auto-expand to show images
+    setExpandedId(property.id);
+
     toast({
       title: "✅ Tekst gekopieerd!",
-      description: `Klik nu op \"Open groep\" voor \"${group.name}\".`,
+      description: `Sla nu de foto's op en plak de tekst in de groep.`,
     });
 
     await markPosted.mutateAsync(property.id);
+  };
+
+  const handleDownloadImages = async (images: string[], propertyTitle: string) => {
+    for (let i = 0; i < images.length; i++) {
+      try {
+        const response = await fetch(images[i]);
+        const blob = await response.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `${propertyTitle.replace(/[^a-z0-9]/gi, "-").toLowerCase()}-foto-${i + 1}.jpg`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        // Small delay between downloads
+        if (i < images.length - 1) await new Promise(r => setTimeout(r, 300));
+      } catch {
+        console.error(`Failed to download image ${i + 1}`);
+      }
+    }
+    toast({ title: `${images.length} foto's worden gedownload` });
   };
 
   const getImages = (images: string[] | null): string[] => {
@@ -543,9 +568,19 @@ const AdminFacebookQueue = () => {
 
                             {images.length > 0 && (
                               <div>
-                                <p className="text-xs font-medium text-muted-foreground mb-2">
-                                  FOTO'S (rechtermuisknop → "Afbeelding opslaan als"):
-                                </p>
+                                <div className="flex items-center justify-between mb-2">
+                                  <p className="text-xs font-medium text-muted-foreground">
+                                    FOTO'S — sla op en upload naar Facebook:
+                                  </p>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => handleDownloadImages(images, property.title)}
+                                  >
+                                    <ImageIcon className="h-4 w-4 mr-2" />
+                                    Download alle foto's ({images.length})
+                                  </Button>
+                                </div>
                                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
                                   {images.map((img, i) => (
                                     <a
