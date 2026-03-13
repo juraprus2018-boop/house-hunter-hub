@@ -519,19 +519,39 @@ Deno.serve(async (req) => {
       const results = [];
 
       for (const prop of sorted) {
-        const result = await postPropertyToFacebook(prop as Property, PAGE_ID, PAGE_ACCESS_TOKEN);
+        const channelResults: Array<{ channel: "page" | "group"; success: boolean; postId?: string; error?: string }> = [];
+
+        if (shouldPostGroup && groupId) {
+          const groupResult = await postPropertyToFacebookGroup(prop as Property, groupId, groupAccessToken);
+          channelResults.push({ channel: "group", ...groupResult });
+        }
+
+        if (shouldPostPage) {
+          const pageResult = await postPropertyToFacebook(prop as Property, PAGE_ID, PAGE_ACCESS_TOKEN);
+          channelResults.push({ channel: "page", ...pageResult });
+        }
+
+        const firstSuccess = channelResults.find((r) => r.success);
+        const success = Boolean(firstSuccess);
+        const errorMessages = channelResults.filter((r) => !r.success && r.error).map((r) => `[${r.channel}] ${r.error}`);
+
         results.push({
           property_id: prop.id,
           title: prop.title,
           images_used: getUniqueImages(prop.images).length,
-          ...result,
+          success,
+          postId: firstSuccess?.postId,
+          error: success ? undefined : errorMessages.join(" | ") || "Posten mislukt",
+          channels: channelResults,
         });
-        if (result.success) {
+
+        if (success) {
           await supabase
             .from("properties")
             .update({ facebook_posted_at: new Date().toISOString() })
             .eq("id", prop.id);
         }
+
         // Delay between posts to avoid rate limiting
         await new Promise((r) => setTimeout(r, 3000));
       }
