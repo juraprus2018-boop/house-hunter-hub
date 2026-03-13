@@ -28,6 +28,8 @@ interface Property {
   build_year: number | null;
 }
 
+type PostTarget = "page" | "group" | "both";
+
 // ─── Caption Builder ────────────────────────────────────────────────
 
 function buildCaption(property: Property): string {
