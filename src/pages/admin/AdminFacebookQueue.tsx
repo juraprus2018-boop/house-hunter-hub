@@ -144,7 +144,7 @@ const AdminFacebookQueue = () => {
     },
   });
 
-  const selectedGroup = groups?.find((g) => g.id === selectedGroupId) || groups?.[0] || null;
+  const selectedGroup = groups?.find((g) => g.id === selectedGroupId) || null;
 
   // Fetch unposted properties (optionally filtered by city)
   const { data: properties, isLoading: propertiesLoading } = useQuery({
