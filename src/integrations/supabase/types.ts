@@ -170,6 +170,36 @@ export type Database = {
         }
         Relationships: []
       }
+      facebook_groups: {
+        Row: {
+          city: string | null
+          created_at: string
+          group_url: string
+          id: string
+          is_active: boolean
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          city?: string | null
+          created_at?: string
+          group_url: string
+          id?: string
+          is_active?: boolean
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          city?: string | null
+          created_at?: string
+          group_url?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       favorites: {
         Row: {
           created_at: string
