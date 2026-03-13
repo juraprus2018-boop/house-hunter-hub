@@ -481,6 +481,12 @@ const AdminFacebookQueue = () => {
                             >
                               <ExternalLink className="h-4 w-4" />
                             </Button>
+                            <Button asChild variant="outline" size="sm">
+                              <a href={normalizeGroupUrl(selectedGroup.group_url)} target="_blank" rel="noopener noreferrer">
+                                <Facebook className="h-4 w-4 mr-2" />
+                                Open groep
+                              </a>
+                            </Button>
                             <Button
                               onClick={() => handleCopyAndOpen(property, selectedGroup)}
                               disabled={isCopied}
@@ -494,7 +500,7 @@ const AdminFacebookQueue = () => {
                               ) : (
                                 <>
                                   <Copy className="h-4 w-4 mr-2" />
-                                  Kopieer & Open Groep
+                                  Kopieer tekst
                                 </>
                               )}
                             </Button>
