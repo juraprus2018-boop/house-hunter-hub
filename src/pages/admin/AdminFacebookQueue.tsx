@@ -283,10 +283,8 @@ const AdminFacebookQueue = () => {
 
     toast({
       title: "✅ Tekst gekopieerd!",
-      description: `Sla nu de foto's op en plak de tekst in de groep.`,
+      description: `Plak de tekst in de groep. Klik daarna op "Geplaatst ✓" om de woning af te vinken.`,
     });
-
-    await markPosted.mutateAsync(property.id);
   };
 
   const handleDownloadImages = async (images: string[], propertyTitle: string) => {
