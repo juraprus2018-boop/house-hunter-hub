@@ -3,6 +3,7 @@ import AdminLayout from "./AdminLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -16,9 +17,18 @@ import {
   ChevronUp,
   Facebook,
   RefreshCw,
+  Plus,
+  Trash2,
+  Settings,
 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
-const FACEBOOK_GROUP_URL = "https://www.facebook.com/groups/woningeneindhoven/";
 const SITE_URL = "https://www.woonpeek.nl";
 
 function formatPrice(price: number, listingType: string): string {
@@ -55,6 +65,14 @@ interface Property {
   created_at: string;
 }
 
+interface FacebookGroup {
+  id: string;
+  name: string;
+  group_url: string;
+  city: string | null;
+  is_active: boolean;
+}
+
 function buildPostText(property: Property): string {
   const typeLabel = capitalize(property.property_type);
   const priceFormatted = formatPrice(property.price, property.listing_type);
@@ -62,7 +80,6 @@ function buildPostText(property: Property): string {
   const listingLabel = property.listing_type === "huur" ? "te huur" : "te koop";
 
   const lines: string[] = [];
-
   lines.push(`🏠 ${typeLabel} ${listingLabel} in ${property.city} – ${priceFormatted}`);
   lines.push("");
 
@@ -77,7 +94,6 @@ function buildPostText(property: Property): string {
   lines.push(specs.join("\n"));
   lines.push("");
 
-  // Short description
   if (property.description) {
     const clean = property.description.replace(/<[^>]*>/g, "").replace(/\s+/g, " ").trim();
     if (clean.length > 10) {
@@ -91,13 +107,12 @@ function buildPostText(property: Property): string {
   lines.push(propertyUrl);
   lines.push("");
 
-  // Hashtags
   const tags: string[] = [];
   tags.push(property.listing_type === "huur" ? "#huurwoning" : "#koopwoning");
   tags.push(property.listing_type === "huur" ? "#tehuur" : "#tekoop");
   tags.push(`#${property.property_type.toLowerCase()}`);
   tags.push(`#${property.city.toLowerCase().replace(/[^a-z0-9]/g, "")}`);
-  tags.push("#woning", "#woonpeek", "#woningmarkt", "#eindhoven");
+  tags.push("#woning", "#woonpeek", "#woningmarkt");
   lines.push([...new Set(tags)].slice(0, 8).join(" "));
 
   return lines.join("\n");
@@ -107,23 +122,89 @@ const AdminFacebookQueue = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [expandedId, setExpandedId] = useState<string | null>(null);
-  const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [copiedKey, setCopiedKey] = useState<string | null>(null);
+  const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
+  const [showAddGroup, setShowAddGroup] = useState(false);
+  const [newGroupName, setNewGroupName] = useState("");
+  const [newGroupUrl, setNewGroupUrl] = useState("");
+  const [newGroupCity, setNewGroupCity] = useState("");
 
-  // Fetch unposted Eindhoven properties
-  const { data: properties, isLoading } = useQuery({
-    queryKey: ["facebook-queue-eindhoven"],
+  // Fetch facebook groups
+  const { data: groups, isLoading: groupsLoading } = useQuery({
+    queryKey: ["facebook-groups"],
     queryFn: async () => {
       const { data, error } = await supabase
+        .from("facebook_groups")
+        .select("*")
+        .eq("is_active", true)
+        .order("name");
+      if (error) throw error;
+      return (data || []) as FacebookGroup[];
+    },
+  });
+
+  const selectedGroup = groups?.find((g) => g.id === selectedGroupId) || groups?.[0] || null;
+
+  // Fetch unposted properties (optionally filtered by city)
+  const { data: properties, isLoading: propertiesLoading } = useQuery({
+    queryKey: ["facebook-queue", selectedGroup?.id],
+    queryFn: async () => {
+      if (!selectedGroup) return [];
+      let query = supabase
         .from("properties")
         .select("id, title, price, listing_type, city, street, house_number, postal_code, surface_area, bedrooms, bathrooms, images, slug, property_type, description, energy_label, build_year, created_at")
         .eq("status", "actief")
         .is("facebook_posted_at", null)
-        .ilike("city", "Eindhoven")
         .order("created_at", { ascending: false })
         .limit(50);
 
+      if (selectedGroup.city) {
+        query = query.ilike("city", selectedGroup.city);
+      }
+
+      const { data, error } = await query;
       if (error) throw error;
       return (data || []) as Property[];
+    },
+    enabled: !!selectedGroup,
+  });
+
+  // Add group
+  const addGroup = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase.from("facebook_groups").insert({
+        name: newGroupName.trim(),
+        group_url: newGroupUrl.trim(),
+        city: newGroupCity.trim() || null,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["facebook-groups"] });
+      setNewGroupName("");
+      setNewGroupUrl("");
+      setNewGroupCity("");
+      setShowAddGroup(false);
+      toast({ title: "Groep toegevoegd!" });
+    },
+    onError: () => {
+      toast({ title: "Fout bij toevoegen", variant: "destructive" });
+    },
+  });
+
+  // Delete group
+  const deleteGroup = useMutation({
+    mutationFn: async (groupId: string) => {
+      const { error } = await supabase
+        .from("facebook_groups")
+        .update({ is_active: false })
+        .eq("id", groupId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["facebook-groups"] });
+      setSelectedGroupId(null);
+      toast({ title: "Groep verwijderd" });
     },
   });
 
@@ -137,33 +218,27 @@ const AdminFacebookQueue = () => {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["facebook-queue-eindhoven"] });
+      queryClient.invalidateQueries({ queryKey: ["facebook-queue"] });
     },
   });
 
-  const handleCopyAndOpen = async (property: Property) => {
+  const handleCopyAndOpen = async (property: Property, group: FacebookGroup) => {
     try {
       const text = buildPostText(property);
       await navigator.clipboard.writeText(text);
-      setCopiedId(property.id);
-      setTimeout(() => setCopiedId(null), 3000);
+      setCopiedKey(`${property.id}-${group.id}`);
+      setTimeout(() => setCopiedKey(null), 3000);
 
-      // Open Facebook group in new tab
-      window.open(FACEBOOK_GROUP_URL, "_blank", "noopener,noreferrer");
+      window.open(group.group_url, "_blank", "noopener,noreferrer");
 
       toast({
         title: "✅ Post gekopieerd!",
-        description: "Plak het bericht in de Facebook-groep met Ctrl+V / ⌘+V. Vergeet niet de foto's toe te voegen!",
+        description: `Plak het bericht in "${group.name}" met Ctrl+V / ⌘+V.`,
       });
 
-      // Mark as posted
       await markPosted.mutateAsync(property.id);
     } catch {
-      toast({
-        title: "Kopiëren mislukt",
-        description: "Probeer het opnieuw.",
-        variant: "destructive",
-      });
+      toast({ title: "Kopiëren mislukt", variant: "destructive" });
     }
   };
 
@@ -172,7 +247,9 @@ const AdminFacebookQueue = () => {
     return images.filter((img) => img && img.trim() !== "").slice(0, 5);
   };
 
-  if (isLoading) {
+  const isLoading = groupsLoading || propertiesLoading;
+
+  if (groupsLoading) {
     return (
       <AdminLayout>
         <div className="flex items-center justify-center py-12">
@@ -185,179 +262,289 @@ const AdminFacebookQueue = () => {
   return (
     <AdminLayout>
       <div className="space-y-6">
+        {/* Header */}
         <div className="flex items-center justify-between">
           <div>
             <h1 className="font-display text-3xl font-bold text-foreground flex items-center gap-3">
               <Facebook className="h-8 w-8 text-blue-600" />
-              Facebook Groep – Eindhoven
+              Facebook Groepen
             </h1>
             <p className="mt-1 text-muted-foreground">
-              Kopieer posts en plaats ze handmatig in de Facebook-groep
+              Beheer groepen en kopieer posts om handmatig te plaatsen
             </p>
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => queryClient.invalidateQueries({ queryKey: ["facebook-queue-eindhoven"] })}
-          >
-            <RefreshCw className="h-4 w-4 mr-2" />
-            Vernieuwen
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                queryClient.invalidateQueries({ queryKey: ["facebook-groups"] });
+                queryClient.invalidateQueries({ queryKey: ["facebook-queue"] });
+              }}
+            >
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Vernieuwen
+            </Button>
+          </div>
         </div>
 
-        {/* Instructions */}
-        <Card className="border-blue-200 bg-blue-50/50">
-          <CardContent className="pt-6">
-            <h3 className="font-semibold text-foreground mb-2">Hoe werkt het?</h3>
-            <ol className="list-decimal list-inside space-y-1 text-sm text-muted-foreground">
-              <li>Klik op <strong>"Kopieer & Open Groep"</strong> bij een woning</li>
-              <li>De tekst wordt gekopieerd en de Facebook-groep opent in een nieuw tabblad</li>
-              <li>Plak de tekst met <kbd className="px-1.5 py-0.5 rounded bg-muted text-xs font-mono">Ctrl+V</kbd></li>
-              <li>Voeg eventueel foto's toe vanuit de preview hieronder</li>
-              <li>Klik op "Plaatsen" in Facebook</li>
-            </ol>
+        {/* Group tabs + add */}
+        <Card>
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-base">Groepen</CardTitle>
+              <Dialog open={showAddGroup} onOpenChange={setShowAddGroup}>
+                <DialogTrigger asChild>
+                  <Button size="sm">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Groep toevoegen
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Facebook Groep toevoegen</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4 pt-2">
+                    <div>
+                      <label className="text-sm font-medium text-foreground">Naam *</label>
+                      <Input
+                        placeholder="bijv. Woningen Eindhoven"
+                        value={newGroupName}
+                        onChange={(e) => setNewGroupName(e.target.value)}
+                      />
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-foreground">Facebook Groep URL *</label>
+                      <Input
+                        placeholder="https://www.facebook.com/groups/..."
+                        value={newGroupUrl}
+                        onChange={(e) => setNewGroupUrl(e.target.value)}
+                      />
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-foreground">Stad (optioneel)</label>
+                      <Input
+                        placeholder="bijv. Eindhoven (leeg = alle steden)"
+                        value={newGroupCity}
+                        onChange={(e) => setNewGroupCity(e.target.value)}
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Als je een stad invult worden alleen woningen uit die stad getoond
+                      </p>
+                    </div>
+                    <Button
+                      className="w-full"
+                      disabled={!newGroupName.trim() || !newGroupUrl.trim() || addGroup.isPending}
+                      onClick={() => addGroup.mutate()}
+                    >
+                      {addGroup.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Plus className="h-4 w-4 mr-2" />}
+                      Toevoegen
+                    </Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            </div>
+          </CardHeader>
+          <CardContent className="pt-0">
+            {groups && groups.length > 0 ? (
+              <div className="flex flex-wrap gap-2">
+                {groups.map((group) => (
+                  <div key={group.id} className="flex items-center gap-1">
+                    <Button
+                      variant={selectedGroup?.id === group.id ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setSelectedGroupId(group.id)}
+                      className="gap-2"
+                    >
+                      <Facebook className="h-3.5 w-3.5" />
+                      {group.name}
+                      {group.city && (
+                        <Badge variant="secondary" className="ml-1 text-xs">
+                          {group.city}
+                        </Badge>
+                      )}
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                      onClick={() => {
+                        if (confirm(`Weet je zeker dat je "${group.name}" wilt verwijderen?`)) {
+                          deleteGroup.mutate(group.id);
+                        }
+                      }}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                Nog geen groepen toegevoegd. Klik op "Groep toevoegen" om te beginnen.
+              </p>
+            )}
           </CardContent>
         </Card>
 
-        {/* Queue count */}
-        <div className="flex items-center gap-2">
-          <Badge variant="secondary" className="text-sm">
-            {properties?.length || 0} woningen in de wachtrij
-          </Badge>
-        </div>
+        {/* Instructions */}
+        {selectedGroup && (
+          <Card className="border-blue-200 bg-blue-50/50">
+            <CardContent className="pt-6">
+              <h3 className="font-semibold text-foreground mb-2">Hoe werkt het?</h3>
+              <ol className="list-decimal list-inside space-y-1 text-sm text-muted-foreground">
+                <li>Klik op <strong>"Kopieer & Open Groep"</strong> bij een woning</li>
+                <li>De tekst wordt gekopieerd en de groep <strong>"{selectedGroup.name}"</strong> opent</li>
+                <li>Plak de tekst met <kbd className="px-1.5 py-0.5 rounded bg-muted text-xs font-mono">Ctrl+V</kbd></li>
+                <li>Voeg eventueel foto's toe en klik op "Plaatsen"</li>
+              </ol>
+            </CardContent>
+          </Card>
+        )}
 
-        {/* Property cards */}
-        {properties && properties.length > 0 ? (
-          <div className="space-y-4">
-            {properties.map((property) => {
-              const isExpanded = expandedId === property.id;
-              const images = getImages(property.images);
-              const isCopied = copiedId === property.id;
+        {/* Queue */}
+        {selectedGroup && (
+          <>
+            <div className="flex items-center gap-2">
+              <Badge variant="secondary" className="text-sm">
+                {properties?.length || 0} woningen in de wachtrij
+                {selectedGroup.city ? ` voor ${selectedGroup.city}` : ""}
+              </Badge>
+            </div>
 
-              return (
-                <Card key={property.id} className="overflow-hidden">
-                  <CardHeader className="pb-3">
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex-1 min-w-0">
-                        <CardTitle className="text-lg truncate">{property.title}</CardTitle>
-                        <p className="text-sm text-muted-foreground mt-1">
-                          📍 {property.street} {property.house_number}, {property.city} •{" "}
-                          💰 {formatPrice(property.price, property.listing_type)}
-                          {property.surface_area ? ` • 📐 ${property.surface_area} m²` : ""}
-                          {property.bedrooms ? ` • 🛏️ ${property.bedrooms}` : ""}
-                        </p>
-                        <div className="flex items-center gap-2 mt-2">
-                          <Badge variant="outline" className="capitalize">{property.property_type}</Badge>
-                          <Badge variant="outline">{property.listing_type === "huur" ? "Huur" : "Koop"}</Badge>
-                          {images.length > 0 && (
-                            <Badge variant="secondary">
-                              <ImageIcon className="h-3 w-3 mr-1" />
-                              {images.length} foto's
-                            </Badge>
-                          )}
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2 shrink-0">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => window.open(`/woning/${property.slug || property.id}`, "_blank")}
-                        >
-                          <ExternalLink className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          onClick={() => handleCopyAndOpen(property)}
-                          disabled={isCopied}
-                          className={isCopied ? "bg-emerald-600 hover:bg-emerald-600" : "bg-blue-600 hover:bg-blue-700"}
-                        >
-                          {isCopied ? (
-                            <>
-                              <Check className="h-4 w-4 mr-2" />
-                              Gekopieerd!
-                            </>
-                          ) : (
-                            <>
-                              <Copy className="h-4 w-4 mr-2" />
-                              Kopieer & Open Groep
-                            </>
-                          )}
-                        </Button>
-                      </div>
-                    </div>
-                  </CardHeader>
+            {propertiesLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="h-6 w-6 animate-spin text-primary" />
+              </div>
+            ) : properties && properties.length > 0 ? (
+              <div className="space-y-4">
+                {properties.map((property) => {
+                  const isExpanded = expandedId === property.id;
+                  const images = getImages(property.images);
+                  const isCopied = copiedKey === `${property.id}-${selectedGroup.id}`;
 
-                  {/* Expandable preview */}
-                  <CardContent className="pt-0">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="text-muted-foreground"
-                      onClick={() => setExpandedId(isExpanded ? null : property.id)}
-                    >
-                      {isExpanded ? (
-                        <>
-                          <ChevronUp className="h-4 w-4 mr-1" />
-                          Verberg preview
-                        </>
-                      ) : (
-                        <>
-                          <ChevronDown className="h-4 w-4 mr-1" />
-                          Bekijk post preview & foto's
-                        </>
-                      )}
-                    </Button>
-
-                    {isExpanded && (
-                      <div className="mt-4 space-y-4">
-                        {/* Post text preview */}
-                        <div className="rounded-lg bg-muted/50 p-4">
-                          <p className="text-xs font-medium text-muted-foreground mb-2">POST TEKST:</p>
-                          <pre className="whitespace-pre-wrap text-sm text-foreground font-sans leading-relaxed">
-                            {buildPostText(property)}
-                          </pre>
-                        </div>
-
-                        {/* Images */}
-                        {images.length > 0 && (
-                          <div>
-                            <p className="text-xs font-medium text-muted-foreground mb-2">
-                              FOTO'S (rechtermuisknop → "Afbeelding opslaan als" om toe te voegen aan je groepspost):
+                  return (
+                    <Card key={property.id} className="overflow-hidden">
+                      <CardHeader className="pb-3">
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex-1 min-w-0">
+                            <CardTitle className="text-lg truncate">{property.title}</CardTitle>
+                            <p className="text-sm text-muted-foreground mt-1">
+                              📍 {property.street} {property.house_number}, {property.city} •{" "}
+                              💰 {formatPrice(property.price, property.listing_type)}
+                              {property.surface_area ? ` • 📐 ${property.surface_area} m²` : ""}
+                              {property.bedrooms ? ` • 🛏️ ${property.bedrooms}` : ""}
                             </p>
-                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
-                              {images.map((img, i) => (
-                                <a
-                                  key={i}
-                                  href={img}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="block aspect-[4/3] rounded-lg overflow-hidden border hover:ring-2 hover:ring-primary transition-all"
-                                >
-                                  <img
-                                    src={img}
-                                    alt={`Foto ${i + 1}`}
-                                    className="w-full h-full object-cover"
-                                    loading="lazy"
-                                  />
-                                </a>
-                              ))}
+                            <div className="flex items-center gap-2 mt-2">
+                              <Badge variant="outline" className="capitalize">{property.property_type}</Badge>
+                              <Badge variant="outline">{property.listing_type === "huur" ? "Huur" : "Koop"}</Badge>
+                              {images.length > 0 && (
+                                <Badge variant="secondary">
+                                  <ImageIcon className="h-3 w-3 mr-1" />
+                                  {images.length} foto's
+                                </Badge>
+                              )}
                             </div>
                           </div>
+                          <div className="flex items-center gap-2 shrink-0">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => window.open(`/woning/${property.slug || property.id}`, "_blank")}
+                            >
+                              <ExternalLink className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              onClick={() => handleCopyAndOpen(property, selectedGroup)}
+                              disabled={isCopied}
+                              className={isCopied ? "bg-emerald-600 hover:bg-emerald-600" : "bg-blue-600 hover:bg-blue-700"}
+                            >
+                              {isCopied ? (
+                                <>
+                                  <Check className="h-4 w-4 mr-2" />
+                                  Gekopieerd!
+                                </>
+                              ) : (
+                                <>
+                                  <Copy className="h-4 w-4 mr-2" />
+                                  Kopieer & Open Groep
+                                </>
+                              )}
+                            </Button>
+                          </div>
+                        </div>
+                      </CardHeader>
+
+                      <CardContent className="pt-0">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-muted-foreground"
+                          onClick={() => setExpandedId(isExpanded ? null : property.id)}
+                        >
+                          {isExpanded ? (
+                            <><ChevronUp className="h-4 w-4 mr-1" /> Verberg preview</>
+                          ) : (
+                            <><ChevronDown className="h-4 w-4 mr-1" /> Bekijk post preview & foto's</>
+                          )}
+                        </Button>
+
+                        {isExpanded && (
+                          <div className="mt-4 space-y-4">
+                            <div className="rounded-lg bg-muted/50 p-4">
+                              <p className="text-xs font-medium text-muted-foreground mb-2">POST TEKST:</p>
+                              <pre className="whitespace-pre-wrap text-sm text-foreground font-sans leading-relaxed">
+                                {buildPostText(property)}
+                              </pre>
+                            </div>
+
+                            {images.length > 0 && (
+                              <div>
+                                <p className="text-xs font-medium text-muted-foreground mb-2">
+                                  FOTO'S (rechtermuisknop → "Afbeelding opslaan als"):
+                                </p>
+                                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
+                                  {images.map((img, i) => (
+                                    <a
+                                      key={i}
+                                      href={img}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="block aspect-[4/3] rounded-lg overflow-hidden border hover:ring-2 hover:ring-primary transition-all"
+                                    >
+                                      <img src={img} alt={`Foto ${i + 1}`} className="w-full h-full object-cover" loading="lazy" />
+                                    </a>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </div>
                         )}
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
-        ) : (
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+            ) : (
+              <Card>
+                <CardContent className="py-12 text-center">
+                  <Facebook className="h-12 w-12 mx-auto text-muted-foreground/30 mb-4" />
+                  <h3 className="text-lg font-semibold text-foreground">Geen woningen in de wachtrij</h3>
+                  <p className="text-muted-foreground mt-1">
+                    Alle woningen{selectedGroup.city ? ` in ${selectedGroup.city}` : ""} zijn al geplaatst.
+                  </p>
+                </CardContent>
+              </Card>
+            )}
+          </>
+        )}
+
+        {!selectedGroup && groups && groups.length > 0 && (
           <Card>
             <CardContent className="py-12 text-center">
-              <Facebook className="h-12 w-12 mx-auto text-muted-foreground/30 mb-4" />
-              <h3 className="text-lg font-semibold text-foreground">Geen woningen in de wachtrij</h3>
-              <p className="text-muted-foreground mt-1">
-                Alle Eindhoven-woningen zijn al geplaatst op Facebook.
-              </p>
+              <Settings className="h-12 w-12 mx-auto text-muted-foreground/30 mb-4" />
+              <h3 className="text-lg font-semibold text-foreground">Selecteer een groep</h3>
+              <p className="text-muted-foreground mt-1">Klik hierboven op een groep om de wachtrij te bekijken.</p>
             </CardContent>
           </Card>
         )}
