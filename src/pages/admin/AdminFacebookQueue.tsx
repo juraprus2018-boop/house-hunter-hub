@@ -224,56 +224,52 @@ const AdminFacebookQueue = () => {
 
   const handleCopyAndOpen = async (property: Property, group: FacebookGroup) => {
     const text = buildPostText(property);
-
-    const copyPromise = (async () => {
-      try {
-        await navigator.clipboard.writeText(text);
-        return true;
-      } catch {
-        const textarea = document.createElement("textarea");
-        textarea.value = text;
-        textarea.setAttribute("readonly", "");
-        textarea.style.position = "fixed";
-        textarea.style.top = "-9999px";
-        textarea.style.opacity = "0";
-        document.body.appendChild(textarea);
-        textarea.focus();
-        textarea.select();
-
-        const didCopy = document.execCommand("copy");
-        document.body.removeChild(textarea);
-        return didCopy;
-      }
-    })();
-
-    const popup = window.open("about:blank", "_blank");
-    const copied = await copyPromise;
-
-    if (!copied) {
-      popup?.close();
-      toast({ title: "Kopiëren mislukt", variant: "destructive" });
-      return;
-    }
+    const popup = window.open(group.group_url, "_blank");
 
     if (!popup) {
       toast({
         title: "Popup geblokkeerd",
-        description: "Sta pop-ups toe of open de groep handmatig via de groepsknop.",
+        description: "Sta pop-ups toe voor deze site en probeer opnieuw.",
         variant: "destructive",
       });
       return;
     }
 
     popup.opener = null;
-    popup.location.href = group.group_url;
 
-    setCopiedKey(`${property.id}-${group.id}`);
-    setTimeout(() => setCopiedKey(null), 3000);
+    let copied = false;
 
-    toast({
-      title: "✅ Post gekopieerd!",
-      description: `Plak het bericht in "${group.name}" met Ctrl+V / ⌘+V.`,
-    });
+    try {
+      await navigator.clipboard.writeText(text);
+      copied = true;
+    } catch {
+      const textarea = document.createElement("textarea");
+      textarea.value = text;
+      textarea.setAttribute("readonly", "");
+      textarea.style.position = "fixed";
+      textarea.style.top = "-9999px";
+      textarea.style.opacity = "0";
+      document.body.appendChild(textarea);
+      textarea.focus();
+      textarea.select();
+      copied = document.execCommand("copy");
+      document.body.removeChild(textarea);
+    }
+
+    if (!copied) {
+      window.prompt("Kopiëren lukte niet automatisch. Kopieer handmatig:", text);
+      toast({
+        title: "Handmatig kopiëren",
+        description: "De groep is geopend. Kopieer de tekst uit de popup en plak in Facebook.",
+      });
+    } else {
+      setCopiedKey(`${property.id}-${group.id}`);
+      setTimeout(() => setCopiedKey(null), 3000);
+      toast({
+        title: "✅ Post gekopieerd!",
+        description: `Plak het bericht in "${group.name}" met Ctrl+V / ⌘+V.`,
+      });
+    }
 
     await markPosted.mutateAsync(property.id);
   };
