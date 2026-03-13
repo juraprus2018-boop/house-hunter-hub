@@ -627,7 +627,7 @@ Deno.serve(async (req) => {
     }
 
     return new Response(
-      JSON.stringify({ error: "Provide property_id, auto_post=true, or blog_post=true" }),
+      JSON.stringify({ error: "Provide property_id, auto_post=true, or blog_post=true. Optional: target=page|group|both" }),
       { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (err) {
