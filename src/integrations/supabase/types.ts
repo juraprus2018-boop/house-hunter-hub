@@ -170,6 +170,42 @@ export type Database = {
         }
         Relationships: []
       }
+      facebook_group_posts: {
+        Row: {
+          group_id: string
+          id: string
+          posted_at: string
+          property_id: string
+        }
+        Insert: {
+          group_id: string
+          id?: string
+          posted_at?: string
+          property_id: string
+        }
+        Update: {
+          group_id?: string
+          id?: string
+          posted_at?: string
+          property_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "facebook_group_posts_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "facebook_groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "facebook_group_posts_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       facebook_groups: {
         Row: {
           city: string | null

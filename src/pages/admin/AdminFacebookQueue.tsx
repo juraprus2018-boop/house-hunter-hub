@@ -146,18 +146,32 @@ const AdminFacebookQueue = () => {
 
   const selectedGroup = groups?.find((g) => g.id === selectedGroupId) || null;
 
+  // Fetch posted property IDs for selected group
+  const { data: postedPropertyIds } = useQuery({
+    queryKey: ["facebook-group-posts", selectedGroup?.id],
+    queryFn: async () => {
+      if (!selectedGroup) return new Set<string>();
+      const { data, error } = await supabase
+        .from("facebook_group_posts")
+        .select("property_id")
+        .eq("group_id", selectedGroup.id);
+      if (error) throw error;
+      return new Set((data || []).map((r: any) => r.property_id));
+    },
+    enabled: !!selectedGroup && showQueue,
+  });
+
   // Fetch unposted properties (optionally filtered by city)
   const { data: properties, isLoading: propertiesLoading } = useQuery({
-    queryKey: ["facebook-queue", selectedGroup?.id],
+    queryKey: ["facebook-queue", selectedGroup?.id, postedPropertyIds ? Array.from(postedPropertyIds) : []],
     queryFn: async () => {
-      if (!selectedGroup) return [];
+      if (!selectedGroup || !postedPropertyIds) return [];
       let query = supabase
         .from("properties")
         .select("id, title, price, listing_type, city, street, house_number, postal_code, surface_area, bedrooms, bathrooms, images, slug, property_type, description, energy_label, build_year, created_at")
         .eq("status", "actief")
-        .is("facebook_posted_at", null)
         .order("created_at", { ascending: false })
-        .limit(50);
+        .limit(100);
 
       if (selectedGroup.city) {
         query = query.ilike("city", selectedGroup.city);
@@ -165,9 +179,10 @@ const AdminFacebookQueue = () => {
 
       const { data, error } = await query;
       if (error) throw error;
-      return (data || []) as Property[];
+      // Filter out properties already posted to this group
+      return ((data || []) as Property[]).filter(p => !postedPropertyIds.has(p.id));
     },
-    enabled: !!selectedGroup && showQueue,
+    enabled: !!selectedGroup && showQueue && !!postedPropertyIds,
   });
 
   // Add group
@@ -210,16 +225,16 @@ const AdminFacebookQueue = () => {
     },
   });
 
-  // Mark as posted
-  const markPosted = useMutation({
-    mutationFn: async (propertyId: string) => {
+  // Mark as posted to specific group
+  const markPostedToGroup = useMutation({
+    mutationFn: async ({ propertyId, groupId }: { propertyId: string; groupId: string }) => {
       const { error } = await supabase
-        .from("properties")
-        .update({ facebook_posted_at: new Date().toISOString() })
-        .eq("id", propertyId);
+        .from("facebook_group_posts")
+        .insert({ group_id: groupId, property_id: propertyId });
       if (error) throw error;
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["facebook-group-posts"] });
       queryClient.invalidateQueries({ queryKey: ["facebook-queue"] });
     },
   });
@@ -268,10 +283,8 @@ const AdminFacebookQueue = () => {
 
     toast({
       title: "✅ Tekst gekopieerd!",
-      description: `Sla nu de foto's op en plak de tekst in de groep.`,
+      description: `Plak de tekst in de groep. Klik daarna op "Geplaatst ✓" om de woning af te vinken.`,
     });
-
-    await markPosted.mutateAsync(property.id);
   };
 
   const handleDownloadImages = async (images: string[], propertyTitle: string) => {
@@ -538,6 +551,23 @@ const AdminFacebookQueue = () => {
                                   Kopieer tekst
                                 </>
                               )}
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="border-emerald-300 text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800"
+                              disabled={markPostedToGroup.isPending}
+                              onClick={() => {
+                                markPostedToGroup.mutate({ propertyId: property.id, groupId: selectedGroup.id });
+                                toast({ title: "✅ Gemarkeerd als geplaatst" });
+                              }}
+                            >
+                              {markPostedToGroup.isPending ? (
+                                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                              ) : (
+                                <Check className="h-4 w-4 mr-2" />
+                              )}
+                              Geplaatst ✓
                             </Button>
                           </div>
                         </div>
