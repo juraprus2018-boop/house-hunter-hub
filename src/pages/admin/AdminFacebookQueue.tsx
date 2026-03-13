@@ -76,8 +76,7 @@ interface FacebookGroup {
 function buildPostText(property: Property): string {
   const typeLabel = capitalize(property.property_type);
   const priceFormatted = formatPrice(property.price, property.listing_type);
-  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-  const propertyUrl = `${supabaseUrl}/functions/v1/og-property?slug=${property.slug || property.id}`;
+  const propertyUrl = `https://www.woonpeek.nl/woning/${property.slug || property.id}`;
   const listingLabel = property.listing_type === "huur" ? "te huur" : "te koop";
 
   const lines: string[] = [];
