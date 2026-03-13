@@ -124,6 +124,7 @@ const AdminFacebookQueue = () => {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
+  const [showQueue, setShowQueue] = useState(false);
   const [showAddGroup, setShowAddGroup] = useState(false);
   const [newGroupName, setNewGroupName] = useState("");
   const [newGroupUrl, setNewGroupUrl] = useState("");
@@ -143,7 +144,7 @@ const AdminFacebookQueue = () => {
     },
   });
 
-  const selectedGroup = groups?.find((g) => g.id === selectedGroupId) || groups?.[0] || null;
+  const selectedGroup = groups?.find((g) => g.id === selectedGroupId) || null;
 
   // Fetch unposted properties (optionally filtered by city)
   const { data: properties, isLoading: propertiesLoading } = useQuery({
@@ -166,7 +167,7 @@ const AdminFacebookQueue = () => {
       if (error) throw error;
       return (data || []) as Property[];
     },
-    enabled: !!selectedGroup,
+    enabled: !!selectedGroup && showQueue,
   });
 
   // Add group
@@ -204,6 +205,7 @@ const AdminFacebookQueue = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["facebook-groups"] });
       setSelectedGroupId(null);
+      setShowQueue(false);
       toast({ title: "Groep verwijderd" });
     },
   });
@@ -378,9 +380,17 @@ const AdminFacebookQueue = () => {
                 {groups.map((group) => (
                   <div key={group.id} className="flex items-center gap-1">
                     <Button
-                      variant={selectedGroup?.id === group.id ? "default" : "outline"}
+                      variant={selectedGroup?.id === group.id && showQueue ? "default" : "outline"}
                       size="sm"
-                      onClick={() => setSelectedGroupId(group.id)}
+                      onClick={() => {
+                        if (selectedGroupId === group.id && showQueue) {
+                          setShowQueue(false);
+                          setSelectedGroupId(null);
+                        } else {
+                          setSelectedGroupId(group.id);
+                          setShowQueue(true);
+                        }
+                      }}
                       className="gap-2"
                     >
                       <Facebook className="h-3.5 w-3.5" />
@@ -415,7 +425,7 @@ const AdminFacebookQueue = () => {
         </Card>
 
         {/* Instructions */}
-        {selectedGroup && (
+        {selectedGroup && showQueue && (
           <Card className="border-blue-200 bg-blue-50/50">
             <CardContent className="pt-6">
               <h3 className="font-semibold text-foreground mb-2">Hoe werkt het?</h3>
@@ -430,7 +440,7 @@ const AdminFacebookQueue = () => {
         )}
 
         {/* Queue */}
-        {selectedGroup && (
+        {selectedGroup && showQueue && (
           <>
             <div className="flex items-center gap-2">
               <Badge variant="secondary" className="text-sm">
