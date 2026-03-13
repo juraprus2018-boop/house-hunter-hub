@@ -223,13 +223,26 @@ const AdminFacebookQueue = () => {
   });
 
   const handleCopyAndOpen = async (property: Property, group: FacebookGroup) => {
+    const popup = window.open("about:blank", "_blank");
+
     try {
       const text = buildPostText(property);
       await navigator.clipboard.writeText(text);
+
+      if (!popup) {
+        toast({
+          title: "Popup geblokkeerd",
+          description: "Sta pop-ups toe of open de groep handmatig via de groepsknop.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      popup.opener = null;
+      popup.location.href = group.group_url;
+
       setCopiedKey(`${property.id}-${group.id}`);
       setTimeout(() => setCopiedKey(null), 3000);
-
-      window.open(group.group_url, "_blank");
 
       toast({
         title: "✅ Post gekopieerd!",
@@ -238,6 +251,7 @@ const AdminFacebookQueue = () => {
 
       await markPosted.mutateAsync(property.id);
     } catch {
+      popup?.close();
       toast({ title: "Kopiëren mislukt", variant: "destructive" });
     }
   };
