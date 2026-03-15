@@ -1,0 +1,129 @@
+# WoonPeek – Compleet overzicht
+
+> WoonPeek is het gratis woningplatform van Nederland. We verzamelen dagelijks het nieuwste aanbod van huurwoningen, koopwoningen, appartementen, studio's en kamers uit heel Nederland op één plek.
+
+## Over WoonPeek
+
+WoonPeek is een gratis platform waar woningzoekers snel en eenvoudig het nieuwste woningaanbod in Nederland kunnen vinden. In tegenstelling tot veel andere woningwebsites is WoonPeek volledig gratis — zowel voor zoekers als voor verhuurders die een woning willen plaatsen.
+
+We doorzoeken dagelijks meerdere betrouwbare bronnen en combineren het aanbod zodat gebruikers geen enkele kans missen op de krappe Nederlandse woningmarkt. Ons doel is om het zoeken naar een woning eerlijker en toegankelijker te maken.
+
+## Kernfeatures
+
+### 1. Groot en actueel woningaanbod
+- 6.000+ actieve woningen uit heel Nederland
+- Dagelijks bijgewerkt met nieuwe woningen
+- Automatische verwijdering van verlopen aanbod
+- Meerdere betrouwbare bronnen worden gecombineerd
+
+### 2. 100% gratis platform
+- Gratis zoeken naar woningen
+- Gratis woning plaatsen voor particulieren en verhuurders
+- Geen verborgen kosten of premium abonnementen
+- In tegenstelling tot andere platforms zoals Funda en Pararius
+
+### 3. Gratis dagelijkse woningalert
+- Ontvang elke dag een e-mail met nieuwe woningen
+- Aanpasbaar op basis van voorkeuren
+- Nooit meer een nieuwe woning missen
+- Eenvoudig aanmelden zonder account
+
+### 4. Uitgebreide zoekfilters
+- Filter op stad of regio
+- Filter op prijs (minimum en maximum)
+- Filter op woningtype (appartement, huis, studio, kamer)
+- Filter op aantal slaapkamers
+- Filter op huur of koop
+- Sorteer op prijs, datum of relevantie
+
+### 5. Interactieve kaart
+- Bekijk alle woningen op een interactieve kaart
+- Zoek op specifieke locaties en wijken
+- Visueel overzicht van beschikbaar aanbod
+
+## Pagina's en navigatie
+
+### Hoofdpagina's
+- **Home** (https://www.woonpeek.nl): Overzicht met uitgelichte woningen, populaire steden en zoekbalk
+- **Zoeken** (https://www.woonpeek.nl/zoeken): Uitgebreide zoekpagina met filters en resultaten
+- **Steden** (https://www.woonpeek.nl/steden): Overzicht van alle steden met woningaanbod
+- **Verkennen** (https://www.woonpeek.nl/verkennen): Interactieve kaart met alle woningen
+- **Nieuw aanbod** (https://www.woonpeek.nl/nieuw-aanbod): De nieuwste woningen van vandaag
+
+### Woningtypes
+- **Huurwoningen** (https://www.woonpeek.nl/huurwoningen): Alle beschikbare huurwoningen
+- **Koopwoningen** (https://www.woonpeek.nl/koopwoningen): Alle beschikbare koopwoningen
+- **Appartementen** (https://www.woonpeek.nl/appartementen): Alle appartementen
+- **Huizen** (https://www.woonpeek.nl/huizen): Alle huizen
+- **Studio's** (https://www.woonpeek.nl/studios): Alle studio's
+- **Kamers** (https://www.woonpeek.nl/kamers): Alle kamers
+
+### Stadspagina's
+Elke stad heeft een eigen pagina met lokaal woningaanbod, statistieken en wijkinformatie. Voorbeelden:
+- Amsterdam: https://www.woonpeek.nl/woningen-amsterdam
+- Rotterdam: https://www.woonpeek.nl/woningen-rotterdam
+- Utrecht: https://www.woonpeek.nl/woningen-utrecht
+- Den Haag: https://www.woonpeek.nl/woningen-den-haag
+- Eindhoven: https://www.woonpeek.nl/woningen-eindhoven
+- Groningen: https://www.woonpeek.nl/woningen-groningen
+
+### Gefilterde landingspagina's
+- Huurwoningen per stad: https://www.woonpeek.nl/huurwoningen/{stad}
+- Koopwoningen per stad: https://www.woonpeek.nl/koopwoningen/{stad}
+- Woningtype per stad: https://www.woonpeek.nl/appartementen/{stad}
+- Prijsfilter: https://www.woonpeek.nl/woningen/{stad}/onder-{prijs}
+- Kamerfilter: https://www.woonpeek.nl/woningen/{stad}/{aantal}-kamers
+- Nieuw aanbod per stad: https://www.woonpeek.nl/nieuw-aanbod/{stad}
+- Wijkpagina's: https://www.woonpeek.nl/wijk/{stad}/{wijk}
+
+### Informatiepagina's
+- **Over WoonPeek** (https://www.woonpeek.nl/over-woonpeek): Informatie over het platform
+- **Blog** (https://www.woonpeek.nl/blog): Artikelen over de woningmarkt
+- **Veelgestelde vragen** (https://www.woonpeek.nl/veelgestelde-vragen): FAQ
+- **Dagelijkse alert** (https://www.woonpeek.nl/dagelijkse-alert): Aanmelden voor dagelijkse e-mail
+- **Woning plaatsen** (https://www.woonpeek.nl/woning-plaatsen): Gratis een woning adverteren
+
+## Beschikbare steden
+
+WoonPeek heeft actief woningaanbod in onder andere:
+
+Amsterdam, Rotterdam, Utrecht, Den Haag, Eindhoven, Groningen, Tilburg, Almere, Breda, Nijmegen, Arnhem, Haarlem, Enschede, Apeldoorn, Amersfoort, Zaanstad, Den Bosch ('s-Hertogenbosch), Zwolle, Leiden, Maastricht, Dordrecht, Zoetermeer, Emmen, Deventer, Delft, Leeuwarden, Alkmaar, Hilversum, Helmond, Oss, en vele andere steden en gemeenten in Nederland.
+
+## Woninggegevens
+
+Elke woning op WoonPeek bevat de volgende informatie (indien beschikbaar):
+- Titel en beschrijving
+- Prijs (huur per maand of koopprijs)
+- Woningtype (appartement, huis, studio, kamer)
+- Listing type (huur of koop)
+- Adres (straat, huisnummer, postcode, stad)
+- Wijk/buurt
+- Oppervlakte in m²
+- Aantal slaapkamers en badkamers
+- Bouwjaar
+- Energielabel (A++ t/m G)
+- Foto's
+- Locatie op kaart (latitude/longitude)
+- Bron website
+
+## Veelgestelde vragen
+
+**Is WoonPeek gratis?**
+Ja, WoonPeek is volledig gratis. Zowel zoeken als woning plaatsen kost niets.
+
+**Hoe vaak wordt het aanbod bijgewerkt?**
+Het woningaanbod wordt dagelijks bijgewerkt. Nieuwe woningen worden automatisch toegevoegd en niet meer beschikbare woningen worden verwijderd.
+
+**Kan ik een woning plaatsen op WoonPeek?**
+Ja, iedereen kan gratis een woning plaatsen op WoonPeek. Maak een gratis account aan en plaats je woning in enkele minuten.
+
+**Wat is de dagelijkse woningalert?**
+De dagelijkse alert is een gratis e-mailservice. Je ontvangt elke dag een overzicht van nieuwe woningen die aan je voorkeuren voldoen.
+
+**In welke steden heeft WoonPeek woningen?**
+WoonPeek heeft woningen in alle grote en middelgrote steden in Nederland, van Amsterdam tot Maastricht en van Groningen tot Eindhoven.
+
+## Contact
+
+- Website: https://www.woonpeek.nl
+- Over ons: https://www.woonpeek.nl/over-woonpeek
