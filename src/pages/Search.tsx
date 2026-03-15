@@ -71,6 +71,8 @@ const SearchPage = () => {
     city: debouncedCity || undefined,
     propertyType: filters.propertyType || undefined,
     listingType: filters.listingType || undefined,
+    maxPrice: filters.maxPrice,
+    minBedrooms: filters.minBedrooms,
     includeInactive: filters.includeInactive,
   });
 
