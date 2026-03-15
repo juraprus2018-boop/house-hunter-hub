@@ -312,12 +312,14 @@ interface FacetFilters {
   city?: string;
   propertyType?: string;
   listingType?: string;
+  maxPrice?: number;
+  minBedrooms?: number;
   includeInactive?: boolean;
 }
 
 export const useFilterFacets = (filters: FacetFilters) => {
   return useQuery({
-    queryKey: ["filter-facets", filters.city, filters.propertyType, filters.listingType, filters.includeInactive],
+    queryKey: ["filter-facets", filters.city, filters.propertyType, filters.listingType, filters.maxPrice, filters.minBedrooms, filters.includeInactive],
     queryFn: async () => {
       // We need to fetch minimal data to compute facets
       // Only select the fields we need for counting
@@ -352,19 +354,21 @@ export const useFilterFacets = (filters: FacetFilters) => {
       for (const row of data || []) {
         const matchesType = !filters.propertyType || row.property_type === filters.propertyType;
         const matchesListing = !filters.listingType || row.listing_type === filters.listingType;
+        const matchesPrice = !filters.maxPrice || row.price <= filters.maxPrice;
+        const matchesBedrooms = !filters.minBedrooms || (row.bedrooms != null && row.bedrooms >= filters.minBedrooms);
 
-        // Count property types (filtered by listing type only)
-        if (matchesListing) {
+        // Count property types (cross-filter: apply all OTHER filters)
+        if (matchesListing && matchesPrice && matchesBedrooms) {
           propertyTypes[row.property_type] = (propertyTypes[row.property_type] || 0) + 1;
         }
 
-        // Count listing types (filtered by property type only)
-        if (matchesType) {
+        // Count listing types (cross-filter: apply all OTHER filters)
+        if (matchesType && matchesPrice && matchesBedrooms) {
           listingTypes[row.listing_type] = (listingTypes[row.listing_type] || 0) + 1;
         }
 
-        // For bedrooms/surface/price, apply both filters
-        if (matchesType && matchesListing) {
+        // Count bedrooms (apply all filters EXCEPT minBedrooms)
+        if (matchesType && matchesListing && matchesPrice) {
           if (row.bedrooms != null) {
             for (const threshold of [1, 2, 3, 4]) {
               if (row.bedrooms >= threshold) {
@@ -372,6 +376,10 @@ export const useFilterFacets = (filters: FacetFilters) => {
               }
             }
           }
+        }
+
+        // Count surfaces (apply all filters)
+        if (matchesType && matchesListing && matchesPrice && matchesBedrooms) {
           if (row.surface_area != null) {
             for (const threshold of [25, 50, 75, 100]) {
               if (row.surface_area >= threshold) {
