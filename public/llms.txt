@@ -1,0 +1,39 @@
+# WoonPeek
+
+> WoonPeek is het gratis woningplatform van Nederland. We verzamelen dagelijks het nieuwste aanbod van huurwoningen, koopwoningen, appartementen, studio's en kamers uit heel Nederland op één plek.
+
+## Over WoonPeek
+
+WoonPeek is een gratis platform waar woningzoekers snel en eenvoudig het nieuwste woningaanbod in Nederland kunnen vinden. We doorzoeken dagelijks meerdere betrouwbare bronnen en combineren het aanbod zodat gebruikers geen enkele kans missen.
+
+### Kernfeatures
+
+- **Groot aanbod**: 6.000+ actieve woningen uit heel Nederland
+- **Dagelijks bijgewerkt**: Elke dag worden nieuwe woningen toegevoegd en verlopen woningen verwijderd
+- **100% gratis**: Geen kosten voor zoeken, plaatsen of alerts
+- **Gratis dagelijkse alert**: Ontvang automatisch een e-mail met nieuwe woningen
+- **Gratis woning plaatsen**: Particulieren en verhuurders kunnen gratis adverteren
+- **Meerdere woningtypes**: Appartementen, huizen, studio's en kamers
+- **Huur en koop**: Zowel huurwoningen als koopwoningen
+- **Interactieve kaart**: Bekijk woningen op de kaart
+- **Zoekfilters**: Filter op stad, prijs, woningtype, slaapkamers en meer
+
+### Beschikbare steden
+
+WoonPeek heeft woningen in alle grote Nederlandse steden, waaronder Amsterdam, Rotterdam, Utrecht, Den Haag, Eindhoven, Groningen, Tilburg, Almere, Breda, Nijmegen, en vele andere steden.
+
+### Woningtypes
+
+- **Appartementen**: Zelfstandige appartementen in diverse prijsklassen
+- **Huizen**: Eengezinswoningen, rijtjeshuizen en vrijstaande woningen
+- **Studio's**: Compacte zelfstandige woonruimtes
+- **Kamers**: Kamers in gedeelde woningen
+
+### Contact
+
+- Website: https://www.woonpeek.nl
+- Over ons: https://www.woonpeek.nl/over-woonpeek
+
+## Documentatie
+
+- [llms-full.txt](https://www.woonpeek.nl/llms-full.txt): Uitgebreide versie met alle pagina's en features
