@@ -299,6 +299,22 @@ const PropertyDetail = () => {
       <Header />
 
       <main className="flex-1">
+        {/* ── Inactive Banner ── */}
+        {property.status !== "actief" && (
+          <div className="bg-destructive/10 border-b border-destructive/20">
+            <div className="mx-auto max-w-screen-xl px-4 py-3 text-center">
+              <p className="text-sm font-medium text-destructive">
+                {property.status === "verhuurd" && "⚠️ Deze woning is verhuurd en niet meer beschikbaar."}
+                {property.status === "verkocht" && "⚠️ Deze woning is verkocht en niet meer beschikbaar."}
+                {property.status === "inactief" && "⚠️ Deze woning is niet meer beschikbaar. Mogelijk is deze al verhuurd of van de markt gehaald."}
+              </p>
+              <Link to="/zoeken" className="mt-1 inline-block text-sm font-semibold text-primary underline underline-offset-2 hover:text-primary/80">
+                Bekijk vergelijkbare woningen →
+              </Link>
+            </div>
+          </div>
+        )}
+
         {/* ── Photo Gallery ── */}
         <section className="relative bg-muted">
           <div className="cursor-pointer" onClick={() => { setLightboxOpen(true); setCurrentImageIndex(0); }}>
