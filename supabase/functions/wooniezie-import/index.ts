@@ -191,34 +191,7 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Deactivate Wooniezie properties no longer in the API
-    const pageSize = 1000;
-    let from = 0;
-    while (true) {
-      const { data: existingProps, error: fetchErr } = await supabase
-        .from("properties")
-        .select("id, source_url")
-        .eq("source_site", "Wooniezie")
-        .eq("status", "actief")
-        .range(from, from + pageSize - 1);
-
-      if (fetchErr || !existingProps || existingProps.length === 0) break;
-
-      for (const prop of existingProps) {
-        if (prop.source_url && !activeSourceUrls.has(prop.source_url)) {
-          const { error: updateErr } = await supabase
-            .from("properties")
-            .update({ status: "inactief", updated_at: new Date().toISOString() })
-            .eq("id", prop.id);
-          if (!updateErr) {
-            totalDeactivated++;
-          }
-        }
-      }
-
-      if (existingProps.length < pageSize) break;
-      from += pageSize;
-    }
+    // Note: Deactivation is handled by the separate deactivate-properties function
 
     // Update scraper record if exists
     const { data: scraper } = await supabase
