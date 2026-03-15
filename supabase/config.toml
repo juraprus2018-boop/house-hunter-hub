@@ -32,3 +32,6 @@ verify_jwt = false
 
 [functions.admin-reset]
 verify_jwt = false
+
+[functions.deactivate-properties]
+verify_jwt = false
