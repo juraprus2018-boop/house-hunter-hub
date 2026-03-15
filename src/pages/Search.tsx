@@ -62,9 +62,10 @@ const SearchPage = () => {
     if (debouncedCity) params.set("locatie", debouncedCity);
     if (filters.propertyType) params.set("type", filters.propertyType);
     if (filters.listingType) params.set("aanbod", filters.listingType);
-    if (filters.maxPrice) params.set("maxPrijs", String(filters.maxPrice));
+    if (filters.maxPrice) params.set("max_prijs", String(filters.maxPrice));
+    if (filters.minBedrooms) params.set("min_kamers", String(filters.minBedrooms));
     setSearchParams(params, { replace: true });
-  }, [debouncedCity, filters.propertyType, filters.listingType, filters.maxPrice, setSearchParams]);
+  }, [debouncedCity, filters.propertyType, filters.listingType, filters.maxPrice, filters.minBedrooms, setSearchParams]);
 
   const { data: facets } = useFilterFacets({
     city: debouncedCity || undefined,
