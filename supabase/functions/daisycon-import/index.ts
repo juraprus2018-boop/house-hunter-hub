@@ -653,37 +653,7 @@ Deno.serve(async (req) => {
         results.push({ feed: feed.name, imported: 0, skipped: 0, deactivated: 0, error: msg });
       }
     }
-
-    // Deactivate Daisycon properties no longer in any feed
-    console.log(`Deactivating properties not in feed. Active source URLs: ${allActiveSourceUrls.size}`);
-    const feedNames = feeds.map((f: any) => f.name);
-    const pageSize = 1000;
-    let from = 0;
-    while (true) {
-      const { data: existingProps, error: fetchErr } = await supabase
-        .from("properties")
-        .select("id, source_url")
-        .in("source_site", feedNames)
-        .eq("status", "actief")
-        .range(from, from + pageSize - 1);
-
-      if (fetchErr || !existingProps || existingProps.length === 0) break;
-
-      for (const prop of existingProps) {
-        if (prop.source_url && !allActiveSourceUrls.has(prop.source_url)) {
-          await supabase
-            .from("properties")
-            .update({ status: "inactief", updated_at: new Date().toISOString() })
-            .eq("id", prop.id);
-          totalDeactivated++;
-        }
-      }
-
-      if (existingProps.length < pageSize) break;
-      from += pageSize;
-    }
-
-    console.log(`Deactivated ${totalDeactivated} properties no longer in feeds`);
+    // Note: Deactivation is handled by the separate deactivate-properties function
 
     // Mark job as completed
     if (jobId) {
