@@ -44,6 +44,7 @@ import NeighborhoodPage from "./pages/NeighborhoodPage";
 import PostPropertyStart from "./pages/PostPropertyStart";
 import AlertUnsubscribe from "./pages/AlertUnsubscribe";
 import DailyAlert from "./pages/DailyAlert";
+import About from "./pages/About";
 import { cityPath } from "@/lib/cities";
 
 const queryClient = new QueryClient();
