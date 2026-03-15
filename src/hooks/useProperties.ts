@@ -319,7 +319,7 @@ interface FacetFilters {
 
 export const useFilterFacets = (filters: FacetFilters) => {
   return useQuery({
-    queryKey: ["filter-facets", filters.city, filters.propertyType, filters.listingType, filters.includeInactive],
+    queryKey: ["filter-facets", filters.city, filters.propertyType, filters.listingType, filters.maxPrice, filters.minBedrooms, filters.includeInactive],
     queryFn: async () => {
       // We need to fetch minimal data to compute facets
       // Only select the fields we need for counting
