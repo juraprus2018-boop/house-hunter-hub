@@ -41,7 +41,8 @@ const SearchPage = () => {
     city: searchParams.get("locatie") || "",
     propertyType: (searchParams.get("type") as SearchFilterValues["propertyType"]) || "",
     listingType: (searchParams.get("aanbod") as SearchFilterValues["listingType"]) || "",
-    maxPrice: searchParams.get("maxPrijs") ? Number(searchParams.get("maxPrijs")) : undefined,
+    maxPrice: searchParams.get("max_prijs") ? Number(searchParams.get("max_prijs")) : searchParams.get("maxPrijs") ? Number(searchParams.get("maxPrijs")) : undefined,
+    minBedrooms: searchParams.get("min_kamers") ? Number(searchParams.get("min_kamers")) : undefined,
   });
 
   // Debounced city value for the actual query
