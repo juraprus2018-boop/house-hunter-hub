@@ -312,6 +312,8 @@ interface FacetFilters {
   city?: string;
   propertyType?: string;
   listingType?: string;
+  maxPrice?: number;
+  minBedrooms?: number;
   includeInactive?: boolean;
 }
 
