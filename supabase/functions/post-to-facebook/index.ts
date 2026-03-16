@@ -407,8 +407,6 @@ Deno.serve(async (req) => {
 
     const target: PostTarget = ["page", "group", "both"].includes(rawTarget)
       ? rawTarget
-      : auto_post
-      ? "group"
       : "page";
 
     const shouldPostGroup = target === "group" || target === "both";
