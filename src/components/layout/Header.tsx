@@ -87,6 +87,7 @@ const woningCategories = [
 const Header = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [openMobileCategory, setOpenMobileCategory] = useState<string | null>(null);
+  const [hoveredCategory, setHoveredCategory] = useState(woningCategories[0]);
   const { user, signOut } = useAuth();
   const { data: isAdmin } = useIsAdmin();
   const navigate = useNavigate();
