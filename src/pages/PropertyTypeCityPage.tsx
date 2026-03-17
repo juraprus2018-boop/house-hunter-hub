@@ -87,8 +87,12 @@ const PropertyTypeCityPage = ({ propertyType }: PropertyTypeCityPageProps) => {
   );
 
   // SEO
-  const pageTitle = `${label.plural} in ${locationLabel} – beschikbare woningen | WoonPeek`;
-  const pageDescription = `Ben je op zoek naar een ${label.singular} in ${locationLabel}? Bekijk ${totalCount} beschikbare ${label.plural.toLowerCase()} in ${locationLabel}. Vergelijk prijzen, foto's en details.`;
+  const pageTitle = cityName
+    ? `${label.plural} in ${cityName} – ${totalCount} ${label.plural.toLowerCase()} te huur & koop | WoonPeek`
+    : `${label.plural} in Nederland – huur en koop aanbod | WoonPeek`;
+  const pageDescription = cityName
+    ? `Bekijk ${totalCount} ${label.plural.toLowerCase()} in ${cityName}. Vergelijk huurprijzen, foto's en details van beschikbare ${label.plural.toLowerCase()} in ${cityName}. Dagelijks bijgewerkt op WoonPeek.`
+    : `Op zoek naar een ${label.singular}? Bekijk het actuele aanbod van ${label.plural.toLowerCase()} in heel Nederland. Vergelijk prijzen, foto's en details op WoonPeek.`;
   const canonical = citySlug
     ? `https://www.woonpeek.nl/${label.slug}/${citySlug}`
     : `https://www.woonpeek.nl/${label.slug}`;
@@ -180,14 +184,20 @@ const PropertyTypeCityPage = ({ propertyType }: PropertyTypeCityPageProps) => {
                 {label.plural} in {locationLabel}
               </h1>
               <p className="mt-3 text-base leading-relaxed text-muted-foreground">
-                Ben je op zoek naar een {label.singular} in {locationLabel}? Op deze pagina vind je het actuele
-                aanbod van beschikbare {label.plural.toLowerCase()} in {locationLabel}. Bekijk prijzen, foto's en
-                details en ontdek welke woning bij je past.
+                Op zoek naar een <strong>{label.singular} in {locationLabel}</strong>? WoonPeek verzamelt dagelijks
+                het nieuwste aanbod van {label.plural.toLowerCase()} uit meerdere bronnen. Of je nu een{" "}
+                <strong>{label.singular} wilt huren</strong> of <strong>kopen in {locationLabel}</strong> — hier
+                vind je het actuele overzicht met prijzen, foto's en details.
               </p>
               <div className="mt-4 flex flex-wrap gap-3">
                 <div className="rounded-full bg-card px-4 py-2 text-sm text-foreground shadow-sm">
                   {totalCount} {label.plural.toLowerCase()} beschikbaar
                 </div>
+                {cityName && (
+                  <Link to="/dagelijkse-alert" className="rounded-full bg-primary/10 px-4 py-2 text-sm font-medium text-primary transition-colors hover:bg-primary/20">
+                    Dagelijkse alert instellen
+                  </Link>
+                )}
               </div>
             </div>
           </div>
@@ -279,27 +289,90 @@ const PropertyTypeCityPage = ({ propertyType }: PropertyTypeCityPageProps) => {
           </div>
         </section>
 
-        {/* SEO text: [Woningtype] huren in [stad] */}
+        {/* SEO text: [Woningtype] in [stad] */}
         <section className="border-t bg-muted/30 py-12">
           <div className="container max-w-4xl">
             <h2 className="font-display text-2xl font-bold text-foreground">
-              {label.plural} huren in {locationLabel}
+              {label.singular.charAt(0).toUpperCase() + label.singular.slice(1)} zoeken in {locationLabel}
             </h2>
             <div className="mt-4 space-y-4 text-sm leading-relaxed text-muted-foreground">
               <p>
                 Op WoonPeek vind je het meest actuele aanbod van <strong>{label.plural.toLowerCase()} in {locationLabel}</strong>.
                 Of je nu een <strong>{label.singular} huren in {locationLabel}</strong> zoekt of een{" "}
                 <strong>{label.singular} kopen in {locationLabel}</strong> — wij verzamelen dagelijks nieuw aanbod uit
-                meerdere bronnen zodat jij niets mist.
+                meerdere bronnen zodat jij niets mist. Zo vind je sneller een woning dan op andere platforms.
               </p>
               <p>
-                Momenteel staan er {totalCount} {label.plural.toLowerCase()} in {locationLabel} op WoonPeek.
+                Momenteel staan er <strong>{totalCount} {label.plural.toLowerCase()}</strong> in {locationLabel} op WoonPeek.
                 Gebruik de filters om direct te filteren op prijs, aantal kamers en oppervlakte.
+                {cityName && (
+                  <> De woningmarkt in {cityName} is vaak krap, waardoor het belangrijk is om snel te reageren op
+                  nieuw aanbod. </>
+                )}
                 Stel een{" "}
                 <Link to="/dagelijkse-alert" className="text-primary underline hover:no-underline">
                   dagelijkse alert
                 </Link>{" "}
                 in om als eerste op de hoogte te zijn van nieuwe {label.plural.toLowerCase()} in {locationLabel}.
+              </p>
+              {cityName && (
+                <p>
+                  Naast {label.plural.toLowerCase()} vind je op WoonPeek ook{" "}
+                  {(["appartement", "huis", "studio", "kamer"] as PropertyType[])
+                    .filter((t) => t !== propertyType)
+                    .slice(0, 3)
+                    .map((t, i, arr) => (
+                      <span key={t}>
+                        <Link to={`/${TYPE_LABELS[t].slug}/${citySlug}`} className="text-primary underline hover:no-underline">
+                          {TYPE_LABELS[t].plural.toLowerCase()} in {cityName}
+                        </Link>
+                        {i < arr.length - 1 ? ", " : ""}
+                      </span>
+                    ))}
+                  . Vergelijk het volledige aanbod en vind de woning die bij jou past.
+                </p>
+              )}
+            </div>
+
+            {/* Extra SEO-blok */}
+            <h3 className="mt-10 font-display text-xl font-semibold text-foreground">
+              Tips voor het vinden van een {label.singular} in {locationLabel}
+            </h3>
+            <div className="mt-3 space-y-4 text-sm leading-relaxed text-muted-foreground">
+              <p>
+                De vraag naar <strong>{label.plural.toLowerCase()} in {locationLabel}</strong> is groot. Het is daarom
+                verstandig om meerdere kanalen te gebruiken. WoonPeek bundelt het aanbod van verschillende websites,
+                zodat je geen enkele woning mist. Hieronder een paar tips:
+              </p>
+              <ul className="list-disc space-y-2 pl-5">
+                <li>
+                  <strong>Reageer snel</strong> — Nieuwe {label.plural.toLowerCase()} in {locationLabel} zijn vaak
+                  binnen een paar dagen verhuurd. Stel een{" "}
+                  <Link to="/dagelijkse-alert" className="text-primary underline hover:no-underline">
+                    dagelijkse alert
+                  </Link>{" "}
+                  in om als eerste op de hoogte te zijn.
+                </li>
+                <li>
+                  <strong>Gebruik filters</strong> — Filter op maximale prijs, aantal kamers of oppervlakte om
+                  alleen relevante {label.plural.toLowerCase()} te zien.
+                </li>
+                <li>
+                  <strong>Bekijk ook andere woningtypes</strong> — Naast {label.plural.toLowerCase()} kun je ook
+                  zoeken op andere categorieën. Verbreed je zoekopdracht om meer kans te maken.
+                </li>
+                <li>
+                  <strong>Vergelijk prijzen</strong> — Bekijk de prijzen van vergelijkbare{" "}
+                  {label.plural.toLowerCase()} in {locationLabel} om een realistisch beeld te krijgen van de markt.
+                </li>
+              </ul>
+              <p>
+                Op{" "}
+                <Link to="/" className="text-primary underline hover:no-underline">
+                  WoonPeek
+                </Link>{" "}
+                kun je volledig gratis zoeken naar {label.plural.toLowerCase()} in {locationLabel} en door heel Nederland.
+                Begin vandaag nog met zoeken en vind jouw ideale {label.singular}.
               </p>
             </div>
           </div>
