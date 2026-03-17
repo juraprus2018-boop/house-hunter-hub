@@ -102,6 +102,7 @@ const App = () => (
             <Route path="/nieuw-aanbod/:city" element={<NewListingsCity />} />
             <Route path="/dagelijkse-alert" element={<DailyAlert />} />
             <Route path="/over-woonpeek" element={<About />} />
+            <Route path="/makelaar-koppelen" element={<MakelaarKoppelen />} />
             <Route path="/alerts/afmelden/:token" element={<AlertUnsubscribe />} />
             <Route path="/huurwoningen/:city?" element={<ListingTypePage listingType="huur" />} />
             <Route path="/koopwoningen/:city?" element={<ListingTypePage listingType="koop" />} />
