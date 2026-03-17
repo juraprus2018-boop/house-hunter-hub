@@ -132,9 +132,10 @@ const Header = () => {
                             <NavigationMenuLink asChild>
                               <Link
                                 to={cat.href}
-                                className="group flex items-center gap-3 rounded-md px-3 py-2.5 text-sm transition-colors hover:bg-muted"
+                                onMouseEnter={() => setHoveredCategory(cat)}
+                                className={`group flex items-center gap-3 rounded-md px-3 py-2.5 text-sm transition-colors hover:bg-muted ${hoveredCategory.href === cat.href ? 'bg-muted' : ''}`}
                               >
-                                <cat.icon className="h-4 w-4 text-muted-foreground group-hover:text-primary" />
+                                <cat.icon className={`h-4 w-4 transition-colors ${hoveredCategory.href === cat.href ? 'text-primary' : 'text-muted-foreground group-hover:text-primary'}`} />
                                 <div>
                                   <span className="font-medium">{cat.label}</span>
                                   <p className="text-xs text-muted-foreground">{cat.description}</p>
@@ -145,7 +146,7 @@ const Header = () => {
                         ))}
                       </ul>
                     </div>
-                    {/* Right column: Popular cities for huurwoningen */}
+                    {/* Right column: Dynamic cities based on hovered category */}
                     <div className="p-4">
                       <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                         Populaire steden
@@ -155,11 +156,11 @@ const Header = () => {
                           <li key={city}>
                             <NavigationMenuLink asChild>
                               <Link
-                                to={`/huurwoningen/${cityToSlug(city)}`}
+                                to={`${hoveredCategory.cityPrefix}/${cityToSlug(city)}`}
                                 className="flex items-center gap-2 rounded-md px-3 py-1.5 text-sm transition-colors hover:bg-muted"
                               >
                                 <MapPin className="h-3 w-3 text-muted-foreground" />
-                                <span>Huurwoningen {city}</span>
+                                <span>{hoveredCategory.label} {city}</span>
                               </Link>
                             </NavigationMenuLink>
                           </li>
