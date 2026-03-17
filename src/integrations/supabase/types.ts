@@ -327,6 +327,54 @@ export type Database = {
           },
         ]
       }
+      makelaar_leads: {
+        Row: {
+          contactpersoon: string
+          created_at: string
+          crm_software: string | null
+          email: string
+          feed_url: string | null
+          id: string
+          kantoornaam: string
+          koppeling_type: string
+          opmerking: string | null
+          status: string
+          telefoon: string | null
+          updated_at: string
+          website: string | null
+        }
+        Insert: {
+          contactpersoon: string
+          created_at?: string
+          crm_software?: string | null
+          email: string
+          feed_url?: string | null
+          id?: string
+          kantoornaam: string
+          koppeling_type?: string
+          opmerking?: string | null
+          status?: string
+          telefoon?: string | null
+          updated_at?: string
+          website?: string | null
+        }
+        Update: {
+          contactpersoon?: string
+          created_at?: string
+          crm_software?: string | null
+          email?: string
+          feed_url?: string | null
+          id?: string
+          kantoornaam?: string
+          koppeling_type?: string
+          opmerking?: string | null
+          status?: string
+          telefoon?: string | null
+          updated_at?: string
+          website?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
