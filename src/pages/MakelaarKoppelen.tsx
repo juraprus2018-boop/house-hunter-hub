@@ -129,13 +129,10 @@ const MakelaarKoppelen = () => {
 
   return (
     <>
-      <Helmet>
-        <title>Makelaar woningen koppelen – Automatisch plaatsen op WoonPeek</title>
-        <meta
-          name="description"
-          content="Koppel je XML feed of makelaarssoftware en toon al je woningen automatisch op WoonPeek. Geen handmatig invoeren, binnen 2 minuten geregeld."
-        />
-      </Helmet>
+      <SEOHead
+        title="Makelaar woningen koppelen – Automatisch plaatsen op WoonPeek"
+        description="Koppel je XML feed of makelaarssoftware en toon al je woningen automatisch op WoonPeek. Geen handmatig invoeren, binnen 2 minuten geregeld."
+      />
       <Header />
 
       <main className="min-h-screen">
