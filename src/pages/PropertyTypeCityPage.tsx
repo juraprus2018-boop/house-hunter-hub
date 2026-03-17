@@ -87,8 +87,12 @@ const PropertyTypeCityPage = ({ propertyType }: PropertyTypeCityPageProps) => {
   );
 
   // SEO
-  const pageTitle = `${label.plural} in ${locationLabel} – beschikbare woningen | WoonPeek`;
-  const pageDescription = `Ben je op zoek naar een ${label.singular} in ${locationLabel}? Bekijk ${totalCount} beschikbare ${label.plural.toLowerCase()} in ${locationLabel}. Vergelijk prijzen, foto's en details.`;
+  const pageTitle = cityName
+    ? `${label.plural} in ${cityName} – ${totalCount} ${label.plural.toLowerCase()} te huur & koop | WoonPeek`
+    : `${label.plural} in Nederland – huur en koop aanbod | WoonPeek`;
+  const pageDescription = cityName
+    ? `Bekijk ${totalCount} ${label.plural.toLowerCase()} in ${cityName}. Vergelijk huurprijzen, foto's en details van beschikbare ${label.plural.toLowerCase()} in ${cityName}. Dagelijks bijgewerkt op WoonPeek.`
+    : `Op zoek naar een ${label.singular}? Bekijk het actuele aanbod van ${label.plural.toLowerCase()} in heel Nederland. Vergelijk prijzen, foto's en details op WoonPeek.`;
   const canonical = citySlug
     ? `https://www.woonpeek.nl/${label.slug}/${citySlug}`
     : `https://www.woonpeek.nl/${label.slug}`;
