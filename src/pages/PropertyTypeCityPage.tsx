@@ -184,14 +184,20 @@ const PropertyTypeCityPage = ({ propertyType }: PropertyTypeCityPageProps) => {
                 {label.plural} in {locationLabel}
               </h1>
               <p className="mt-3 text-base leading-relaxed text-muted-foreground">
-                Ben je op zoek naar een {label.singular} in {locationLabel}? Op deze pagina vind je het actuele
-                aanbod van beschikbare {label.plural.toLowerCase()} in {locationLabel}. Bekijk prijzen, foto's en
-                details en ontdek welke woning bij je past.
+                Op zoek naar een <strong>{label.singular} in {locationLabel}</strong>? WoonPeek verzamelt dagelijks
+                het nieuwste aanbod van {label.plural.toLowerCase()} uit meerdere bronnen. Of je nu een{" "}
+                <strong>{label.singular} wilt huren</strong> of <strong>kopen in {locationLabel}</strong> — hier
+                vind je het actuele overzicht met prijzen, foto's en details.
               </p>
               <div className="mt-4 flex flex-wrap gap-3">
                 <div className="rounded-full bg-card px-4 py-2 text-sm text-foreground shadow-sm">
                   {totalCount} {label.plural.toLowerCase()} beschikbaar
                 </div>
+                {cityName && (
+                  <Link to="/dagelijkse-alert" className="rounded-full bg-primary/10 px-4 py-2 text-sm font-medium text-primary transition-colors hover:bg-primary/20">
+                    Dagelijkse alert instellen
+                  </Link>
+                )}
               </div>
             </div>
           </div>
