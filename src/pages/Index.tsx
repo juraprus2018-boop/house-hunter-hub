@@ -1,5 +1,7 @@
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
+import TopAlertBar from "@/components/layout/TopAlertBar";
+import CitySkyline from "@/components/layout/CitySkyline";
 import HeroSection from "@/components/home/HeroSection";
 import FeaturedListings from "@/components/home/FeaturedListings";
 import PopularCities from "@/components/home/PopularCities";
@@ -51,6 +53,7 @@ const Index = () => {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteLd) }}
       />
+      <TopAlertBar />
       <Header />
       <main className="flex-1">
         <HeroSection />
@@ -61,6 +64,7 @@ const Index = () => {
         <DailyAlertSection />
         <SEOContentSection />
       </main>
+      <CitySkyline />
       <Footer />
     </div>
   );
