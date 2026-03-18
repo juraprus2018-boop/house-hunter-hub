@@ -68,6 +68,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
     { to: "/admin/scrapers", label: "Daisycon", icon: Activity },
     { to: "/admin/blog", label: "Blog", icon: FileText },
     { to: "/admin/facebook", label: "Facebook Groep", icon: Facebook },
+    { to: "/admin/leads", label: "Makelaar Leads", icon: Handshake },
     { to: "/admin/instellingen", label: "Instellingen", icon: Settings },
   ];
 
