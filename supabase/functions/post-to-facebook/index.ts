@@ -755,7 +755,7 @@ Deno.serve(async (req) => {
         );
       }
 
-      const channelResults: Array<{ channel: "page" | "group"; success: boolean; postId?: string; error?: string }> = [];
+      const channelResults: Array<{ channel: "page" | "group" | "instagram"; success: boolean; postId?: string; error?: string }> = [];
 
       if (shouldPostGroup && groupId) {
         const groupResult = await postPropertyToFacebookGroup(property as Property, groupId, groupAccessToken);
@@ -765,6 +765,13 @@ Deno.serve(async (req) => {
       if (shouldPostPage) {
         const pageResult = await postPropertyToFacebook(property as Property, PAGE_ID, PAGE_ACCESS_TOKEN);
         channelResults.push({ channel: "page", ...pageResult });
+      }
+
+      // Instagram for manual posts too
+      const igId = await getInstagramAccountId(PAGE_ID, PAGE_ACCESS_TOKEN);
+      if (igId) {
+        const igResult = await postPropertyToInstagram(property as Property, igId, PAGE_ACCESS_TOKEN);
+        channelResults.push({ channel: "instagram", ...igResult });
       }
 
       const firstSuccess = channelResults.find((r) => r.success);
