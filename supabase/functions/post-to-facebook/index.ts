@@ -657,10 +657,23 @@ Deno.serve(async (req) => {
         })
         .slice(0, count);
 
+      // Resolve Instagram account ID once
+      let igAccountId: string | null = null;
+      try {
+        igAccountId = await getInstagramAccountId(PAGE_ID, PAGE_ACCESS_TOKEN);
+        if (igAccountId) {
+          console.log("Instagram Business Account ID:", igAccountId);
+        } else {
+          console.log("No Instagram Business Account linked, skipping IG posts");
+        }
+      } catch (e) {
+        console.warn("Could not resolve Instagram account:", e);
+      }
+
       const results = [];
 
       for (const prop of sorted) {
-        const channelResults: Array<{ channel: "page" | "group"; success: boolean; postId?: string; error?: string }> = [];
+        const channelResults: Array<{ channel: "page" | "group" | "instagram"; success: boolean; postId?: string; error?: string }> = [];
 
         if (shouldPostGroup && groupId) {
           const groupResult = await postPropertyToFacebookGroup(prop as Property, groupId, groupAccessToken);
@@ -670,6 +683,17 @@ Deno.serve(async (req) => {
         if (shouldPostPage) {
           const pageResult = await postPropertyToFacebook(prop as Property, PAGE_ID, PAGE_ACCESS_TOKEN);
           channelResults.push({ channel: "page", ...pageResult });
+        }
+
+        // Instagram post
+        if (igAccountId) {
+          const igResult = await postPropertyToInstagram(prop as Property, igAccountId, PAGE_ACCESS_TOKEN);
+          channelResults.push({ channel: "instagram", ...igResult });
+          if (igResult.success) {
+            console.log(`Instagram post success for ${prop.title}: ${igResult.postId}`);
+          } else {
+            console.warn(`Instagram post failed for ${prop.title}: ${igResult.error}`);
+          }
         }
 
         const firstSuccess = channelResults.find((r) => r.success);
@@ -700,8 +724,9 @@ Deno.serve(async (req) => {
       const successCount = results.filter((r) => r.success).length;
       return new Response(
         JSON.stringify({
-          summary: `${successCount}/${results.length} woningen succesvol gepost (${target})`,
+          summary: `${successCount}/${results.length} woningen succesvol gepost (${target}${igAccountId ? '+instagram' : ''})`,
           target,
+          instagram_enabled: !!igAccountId,
           results,
         }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
