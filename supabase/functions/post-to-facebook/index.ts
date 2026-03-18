@@ -9,6 +9,138 @@ const corsHeaders = {
 const GRAPH_API = "https://graph.facebook.com/v21.0";
 const SITE_URL = "https://www.woonpeek.nl";
 
+// ─── Instagram Helpers ──────────────────────────────────────────────
+
+async function getInstagramAccountId(
+  pageId: string,
+  accessToken: string
+): Promise<string | null> {
+  try {
+    const res = await fetch(
+      `${GRAPH_API}/${pageId}?fields=instagram_business_account&access_token=${accessToken}`
+    );
+    const data = await res.json();
+    return data?.instagram_business_account?.id || null;
+  } catch (err) {
+    console.error("Failed to get Instagram account ID:", err);
+    return null;
+  }
+}
+
+async function postToInstagramCarousel(
+  igAccountId: string,
+  accessToken: string,
+  caption: string,
+  imageUrls: string[]
+): Promise<{ success: boolean; postId?: string; error?: string }> {
+  try {
+    // Step 1: Create media containers for each image
+    const containerIds: string[] = [];
+    for (const url of imageUrls.slice(0, 10)) {
+      const res = await fetch(`${GRAPH_API}/${igAccountId}/media`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          image_url: url,
+          is_carousel_item: true,
+          access_token: accessToken,
+        }),
+      });
+      const data = await res.json();
+      if (data.id) {
+        containerIds.push(data.id);
+      } else {
+        console.warn("IG container creation failed for", url, data.error?.message);
+      }
+      await new Promise((r) => setTimeout(r, 500));
+    }
+
+    if (containerIds.length === 0) {
+      return { success: false, error: "No Instagram media containers created" };
+    }
+
+    if (containerIds.length === 1) {
+      // Single image post instead of carousel
+      const singleRes = await fetch(`${GRAPH_API}/${igAccountId}/media`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          image_url: imageUrls[0],
+          caption,
+          access_token: accessToken,
+        }),
+      });
+      const singleData = await singleRes.json();
+      if (!singleData.id) {
+        return { success: false, error: singleData.error?.message || "Single IG media creation failed" };
+      }
+      // Publish
+      const pubRes = await fetch(`${GRAPH_API}/${igAccountId}/media_publish`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          creation_id: singleData.id,
+          access_token: accessToken,
+        }),
+      });
+      const pubData = await pubRes.json();
+      if (pubData.id) return { success: true, postId: pubData.id };
+      return { success: false, error: pubData.error?.message || "IG publish failed" };
+    }
+
+    // Step 2: Create carousel container
+    const carouselRes = await fetch(`${GRAPH_API}/${igAccountId}/media`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        caption,
+        media_type: "CAROUSEL",
+        children: containerIds.join(","),
+        access_token: accessToken,
+      }),
+    });
+    const carouselData = await carouselRes.json();
+    if (!carouselData.id) {
+      return { success: false, error: carouselData.error?.message || "Carousel creation failed" };
+    }
+
+    // Step 3: Publish carousel
+    // Wait a moment for Instagram to process
+    await new Promise((r) => setTimeout(r, 2000));
+    const publishRes = await fetch(`${GRAPH_API}/${igAccountId}/media_publish`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        creation_id: carouselData.id,
+        access_token: accessToken,
+      }),
+    });
+    const publishData = await publishRes.json();
+    if (publishData.id) {
+      return { success: true, postId: publishData.id };
+    }
+    return { success: false, error: publishData.error?.message || "IG publish failed" };
+  } catch (err) {
+    console.error("Instagram API error:", err);
+    return { success: false, error: String(err) };
+  }
+}
+
+async function postPropertyToInstagram(
+  property: Property,
+  igAccountId: string,
+  accessToken: string
+): Promise<{ success: boolean; postId?: string; error?: string }> {
+  const caption = buildCaption(property);
+  const images = getUniqueImages(property.images, 10);
+
+  if (images.length === 0) {
+    return { success: false, error: "No images available for Instagram post" };
+  }
+
+  return postToInstagramCarousel(igAccountId, accessToken, caption, images);
+}
+
 interface Property {
   id: string;
   title: string;
