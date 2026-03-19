@@ -301,23 +301,72 @@ function getUniqueImages(images: string[] | null, max: number = 10): string[] {
 }
 
 /**
- * Clean image URLs for Instagram API compatibility.
- * Instagram rejects Fastly CDN URLs with complex query params (sig, original_uri, auto=webp).
- * Strategy: strip all query parameters to get a clean image URL that Instagram can fetch.
+ * Instagram rejects Fastly CDN URLs (blocks crawlers or serves WebP).
+ * Solution: download images and re-upload to Supabase Storage for clean public URLs.
  */
-function cleanImageUrlForInstagram(url: string): string {
+async function proxyImageToStorage(
+  imageUrl: string,
+  propertyId: string,
+  index: number,
+  supabaseUrl: string,
+  serviceRoleKey: string
+): Promise<string | null> {
   try {
-    const u = new URL(url);
-    // Strip ALL query parameters - Fastly CDN serves valid JPEG without them
-    return u.origin + u.pathname;
-  } catch {
-    // Fallback: strip everything after ?
-    return url.split("?")[0];
+    // Download image
+    const res = await fetch(imageUrl, {
+      headers: { "Accept": "image/jpeg, image/png, image/*" },
+    });
+    if (!res.ok) {
+      console.warn(`Failed to download image ${index}: ${res.status}`);
+      return null;
+    }
+    const blob = await res.blob();
+    
+    // Upload to Supabase Storage
+    const path = `ig-proxy/${propertyId}/${index}.jpg`;
+    const uploadRes = await fetch(
+      `${supabaseUrl}/storage/v1/object/property-images/${path}`,
+      {
+        method: "PUT",
+        headers: {
+          "Authorization": `Bearer ${serviceRoleKey}`,
+          "Content-Type": blob.type || "image/jpeg",
+          "x-upsert": "true",
+        },
+        body: blob,
+      }
+    );
+    
+    if (!uploadRes.ok) {
+      const errText = await uploadRes.text();
+      console.warn(`Failed to upload proxy image ${index}: ${errText}`);
+      return null;
+    }
+    
+    // Return public URL
+    return `${supabaseUrl}/storage/v1/object/public/property-images/${path}`;
+  } catch (err) {
+    console.warn(`Proxy image error ${index}:`, err);
+    return null;
   }
 }
 
-function getInstagramImages(images: string[] | null, max: number = 10): string[] {
-  return getUniqueImages(images, max).map(cleanImageUrlForInstagram);
+async function getInstagramImages(
+  images: string[] | null,
+  propertyId: string,
+  supabaseUrl: string,
+  serviceRoleKey: string,
+  max: number = 5
+): Promise<string[]> {
+  const originals = getUniqueImages(images, max);
+  const proxied: string[] = [];
+  
+  for (let i = 0; i < originals.length; i++) {
+    const url = await proxyImageToStorage(originals[i], propertyId, i, supabaseUrl, serviceRoleKey);
+    if (url) proxied.push(url);
+  }
+  
+  return proxied;
 }
 
 // ─── Facebook Multi-Photo Post (Carousel) ───────────────────────────
