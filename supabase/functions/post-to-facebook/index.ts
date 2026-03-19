@@ -132,7 +132,8 @@ async function postPropertyToInstagram(
   accessToken: string
 ): Promise<{ success: boolean; postId?: string; error?: string }> {
   const caption = buildCaption(property);
-  const images = getUniqueImages(property.images, 10);
+  // Use cleaned URLs for Instagram (no webp, proper format)
+  const images = getInstagramImages(property.images, 10);
 
   if (images.length === 0) {
     return { success: false, error: "No images available for Instagram post" };
