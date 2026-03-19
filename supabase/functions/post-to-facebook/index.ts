@@ -311,8 +311,7 @@ async function proxyImageToStorage(
   imageUrl: string,
   propertyId: string,
   index: number,
-  supabaseUrl: string,
-  serviceRoleKey: string
+  supabaseClient: ReturnType<typeof createClient>
 ): Promise<string | null> {
   try {
     // Download image
@@ -323,31 +322,29 @@ async function proxyImageToStorage(
       console.warn(`Failed to download image ${index}: ${res.status}`);
       return null;
     }
-    const blob = await res.blob();
+    const arrayBuffer = await res.arrayBuffer();
+    const uint8 = new Uint8Array(arrayBuffer);
     
-    // Upload to Supabase Storage
+    // Upload to Supabase Storage using client
     const path = `ig-proxy/${propertyId}/${index}.jpg`;
-    const uploadRes = await fetch(
-      `${supabaseUrl}/storage/v1/object/property-images/${path}`,
-      {
-        method: "PUT",
-        headers: {
-          "Authorization": `Bearer ${serviceRoleKey}`,
-          "Content-Type": blob.type || "image/jpeg",
-          "x-upsert": "true",
-        },
-        body: blob,
-      }
-    );
+    const { error } = await supabaseClient.storage
+      .from("property-images")
+      .upload(path, uint8, {
+        contentType: "image/jpeg",
+        upsert: true,
+      });
     
-    if (!uploadRes.ok) {
-      const errText = await uploadRes.text();
-      console.warn(`Failed to upload proxy image ${index}: ${errText}`);
+    if (error) {
+      console.warn(`Failed to upload proxy image ${index}: ${error.message}`);
       return null;
     }
     
     // Return public URL
-    return `${supabaseUrl}/storage/v1/object/public/property-images/${path}`;
+    const { data: urlData } = supabaseClient.storage
+      .from("property-images")
+      .getPublicUrl(path);
+    
+    return urlData.publicUrl;
   } catch (err) {
     console.warn(`Proxy image error ${index}:`, err);
     return null;
@@ -357,15 +354,14 @@ async function proxyImageToStorage(
 async function getInstagramImages(
   images: string[] | null,
   propertyId: string,
-  supabaseUrl: string,
-  serviceRoleKey: string,
+  supabaseClient: ReturnType<typeof createClient>,
   max: number = 5
 ): Promise<string[]> {
   const originals = getUniqueImages(images, max);
   const proxied: string[] = [];
   
   for (let i = 0; i < originals.length; i++) {
-    const url = await proxyImageToStorage(originals[i], propertyId, i, supabaseUrl, serviceRoleKey);
+    const url = await proxyImageToStorage(originals[i], propertyId, i, supabaseClient);
     if (url) proxied.push(url);
   }
   
