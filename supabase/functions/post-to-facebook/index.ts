@@ -760,7 +760,7 @@ Deno.serve(async (req) => {
 
         // Instagram post
         if (igAccountId) {
-          const igResult = await postPropertyToInstagram(prop as Property, igAccountId, PAGE_ACCESS_TOKEN);
+          const igResult = await postPropertyToInstagram(prop as Property, igAccountId, PAGE_ACCESS_TOKEN, supabaseUrl, supabaseKey);
           channelResults.push({ channel: "instagram", ...igResult });
           if (igResult.success) {
             console.log(`Instagram post success for ${prop.title}: ${igResult.postId}`);
