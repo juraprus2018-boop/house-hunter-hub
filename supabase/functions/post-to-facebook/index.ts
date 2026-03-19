@@ -299,6 +299,33 @@ function getUniqueImages(images: string[] | null, max: number = 10): string[] {
   return result;
 }
 
+/**
+ * Clean image URLs for Instagram API compatibility.
+ * Instagram rejects URLs with ?width=...&auto=webp params (returns "Only photo or video can be accepted").
+ * We strip problematic query params to get a clean JPEG URL.
+ */
+function cleanImageUrlForInstagram(url: string): string {
+  try {
+    const u = new URL(url);
+    // Remove webp format param - Instagram needs JPEG/PNG
+    u.searchParams.delete("auto");
+    // Keep width param but ensure it's reasonable
+    if (!u.searchParams.has("width")) {
+      u.searchParams.set("width", "1080");
+    }
+    // Force JPEG format instead of webp
+    u.searchParams.set("format", "jpg");
+    return u.toString();
+  } catch {
+    // If URL parsing fails, try simple string cleanup
+    return url.replace(/[?&]auto=webp/g, "").replace(/\?$/, "");
+  }
+}
+
+function getInstagramImages(images: string[] | null, max: number = 10): string[] {
+  return getUniqueImages(images, max).map(cleanImageUrlForInstagram);
+}
+
 // ─── Facebook Multi-Photo Post (Carousel) ───────────────────────────
 
 async function uploadUnpublishedPhoto(
