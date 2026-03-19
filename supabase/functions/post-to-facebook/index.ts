@@ -302,24 +302,17 @@ function getUniqueImages(images: string[] | null, max: number = 10): string[] {
 
 /**
  * Clean image URLs for Instagram API compatibility.
- * Instagram rejects URLs with ?width=...&auto=webp params (returns "Only photo or video can be accepted").
- * We strip problematic query params to get a clean JPEG URL.
+ * Instagram rejects Fastly CDN URLs with complex query params (sig, original_uri, auto=webp).
+ * Strategy: strip all query parameters to get a clean image URL that Instagram can fetch.
  */
 function cleanImageUrlForInstagram(url: string): string {
   try {
     const u = new URL(url);
-    // Remove webp format param - Instagram needs JPEG/PNG
-    u.searchParams.delete("auto");
-    // Keep width param but ensure it's reasonable
-    if (!u.searchParams.has("width")) {
-      u.searchParams.set("width", "1080");
-    }
-    // Force JPEG format instead of webp
-    u.searchParams.set("format", "jpg");
-    return u.toString();
+    // Strip ALL query parameters - Fastly CDN serves valid JPEG without them
+    return u.origin + u.pathname;
   } catch {
-    // If URL parsing fails, try simple string cleanup
-    return url.replace(/[?&]auto=webp/g, "").replace(/\?$/, "");
+    // Fallback: strip everything after ?
+    return url.split("?")[0];
   }
 }
 
