@@ -129,16 +129,19 @@ async function postToInstagramCarousel(
 async function postPropertyToInstagram(
   property: Property,
   igAccountId: string,
-  accessToken: string
+  accessToken: string,
+  supabaseUrl: string,
+  serviceRoleKey: string
 ): Promise<{ success: boolean; postId?: string; error?: string }> {
   const caption = buildCaption(property);
-  // Use cleaned URLs for Instagram (no webp, proper format)
-  const images = getInstagramImages(property.images, 10);
+  // Proxy images through Supabase Storage for Instagram compatibility
+  const images = await getInstagramImages(property.images, property.id, supabaseUrl, serviceRoleKey, 5);
 
   if (images.length === 0) {
-    return { success: false, error: "No images available for Instagram post" };
+    return { success: false, error: "No images could be proxied for Instagram" };
   }
 
+  console.log(`Instagram: using ${images.length} proxied images for ${property.title}`);
   return postToInstagramCarousel(igAccountId, accessToken, caption, images);
 }
 
