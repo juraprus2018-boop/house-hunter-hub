@@ -129,15 +129,18 @@ async function postToInstagramCarousel(
 async function postPropertyToInstagram(
   property: Property,
   igAccountId: string,
-  accessToken: string
+  accessToken: string,
+  supabaseClient: ReturnType<typeof createClient>
 ): Promise<{ success: boolean; postId?: string; error?: string }> {
   const caption = buildCaption(property);
-  const images = getUniqueImages(property.images, 10);
+  // Proxy images through Supabase Storage for Instagram compatibility
+  const images = await getInstagramImages(property.images, property.id, supabaseClient, 5);
 
   if (images.length === 0) {
-    return { success: false, error: "No images available for Instagram post" };
+    return { success: false, error: "No images could be proxied for Instagram" };
   }
 
+  console.log(`Instagram: using ${images.length} proxied images for ${property.title}`);
   return postToInstagramCarousel(igAccountId, accessToken, caption, images);
 }
 
@@ -297,6 +300,71 @@ function getUniqueImages(images: string[] | null, max: number = 10): string[] {
     if (result.length >= max) break;
   }
   return result;
+}
+
+/**
+ * Instagram rejects Fastly CDN URLs (blocks crawlers or serves WebP).
+ * Solution: download images and re-upload to Supabase Storage for clean public URLs.
+ */
+async function proxyImageToStorage(
+  imageUrl: string,
+  propertyId: string,
+  index: number,
+  supabaseClient: ReturnType<typeof createClient>
+): Promise<string | null> {
+  try {
+    // Download image
+    const res = await fetch(imageUrl, {
+      headers: { "Accept": "image/jpeg, image/png, image/*" },
+    });
+    if (!res.ok) {
+      console.warn(`Failed to download image ${index}: ${res.status}`);
+      return null;
+    }
+    const arrayBuffer = await res.arrayBuffer();
+    const uint8 = new Uint8Array(arrayBuffer);
+    
+    // Upload to Supabase Storage using client
+    const path = `ig-proxy/${propertyId}/${index}.jpg`;
+    const { error } = await supabaseClient.storage
+      .from("property-images")
+      .upload(path, uint8, {
+        contentType: "image/jpeg",
+        upsert: true,
+      });
+    
+    if (error) {
+      console.warn(`Failed to upload proxy image ${index}: ${error.message}`);
+      return null;
+    }
+    
+    // Return public URL
+    const { data: urlData } = supabaseClient.storage
+      .from("property-images")
+      .getPublicUrl(path);
+    
+    return urlData.publicUrl;
+  } catch (err) {
+    console.warn(`Proxy image error ${index}:`, err);
+    return null;
+  }
+}
+
+async function getInstagramImages(
+  images: string[] | null,
+  propertyId: string,
+  supabaseClient: ReturnType<typeof createClient>,
+  max: number = 5
+): Promise<string[]> {
+  const originals = getUniqueImages(images, max);
+  const proxied: string[] = [];
+  
+  for (let i = 0; i < originals.length; i++) {
+    const url = await proxyImageToStorage(originals[i], propertyId, i, supabaseClient);
+    if (url) proxied.push(url);
+  }
+  
+  return proxied;
 }
 
 // ─── Facebook Multi-Photo Post (Carousel) ───────────────────────────
@@ -687,7 +755,7 @@ Deno.serve(async (req) => {
 
         // Instagram post
         if (igAccountId) {
-          const igResult = await postPropertyToInstagram(prop as Property, igAccountId, PAGE_ACCESS_TOKEN);
+          const igResult = await postPropertyToInstagram(prop as Property, igAccountId, PAGE_ACCESS_TOKEN, supabase);
           channelResults.push({ channel: "instagram", ...igResult });
           if (igResult.success) {
             console.log(`Instagram post success for ${prop.title}: ${igResult.postId}`);
@@ -770,7 +838,7 @@ Deno.serve(async (req) => {
       // Instagram for manual posts too
       const igId = await getInstagramAccountId(PAGE_ID, PAGE_ACCESS_TOKEN);
       if (igId) {
-        const igResult = await postPropertyToInstagram(property as Property, igId, PAGE_ACCESS_TOKEN);
+        const igResult = await postPropertyToInstagram(property as Property, igId, PAGE_ACCESS_TOKEN, supabase);
         channelResults.push({ channel: "instagram", ...igResult });
       }
 
