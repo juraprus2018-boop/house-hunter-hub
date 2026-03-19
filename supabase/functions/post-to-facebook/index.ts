@@ -130,12 +130,11 @@ async function postPropertyToInstagram(
   property: Property,
   igAccountId: string,
   accessToken: string,
-  supabaseUrl: string,
-  serviceRoleKey: string
+  supabaseClient: ReturnType<typeof createClient>
 ): Promise<{ success: boolean; postId?: string; error?: string }> {
   const caption = buildCaption(property);
   // Proxy images through Supabase Storage for Instagram compatibility
-  const images = await getInstagramImages(property.images, property.id, supabaseUrl, serviceRoleKey, 5);
+  const images = await getInstagramImages(property.images, property.id, supabaseClient, 5);
 
   if (images.length === 0) {
     return { success: false, error: "No images could be proxied for Instagram" };
