@@ -838,7 +838,7 @@ Deno.serve(async (req) => {
       // Instagram for manual posts too
       const igId = await getInstagramAccountId(PAGE_ID, PAGE_ACCESS_TOKEN);
       if (igId) {
-        const igResult = await postPropertyToInstagram(property as Property, igId, PAGE_ACCESS_TOKEN, supabaseUrl, supabaseKey);
+        const igResult = await postPropertyToInstagram(property as Property, igId, PAGE_ACCESS_TOKEN, supabase);
         channelResults.push({ channel: "instagram", ...igResult });
       }
 
