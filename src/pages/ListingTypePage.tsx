@@ -166,7 +166,7 @@ const ListingTypePage = ({ listingType }: ListingTypePageProps) => {
             </div>
             <div className="max-w-3xl">
               <h1 className="font-display text-3xl font-bold text-foreground md:text-4xl">
-                {label.plural} in {locationLabel}
+                Vind jouw <span className="text-primary">{label.singular}</span> of <span className="text-primary">appartement</span> in {locationLabel}
               </h1>
               <p className="mt-3 text-base leading-relaxed text-muted-foreground">
                 Op zoek naar een <strong>{label.singular} in {locationLabel}</strong>? WoonPeek verzamelt dagelijks
