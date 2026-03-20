@@ -64,40 +64,49 @@ export type Database = {
       }
       daily_alert_subscribers: {
         Row: {
+          city: string | null
           created_at: string
           email: string
           id: string
           is_active: boolean
           last_notified_at: string | null
+          phone_number: string | null
           source: string | null
           subscribed_at: string
           unsubscribed_at: string | null
           updated_at: string
           user_id: string | null
+          whatsapp_enabled: boolean
         }
         Insert: {
+          city?: string | null
           created_at?: string
           email: string
           id?: string
           is_active?: boolean
           last_notified_at?: string | null
+          phone_number?: string | null
           source?: string | null
           subscribed_at?: string
           unsubscribed_at?: string | null
           updated_at?: string
           user_id?: string | null
+          whatsapp_enabled?: boolean
         }
         Update: {
+          city?: string | null
           created_at?: string
           email?: string
           id?: string
           is_active?: boolean
           last_notified_at?: string | null
+          phone_number?: string | null
           source?: string | null
           subscribed_at?: string
           unsubscribed_at?: string | null
           updated_at?: string
           user_id?: string | null
+          whatsapp_enabled?: boolean
         }
         Relationships: []
       }
