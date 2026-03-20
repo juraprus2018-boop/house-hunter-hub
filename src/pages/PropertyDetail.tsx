@@ -15,6 +15,7 @@ import SEOHead from "@/components/seo/SEOHead";
 import Breadcrumbs from "@/components/seo/Breadcrumbs";
 import PropertyCard from "@/components/properties/PropertyCard";
 import PriceAnalysis from "@/components/properties/PriceAnalysis";
+import NearbyAmenities from "@/components/properties/NearbyAmenities";
 import {
   Heart,
   Share2,
@@ -603,6 +604,15 @@ const PropertyDetail = () => {
                     </Button>
                   </div>
                 </section>
+              )}
+
+              {/* ── Nearby Amenities ── */}
+              {property.latitude && property.longitude && (
+                <NearbyAmenities
+                  latitude={Number(property.latitude)}
+                  longitude={Number(property.longitude)}
+                  city={property.city}
+                />
               )}
 
               {/* ── Over wonen in [stad] ── */}
