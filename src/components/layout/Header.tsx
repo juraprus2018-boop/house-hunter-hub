@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import {
   Search, Heart, PlusCircle, User, Menu, LogOut, Shield, Map, Bell,
   MapPin, CalendarDays, Home, Building2, DoorOpen, BedDouble, ChevronDown,
-  ChevronRight
+  ChevronRight, Handshake
 } from "lucide-react";
 import logoWoonpeek from "@/assets/logo-woonpeek.png";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
