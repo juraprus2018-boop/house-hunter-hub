@@ -154,7 +154,7 @@ const NearbyAmenities = ({ latitude, longitude, city }: Props) => {
       <h3 className="font-display text-lg font-semibold text-foreground mb-1 break-words">
         In de buurt van deze woning in {city}
       </h3>
-      <p className="text-sm text-muted-foreground mb-4">
+      <p className="text-[0.9375rem] text-muted-foreground mb-4">
         Voorzieningen binnen {RADIUS / 1000} km
       </p>
 
