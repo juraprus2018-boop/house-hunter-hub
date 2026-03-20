@@ -63,10 +63,10 @@ const WhyUsSection = () => {
                 <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10">
                   <Icon className="h-5 w-5 text-primary" />
                 </div>
-                <h3 className="font-display text-base font-semibold text-foreground">
+                <h3 className="font-display text-[1.0625rem] font-semibold text-foreground">
                   {benefit.title}
                 </h3>
-                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                <p className="mt-2 text-[0.9375rem] leading-relaxed text-muted-foreground">
                   {benefit.description}
                 </p>
               </div>

@@ -79,7 +79,7 @@ const BlogPage = () => {
                           </p>
                         )}
                         {post.published_at && (
-                          <div className="mt-3 flex items-center gap-1 text-xs text-muted-foreground">
+                          <div className="mt-3 flex items-center gap-1.5 text-sm text-muted-foreground">
                             <Calendar className="h-3 w-3" />
                             <span>
                               {new Date(post.published_at).toLocaleDateString("nl-NL", {

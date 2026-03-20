@@ -195,7 +195,7 @@ const NearbyAmenities = ({ latitude, longitude, city }: Props) => {
                       ))}
                     </ul>
                   ) : (
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-[0.9375rem] text-muted-foreground">
                       Geen gevonden binnen {RADIUS / 1000} km
                     </p>
                   )}
