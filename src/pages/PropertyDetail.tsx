@@ -373,7 +373,15 @@ const PropertyDetail = () => {
 
         {/* Lightbox */}
         <Dialog open={lightboxOpen} onOpenChange={setLightboxOpen}>
-          <DialogContent className="max-w-5xl border-0 bg-black/95 p-0">
+          <DialogContent className="max-w-5xl border-0 bg-black/95 p-0 [&>button]:hidden">
+            {/* Explicit close button – always visible on dark bg */}
+            <button
+              onClick={() => setLightboxOpen(false)}
+              className="absolute right-3 top-3 z-50 flex h-10 w-10 items-center justify-center rounded-full bg-white/20 text-white backdrop-blur-sm transition-colors hover:bg-white/40"
+              aria-label="Sluiten"
+            >
+              <X className="h-5 w-5" />
+            </button>
             <DialogHeader className="sr-only">
               <DialogTitle>Foto's van {property.title}</DialogTitle>
               <DialogDescription>Bekijk alle foto's</DialogDescription>
