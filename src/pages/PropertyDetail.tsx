@@ -435,9 +435,9 @@ const PropertyDetail = () => {
             </div>
           )}
 
-          <div className="mt-6 grid gap-8 lg:grid-cols-3">
+          <div className="mt-6 grid gap-8 lg:grid-cols-3 min-w-0">
             {/* ── Left Column ── */}
-            <div className="space-y-8 lg:col-span-2">
+            <div className="space-y-8 lg:col-span-2 min-w-0 overflow-hidden">
               {/* Title + price + quick stats */}
               <div>
                 <div className="flex flex-wrap items-center gap-2 mb-2">
