@@ -164,7 +164,7 @@ const NearbyAmenities = ({ latitude, longitude, city }: Props) => {
           <span className="text-sm">Voorzieningen laden…</span>
         </div>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid gap-3 grid-cols-1 sm:grid-cols-2">
           {CATEGORIES.map((cat) => {
             const items = results[cat.key] || [];
             const Icon = cat.icon;
