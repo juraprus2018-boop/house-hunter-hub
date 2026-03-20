@@ -412,7 +412,7 @@ const PropertyDetail = () => {
         </Dialog>
 
         {/* ── Main Content ── */}
-        <div className="container py-6 lg:py-10 overflow-hidden">
+        <div className="container py-6 lg:py-10">
           {/* Breadcrumbs */}
           <Breadcrumbs items={[
             { label: "Home", href: "/" },
