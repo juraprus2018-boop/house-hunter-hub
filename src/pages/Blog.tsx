@@ -74,7 +74,7 @@ const BlogPage = () => {
                           {post.title}
                         </h2>
                         {post.excerpt && (
-                          <p className="mt-2 text-muted-foreground line-clamp-2">
+                          <p className="mt-2 text-[0.9375rem] text-muted-foreground line-clamp-2">
                             {post.excerpt}
                           </p>
                         )}
