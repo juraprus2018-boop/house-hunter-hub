@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import {
   Search, Heart, PlusCircle, User, Menu, LogOut, Shield, Map, Bell,
   MapPin, CalendarDays, Home, Building2, DoorOpen, BedDouble, ChevronDown,
-  ChevronRight
+  ChevronRight, Handshake
 } from "lucide-react";
 import logoWoonpeek from "@/assets/logo-woonpeek.png";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -229,6 +229,19 @@ const Header = () => {
                   </Link>
                 </NavigationMenuLink>
               </NavigationMenuItem>
+
+              {/* Voor makelaars */}
+              <NavigationMenuItem>
+                <NavigationMenuLink asChild>
+                  <Link
+                    to="/makelaar-koppelen"
+                    className="group inline-flex h-9 w-max items-center justify-center rounded-md bg-transparent px-3 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
+                  >
+                    <Handshake className="mr-1.5 h-4 w-4" />
+                    Voor makelaars
+                  </Link>
+                </NavigationMenuLink>
+              </NavigationMenuItem>
             </NavigationMenuList>
           </NavigationMenu>
 
@@ -418,6 +431,15 @@ const Header = () => {
               >
                 <Heart className="h-5 w-5" />
                 Favorieten
+              </Link>
+
+              <Link
+                to="/makelaar-koppelen"
+                onClick={() => setIsOpen(false)}
+                className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-foreground transition-colors hover:bg-muted"
+              >
+                <Handshake className="h-5 w-5" />
+                Voor makelaars
               </Link>
 
               <Link
