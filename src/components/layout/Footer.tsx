@@ -107,6 +107,17 @@ const Footer = () => {
               </li>
               <li>
                 <a
+                  href="https://www.instagram.com/woonpeek"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  <Instagram className="h-4 w-4" />
+                  Instagram
+                </a>
+              </li>
+              <li>
+                <a
                   href="https://www.linkedin.com/company/woonpeek/"
                   target="_blank"
                   rel="noopener noreferrer"
