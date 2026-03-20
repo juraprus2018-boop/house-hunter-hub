@@ -134,27 +134,7 @@ Deno.serve(async (req) => {
       const sinceDate = subscriber.last_notified_at || subscriber.subscribed_at || subscriber.created_at;
       const subscriberCity = subscriber.city;
 
-      // Build query — filter by subscriber's city
-      let propsQuery = supabase
-        .from("properties")
-        .select("id, title, city, price, listing_type, property_type, slug, street, house_number, images, surface_area, bedrooms")
-        .eq("status", "actief")
-        .gt("created_at", sinceDate)
-        .order("created_at", { ascending: false });
-
-      if (subscriberCity) {
-        propsQuery = propsQuery.ilike("city", subscriberCity);
-      }
-
-      // First get count
-      const { count: newCount, error: countError } = await supabase
-        .from("properties")
-        .select("id", { count: "exact", head: true })
-        .eq("status", "actief")
-        .gt("created_at", sinceDate)
-        ...(subscriberCity ? (() => { /* handled below */ })() : undefined);
-
-      // Re-do count with city filter properly
+      // Count new properties for this subscriber's city
       let countQuery = supabase
         .from("properties")
         .select("id", { count: "exact", head: true })
