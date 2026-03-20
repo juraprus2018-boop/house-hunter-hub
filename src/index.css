@@ -121,6 +121,8 @@
     @apply bg-background text-foreground antialiased;
     font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
     font-weight: 500;
+    overflow-wrap: break-word;
+    word-break: break-word;
   }
 
   h1, h2, h3, h4, h5, h6 {
