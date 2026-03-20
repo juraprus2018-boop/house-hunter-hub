@@ -70,7 +70,7 @@ const HeroSection = () => {
           </div>
 
           <h1 className="font-display text-3xl font-bold tracking-tight text-white sm:text-4xl md:text-5xl lg:text-6xl">
-            Vind jouw <span style={{ color: '#288a51' }}>huurwoning</span> of <span style={{ color: '#288a51' }}>appartement</span> in Nederland
+            Voor mensen die op zoek zijn naar een <span style={{ color: '#288a51' }}>woning</span>
           </h1>
 
           <p className="mx-auto mt-5 max-w-2xl text-base text-white/80 sm:text-lg md:text-xl">
