@@ -70,8 +70,7 @@ const HeroSection = () => {
           </div>
 
           <h1 className="font-display text-3xl font-bold tracking-tight text-white sm:text-4xl md:text-5xl lg:text-6xl">
-            Vind nieuwe woningen{" "}
-            <span className="text-accent">sneller dan op Funda</span>
+            Vind jouw <span className="text-primary">huurwoning</span> of <span className="text-primary">appartement</span> in Nederland
           </h1>
 
           <p className="mx-auto mt-5 max-w-2xl text-base text-white/80 sm:text-lg md:text-xl">
