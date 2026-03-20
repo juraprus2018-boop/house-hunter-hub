@@ -1,11 +1,19 @@
-import { useCallback, useState } from "react";
-import { useMutation } from "@tanstack/react-query";
-import { BellRing, Loader2 } from "lucide-react";
+import { useCallback, useState, useEffect } from "react";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { BellRing, Loader2, MapPin, Phone } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import TurnstileWidget from "@/components/security/TurnstileWidget";
 import dailyAlertImg from "@/assets/daily-alert-illustration.jpg";
 
@@ -15,11 +23,35 @@ const DailyAlertSection = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [email, setEmail] = useState("");
+  const [city, setCity] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [whatsappEnabled, setWhatsappEnabled] = useState(false);
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   const turnstileSiteKey = import.meta.env.VITE_TURNSTILE_SITE_KEY as string | undefined;
 
+  // Fetch available cities from properties
+  const { data: cities } = useQuery({
+    queryKey: ["alert-cities"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("properties")
+        .select("city")
+        .eq("status", "actief");
+      if (error) throw error;
+      const uniqueCities = [...new Set(data.map((p) => p.city))].sort();
+      return uniqueCities;
+    },
+    staleTime: 10 * 60 * 1000,
+  });
+
   const subscribe = useMutation({
-    mutationFn: async (payload: { email?: string; turnstileToken?: string | null }) => {
+    mutationFn: async (payload: {
+      email?: string;
+      city: string;
+      phone_number?: string;
+      whatsapp_enabled: boolean;
+      turnstileToken?: string | null;
+    }) => {
       const { data, error } = await supabase.functions.invoke("daily-alert-subscribe", {
         body: payload,
       });
@@ -30,9 +62,12 @@ const DailyAlertSection = () => {
     onSuccess: (data) => {
       toast({
         title: "Gelukt",
-        description: data?.message || "Je bent ingeschreven voor dagelijkse alerts.",
+        description: data?.message || "Je bent ingeschreven voor alerts.",
       });
       setEmail("");
+      setCity("");
+      setPhoneNumber("");
+      setWhatsappEnabled(false);
       setTurnstileToken(null);
     },
     onError: (error: unknown) => {
@@ -44,13 +79,33 @@ const DailyAlertSection = () => {
     },
   });
 
-  const handleGuestSubscribe = () => {
-    const cleanedEmail = email.trim().toLowerCase();
-    if (!cleanedEmail || !emailRegex.test(cleanedEmail)) {
+  const handleSubmit = () => {
+    if (!city) {
       toast({
         variant: "destructive",
-        title: "Ongeldig e-mailadres",
-        description: "Vul een geldig e-mailadres in.",
+        title: "Stad vereist",
+        description: "Selecteer een stad waarvoor je alerts wilt ontvangen.",
+      });
+      return;
+    }
+
+    if (!user) {
+      const cleanedEmail = email.trim().toLowerCase();
+      if (!cleanedEmail || !emailRegex.test(cleanedEmail)) {
+        toast({
+          variant: "destructive",
+          title: "Ongeldig e-mailadres",
+          description: "Vul een geldig e-mailadres in.",
+        });
+        return;
+      }
+    }
+
+    if (whatsappEnabled && !phoneNumber.trim()) {
+      toast({
+        variant: "destructive",
+        title: "Telefoonnummer vereist",
+        description: "Vul je telefoonnummer in voor WhatsApp-alerts.",
       });
       return;
     }
@@ -64,20 +119,13 @@ const DailyAlertSection = () => {
       return;
     }
 
-    subscribe.mutate({ email: cleanedEmail, turnstileToken });
-  };
-
-  const handleAccountSubscribe = () => {
-    if (turnstileSiteKey && !turnstileToken) {
-      toast({
-        variant: "destructive",
-        title: "Captcha vereist",
-        description: "Vink de captcha aan voordat je je inschrijft.",
-      });
-      return;
-    }
-
-    subscribe.mutate({ turnstileToken });
+    subscribe.mutate({
+      email: user ? undefined : email.trim().toLowerCase(),
+      city,
+      phone_number: whatsappEnabled ? phoneNumber.trim() : undefined,
+      whatsapp_enabled: whatsappEnabled,
+      turnstileToken,
+    });
   };
 
   const handleTokenChange = useCallback((token: string | null) => {
@@ -110,25 +158,38 @@ const DailyAlertSection = () => {
                     Alert voor nieuw woningaanbod
                   </h2>
                   <p className="text-sm text-muted-foreground">
-                    Ontvang dagelijks 1 e-mail na de run met het aantal nieuwe woningen en een knop naar al het aanbod.
+                    Ontvang een melding wanneer er nieuwe woningen in jouw stad beschikbaar zijn.
                   </p>
                 </div>
               </div>
 
-              {user ? (
-                <div className="space-y-3">
-                  <p className="text-sm text-muted-foreground">
-                    Ingeschreven met je account e-mail: <span className="font-medium text-foreground">{user.email}</span>
-                  </p>
-                  <TurnstileWidget siteKey={turnstileSiteKey} onTokenChange={handleTokenChange} />
-                  <Button onClick={handleAccountSubscribe} disabled={subscribe.isPending} className="gap-2">
-                    {subscribe.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
-                    Activeer dagelijkse alert
-                  </Button>
+              <div className="space-y-4">
+                {/* City selector (required) */}
+                <div>
+                  <label className="mb-1.5 block text-sm font-medium text-foreground">
+                    <MapPin className="mr-1 inline-block h-4 w-4" />
+                    Stad *
+                  </label>
+                  <Select value={city} onValueChange={setCity}>
+                    <SelectTrigger className="w-full sm:max-w-sm">
+                      <SelectValue placeholder="Selecteer een stad..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {(cities || []).map((c) => (
+                        <SelectItem key={c} value={c}>
+                          {c}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
-              ) : (
-                <div className="space-y-3">
-                  <div className="flex flex-col gap-3 sm:flex-row">
+
+                {/* Email field for guests */}
+                {!user && (
+                  <div>
+                    <label className="mb-1.5 block text-sm font-medium text-foreground">
+                      E-mailadres *
+                    </label>
                     <Input
                       type="email"
                       placeholder="jouw@email.nl"
@@ -136,14 +197,50 @@ const DailyAlertSection = () => {
                       onChange={(e) => setEmail(e.target.value)}
                       className="sm:max-w-sm"
                     />
-                    <Button onClick={handleGuestSubscribe} disabled={subscribe.isPending} className="gap-2">
-                      {subscribe.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
-                      Schrijf me in
-                    </Button>
                   </div>
-                  <TurnstileWidget siteKey={turnstileSiteKey} onTokenChange={handleTokenChange} />
+                )}
+
+                {user && (
+                  <p className="text-sm text-muted-foreground">
+                    E-mail alerts naar: <span className="font-medium text-foreground">{user.email}</span>
+                  </p>
+                )}
+
+                {/* WhatsApp toggle */}
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    id="whatsapp-toggle"
+                    checked={whatsappEnabled}
+                    onCheckedChange={(checked) => setWhatsappEnabled(checked === true)}
+                  />
+                  <label htmlFor="whatsapp-toggle" className="text-sm font-medium text-foreground cursor-pointer">
+                    <Phone className="mr-1 inline-block h-4 w-4" />
+                    Ook via WhatsApp ontvangen
+                  </label>
                 </div>
-              )}
+
+                {whatsappEnabled && (
+                  <div>
+                    <label className="mb-1.5 block text-sm font-medium text-foreground">
+                      WhatsApp-nummer (met landcode, bijv. +31612345678)
+                    </label>
+                    <Input
+                      type="tel"
+                      placeholder="+31612345678"
+                      value={phoneNumber}
+                      onChange={(e) => setPhoneNumber(e.target.value)}
+                      className="sm:max-w-sm"
+                    />
+                  </div>
+                )}
+
+                <TurnstileWidget siteKey={turnstileSiteKey} onTokenChange={handleTokenChange} />
+
+                <Button onClick={handleSubmit} disabled={subscribe.isPending} className="gap-2">
+                  {subscribe.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
+                  Activeer woningalert
+                </Button>
+              </div>
             </div>
           </div>
         </div>

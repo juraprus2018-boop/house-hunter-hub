@@ -7,17 +7,12 @@ const corsHeaders = {
 };
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const phoneRegex = /^\+[1-9]\d{6,14}$/;
 
 async function verifyTurnstileToken(token: string, remoteIp?: string | null) {
   const secretKey = Deno.env.get("TURNSTILE_SECRET_KEY");
-  if (!secretKey) {
-    // No secret configured: skip verification (dev/fallback).
-    return { success: true };
-  }
-
-  if (!token) {
-    return { success: false, message: "Captcha-token ontbreekt." };
-  }
+  if (!secretKey) return { success: true };
+  if (!token) return { success: false, message: "Captcha-token ontbreekt." };
 
   const formData = new URLSearchParams();
   formData.append("secret", secretKey);
@@ -29,10 +24,7 @@ async function verifyTurnstileToken(token: string, remoteIp?: string | null) {
     body: formData,
   });
 
-  if (!res.ok) {
-    return { success: false, message: "Captcha-verificatie mislukt." };
-  }
-
+  if (!res.ok) return { success: false, message: "Captcha-verificatie mislukt." };
   const data = await res.json();
   return {
     success: data.success === true,
@@ -59,8 +51,9 @@ Deno.serve(async (req) => {
     const jwt = authHeader.startsWith("Bearer ") ? authHeader.slice("Bearer ".length) : "";
 
     const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
-    const { email, source, turnstileToken } = await req.json().catch(() => ({}));
+    const { email, city, phone_number, whatsapp_enabled, source, turnstileToken } = await req.json().catch(() => ({}));
 
+    // Validate captcha
     const captcha = await verifyTurnstileToken(String(turnstileToken || ""), req.headers.get("x-forwarded-for"));
     if (!captcha.success) {
       return new Response(JSON.stringify({ error: captcha.message }), {
@@ -69,6 +62,26 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Validate city (required)
+    const cleanCity = String(city || "").trim();
+    if (!cleanCity) {
+      return new Response(JSON.stringify({ error: "Selecteer een stad." }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Validate phone if WhatsApp enabled
+    const wantWhatsapp = whatsapp_enabled === true;
+    const cleanPhone = String(phone_number || "").trim();
+    if (wantWhatsapp && (!cleanPhone || !phoneRegex.test(cleanPhone))) {
+      return new Response(JSON.stringify({ error: "Vul een geldig telefoonnummer in met landcode (bijv. +31612345678)." }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Resolve user
     let user: { id: string; email?: string | null } | null = null;
     if (jwt) {
       const { data: userData, error: userError } = await supabaseAdmin.auth.getUser(jwt);
@@ -78,7 +91,6 @@ Deno.serve(async (req) => {
     }
 
     const targetEmail = String(user?.email ?? email ?? "").trim().toLowerCase();
-
     if (!targetEmail || !emailRegex.test(targetEmail)) {
       return new Response(JSON.stringify({ error: "Voer een geldig e-mailadres in." }), {
         status: 400,
@@ -86,6 +98,7 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Check existing
     const { data: existing, error: existingError } = await supabaseAdmin
       .from("daily_alert_subscribers")
       .select("*")
@@ -94,12 +107,12 @@ Deno.serve(async (req) => {
 
     if (existingError) throw existingError;
 
-    if (existing?.is_active) {
+    if (existing?.is_active && existing?.city === cleanCity) {
       return new Response(
         JSON.stringify({
           success: true,
           already_active: true,
-          message: "Je staat al ingeschreven voor dagelijkse alerts.",
+          message: `Je staat al ingeschreven voor alerts in ${cleanCity}.`,
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
@@ -112,6 +125,9 @@ Deno.serve(async (req) => {
       user_id: user?.id ?? existing?.user_id ?? null,
       is_active: true,
       unsubscribed_at: null,
+      city: cleanCity,
+      phone_number: wantWhatsapp ? cleanPhone : existing?.phone_number ?? null,
+      whatsapp_enabled: wantWhatsapp,
       source: String(source || (user ? "account" : "guest")).substring(0, 50),
       subscribed_at: isReactivation ? existing?.subscribed_at ?? new Date().toISOString() : new Date().toISOString(),
       last_notified_at: null,
@@ -125,6 +141,7 @@ Deno.serve(async (req) => {
 
     if (upsertError) throw upsertError;
 
+    // Send admin notification
     const client = new SMTPClient({
       connection: {
         hostname: "woonpeek.nl",
@@ -142,11 +159,13 @@ Deno.serve(async (req) => {
       await client.send({
         from: "WoonPeek <info@woonpeek.nl>",
         to: "info@woonpeek.nl",
-        subject: `Alert-inschrijving: ${targetEmail}`,
+        subject: `Alert-inschrijving: ${targetEmail} (${cleanCity})`,
         content: "text/html",
         html: `
           <h2>Nieuwe alert-inschrijving</h2>
           <p><strong>E-mail:</strong> ${targetEmail}</p>
+          <p><strong>Stad:</strong> ${cleanCity}</p>
+          <p><strong>WhatsApp:</strong> ${wantWhatsapp ? `Ja (${cleanPhone})` : "Nee"}</p>
           <p><strong>Status:</strong> ${actionText}</p>
           <p><strong>Gebruiker ID:</strong> ${saved.user_id || "niet ingelogd"}</p>
           <p><strong>Bron:</strong> ${saved.source}</p>
@@ -157,11 +176,14 @@ Deno.serve(async (req) => {
       await client.close();
     }
 
+    const channels = ["e-mail"];
+    if (wantWhatsapp) channels.push("WhatsApp");
+
     return new Response(
       JSON.stringify({
         success: true,
         already_active: false,
-        message: "Je bent ingeschreven voor dagelijkse e-mailalerts.",
+        message: `Je bent ingeschreven voor woningalerts in ${cleanCity} via ${channels.join(" en ")}.`,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
