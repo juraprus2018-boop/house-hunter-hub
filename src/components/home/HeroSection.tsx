@@ -11,8 +11,8 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  SelectValue } from
+"@/components/ui/select";
 import heroBg from "@/assets/hero-bg.jpg";
 
 const HeroSection = () => {
@@ -21,14 +21,14 @@ const HeroSection = () => {
   const { data: activePropertiesCount } = useQuery({
     queryKey: ["home-active-properties-count"],
     queryFn: async () => {
-      const { count, error } = await supabase
-        .from("properties")
-        .select("id", { count: "exact", head: true })
-        .eq("status", "actief");
+      const { count, error } = await supabase.
+      from("properties").
+      select("id", { count: "exact", head: true }).
+      eq("status", "actief");
       if (error) throw error;
       return count ?? 0;
     },
-    staleTime: 5 * 60 * 1000,
+    staleTime: 5 * 60 * 1000
   });
 
   const [searchQuery, setSearchQuery] = useState("");
@@ -54,8 +54,8 @@ const HeroSection = () => {
       {/* Background */}
       <div
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-        style={{ backgroundImage: `url(${heroBg})` }}
-      />
+        style={{ backgroundImage: `url(${heroBg})` }} />
+      
       <div className="absolute inset-0 bg-gradient-to-b from-primary/85 via-primary/75 to-primary/90" />
 
       <div className="container relative py-16 md:py-28 lg:py-36">
@@ -75,8 +75,8 @@ const HeroSection = () => {
           </h1>
 
           <p className="mx-auto mt-5 max-w-2xl text-base text-white/80 sm:text-lg md:text-xl">
-            WoonPeek helpt je nieuwe woningen te ontdekken zodra ze beschikbaar komen.
-            Huurwoningen, koopwoningen en meer — dagelijks bijgewerkt.
+            WoonPeek helpt je nieuwe woningen te ontdekken zodra ze beschikbaar komen. Huurwoningen, koopwoningen en meer dagelijks bijgewerkt.
+          
           </p>
 
           {/* Search Bar - Extended */}
@@ -90,8 +90,8 @@ const HeroSection = () => {
                   placeholder="Zoek op stad of postcode..."
                   className="h-14 border-0 bg-transparent text-base shadow-none focus-visible:ring-0"
                   value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
+                  onChange={(e) => setSearchQuery(e.target.value)} />
+                
               </div>
 
               {/* Filter row */}
@@ -140,8 +140,8 @@ const HeroSection = () => {
                 <Button
                   type="submit"
                   size="lg"
-                  className="h-12 w-full gap-2 rounded-xl bg-accent text-base font-semibold text-accent-foreground shadow-md hover:bg-accent/90"
-                >
+                  className="h-12 w-full gap-2 rounded-xl bg-accent text-base font-semibold text-accent-foreground shadow-md hover:bg-accent/90">
+                  
                   <Search className="h-5 w-5" />
                   Zoek woningen
                 </Button>
@@ -155,8 +155,8 @@ const HeroSection = () => {
               <Button
                 variant="outline"
                 size="lg"
-                className="gap-2 border-white/25 bg-white/10 text-white backdrop-blur-sm hover:bg-white/20 hover:text-white"
-              >
+                className="gap-2 border-white/25 bg-white/10 text-white backdrop-blur-sm hover:bg-white/20 hover:text-white">
+                
                 <Bell className="h-4 w-4" />
                 Ontvang woningalerts
               </Button>
@@ -166,15 +166,15 @@ const HeroSection = () => {
           {/* Quick links */}
           <div className="mt-8 flex flex-wrap items-center justify-center gap-2">
             <span className="text-sm text-white/60">Populair:</span>
-            {["Amsterdam", "Rotterdam", "Utrecht", "Den Haag", "Eindhoven"].map((city) => (
-              <button
-                key={city}
-                onClick={() => navigate(`/woningen-${city.toLowerCase().replace(/\s+/g, "-")}`)}
-                className="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-sm text-white/80 backdrop-blur-sm transition-colors hover:bg-white/20"
-              >
+            {["Amsterdam", "Rotterdam", "Utrecht", "Den Haag", "Eindhoven"].map((city) =>
+            <button
+              key={city}
+              onClick={() => navigate(`/woningen-${city.toLowerCase().replace(/\s+/g, "-")}`)}
+              className="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-sm text-white/80 backdrop-blur-sm transition-colors hover:bg-white/20">
+              
                 {city}
               </button>
-            ))}
+            )}
           </div>
         </div>
       </div>
@@ -185,8 +185,8 @@ const HeroSection = () => {
           <path d="M0 60L1440 60L1440 30C1440 30 1200 0 720 0C240 0 0 30 0 30L0 60Z" fill="hsl(var(--background))" />
         </svg>
       </div>
-    </section>
-  );
+    </section>);
+
 };
 
 export default HeroSection;
