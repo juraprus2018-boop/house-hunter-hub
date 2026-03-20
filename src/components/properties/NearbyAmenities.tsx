@@ -150,8 +150,8 @@ const NearbyAmenities = ({ latitude, longitude, city }: Props) => {
   if (error) return null;
 
   return (
-    <section className="mt-8">
-      <h3 className="font-display text-lg font-semibold text-foreground mb-1">
+    <section className="mt-8 min-w-0">
+      <h3 className="font-display text-lg font-semibold text-foreground mb-1 break-words">
         In de buurt van deze woning in {city}
       </h3>
       <p className="text-sm text-muted-foreground mb-4">
