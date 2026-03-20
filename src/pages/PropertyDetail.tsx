@@ -606,6 +606,15 @@ const PropertyDetail = () => {
                 </section>
               )}
 
+              {/* ── Nearby Amenities ── */}
+              {property.latitude && property.longitude && (
+                <NearbyAmenities
+                  latitude={Number(property.latitude)}
+                  longitude={Number(property.longitude)}
+                  city={property.city}
+                />
+              )}
+
               {/* ── Over wonen in [stad] ── */}
               <section className="rounded-xl border bg-muted/30 p-6">
                 <h2 className="font-display text-xl font-semibold mb-3">
