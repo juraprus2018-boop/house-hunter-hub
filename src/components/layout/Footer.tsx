@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Mail, Facebook, Linkedin } from "lucide-react";
+import { Mail, Facebook, Linkedin, Instagram } from "lucide-react";
 import logoWoonpeek from "@/assets/logo-woonpeek.png";
 
 const Footer = () => {
@@ -103,6 +103,17 @@ const Footer = () => {
                 >
                   <Facebook className="h-4 w-4" />
                   Facebook
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://www.instagram.com/woonpeek"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  <Instagram className="h-4 w-4" />
+                  Instagram
                 </a>
               </li>
               <li>
