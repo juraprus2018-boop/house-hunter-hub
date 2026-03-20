@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import { ShoppingCart, GraduationCap, Bus, TrainFront, Loader2 } from "lucide-react";
+import { ShoppingCart, GraduationCap, Bus, TrainFront } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface AmenityCategory {
   key: string;
