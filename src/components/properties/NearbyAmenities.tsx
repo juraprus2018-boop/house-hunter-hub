@@ -65,7 +65,7 @@ interface Props {
   city: string;
 }
 
-const RADIUS = 2000; // 2km search radius
+const RADIUS = 5000; // 5km search radius
 
 /** Simple in-memory + sessionStorage cache for Overpass results */
 const memoryCache: Record<string, Record<string, AmenityResult[]>> = {};
