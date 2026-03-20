@@ -183,7 +183,7 @@ const NearbyAmenities = ({ latitude, longitude, city }: Props) => {
                       {items.map((item, i) => (
                         <li
                           key={i}
-                          className="flex items-center justify-between text-sm"
+                          className="flex items-center justify-between text-[0.9375rem]"
                         >
                           <span className="text-muted-foreground truncate mr-2">
                             {item.name}
