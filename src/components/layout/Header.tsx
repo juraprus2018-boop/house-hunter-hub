@@ -229,6 +229,19 @@ const Header = () => {
                   </Link>
                 </NavigationMenuLink>
               </NavigationMenuItem>
+
+              {/* Voor makelaars */}
+              <NavigationMenuItem>
+                <NavigationMenuLink asChild>
+                  <Link
+                    to="/makelaar-koppelen"
+                    className="group inline-flex h-9 w-max items-center justify-center rounded-md bg-transparent px-3 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
+                  >
+                    <Handshake className="mr-1.5 h-4 w-4" />
+                    Voor makelaars
+                  </Link>
+                </NavigationMenuLink>
+              </NavigationMenuItem>
             </NavigationMenuList>
           </NavigationMenu>
 
