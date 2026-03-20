@@ -412,7 +412,7 @@ const PropertyDetail = () => {
         </Dialog>
 
         {/* ── Main Content ── */}
-        <div className="container py-6 lg:py-10 overflow-hidden">
+        <div className="container py-6 lg:py-10">
           {/* Breadcrumbs */}
           <Breadcrumbs items={[
             { label: "Home", href: "/" },
@@ -547,7 +547,7 @@ const PropertyDetail = () => {
 
               {/* ── Kenmerken ── */}
               <section>
-                <h2 className="font-display text-xl font-semibold mb-4">Kenmerken van deze woning in {property.city}</h2>
+                <h2 className="font-display text-xl font-semibold mb-4 break-words">Kenmerken van deze woning in {property.city}</h2>
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
                   {kenmerken.map(({ icon: Icon, label, value }) => (
                     <div key={label} className="flex flex-col items-center gap-2 rounded-xl border bg-card p-4 text-center">
