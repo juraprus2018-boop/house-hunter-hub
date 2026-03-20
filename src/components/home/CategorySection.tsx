@@ -63,7 +63,7 @@ const CategorySection = () => {
                   <h3 className="font-display text-base font-semibold text-foreground">
                     {category.title}
                   </h3>
-                  <p className="mt-1 text-xs text-muted-foreground">
+                  <p className="mt-1 text-sm text-muted-foreground">
                     {category.description}
                   </p>
                 </div>

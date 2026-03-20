@@ -48,7 +48,7 @@ const HowItWorksSection = () => {
                 <h3 className="font-display text-lg font-semibold text-foreground">
                   {item.title}
                 </h3>
-                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                <p className="mt-2 text-[0.9375rem] leading-relaxed text-muted-foreground">
                   {item.description}
                 </p>
               </div>
