@@ -195,9 +195,22 @@ const NearbyAmenities = ({ latitude, longitude, city }: Props) => {
       </p>
 
       {loading ? (
-        <div className="flex items-center gap-2 py-8 justify-center text-muted-foreground">
-          <Loader2 className="h-5 w-5 animate-spin" />
-          <span className="text-sm">Voorzieningen laden…</span>
+        <div className="grid gap-3 grid-cols-1 sm:grid-cols-2">
+          {CATEGORIES.map((cat) => (
+            <Card key={cat.key} className="overflow-hidden">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <Skeleton className="h-8 w-8 rounded-lg" />
+                  <Skeleton className="h-4 w-24" />
+                </div>
+                <div className="space-y-2">
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-3/4" />
+                  <Skeleton className="h-4 w-5/6" />
+                </div>
+              </CardContent>
+            </Card>
+          ))}
         </div>
       ) : (
         <div className="grid gap-3 grid-cols-1 sm:grid-cols-2">
