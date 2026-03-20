@@ -66,19 +66,54 @@ interface Props {
 
 const RADIUS = 2000; // 2km search radius
 
+/** Simple in-memory + sessionStorage cache for Overpass results */
+const memoryCache: Record<string, Record<string, AmenityResult[]>> = {};
+
+function getCacheKey(lat: number, lon: number) {
+  return `amenities_${lat.toFixed(4)}_${lon.toFixed(4)}`;
+}
+
+function getCached(key: string): Record<string, AmenityResult[]> | null {
+  if (memoryCache[key]) return memoryCache[key];
+  try {
+    const stored = sessionStorage.getItem(key);
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      memoryCache[key] = parsed;
+      return parsed;
+    }
+  } catch { /* ignore */ }
+  return null;
+}
+
+function setCache(key: string, data: Record<string, AmenityResult[]>) {
+  memoryCache[key] = data;
+  try {
+    sessionStorage.setItem(key, JSON.stringify(data));
+  } catch { /* ignore */ }
+}
+
 const NearbyAmenities = ({ latitude, longitude, city }: Props) => {
-  const [results, setResults] = useState<Record<string, AmenityResult[]>>({});
-  const [loading, setLoading] = useState(true);
+  const cacheKey = getCacheKey(latitude, longitude);
+  const cached = getCached(cacheKey);
+
+  const [results, setResults] = useState<Record<string, AmenityResult[]>>(cached || {});
+  const [loading, setLoading] = useState(!cached);
   const [error, setError] = useState(false);
 
   useEffect(() => {
+    if (cached) {
+      setResults(cached);
+      setLoading(false);
+      return;
+    }
+
     let cancelled = false;
 
     const fetchAmenities = async () => {
       setLoading(true);
       setError(false);
 
-      // Build a combined Overpass query for all categories at once
       const unionParts = CATEGORIES.map(
         (c) => `${c.query}(around:${RADIUS},${latitude},${longitude});`
       ).join("\n");
@@ -128,13 +163,13 @@ const NearbyAmenities = ({ latitude, longitude, city }: Props) => {
           }
         }
 
-        // Sort by distance and take top 3 per category
         for (const key of Object.keys(grouped)) {
           grouped[key] = grouped[key]
             .sort((a, b) => a.distance - b.distance)
             .slice(0, 3);
         }
 
+        setCache(cacheKey, grouped);
         setResults(grouped);
       } catch {
         if (!cancelled) setError(true);
@@ -145,7 +180,7 @@ const NearbyAmenities = ({ latitude, longitude, city }: Props) => {
 
     fetchAmenities();
     return () => { cancelled = true; };
-  }, [latitude, longitude]);
+  }, [latitude, longitude, cacheKey, cached]);
 
   if (error) return null;
 
