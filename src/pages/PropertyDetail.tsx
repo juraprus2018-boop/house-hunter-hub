@@ -582,6 +582,26 @@ const PropertyDetail = () => {
                       title={property.title}
                     />
                   </div>
+                  <div className="mt-3 flex gap-2">
+                    <Button variant="outline" size="sm" asChild>
+                      <a
+                        href={`https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${property.latitude},${property.longitude}&heading=0&pitch=0&fov=90`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        <Camera className="mr-1.5 h-4 w-4" /> Street View bekijken
+                      </a>
+                    </Button>
+                    <Button variant="outline" size="sm" asChild>
+                      <a
+                        href={`https://www.google.com/maps/search/?api=1&query=${property.latitude},${property.longitude}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        <MapPin className="mr-1.5 h-4 w-4" /> Bekijk op Google Maps
+                      </a>
+                    </Button>
+                  </div>
                 </section>
               )}
 
