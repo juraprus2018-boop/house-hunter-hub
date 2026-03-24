@@ -336,7 +336,7 @@ function mapDaisyconToProperty(product: DaisyconProduct, sourceSite: string, sou
     longitude: lng,
     build_year: buildYear,
     energy_label: energyLabel,
-    description: product.description || null,
+    description: product.description ? stripHtml(product.description) : null,
     images,
     source_url: sourceUrl,
     source_site: sourceSite,
