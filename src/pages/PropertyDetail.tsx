@@ -537,7 +537,7 @@ const PropertyDetail = () => {
                 </h2>
                 {property.description ? (
                   <div className="whitespace-pre-wrap leading-relaxed text-muted-foreground">
-                    {property.description}
+                    {property.description.replace(/<[^>]*>/g, "").replace(/&nbsp;/gi, " ").replace(/&amp;/gi, "&").replace(/&lt;/gi, "<").replace(/&gt;/gi, ">").replace(/&quot;/gi, '"').replace(/&#39;/gi, "'")}
                   </div>
                 ) : (
                   <div className="rounded-lg border border-dashed p-6 text-center">
