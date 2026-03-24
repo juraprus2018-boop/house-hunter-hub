@@ -136,6 +136,24 @@ interface DaisyconProduct {
   [key: string]: unknown;
 }
 
+function stripHtml(html: string): string {
+  // Remove HTML tags and decode common entities
+  return html
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<\/p>/gi, "\n\n")
+    .replace(/<\/div>/gi, "\n")
+    .replace(/<\/li>/gi, "\n")
+    .replace(/<[^>]*>/g, "")
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&amp;/gi, "&")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;/gi, "'")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
 function flattenProduct(raw: any): DaisyconProduct {
   // Handle nested format: { update_info: {}, product_info: {} }
   if (raw.product_info && typeof raw.product_info === "object") {
@@ -256,6 +274,11 @@ function mapDaisyconToProperty(product: DaisyconProduct, sourceSite: string, sou
 
   // Collect images - check many common Daisycon field naming patterns
   const images: string[] = [];
+  const addImage = (url: unknown) => {
+    if (typeof url === "string" && url.trim() && !images.includes(url.trim())) {
+      images.push(url.trim());
+    }
+  };
   
   // Handle "images" field (Daisycon standard_id=20 format)
   let rawImages: any = product.images;
@@ -268,35 +291,41 @@ function mapDaisyconToProperty(product: DaisyconProduct, sourceSite: string, sou
     if (Array.isArray(rawImages)) {
       for (const img of rawImages) {
         if (typeof img === "string" && img) {
-          images.push(img);
+          addImage(img);
         } else if (img && typeof img === "object") {
-          // Daisycon format: { location: "https://...", size: "large", tag: "detail" }
           const imgUrl = (img as any).location || (img as any).url || (img as any).image || 
                          (img as any).src || (img as any).image_url;
-          if (typeof imgUrl === "string" && imgUrl) images.push(imgUrl);
+          addImage(imgUrl);
         }
       }
     } else if (typeof rawImages === "string" && rawImages) {
       const urls = rawImages.includes(",") ? rawImages.split(",") : 
                    rawImages.includes("|") ? rawImages.split("|") : [rawImages];
-      for (const u of urls) {
-        const trimmed = u.trim();
-        if (trimmed) images.push(trimmed);
-      }
+      for (const u of urls) addImage(u);
     }
   }
 
-  // Fallback: check individual image fields
-  if (images.length === 0) {
-    const mainImage = product.image_large || product.image_url_large || product.image_url;
-    if (mainImage && typeof mainImage === "string") images.push(mainImage);
-    if (product.additional_image_urls && Array.isArray(product.additional_image_urls)) {
-      images.push(...product.additional_image_urls.filter((u: unknown) => typeof u === "string" && u).slice(0, 9));
-    }
-    // Check image_url_1..20, extra_image_url_1..20, image_1..20
-    for (let i = 1; i <= 20; i++) {
-      const extraImg = product[`image_url_${i}`] || product[`extra_image_url_${i}`] || product[`image_${i}`];
-      if (typeof extraImg === "string" && extraImg && !images.includes(extraImg)) images.push(extraImg);
+  // Always check individual image fields (not just as fallback)
+  addImage(product.image_large || product.image_url_large);
+  addImage(product.image_url);
+  if (product.additional_image_urls && Array.isArray(product.additional_image_urls)) {
+    for (const u of product.additional_image_urls) addImage(u);
+  }
+  // Check image_url_1..20, extra_image_url_1..20, image_1..20, photo_1..20
+  for (let i = 1; i <= 20; i++) {
+    addImage(product[`image_url_${i}`]);
+    addImage(product[`extra_image_url_${i}`]);
+    addImage(product[`image_${i}`]);
+    addImage(product[`photo_${i}`]);
+    addImage(product[`foto_${i}`]);
+    addImage(product[`picture_${i}`]);
+  }
+
+  // Check any remaining keys that look like image URLs
+  for (const [key, val] of Object.entries(product)) {
+    if (typeof val === "string" && /^https?:\/\/.*\.(jpg|jpeg|png|webp|gif)/i.test(val) && 
+        /image|img|photo|picture|foto/i.test(key) && !images.includes(val)) {
+      addImage(val);
     }
   }
 
@@ -336,7 +365,7 @@ function mapDaisyconToProperty(product: DaisyconProduct, sourceSite: string, sou
     longitude: lng,
     build_year: buildYear,
     energy_label: energyLabel,
-    description: product.description || null,
+    description: product.description ? stripHtml(product.description) : null,
     images,
     source_url: sourceUrl,
     source_site: sourceSite,
