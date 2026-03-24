@@ -9,33 +9,46 @@ const corsHeaders = {
 const PDOK_URL = "https://api.pdok.nl/bzk/locatieserver/search/v3_1/free";
 
 async function geocodeAddress(street: string, houseNumber: string, city: string, postalCode: string): Promise<{ lat: number; lng: number } | null> {
-  // Build search query - PDOK works best with postcode + house number
-  let query = "";
+  const hasHouseNumber = houseNumber && houseNumber !== "-";
+  
+  // Build search queries in order of precision
+  const queries: { q: string; filter: string }[] = [];
+  
+  if (postalCode && postalCode !== "0000AA" && hasHouseNumber) {
+    queries.push({ q: `${postalCode} ${houseNumber} ${city}`.trim(), filter: "type:adres" });
+  }
+  if (street && hasHouseNumber && city) {
+    queries.push({ q: `${street} ${houseNumber} ${city}`.trim(), filter: "type:adres" });
+  }
+  // Fallback: street-level (no house number)
+  if (street && city) {
+    queries.push({ q: `${street} ${city}`.trim(), filter: "type:weg" });
+  }
+  // Fallback: postal code area
   if (postalCode && postalCode !== "0000AA") {
-    query = `${postalCode} ${houseNumber !== "-" ? houseNumber : ""} ${city}`.trim();
-  } else {
-    query = `${street} ${houseNumber !== "-" ? houseNumber : ""} ${city}`.trim();
+    queries.push({ q: `${postalCode} ${city}`.trim(), filter: "type:postcode" });
   }
 
-  if (!query || query.length < 3) return null;
+  for (const { q, filter } of queries) {
+    if (!q || q.length < 3) continue;
+    try {
+      const url = `${PDOK_URL}?q=${encodeURIComponent(q)}&rows=1&fq=${filter}`;
+      const resp = await fetch(url);
+      if (!resp.ok) continue;
 
-  try {
-    const url = `${PDOK_URL}?q=${encodeURIComponent(query)}&rows=1&fq=type:adres`;
-    const resp = await fetch(url);
-    if (!resp.ok) return null;
+      const data = await resp.json();
+      const doc = data?.response?.docs?.[0];
+      if (!doc?.centroide_ll) continue;
 
-    const data = await resp.json();
-    const doc = data?.response?.docs?.[0];
-    if (!doc?.centroide_ll) return null;
+      const match = doc.centroide_ll.match(/POINT\(([\d.]+)\s+([\d.]+)\)/);
+      if (!match) continue;
 
-    // centroide_ll format: "POINT(lng lat)"
-    const match = doc.centroide_ll.match(/POINT\(([\d.]+)\s+([\d.]+)\)/);
-    if (!match) return null;
-
-    return { lat: parseFloat(match[2]), lng: parseFloat(match[1]) };
-  } catch {
-    return null;
+      return { lat: parseFloat(match[2]), lng: parseFloat(match[1]) };
+    } catch {
+      continue;
+    }
   }
+  return null;
 }
 
 Deno.serve(async (req) => {
