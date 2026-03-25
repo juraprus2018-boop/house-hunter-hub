@@ -29,7 +29,7 @@ const usps = [
     icon: Heart,
     title: "100% gratis platform",
     description:
-      "In tegenstelling tot andere woningplatforms is WoonPeek volledig gratis. Zoeken, alerts instellen én zelfs je eigen woning plaatsen — het kost je niets. Geen verborgen kosten, geen abonnementen.",
+      "In tegenstelling tot andere woningplatforms is WoonPeek volledig gratis. Zoeken, alerts instellen én zelfs je eigen woning plaatsen: het kost je niets. Geen verborgen kosten, geen abonnementen.",
   },
   {
     icon: Bell,

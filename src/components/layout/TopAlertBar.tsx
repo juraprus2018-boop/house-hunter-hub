@@ -25,7 +25,7 @@ const TopAlertBar = () => {
       <div className="container flex items-center justify-center gap-2 py-2 text-sm font-medium">
         <Bell className="h-4 w-4 shrink-0 animate-[wiggle_1s_ease-in-out_infinite]" />
         <span className="hidden sm:inline">
-          Mis geen nieuwe woning meer —{" "}
+          Mis geen nieuwe woning meer!{" "}
         </span>
         <Link
           to="/dagelijkse-alert"

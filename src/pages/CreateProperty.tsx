@@ -316,7 +316,7 @@ const CreateProperty = () => {
                   >
                     <ImagePlus className="mb-3 h-10 w-10 text-muted-foreground" />
                     <p className="font-medium text-foreground">Klik om foto's te selecteren</p>
-                    <p className="mt-1 text-sm text-muted-foreground">JPG, PNG, WebP — max 5MB per foto</p>
+                    <p className="mt-1 text-sm text-muted-foreground">JPG, PNG, WebP (max 5MB per foto)</p>
                   </div>
                   <input ref={fileInputRef} type="file" accept="image/*" multiple className="hidden" onChange={handleFileSelect} />
 
@@ -350,7 +350,7 @@ const CreateProperty = () => {
 
                   <div className="divide-y rounded-xl border bg-muted/30">
                     <SummaryRow label="Titel" value={title} />
-                    <SummaryRow label="Type" value={`${propertyTypeLabels[propertyType]} — ${listingType === "huur" ? "Te huur" : "Te koop"}`} />
+                    <SummaryRow label="Type" value={`${propertyTypeLabels[propertyType]} · ${listingType === "huur" ? "Te huur" : "Te koop"}`} />
                     <SummaryRow label="Adres" value={`${street} ${houseNumber}, ${postalCode} ${city}`} />
                     <SummaryRow label="Prijs" value={`€${Number(price).toLocaleString("nl-NL")}${listingType === "huur" ? " /mnd" : ""}`} />
                     {surfaceArea && <SummaryRow label="Oppervlakte" value={`${surfaceArea} m²`} />}
