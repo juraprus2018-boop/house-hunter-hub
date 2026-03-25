@@ -24,7 +24,6 @@ const DailyAlertSection = () => {
   const [email, setEmail] = useState("");
   const [city, setCity] = useState("");
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
-  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   const turnstileSiteKey = import.meta.env.VITE_TURNSTILE_SITE_KEY as string | undefined;
 
   // Fetch available cities from properties
