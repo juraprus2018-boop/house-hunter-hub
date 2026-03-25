@@ -1,12 +1,11 @@
-import { useCallback, useState, useEffect } from "react";
+import { useCallback, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { BellRing, Loader2, MapPin, Phone } from "lucide-react";
+import { BellRing, Loader2, MapPin } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
