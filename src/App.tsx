@@ -47,6 +47,7 @@ import AlertUnsubscribe from "./pages/AlertUnsubscribe";
 import DailyAlert from "./pages/DailyAlert";
 import About from "./pages/About";
 import MakelaarKoppelen from "./pages/MakelaarKoppelen";
+import Samenwerking from "./pages/Samenwerking";
 import CookieConsent from "@/components/CookieConsent";
 import { cityPath } from "@/lib/cities";
 
@@ -106,6 +107,7 @@ const App = () => (
             <Route path="/dagelijkse-alert" element={<DailyAlert />} />
             <Route path="/over-woonpeek" element={<About />} />
             <Route path="/makelaar-koppelen" element={<MakelaarKoppelen />} />
+            <Route path="/samenwerking" element={<Samenwerking />} />
             <Route path="/alerts/afmelden/:token" element={<AlertUnsubscribe />} />
             <Route path="/huurwoningen/:city?" element={<ListingTypePage listingType="huur" />} />
             <Route path="/koopwoningen/:city?" element={<ListingTypePage listingType="koop" />} />

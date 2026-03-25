@@ -1,12 +1,11 @@
-import { useCallback, useState, useEffect } from "react";
+import { useCallback, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { BellRing, Loader2, MapPin, Phone } from "lucide-react";
+import { BellRing, Loader2, MapPin } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -24,8 +23,6 @@ const DailyAlertSection = () => {
   const { toast } = useToast();
   const [email, setEmail] = useState("");
   const [city, setCity] = useState("");
-  const [phoneNumber, setPhoneNumber] = useState("");
-  const [whatsappEnabled, setWhatsappEnabled] = useState(false);
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   const turnstileSiteKey = import.meta.env.VITE_TURNSTILE_SITE_KEY as string | undefined;
 
@@ -48,8 +45,6 @@ const DailyAlertSection = () => {
     mutationFn: async (payload: {
       email?: string;
       city: string;
-      phone_number?: string;
-      whatsapp_enabled: boolean;
       turnstileToken?: string | null;
     }) => {
       const { data, error } = await supabase.functions.invoke("daily-alert-subscribe", {
@@ -66,8 +61,7 @@ const DailyAlertSection = () => {
       });
       setEmail("");
       setCity("");
-      setPhoneNumber("");
-      setWhatsappEnabled(false);
+      setTurnstileToken(null);
       setTurnstileToken(null);
     },
     onError: (error: unknown) => {
@@ -101,15 +95,6 @@ const DailyAlertSection = () => {
       }
     }
 
-    if (whatsappEnabled && !phoneNumber.trim()) {
-      toast({
-        variant: "destructive",
-        title: "Telefoonnummer vereist",
-        description: "Vul je telefoonnummer in voor WhatsApp-alerts.",
-      });
-      return;
-    }
-
     if (turnstileSiteKey && !turnstileToken) {
       toast({
         variant: "destructive",
@@ -122,8 +107,6 @@ const DailyAlertSection = () => {
     subscribe.mutate({
       email: user ? undefined : email.trim().toLowerCase(),
       city,
-      phone_number: whatsappEnabled ? phoneNumber.trim() : undefined,
-      whatsapp_enabled: whatsappEnabled,
       turnstileToken,
     });
   };
@@ -206,33 +189,7 @@ const DailyAlertSection = () => {
                   </p>
                 )}
 
-                {/* WhatsApp toggle */}
-                <div className="flex items-center gap-2">
-                  <Checkbox
-                    id="whatsapp-toggle"
-                    checked={whatsappEnabled}
-                    onCheckedChange={(checked) => setWhatsappEnabled(checked === true)}
-                  />
-                  <label htmlFor="whatsapp-toggle" className="text-sm font-medium text-foreground cursor-pointer">
-                    <Phone className="mr-1 inline-block h-4 w-4" />
-                    Ook via WhatsApp ontvangen
-                  </label>
-                </div>
 
-                {whatsappEnabled && (
-                  <div>
-                    <label className="mb-1.5 block text-sm font-medium text-foreground">
-                      WhatsApp-nummer (met landcode, bijv. +31612345678)
-                    </label>
-                    <Input
-                      type="tel"
-                      placeholder="+31612345678"
-                      value={phoneNumber}
-                      onChange={(e) => setPhoneNumber(e.target.value)}
-                      className="sm:max-w-sm"
-                    />
-                  </div>
-                )}
 
                 <TurnstileWidget siteKey={turnstileSiteKey} onTokenChange={handleTokenChange} />
 
