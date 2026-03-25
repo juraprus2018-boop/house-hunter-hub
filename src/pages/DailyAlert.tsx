@@ -32,7 +32,7 @@ const DailyAlert = () => {
             <p>
               Met de dagelijkse woningalert van WoonPeek ontvang je elke dag een overzichtelijke e-mail 
               met het nieuwste woningaanbod in Nederland. Of je nu op zoek bent naar een huurwoning, 
-              koopwoning, studio of kamer — onze alert houdt je op de hoogte zonder dat je zelf hoeft te zoeken.
+              koopwoning, studio of kamer: onze alert houdt je op de hoogte zonder dat je zelf hoeft te zoeken.
             </p>
             <h3 className="font-display text-xl font-semibold text-foreground pt-2">
               Hoe werkt de dagelijkse alert?
@@ -48,19 +48,19 @@ const DailyAlert = () => {
             </h3>
             <ul className="list-disc pl-6 space-y-2">
               <li>
-                <strong>Bespaar tijd</strong> — Je hoeft niet meer dagelijks meerdere websites af te speuren. 
+                <strong>Bespaar tijd</strong>: Je hoeft niet meer dagelijks meerdere websites af te speuren. 
                 WoonPeek doet het werk en stuurt je een handig overzicht.
               </li>
               <li>
-                <strong>Reageer sneller</strong> — In een krappe woningmarkt is snelheid cruciaal. 
+                <strong>Reageer sneller</strong>: In een krappe woningmarkt is snelheid cruciaal. 
                 Hoe eerder je reageert, hoe groter je kans op een bezichtiging.
               </li>
               <li>
-                <strong>Mis niets</strong> — Onze scrapers doorzoeken dagelijks meerdere bronnen. 
+                <strong>Mis niets</strong>: Onze scrapers doorzoeken dagelijks meerdere bronnen. 
                 Woningen die je op andere platforms zou missen, vind je wel op WoonPeek.
               </li>
               <li>
-                <strong>Gratis en vrijblijvend</strong> — Inschrijven is gratis en je kunt je op elk 
+                <strong>Gratis en vrijblijvend</strong>: Inschrijven is gratis en je kunt je op elk 
                 moment weer uitschrijven via de link in de e-mail.
               </li>
             </ul>

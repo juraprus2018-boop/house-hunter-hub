@@ -186,7 +186,7 @@ const PropertyTypeCityPage = ({ propertyType }: PropertyTypeCityPageProps) => {
               <p className="mt-3 text-base leading-relaxed text-muted-foreground">
                 Op zoek naar een <strong>{label.singular} in {locationLabel}</strong>? WoonPeek verzamelt dagelijks
                 het nieuwste aanbod van {label.plural.toLowerCase()} uit meerdere bronnen. Of je nu een{" "}
-                <strong>{label.singular} wilt huren</strong> of <strong>kopen in {locationLabel}</strong> — hier
+                <strong>{label.singular} wilt huren</strong> of <strong>kopen in {locationLabel}</strong>, hier
                 vind je het actuele overzicht met prijzen, foto's en details.
               </p>
               <div className="mt-4 flex flex-wrap gap-3">
@@ -299,7 +299,7 @@ const PropertyTypeCityPage = ({ propertyType }: PropertyTypeCityPageProps) => {
               <p>
                 Op WoonPeek vind je het meest actuele aanbod van <strong>{label.plural.toLowerCase()} in {locationLabel}</strong>.
                 Of je nu een <strong>{label.singular} huren in {locationLabel}</strong> zoekt of een{" "}
-                <strong>{label.singular} kopen in {locationLabel}</strong> — wij verzamelen dagelijks nieuw aanbod uit
+                <strong>{label.singular} kopen in {locationLabel}</strong>, wij verzamelen dagelijks nieuw aanbod uit
                 meerdere bronnen zodat jij niets mist. Zo vind je sneller een woning dan op andere platforms.
               </p>
               <p>
@@ -346,7 +346,7 @@ const PropertyTypeCityPage = ({ propertyType }: PropertyTypeCityPageProps) => {
               </p>
               <ul className="list-disc space-y-2 pl-5">
                 <li>
-                  <strong>Reageer snel</strong> — Nieuwe {label.plural.toLowerCase()} in {locationLabel} zijn vaak
+                  <strong>Reageer snel</strong>: Nieuwe {label.plural.toLowerCase()} in {locationLabel} zijn vaak
                   binnen een paar dagen verhuurd. Stel een{" "}
                   <Link to="/dagelijkse-alert" className="text-primary underline hover:no-underline">
                     dagelijkse alert
@@ -354,15 +354,15 @@ const PropertyTypeCityPage = ({ propertyType }: PropertyTypeCityPageProps) => {
                   in om als eerste op de hoogte te zijn.
                 </li>
                 <li>
-                  <strong>Gebruik filters</strong> — Filter op maximale prijs, aantal kamers of oppervlakte om
+                  <strong>Gebruik filters</strong>: Filter op maximale prijs, aantal kamers of oppervlakte om
                   alleen relevante {label.plural.toLowerCase()} te zien.
                 </li>
                 <li>
-                  <strong>Bekijk ook andere woningtypes</strong> — Naast {label.plural.toLowerCase()} kun je ook
+                  <strong>Bekijk ook andere woningtypes</strong>: Naast {label.plural.toLowerCase()} kun je ook
                   zoeken op andere categorieën. Verbreed je zoekopdracht om meer kans te maken.
                 </li>
                 <li>
-                  <strong>Vergelijk prijzen</strong> — Bekijk de prijzen van vergelijkbare{" "}
+                  <strong>Vergelijk prijzen</strong>: Bekijk de prijzen van vergelijkbare{" "}
                   {label.plural.toLowerCase()} in {locationLabel} om een realistisch beeld te krijgen van de markt.
                 </li>
               </ul>

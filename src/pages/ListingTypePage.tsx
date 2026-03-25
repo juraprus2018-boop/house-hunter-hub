@@ -272,7 +272,7 @@ const ListingTypePage = ({ listingType }: ListingTypePageProps) => {
                   <p>
                     De koopwoningmarkt {cityName ? `in ${cityName}` : "in Nederland"} biedt kansen voor
                     zowel starters als doorstromers. Of je nu op zoek bent naar een betaalbaar <strong>appartement
-                    {cityName ? ` in ${cityName}` : ""}</strong> of een ruime gezinswoning — op WoonPeek vind je
+                    {cityName ? ` in ${cityName}` : ""}</strong> of een ruime gezinswoning, op WoonPeek vind je
                     dagelijks nieuwe koopwoningen uit meerdere bronnen.
                   </p>
                   <p>
@@ -307,7 +307,7 @@ const ListingTypePage = ({ listingType }: ListingTypePageProps) => {
             <div className="mt-3 space-y-4 text-sm leading-relaxed text-muted-foreground">
               <ul className="list-disc space-y-2 pl-5">
                 <li>
-                  <strong>Reageer snel</strong> — Nieuwe {label.plural.toLowerCase()} in {locationLabel} zijn
+                  <strong>Reageer snel</strong>: Nieuwe {label.plural.toLowerCase()} in {locationLabel} zijn
                   vaak snel weg. Stel een{" "}
                   <Link to="/dagelijkse-alert" className="text-primary underline hover:no-underline">
                     dagelijkse alert
@@ -315,15 +315,15 @@ const ListingTypePage = ({ listingType }: ListingTypePageProps) => {
                   in om als eerste op de hoogte te zijn.
                 </li>
                 <li>
-                  <strong>Gebruik filters</strong> — Filter op maximale {listingType === "huur" ? "huurprijs" : "koopprijs"},
+                  <strong>Gebruik filters</strong>: Filter op maximale {listingType === "huur" ? "huurprijs" : "koopprijs"},
                   aantal kamers of oppervlakte om alleen relevante woningen te zien.
                 </li>
                 <li>
-                  <strong>Bekijk ook andere woningtypes</strong> — Verbreed je zoekopdracht naar appartementen, huizen of
+                  <strong>Bekijk ook andere woningtypes</strong>: Verbreed je zoekopdracht naar appartementen, huizen of
                   studio's om meer kans te maken.
                 </li>
                 <li>
-                  <strong>Vergelijk prijzen</strong> — Bekijk de prijzen van vergelijkbare{" "}
+                  <strong>Vergelijk prijzen</strong>: Bekijk de prijzen van vergelijkbare{" "}
                   {label.plural.toLowerCase()} in {locationLabel} om een realistisch beeld te krijgen van de markt.
                 </li>
               </ul>
