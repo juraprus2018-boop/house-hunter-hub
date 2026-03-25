@@ -432,7 +432,7 @@ const PropertyDetail = () => {
           {/* Status banners */}
           {property.status === "inactief" && (
             <div className="mt-4 rounded-lg border border-amber-300 bg-amber-50 p-4 dark:border-amber-700 dark:bg-amber-950/30">
-              <p className="text-sm font-medium text-amber-800 dark:text-amber-200">⚠️ Deze woning is verlopen — het aanbod is niet meer beschikbaar.</p>
+              <p className="text-sm font-medium text-amber-800 dark:text-amber-200">⚠️ Deze woning is verlopen. Het aanbod is niet meer beschikbaar.</p>
               <p className="mt-1 text-xs text-amber-600 dark:text-amber-400">
                 Verlopen sinds {new Date(property.updated_at).toLocaleDateString("nl-NL", { day: "numeric", month: "long", year: "numeric" })}
               </p>

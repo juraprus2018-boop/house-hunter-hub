@@ -17,7 +17,7 @@ const usps = [
     icon: Home,
     title: "Groot en divers aanbod",
     description:
-      "WoonPeek verzamelt woningen uit meerdere bronnen op één plek. Van huurwoningen en koopwoningen tot studio's en kamers — je vindt het allemaal bij ons. Geen eindeloos zoeken op tientallen websites meer.",
+      "WoonPeek verzamelt woningen uit meerdere bronnen op één plek. Van huurwoningen en koopwoningen tot studio's en kamers: je vindt het allemaal bij ons. Geen eindeloos zoeken op tientallen websites meer.",
   },
   {
     icon: RefreshCw,
@@ -87,7 +87,7 @@ const About = () => {
               <p className="mx-auto mt-4 max-w-2xl text-lg text-primary-foreground/80">
                 WoonPeek is hét gratis woningplatform van Nederland. Wij
                 verzamelen dagelijks het nieuwste huur- en koopaanbod uit
-                meerdere bronnen — zodat jij sneller vindt wat je zoekt.
+                meerdere bronnen, zodat jij sneller vindt wat je zoekt.
               </p>
             </div>
           </div>
@@ -152,7 +152,7 @@ const About = () => {
                 De woningmarkt in Nederland is krap en onoverzichtelijk.
                 Woningzoekers moeten dagelijks tientallen websites checken om
                 niets te missen. Dat kan beter. WoonPeek brengt al het aanbod
-                samen op één plek — volledig gratis en dagelijks bijgewerkt.
+                samen op één plek, volledig gratis en dagelijks bijgewerkt.
               </p>
               <p className="text-center leading-relaxed text-muted-foreground">
                 Wij geloven dat iedereen eerlijke en snelle toegang verdient tot
@@ -174,7 +174,7 @@ const About = () => {
               <p className="mx-auto mt-4 max-w-2xl text-muted-foreground">
                 Heb je een woning te huur of te koop? Op WoonPeek kun je
                 kosteloos je woning adverteren. Bereik duizenden woningzoekers
-                zonder advertentiekosten — anders dan bij veel andere platforms.
+                zonder advertentiekosten, anders dan bij veel andere platforms.
               </p>
               <div className="mt-8 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
                 <Link to="/woning-plaatsen">

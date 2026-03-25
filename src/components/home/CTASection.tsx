@@ -21,7 +21,7 @@ const CTASection = () => {
             </h2>
             <p className="mx-auto mt-4 max-w-xl text-lg text-primary-foreground/80">
               Bekijk het complete woningaanbod van Nederland op WoonPeek. Huurwoningen,
-              koopwoningen en meer — dagelijks bijgewerkt.
+              koopwoningen en meer, dagelijks bijgewerkt.
             </p>
             <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
               <Link to="/zoeken">

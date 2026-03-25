@@ -5,7 +5,7 @@ const benefits = [
     icon: Zap,
     title: "Sneller dan anderen",
     description:
-      "Ontdek nieuwe woningen zodra ze online komen — nog voordat ze op de grote platforms staan.",
+      "Ontdek nieuwe woningen zodra ze online komen, nog voordat ze op de grote platforms staan.",
   },
   {
     icon: Search,
@@ -35,7 +35,7 @@ const benefits = [
     icon: Heart,
     title: "100% gratis",
     description:
-      "Zoek onbeperkt, sla favorieten op en stel alerts in — volledig gratis.",
+      "Zoek onbeperkt, sla favorieten op en stel alerts in. Volledig gratis.",
   },
 ];
 
