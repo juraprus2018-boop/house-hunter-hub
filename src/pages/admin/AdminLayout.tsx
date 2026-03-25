@@ -16,6 +16,7 @@ import {
   CalendarDays,
   Facebook,
   Handshake,
+  Mail,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -69,6 +70,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
     { to: "/admin/blog", label: "Blog", icon: FileText },
     { to: "/admin/facebook", label: "Facebook Groep", icon: Facebook },
     { to: "/admin/leads", label: "Makelaar Leads", icon: Handshake },
+    { to: "/admin/email", label: "E-mail Sender", icon: Mail },
     { to: "/admin/instellingen", label: "Instellingen", icon: Settings },
   ];
 

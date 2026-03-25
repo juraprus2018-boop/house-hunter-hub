@@ -14,6 +14,48 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_sent_emails: {
+        Row: {
+          created_at: string
+          html_content: string | null
+          id: string
+          opened_at: string | null
+          recipient_email: string
+          recipient_name: string | null
+          sent_by: string
+          status: string
+          subject: string
+          template_name: string
+          tracking_id: string
+        }
+        Insert: {
+          created_at?: string
+          html_content?: string | null
+          id?: string
+          opened_at?: string | null
+          recipient_email: string
+          recipient_name?: string | null
+          sent_by: string
+          status?: string
+          subject: string
+          template_name: string
+          tracking_id?: string
+        }
+        Update: {
+          created_at?: string
+          html_content?: string | null
+          id?: string
+          opened_at?: string | null
+          recipient_email?: string
+          recipient_name?: string | null
+          sent_by?: string
+          status?: string
+          subject?: string
+          template_name?: string
+          tracking_id?: string
+        }
+        Relationships: []
+      }
       blog_posts: {
         Row: {
           author_id: string
