@@ -36,7 +36,7 @@ const FeaturedListings = () => {
               Nieuw geplaatst vandaag
             </h2>
             <p className="mt-2 text-muted-foreground">
-              De nieuwste woningen op ons platform — wees er snel bij
+              De nieuwste woningen op ons platform. Wees er snel bij!
             </p>
           </div>
           <Link to="/zoeken" className="hidden sm:block">

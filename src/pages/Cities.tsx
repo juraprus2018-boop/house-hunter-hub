@@ -57,7 +57,7 @@ const Cities = () => {
         <div className="mb-8 max-w-3xl space-y-3 text-sm text-muted-foreground leading-relaxed">
           <p>
             WoonPeek verzamelt dagelijks huurwoningen en koopwoningen uit steden door heel Nederland. 
-            Van de Randstad tot de provincies — hieronder vind je een overzicht van alle steden waar momenteel 
+            Van de Randstad tot de provincies: hieronder vind je een overzicht van alle steden waar momenteel 
             actief woningaanbod beschikbaar is. Klik op een stad om het volledige aanbod te bekijken, 
             inclusief appartementen, huizen, studio's en kamers.
           </p>

@@ -600,7 +600,7 @@ const AdminFacebookQueue = () => {
                               <div>
                                 <div className="flex items-center justify-between mb-2">
                                   <p className="text-xs font-medium text-muted-foreground">
-                                    FOTO'S — sla op en upload naar Facebook:
+                                    FOTO'S: sla op en upload naar Facebook:
                                   </p>
                                   <Button
                                     variant="outline"

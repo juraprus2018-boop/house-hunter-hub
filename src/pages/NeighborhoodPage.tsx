@@ -257,7 +257,7 @@ const NeighborhoodPage = () => {
             <div className="space-y-3 text-sm text-muted-foreground leading-relaxed">
               <p>
                 {neighborhoodName} is een populaire wijk in {cityName}. Op WoonPeek vind je het meest actuele aanbod van
-                <strong> woningen in {neighborhoodName}</strong>. Of je nu zoekt naar een appartement, huis of kamer —
+                <strong> woningen in {neighborhoodName}</strong>. Of je nu zoekt naar een appartement, huis of kamer,
                 het aanbod wordt dagelijks bijgewerkt.
               </p>
               <p>

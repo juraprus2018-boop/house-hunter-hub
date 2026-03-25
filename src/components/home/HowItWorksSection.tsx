@@ -17,7 +17,7 @@ const steps = [
     icon: Bell,
     step: "3",
     title: "Reageer als eerste",
-    description: "Stel alerts in en ontvang nieuwe woningen direct in je inbox — sneller dan anderen.",
+    description: "Stel alerts in en ontvang nieuwe woningen direct in je inbox, sneller dan anderen.",
   },
 ];
 

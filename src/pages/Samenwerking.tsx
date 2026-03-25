@@ -109,7 +109,7 @@ const Samenwerking = () => {
             <p>
               Elke aanbieder levert een datafeed met actueel woningaanbod. Onze systemen
               verwerken deze feeds automatisch, zodat je als bezoeker altijd het meest
-              recente aanbod ziet — zonder zelf tientallen websites af te hoeven zoeken.
+              recente aanbod ziet, zonder zelf tientallen websites af te hoeven zoeken.
             </p>
             <h3 className="font-display pt-2 text-xl font-semibold text-foreground">
               Zelf samenwerken met WoonPeek?

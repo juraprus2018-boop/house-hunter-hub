@@ -13,7 +13,7 @@ const SEOContentSection = () => {
             nieuwste aanbod van <strong>huurwoningen</strong>, <strong>appartementen</strong>,
             studio's en koopwoningen uit heel Nederland op één overzichtelijke plek. Of je nu een
             starter bent die een eerste <strong>huurwoning</strong> zoekt, een gezin dat een ruimer
-            huis wil kopen, of een student op zoek naar een betaalbare kamer — bij WoonPeek vind je
+            huis wil kopen, of een student op zoek naar een betaalbare kamer: bij WoonPeek vind je
             snel wat je zoekt.
           </p>
           <p>
@@ -46,7 +46,7 @@ const SEOContentSection = () => {
             Met onze gratis dagelijkse alert ontvang je automatisch een e-mail wanneer er nieuwe{" "}
             <strong>woningen</strong> beschikbaar komen. Sla je favorieten op, vergelijk prijzen en
             reageer sneller dan anderen op de krappe woningmarkt. Start vandaag nog met{" "}
-            <strong>woning zoeken</strong> via WoonPeek — het is volledig gratis.
+            <strong>woning zoeken</strong> via WoonPeek. Het is volledig gratis.
           </p>
         </div>
       </div>

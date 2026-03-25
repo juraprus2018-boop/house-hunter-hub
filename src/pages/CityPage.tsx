@@ -249,7 +249,7 @@ const CityPage = () => {
                 <p>
                   {cityName} biedt een divers aanbod aan huurwoningen en koopwoningen. Of je nu zoekt naar een 
                   <strong> appartement in {cityName}</strong>, een ruim <strong>huis huren in {cityName}</strong> of een 
-                  compacte studio — op WoonPeek vind je het meest actuele overzicht.
+                  compacte studio: op WoonPeek vind je het meest actuele overzicht.
                 </p>
                 <p>
                   Op dit moment zijn er {totalCount} woningen beschikbaar in {cityName}, 

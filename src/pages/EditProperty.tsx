@@ -365,7 +365,7 @@ const EditProperty = () => {
                       >
                         <ImagePlus className="mb-2 h-8 w-8 text-muted-foreground" />
                         <p className="text-sm font-medium text-muted-foreground">Klik om foto's toe te voegen</p>
-                        <p className="text-xs text-muted-foreground/70">JPG, PNG, WebP — max 5MB per foto</p>
+                        <p className="text-xs text-muted-foreground/70">JPG, PNG, WebP (max 5MB per foto)</p>
                       </div>
                     )}
                     <input ref={fileInputRef} type="file" accept="image/*" multiple className="hidden" onChange={handleFileSelect} />

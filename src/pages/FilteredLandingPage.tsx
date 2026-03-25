@@ -216,7 +216,7 @@ const FilteredLandingPage = () => {
               <p>
                 {cityName} biedt een divers woningaanbod voor elke woningzoeker. Of je nu zoekt naar een
                 <strong> betaalbare huurwoning in {cityName}</strong>, een <strong>appartement in {cityName}</strong> of
-                een <strong>ruim huis</strong> — op WoonPeek vind je dagelijks nieuw aanbod uit meerdere bronnen.
+                een <strong>ruim huis</strong>: op WoonPeek vind je dagelijks nieuw aanbod uit meerdere bronnen.
               </p>
               <p>
                 Op dit moment zijn er {totalCount} woningen beschikbaar in {cityName} {filterLabel}.
