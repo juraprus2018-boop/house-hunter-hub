@@ -401,13 +401,15 @@ const AdminEmailSender = () => {
                   <div className="space-y-2 rounded-lg border bg-muted/50 p-4">
                     <div className="flex items-center justify-between text-sm">
                       <span className="font-medium">
-                        Verzenden... {batchProgress.sent + batchProgress.failed} / {batchProgress.total}
+                        Verzenden... {batchProgress.sent + batchProgress.failed + batchProgress.skipped} / {batchProgress.total}
                       </span>
                       <span className="text-muted-foreground">
-                        {batchProgress.sent} verzonden{batchProgress.failed > 0 ? `, ${batchProgress.failed} mislukt` : ""}
+                        {batchProgress.sent} verzonden
+                        {batchProgress.skipped > 0 ? `, ${batchProgress.skipped} overgeslagen` : ""}
+                        {batchProgress.failed > 0 ? `, ${batchProgress.failed} mislukt` : ""}
                       </span>
                     </div>
-                    <Progress value={((batchProgress.sent + batchProgress.failed) / batchProgress.total) * 100} />
+                    <Progress value={((batchProgress.sent + batchProgress.failed + batchProgress.skipped) / batchProgress.total) * 100} />
                     <Button variant="destructive" size="sm" onClick={() => { abortRef.current = true; }}>
                       Stoppen
                     </Button>
