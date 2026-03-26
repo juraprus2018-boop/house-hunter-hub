@@ -221,7 +221,9 @@ Deno.serve(async (req) => {
 
     // Note: Deactivation is handled by the separate deactivate-properties function
 
-    // Update scraper record if exists
+    // Submit new URLs to IndexNow for instant indexing
+    await submitToIndexNow(indexNowUrls);
+
     const { data: scraper } = await supabase
       .from("scrapers")
       .select("id, properties_found")
