@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useCallback } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,6 +13,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Send, Mail, MailOpen, Clock, Loader2, Upload, Users, User } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { nl } from "date-fns/locale";
@@ -36,6 +37,10 @@ const AdminEmailSender = () => {
   // Shared
   const [selectedTemplate, setSelectedTemplate] = useState<string>("");
   const [customSubject, setCustomSubject] = useState("");
+
+  // Batch progress
+  const [batchProgress, setBatchProgress] = useState<{ sent: number; failed: number; total: number } | null>(null);
+  const abortRef = useRef(false);
 
   // Fetch sent emails history
   const { data: sentEmails, isLoading: loadingHistory } = useQuery({
@@ -126,6 +131,8 @@ const AdminEmailSender = () => {
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
+  const BATCH_SIZE = 10;
+
   const sendMutation = useMutation({
     mutationFn: async () => {
       if (!selectedTemplate) throw new Error("Selecteer een template");
@@ -134,9 +141,9 @@ const AdminEmailSender = () => {
 
       const subject = customSubject || template.subject;
       const htmlContent = template.getHtml();
+      abortRef.current = false;
 
       if (sendMode === "single") {
-        if (!recipientEmail) throw new Error("Vul een e-mailadres in");
         const { data, error } = await supabase.functions.invoke("send-makelaar-email", {
           body: {
             recipients: [{ email: recipientEmail, name: recipientName || undefined }],
@@ -150,21 +157,45 @@ const AdminEmailSender = () => {
         if (data?.error) throw new Error(data.error);
         return data;
       } else {
-        const recipients = parseBulkEmails();
-        if (recipients.length === 0) throw new Error("Geen geldige e-mailadressen gevonden");
+        const allRecipients = parseBulkEmails();
+        if (allRecipients.length === 0) throw new Error("Geen geldige e-mailadressen gevonden");
 
-        const { data, error } = await supabase.functions.invoke("send-makelaar-email", {
-          body: {
-            recipients,
-            subject,
-            htmlContent,
-            templateName: selectedTemplate,
-            userId: user?.id,
-          },
-        });
-        if (error) throw error;
-        if (data?.error) throw new Error(data.error);
-        return data;
+        let totalSent = 0;
+        let totalFailed = 0;
+        const totalCount = allRecipients.length;
+        setBatchProgress({ sent: 0, failed: 0, total: totalCount });
+
+        // Split into batches
+        for (let i = 0; i < allRecipients.length; i += BATCH_SIZE) {
+          if (abortRef.current) break;
+          
+          const batch = allRecipients.slice(i, i + BATCH_SIZE);
+          try {
+            const { data, error } = await supabase.functions.invoke("send-makelaar-email", {
+              body: {
+                recipients: batch,
+                subject,
+                htmlContent,
+                templateName: selectedTemplate,
+                userId: user?.id,
+              },
+            });
+            if (error) throw error;
+            totalSent += data?.sent || 0;
+            totalFailed += data?.failed || 0;
+          } catch {
+            totalFailed += batch.length;
+          }
+          setBatchProgress({ sent: totalSent, failed: totalFailed, total: totalCount });
+
+          // Small delay between batches
+          if (i + BATCH_SIZE < allRecipients.length && !abortRef.current) {
+            await new Promise(r => setTimeout(r, 1000));
+          }
+        }
+
+        setBatchProgress(null);
+        return { sent: totalSent, failed: totalFailed };
       }
     },
     onSuccess: (data) => {
@@ -182,6 +213,7 @@ const AdminEmailSender = () => {
       queryClient.invalidateQueries({ queryKey: ["admin-sent-emails"] });
     },
     onError: (err: Error) => {
+      setBatchProgress(null);
       toast.error(`Fout bij verzenden: ${err.message}`);
     },
   });
@@ -365,25 +397,45 @@ const AdminEmailSender = () => {
                   />
                 </div>
 
-                <Button
-                  onClick={() => sendMutation.mutate()}
-                  disabled={
-                    !selectedTemplate ||
-                    sendMutation.isPending ||
-                    (sendMode === "single" && !recipientEmail) ||
-                    (sendMode === "bulk" && bulkCount === 0)
-                  }
-                  className="w-full sm:w-auto"
-                >
-                  {sendMutation.isPending ? (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  ) : (
-                    <Send className="mr-2 h-4 w-4" />
-                  )}
-                  {sendMode === "bulk"
-                    ? `Verstuur naar ${bulkCount} ontvanger${bulkCount !== 1 ? "s" : ""}`
-                    : "Verstuur E-mail"}
-                </Button>
+                {/* Batch progress */}
+                {batchProgress && (
+                  <div className="space-y-2 rounded-lg border bg-muted/50 p-4">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="font-medium">
+                        Verzenden... {batchProgress.sent + batchProgress.failed} / {batchProgress.total}
+                      </span>
+                      <span className="text-muted-foreground">
+                        {batchProgress.sent} verzonden{batchProgress.failed > 0 ? `, ${batchProgress.failed} mislukt` : ""}
+                      </span>
+                    </div>
+                    <Progress value={((batchProgress.sent + batchProgress.failed) / batchProgress.total) * 100} />
+                    <Button variant="destructive" size="sm" onClick={() => { abortRef.current = true; }}>
+                      Stoppen
+                    </Button>
+                  </div>
+                )}
+
+                <div className="flex gap-2">
+                  <Button
+                    onClick={() => sendMutation.mutate()}
+                    disabled={
+                      !selectedTemplate ||
+                      sendMutation.isPending ||
+                      (sendMode === "single" && !recipientEmail) ||
+                      (sendMode === "bulk" && bulkCount === 0)
+                    }
+                    className="w-full sm:w-auto"
+                  >
+                    {sendMutation.isPending ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                      <Send className="mr-2 h-4 w-4" />
+                    )}
+                    {sendMode === "bulk"
+                      ? `Verstuur naar ${bulkCount} ontvanger${bulkCount !== 1 ? "s" : ""}`
+                      : "Verstuur E-mail"}
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
