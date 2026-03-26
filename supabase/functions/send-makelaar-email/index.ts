@@ -84,7 +84,7 @@ Deno.serve(async (req) => {
         client = null;
 
         await supabase.from("admin_sent_emails").insert({
-          recipient_email: recipient.email,
+          recipient_email: emailLower,
           recipient_name: recipient.name || null,
           subject,
           template_name: templateName,
