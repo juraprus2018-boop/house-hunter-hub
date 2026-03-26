@@ -41,7 +41,90 @@ const AdminEmailSender = () => {
   // Batch progress
   const [batchProgress, setBatchProgress] = useState<{ sent: number; failed: number; skipped: number; total: number } | null>(null);
   const abortRef = useRef(false);
-...
+
+  // Fetch sent emails history
+  const { data: sentEmails, isLoading: loadingHistory } = useQuery({
+    queryKey: ["admin-sent-emails"],
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from("admin_sent_emails")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(100);
+      if (error) throw error;
+      return data as {
+        id: string;
+        recipient_email: string;
+        recipient_name: string | null;
+        subject: string;
+        template_name: string;
+        status: string;
+        opened_at: string | null;
+        tracking_id: string;
+        created_at: string;
+      }[];
+    },
+  });
+
+  const parseBulkEmails = (): { email: string; name?: string }[] => {
+    return bulkEmails
+      .split("\n")
+      .map((line) => line.trim())
+      .filter((line) => line.length > 0)
+      .map((line) => {
+        const parts = line.split(/[,;]\s*/);
+        if (parts.length >= 2) {
+          const first = parts[0]?.trim();
+          const second = parts[1]?.trim();
+          if (second?.includes("@")) {
+            return { email: second, name: first || undefined };
+          }
+          if (first?.includes("@")) {
+            return { email: first, name: second || undefined };
+          }
+          return null;
+        }
+        const email = parts[0]?.trim();
+        if (!email || !email.includes("@")) return null;
+        return { email };
+      })
+      .filter(Boolean) as { email: string; name?: string }[];
+  };
+
+  const handleCsvImport = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const text = event.target?.result as string;
+      const lines = text.split("\n").filter((l) => l.trim());
+      const startIndex = lines[0]?.toLowerCase().includes("email") ? 1 : 0;
+
+      const parsed = lines
+        .slice(startIndex)
+        .map((line) => {
+          const parts = line.split(/[,;]\s*/);
+          const first = parts[0]?.trim();
+          const second = parts[1]?.trim();
+          if (second?.includes("@")) {
+            return first ? `${first}, ${second}` : second;
+          }
+          if (first?.includes("@")) {
+            return second ? `${second}, ${first}` : first;
+          }
+          return "";
+        })
+        .filter(Boolean)
+        .join("\n");
+
+      setBulkEmails((prev) => (prev ? prev + "\n" + parsed : parsed));
+      toast.success(`${parsed.split("\n").length} e-mailadressen geïmporteerd`);
+    };
+    reader.readAsText(file);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
   const BATCH_SIZE = 2;
 
   const sendMutation = useMutation({
@@ -67,53 +150,48 @@ const AdminEmailSender = () => {
         if (error) throw error;
         if (data?.error) throw new Error(data.error);
         return data;
-      } else {
-        const allRecipients = parseBulkEmails();
-        if (allRecipients.length === 0) throw new Error("Geen geldige e-mailadressen gevonden");
+      }
 
-        let totalSent = 0;
-        let totalFailed = 0;
-        let totalSkipped = 0;
-        const totalCount = allRecipients.length;
-        setBatchProgress({ sent: 0, failed: 0, skipped: 0, total: totalCount });
+      const allRecipients = parseBulkEmails();
+      if (allRecipients.length === 0) throw new Error("Geen geldige e-mailadressen gevonden");
 
-        for (let i = 0; i < allRecipients.length; i += BATCH_SIZE) {
-          if (abortRef.current) break;
+      let totalSent = 0;
+      let totalFailed = 0;
+      let totalSkipped = 0;
+      const totalCount = allRecipients.length;
+      setBatchProgress({ sent: 0, failed: 0, skipped: 0, total: totalCount });
 
-          const batch = allRecipients.slice(i, i + BATCH_SIZE);
-          try {
-            const { data, error } = await supabase.functions.invoke("send-makelaar-email", {
-              body: {
-                recipients: batch,
-                subject,
-                htmlContent,
-                templateName: selectedTemplate,
-                userId: user?.id,
-              },
-            });
-            if (error) throw error;
-            totalSent += data?.sent || 0;
-            totalFailed += data?.failed || 0;
-            totalSkipped += data?.skipped || 0;
-          } catch {
-            totalFailed += batch.length;
-          }
+      for (let i = 0; i < allRecipients.length; i += BATCH_SIZE) {
+        if (abortRef.current) break;
 
-          setBatchProgress({
-            sent: totalSent,
-            failed: totalFailed,
-            skipped: totalSkipped,
-            total: totalCount,
+        const batch = allRecipients.slice(i, i + BATCH_SIZE);
+        try {
+          const { data, error } = await supabase.functions.invoke("send-makelaar-email", {
+            body: {
+              recipients: batch,
+              subject,
+              htmlContent,
+              templateName: selectedTemplate,
+              userId: user?.id,
+            },
           });
-
-          if (i + BATCH_SIZE < allRecipients.length && !abortRef.current) {
-            await new Promise((r) => setTimeout(r, 1000));
-          }
+          if (error) throw error;
+          totalSent += data?.sent || 0;
+          totalFailed += data?.failed || 0;
+          totalSkipped += data?.skipped || 0;
+        } catch {
+          totalFailed += batch.length;
         }
 
-        setBatchProgress(null);
-        return { sent: totalSent, failed: totalFailed, skipped: totalSkipped };
+        setBatchProgress({ sent: totalSent, failed: totalFailed, skipped: totalSkipped, total: totalCount });
+
+        if (i + BATCH_SIZE < allRecipients.length && !abortRef.current) {
+          await new Promise((r) => setTimeout(r, 1000));
+        }
       }
+
+      setBatchProgress(null);
+      return { sent: totalSent, failed: totalFailed, skipped: totalSkipped };
     },
     onSuccess: (data) => {
       const sent = data?.sent || 0;
