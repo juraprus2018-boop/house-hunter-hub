@@ -13,14 +13,16 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { recipientEmail, recipientName, subject, htmlContent, templateName, trackingId, userId } = await req.json();
+    const body = await req.json();
+    
+    // Support both single and bulk sending
+    const recipients: { email: string; name?: string }[] = body.recipients || [
+      { email: body.recipientEmail, name: body.recipientName }
+    ];
+    const { subject, htmlContent, templateName, userId } = body;
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
-    const trackingPixelUrl = `${supabaseUrl}/functions/v1/track-email-open?t=${trackingId}`;
-
-    // Remove excessive whitespace/newlines to prevent =20 quoted-printable encoding issues
-    const cleanHtml = htmlContent.replace(/\n\s+/g, '\n').replace(/\s{2,}/g, ' ').trim();
-    const finalHtml = cleanHtml + `<img src="${trackingPixelUrl}" width="1" height="1" style="display:none" alt="" />`;
+    const supabase = createClient(supabaseUrl, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "");
 
     const client = new SMTPClient({
       connection: {
@@ -34,35 +36,59 @@ Deno.serve(async (req) => {
       },
     });
 
-    await client.send({
-      from: "WoonPeek <info@woonpeek.nl>",
-      to: recipientEmail,
-      subject,
-      content: "auto",
-      html: finalHtml,
-      encoding: "8bit",
-    });
+    const results: { email: string; success: boolean; error?: string }[] = [];
+
+    for (const recipient of recipients) {
+      const trackingId = crypto.randomUUID();
+      const trackingPixelUrl = `${supabaseUrl}/functions/v1/track-email-open?t=${trackingId}`;
+
+      // Personalize HTML with recipient name if template uses it
+      let personalizedHtml = htmlContent;
+      if (recipient.name) {
+        personalizedHtml = htmlContent.replace(/Geachte heer\/mevrouw,/g, `Geachte ${recipient.name},`);
+      }
+
+      const cleanHtml = personalizedHtml.replace(/\n\s+/g, '\n').replace(/\s{2,}/g, ' ').trim();
+      const finalHtml = cleanHtml + `<img src="${trackingPixelUrl}" width="1" height="1" style="display:none" alt="" />`;
+
+      try {
+        await client.send({
+          from: "WoonPeek <info@woonpeek.nl>",
+          to: recipient.email,
+          subject,
+          content: "auto",
+          html: finalHtml,
+          encoding: "8bit",
+        });
+
+        await supabase.from("admin_sent_emails").insert({
+          recipient_email: recipient.email,
+          recipient_name: recipient.name || null,
+          subject,
+          template_name: templateName,
+          html_content: finalHtml,
+          tracking_id: trackingId,
+          sent_by: userId,
+          status: "sent",
+        });
+
+        results.push({ email: recipient.email, success: true });
+      } catch (err) {
+        results.push({ email: recipient.email, success: false, error: err instanceof Error ? err.message : "Unknown" });
+      }
+
+      // Small delay between sends to avoid rate limiting
+      if (recipients.length > 1) {
+        await new Promise(r => setTimeout(r, 500));
+      }
+    }
 
     await client.close();
 
-    // Log to database
-    const supabase = createClient(
-      supabaseUrl,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || ""
-    );
+    const sent = results.filter(r => r.success).length;
+    const failed = results.filter(r => !r.success).length;
 
-    await supabase.from("admin_sent_emails").insert({
-      recipient_email: recipientEmail,
-      recipient_name: recipientName || null,
-      subject,
-      template_name: templateName,
-      html_content: finalHtml,
-      tracking_id: trackingId,
-      sent_by: userId,
-      status: "sent",
-    });
-
-    return new Response(JSON.stringify({ success: true }), {
+    return new Response(JSON.stringify({ success: true, sent, failed, results }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {

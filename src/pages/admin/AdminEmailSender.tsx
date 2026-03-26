@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -6,80 +6,34 @@ import AdminLayout from "./AdminLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Send, Mail, MailOpen, Clock, CheckCircle2, Loader2 } from "lucide-react";
+import { Send, Mail, MailOpen, Clock, Loader2, Upload, Users, User } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { nl } from "date-fns/locale";
-
-// Email templates
-const LOGO_URL = "https://www.woonpeek.nl/assets/logo-woonpeek-CMQsaJz-.png";
-
-const EMAIL_TEMPLATES: Record<string, { name: string; subject: string; getHtml: (recipientName?: string) => string }> = {
-  "makelaar-welkom": {
-    name: "Makelaar Welkom",
-    subject: "Vergroot uw bereik met WoonPeek",
-    getHtml: (name?: string) => `<div style="font-family:Arial,Helvetica,sans-serif;max-width:600px;margin:0 auto;background:#ffffff;border:1px solid #e2e8f0;">
-<div style="background:#1a365d;padding:30px;text-align:center;">
-<img src="${LOGO_URL}" alt="WoonPeek" height="50" style="display:inline-block;" />
-</div>
-<div style="padding:30px;">
-<p style="color:#1a365d;font-size:16px;margin:0 0 20px;">${name ? `Geachte ${name},` : "Geachte heer/mevrouw,"}</p>
-<p style="color:#333333;font-size:14px;line-height:1.6;margin:0 0 15px;">Graag stellen wij ons voor: wij zijn <strong>WoonPeek</strong>, een groeiend woningplatform in Nederland. Wij bieden makelaars de mogelijkheid om kosteloos hun woningaanbod bij ons te plaatsen.</p>
-<p style="color:#333333;font-size:14px;line-height:1.6;margin:0 0 20px;">Door uw aanbod op WoonPeek te plaatsen profiteert u van:</p>
-<table style="width:100%;border-collapse:collapse;margin:0 0 20px;">
-<tr><td style="padding:10px 12px;border-bottom:1px solid #e2e8f0;color:#333333;font-size:14px;">Kosteloos uw woningen plaatsen</td></tr>
-<tr><td style="padding:10px 12px;border-bottom:1px solid #e2e8f0;color:#333333;font-size:14px;">Extra bezoekers naar uw eigen website</td></tr>
-<tr><td style="padding:10px 12px;border-bottom:1px solid #e2e8f0;color:#333333;font-size:14px;">Automatische koppeling via XML of JSON feed</td></tr>
-<tr><td style="padding:10px 12px;border-bottom:1px solid #e2e8f0;color:#333333;font-size:14px;">Professionele presentatie van uw aanbod</td></tr>
-<tr><td style="padding:10px 12px;color:#333333;font-size:14px;">Dagelijks nieuwe woningzoekers op ons platform</td></tr>
-</table>
-<p style="color:#333333;font-size:14px;line-height:1.6;margin:0 0 25px;">De koppeling is eenvoudig. Of u een XML-feed heeft, handmatig wilt plaatsen of een andere voorkeur heeft, wij denken graag met u mee.</p>
-<div style="text-align:center;margin:0 0 25px;">
-<a href="https://www.woonpeek.nl/makelaar-koppelen" style="display:inline-block;background:#1a365d;color:#ffffff;text-decoration:none;padding:12px 30px;font-size:14px;font-weight:600;">Gratis aanmelden</a>
-</div>
-<p style="color:#333333;font-size:14px;line-height:1.6;margin:0 0 5px;">Met vriendelijke groet,</p>
-<p style="color:#1a365d;font-size:14px;font-weight:600;margin:0;">Team WoonPeek</p>
-</div>
-<div style="background:#f8fafc;padding:20px 30px;border-top:1px solid #e2e8f0;">
-<p style="color:#94a3b8;font-size:12px;margin:0;text-align:center;">WoonPeek.nl | info@woonpeek.nl</p>
-</div>
-</div>`,
-  },
-  "makelaar-herinnering": {
-    name: "Makelaar Herinnering",
-    subject: "Herinnering: plaats kosteloos uw woningen op WoonPeek",
-    getHtml: (name?: string) => `<div style="font-family:Arial,Helvetica,sans-serif;max-width:600px;margin:0 auto;background:#ffffff;border:1px solid #e2e8f0;">
-<div style="background:#1a365d;padding:30px;text-align:center;">
-<img src="${LOGO_URL}" alt="WoonPeek" height="50" style="display:inline-block;" />
-</div>
-<div style="padding:30px;">
-<p style="color:#1a365d;font-size:16px;margin:0 0 20px;">${name ? `Geachte ${name},` : "Geachte heer/mevrouw,"}</p>
-<p style="color:#333333;font-size:14px;line-height:1.6;margin:0 0 15px;">Onlangs hebben wij u benaderd over de mogelijkheid om kosteloos uw woningaanbod op WoonPeek te plaatsen. Graag herinneren wij u aan dit aanbod.</p>
-<p style="color:#333333;font-size:14px;line-height:1.6;margin:0 0 20px;">Makelaars die op WoonPeek staan, bereiken dagelijks extra woningzoekers zonder dat daar kosten aan verbonden zijn. De koppeling is snel geregeld.</p>
-<div style="text-align:center;margin:0 0 25px;">
-<a href="https://www.woonpeek.nl/makelaar-koppelen" style="display:inline-block;background:#1a365d;color:#ffffff;text-decoration:none;padding:12px 30px;font-size:14px;font-weight:600;">Nu aanmelden</a>
-</div>
-<p style="color:#333333;font-size:14px;line-height:1.6;margin:0 0 15px;">Heeft u vragen of wilt u meer informatie? Neem gerust contact met ons op via <a href="mailto:info@woonpeek.nl" style="color:#1a365d;">info@woonpeek.nl</a>.</p>
-<p style="color:#333333;font-size:14px;line-height:1.6;margin:0 0 5px;">Met vriendelijke groet,</p>
-<p style="color:#1a365d;font-size:14px;font-weight:600;margin:0;">Team WoonPeek</p>
-</div>
-<div style="background:#f8fafc;padding:20px 30px;border-top:1px solid #e2e8f0;">
-<p style="color:#94a3b8;font-size:12px;margin:0;text-align:center;">WoonPeek.nl | info@woonpeek.nl</p>
-</div>
-</div>`,
-  },
-};
+import { EMAIL_TEMPLATES } from "@/components/admin/emailTemplates";
 
 const AdminEmailSender = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Mode: single or bulk
+  const [sendMode, setSendMode] = useState<"single" | "bulk">("single");
+
+  // Single mode
   const [recipientEmail, setRecipientEmail] = useState("");
   const [recipientName, setRecipientName] = useState("");
+
+  // Bulk mode
+  const [bulkEmails, setBulkEmails] = useState("");
+
+  // Shared
   const [selectedTemplate, setSelectedTemplate] = useState<string>("");
   const [customSubject, setCustomSubject] = useState("");
 
@@ -107,36 +61,106 @@ const AdminEmailSender = () => {
     },
   });
 
+  const parseBulkEmails = (): { email: string; name?: string }[] => {
+    return bulkEmails
+      .split("\n")
+      .map((line) => line.trim())
+      .filter((line) => line.length > 0)
+      .map((line) => {
+        // Support formats: "email" or "email,name" or "email;name"
+        const parts = line.split(/[,;]\s*/);
+        const email = parts[0]?.trim();
+        const name = parts[1]?.trim();
+        if (!email || !email.includes("@")) return null;
+        return { email, name: name || undefined };
+      })
+      .filter(Boolean) as { email: string; name?: string }[];
+  };
+
+  const handleCsvImport = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const text = event.target?.result as string;
+      const lines = text.split("\n").filter((l) => l.trim());
+      
+      // Skip header row if it looks like a header
+      const startIndex = lines[0]?.toLowerCase().includes("email") ? 1 : 0;
+      
+      const parsed = lines
+        .slice(startIndex)
+        .map((line) => {
+          const parts = line.split(/[,;]\s*/);
+          const email = parts[0]?.trim();
+          const name = parts[1]?.trim();
+          if (!email || !email.includes("@")) return "";
+          return name ? `${email}, ${name}` : email;
+        })
+        .filter(Boolean)
+        .join("\n");
+
+      setBulkEmails((prev) => (prev ? prev + "\n" + parsed : parsed));
+      toast.success(`${parsed.split("\n").length} e-mailadressen geïmporteerd`);
+    };
+    reader.readAsText(file);
+    // Reset input
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
   const sendMutation = useMutation({
     mutationFn: async () => {
-      if (!selectedTemplate || !recipientEmail) throw new Error("Vul alle velden in");
+      if (!selectedTemplate) throw new Error("Selecteer een template");
       const template = EMAIL_TEMPLATES[selectedTemplate];
       if (!template) throw new Error("Template niet gevonden");
 
-      const trackingId = crypto.randomUUID();
       const subject = customSubject || template.subject;
-      const htmlContent = template.getHtml(recipientName || undefined);
+      const htmlContent = template.getHtml();
 
-      const { data, error } = await supabase.functions.invoke("send-makelaar-email", {
-        body: {
-          recipientEmail,
-          recipientName: recipientName || null,
-          subject,
-          htmlContent,
-          templateName: selectedTemplate,
-          trackingId,
-          userId: user?.id,
-        },
-      });
+      if (sendMode === "single") {
+        if (!recipientEmail) throw new Error("Vul een e-mailadres in");
+        const { data, error } = await supabase.functions.invoke("send-makelaar-email", {
+          body: {
+            recipients: [{ email: recipientEmail, name: recipientName || undefined }],
+            subject,
+            htmlContent,
+            templateName: selectedTemplate,
+            userId: user?.id,
+          },
+        });
+        if (error) throw error;
+        if (data?.error) throw new Error(data.error);
+        return data;
+      } else {
+        const recipients = parseBulkEmails();
+        if (recipients.length === 0) throw new Error("Geen geldige e-mailadressen gevonden");
 
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
-      return data;
+        const { data, error } = await supabase.functions.invoke("send-makelaar-email", {
+          body: {
+            recipients,
+            subject,
+            htmlContent,
+            templateName: selectedTemplate,
+            userId: user?.id,
+          },
+        });
+        if (error) throw error;
+        if (data?.error) throw new Error(data.error);
+        return data;
+      }
     },
-    onSuccess: () => {
-      toast.success("E-mail succesvol verzonden!");
+    onSuccess: (data) => {
+      const sent = data?.sent || 1;
+      const failed = data?.failed || 0;
+      if (failed > 0) {
+        toast.warning(`${sent} verzonden, ${failed} mislukt`);
+      } else {
+        toast.success(`${sent} e-mail(s) succesvol verzonden!`);
+      }
       setRecipientEmail("");
       setRecipientName("");
+      setBulkEmails("");
       setCustomSubject("");
       queryClient.invalidateQueries({ queryKey: ["admin-sent-emails"] });
     },
@@ -144,6 +168,8 @@ const AdminEmailSender = () => {
       toast.error(`Fout bij verzenden: ${err.message}`);
     },
   });
+
+  const bulkCount = parseBulkEmails().length;
 
   const stats = {
     total: sentEmails?.length || 0,
@@ -208,28 +234,90 @@ const AdminEmailSender = () => {
             <Card>
               <CardHeader>
                 <CardTitle>Nieuwe E-mail</CardTitle>
-                <CardDescription>Selecteer een template en vul de gegevens in</CardDescription>
+                <CardDescription>Verstuur naar één ontvanger of in bulk</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label>E-mailadres ontvanger *</Label>
-                    <Input
-                      type="email"
-                      placeholder="makelaar@kantoor.nl"
-                      value={recipientEmail}
-                      onChange={(e) => setRecipientEmail(e.target.value)}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Naam ontvanger (optioneel)</Label>
-                    <Input
-                      placeholder="Jan de Vries"
-                      value={recipientName}
-                      onChange={(e) => setRecipientName(e.target.value)}
-                    />
-                  </div>
+                {/* Mode toggle */}
+                <div className="flex gap-2">
+                  <Button
+                    variant={sendMode === "single" ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setSendMode("single")}
+                  >
+                    <User className="mr-2 h-4 w-4" />
+                    Enkel
+                  </Button>
+                  <Button
+                    variant={sendMode === "bulk" ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setSendMode("bulk")}
+                  >
+                    <Users className="mr-2 h-4 w-4" />
+                    Bulk
+                  </Button>
                 </div>
+
+                {sendMode === "single" ? (
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label>E-mailadres ontvanger *</Label>
+                      <Input
+                        type="email"
+                        placeholder="makelaar@kantoor.nl"
+                        value={recipientEmail}
+                        onChange={(e) => setRecipientEmail(e.target.value)}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Naam ontvanger (optioneel)</Label>
+                      <Input
+                        placeholder="Jan de Vries"
+                        value={recipientName}
+                        onChange={(e) => setRecipientName(e.target.value)}
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    <div className="flex items-end gap-3">
+                      <div className="flex-1 space-y-2">
+                        <Label>
+                          E-mailadressen (één per regel, optioneel met naam: email, naam)
+                        </Label>
+                      </div>
+                      <div>
+                        <input
+                          ref={fileInputRef}
+                          type="file"
+                          accept=".csv,.txt"
+                          className="hidden"
+                          onChange={handleCsvImport}
+                        />
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => fileInputRef.current?.click()}
+                        >
+                          <Upload className="mr-2 h-4 w-4" />
+                          CSV importeren
+                        </Button>
+                      </div>
+                    </div>
+                    <Textarea
+                      placeholder={`makelaar1@kantoor.nl, Jan de Vries\nmakelaar2@kantoor.nl\ninfo@vastgoed.nl, Piet Jansen`}
+                      value={bulkEmails}
+                      onChange={(e) => setBulkEmails(e.target.value)}
+                      rows={8}
+                      className="font-mono text-sm"
+                    />
+                    {bulkCount > 0 && (
+                      <p className="text-sm text-muted-foreground">
+                        <Users className="mr-1 inline h-4 w-4" />
+                        {bulkCount} geldige ontvanger{bulkCount !== 1 ? "s" : ""} gevonden
+                      </p>
+                    )}
+                  </div>
+                )}
 
                 <div className="space-y-2">
                   <Label>Template *</Label>
@@ -239,7 +327,9 @@ const AdminEmailSender = () => {
                     </SelectTrigger>
                     <SelectContent>
                       {Object.entries(EMAIL_TEMPLATES).map(([key, tpl]) => (
-                        <SelectItem key={key} value={key}>{tpl.name}</SelectItem>
+                        <SelectItem key={key} value={key}>
+                          {tpl.name}
+                        </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -248,7 +338,11 @@ const AdminEmailSender = () => {
                 <div className="space-y-2">
                   <Label>Onderwerp (leeg = standaard van template)</Label>
                   <Input
-                    placeholder={selectedTemplate ? EMAIL_TEMPLATES[selectedTemplate]?.subject : "Onderwerp..."}
+                    placeholder={
+                      selectedTemplate
+                        ? EMAIL_TEMPLATES[selectedTemplate]?.subject
+                        : "Onderwerp..."
+                    }
                     value={customSubject}
                     onChange={(e) => setCustomSubject(e.target.value)}
                   />
@@ -256,7 +350,12 @@ const AdminEmailSender = () => {
 
                 <Button
                   onClick={() => sendMutation.mutate()}
-                  disabled={!recipientEmail || !selectedTemplate || sendMutation.isPending}
+                  disabled={
+                    !selectedTemplate ||
+                    sendMutation.isPending ||
+                    (sendMode === "single" && !recipientEmail) ||
+                    (sendMode === "bulk" && bulkCount === 0)
+                  }
                   className="w-full sm:w-auto"
                 >
                   {sendMutation.isPending ? (
@@ -264,7 +363,9 @@ const AdminEmailSender = () => {
                   ) : (
                     <Send className="mr-2 h-4 w-4" />
                   )}
-                  Verstuur E-mail
+                  {sendMode === "bulk"
+                    ? `Verstuur naar ${bulkCount} ontvanger${bulkCount !== 1 ? "s" : ""}`
+                    : "Verstuur E-mail"}
                 </Button>
               </CardContent>
             </Card>
@@ -282,7 +383,9 @@ const AdminEmailSender = () => {
                     <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
                   </div>
                 ) : !sentEmails?.length ? (
-                  <p className="py-8 text-center text-muted-foreground">Nog geen e-mails verzonden</p>
+                  <p className="py-8 text-center text-muted-foreground">
+                    Nog geen e-mails verzonden
+                  </p>
                 ) : (
                   <div className="overflow-x-auto">
                     <Table>
@@ -300,21 +403,26 @@ const AdminEmailSender = () => {
                           <TableRow key={email.id}>
                             <TableCell>
                               <div>
-                                <p className="font-medium text-sm">{email.recipient_email}</p>
+                                <p className="text-sm font-medium">{email.recipient_email}</p>
                                 {email.recipient_name && (
-                                  <p className="text-xs text-muted-foreground">{email.recipient_name}</p>
+                                  <p className="text-xs text-muted-foreground">
+                                    {email.recipient_name}
+                                  </p>
                                 )}
                               </div>
                             </TableCell>
                             <TableCell>
                               <Badge variant="secondary" className="text-xs">
-                                {EMAIL_TEMPLATES[email.template_name]?.name || email.template_name}
+                                {EMAIL_TEMPLATES[email.template_name]?.name ||
+                                  email.template_name}
                               </Badge>
                             </TableCell>
-                            <TableCell className="max-w-[200px] truncate text-sm">{email.subject}</TableCell>
+                            <TableCell className="max-w-[200px] truncate text-sm">
+                              {email.subject}
+                            </TableCell>
                             <TableCell>
                               {email.opened_at ? (
-                                <Badge className="bg-green-500/10 text-green-700 hover:bg-green-500/20 border-0">
+                                <Badge className="border-0 bg-green-500/10 text-green-700 hover:bg-green-500/20">
                                   <MailOpen className="mr-1 h-3 w-3" />
                                   Geopend
                                 </Badge>
@@ -326,10 +434,15 @@ const AdminEmailSender = () => {
                               )}
                             </TableCell>
                             <TableCell className="text-sm text-muted-foreground">
-                              {format(new Date(email.created_at), "d MMM yyyy HH:mm", { locale: nl })}
+                              {format(new Date(email.created_at), "d MMM yyyy HH:mm", {
+                                locale: nl,
+                              })}
                               {email.opened_at && (
                                 <p className="text-xs text-green-600">
-                                  Geopend: {format(new Date(email.opened_at), "d MMM HH:mm", { locale: nl })}
+                                  Geopend:{" "}
+                                  {format(new Date(email.opened_at), "d MMM HH:mm", {
+                                    locale: nl,
+                                  })}
                                 </p>
                               )}
                             </TableCell>
@@ -359,7 +472,9 @@ const AdminEmailSender = () => {
                   <div className="rounded-lg border bg-white p-4">
                     <div
                       dangerouslySetInnerHTML={{
-                        __html: EMAIL_TEMPLATES[selectedTemplate].getHtml(recipientName || "Voorbeeld Naam"),
+                        __html: EMAIL_TEMPLATES[selectedTemplate].getHtml(
+                          recipientName || "Voorbeeld Naam"
+                        ),
                       }}
                     />
                   </div>
