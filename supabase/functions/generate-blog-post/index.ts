@@ -260,20 +260,19 @@ Deno.serve(async (req) => {
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-    // Check if we already posted today
-    const today = new Date().toISOString().split("T")[0];
-    const { data: existingToday } = await supabase
+    // Check if we already posted in the last 2 days (buffer for 3-day schedule)
+    const twoDaysAgo = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString();
+    const { data: recentPosts } = await supabase
       .from("blog_posts")
       .select("id")
-      .gte("published_at", `${today}T00:00:00Z`)
-      .lte("published_at", `${today}T23:59:59Z`)
+      .gte("published_at", twoDaysAgo)
       .eq("status", "published")
       .limit(1);
 
-    if (existingToday && existingToday.length > 0) {
-      console.log("Already published a blog post today, skipping.");
+    if (recentPosts && recentPosts.length > 0) {
+      console.log("Already published a blog post recently, skipping.");
       return new Response(
-        JSON.stringify({ success: true, message: "Already posted today" }),
+        JSON.stringify({ success: true, message: "Already posted recently" }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
