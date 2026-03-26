@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import {
   Search, Heart, PlusCircle, User, Menu, LogOut, Shield, Map, Bell,
   MapPin, CalendarDays, Home, Building2, DoorOpen, BedDouble, ChevronDown,
-  ChevronRight, Handshake
+  ChevronRight, Handshake, MessageCircle
 } from "lucide-react";
 import logoWoonpeek from "@/assets/logo-woonpeek.png";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -286,6 +286,12 @@ const Header = () => {
                   <Link to="/zoekalerts" className="flex items-center gap-2">
                     <Bell className="h-4 w-4" />
                     Zoekalerts
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/berichten" className="flex items-center gap-2">
+                    <MessageCircle className="h-4 w-4" />
+                    Berichten
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
