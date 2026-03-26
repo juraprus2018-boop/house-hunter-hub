@@ -39,7 +39,7 @@ const AdminEmailSender = () => {
   const [customSubject, setCustomSubject] = useState("");
 
   // Batch progress
-  const [batchProgress, setBatchProgress] = useState<{ sent: number; failed: number; total: number } | null>(null);
+  const [batchProgress, setBatchProgress] = useState<{ sent: number; failed: number; skipped: number; total: number } | null>(null);
   const abortRef = useRef(false);
 
   // Fetch sent emails history
@@ -72,10 +72,8 @@ const AdminEmailSender = () => {
       .map((line) => line.trim())
       .filter((line) => line.length > 0)
       .map((line) => {
-        // Support formats: "email" or "name, email" or "name; email"
         const parts = line.split(/[,;]\s*/);
         if (parts.length >= 2) {
-          // Check which part is the email
           const first = parts[0]?.trim();
           const second = parts[1]?.trim();
           if (second?.includes("@")) {
@@ -101,17 +99,14 @@ const AdminEmailSender = () => {
     reader.onload = (event) => {
       const text = event.target?.result as string;
       const lines = text.split("\n").filter((l) => l.trim());
-      
-      // Skip header row if it looks like a header
       const startIndex = lines[0]?.toLowerCase().includes("email") ? 1 : 0;
-      
+
       const parsed = lines
         .slice(startIndex)
         .map((line) => {
           const parts = line.split(/[,;]\s*/);
           const first = parts[0]?.trim();
           const second = parts[1]?.trim();
-          // Detect which is email
           if (second?.includes("@")) {
             return first ? `${first}, ${second}` : second;
           }
@@ -127,7 +122,6 @@ const AdminEmailSender = () => {
       toast.success(`${parsed.split("\n").length} e-mailadressen geïmporteerd`);
     };
     reader.readAsText(file);
-    // Reset input
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
@@ -156,49 +150,48 @@ const AdminEmailSender = () => {
         if (error) throw error;
         if (data?.error) throw new Error(data.error);
         return data;
-      } else {
-        const allRecipients = parseBulkEmails();
-        if (allRecipients.length === 0) throw new Error("Geen geldige e-mailadressen gevonden");
+      }
 
-        let totalSent = 0;
-        let totalFailed = 0;
-        let totalSkipped = 0;
-        const totalCount = allRecipients.length;
-        setBatchProgress({ sent: 0, failed: 0, total: totalCount });
+      const allRecipients = parseBulkEmails();
+      if (allRecipients.length === 0) throw new Error("Geen geldige e-mailadressen gevonden");
 
-        // Split into batches
-        for (let i = 0; i < allRecipients.length; i += BATCH_SIZE) {
-          if (abortRef.current) break;
-          
-          const batch = allRecipients.slice(i, i + BATCH_SIZE);
-          try {
-            const { data, error } = await supabase.functions.invoke("send-makelaar-email", {
-              body: {
-                recipients: batch,
-                subject,
-                htmlContent,
-                templateName: selectedTemplate,
-                userId: user?.id,
-              },
-            });
-            if (error) throw error;
-            totalSent += data?.sent || 0;
-            totalFailed += data?.failed || 0;
-            totalSkipped += data?.skipped || 0;
-          } catch {
-            totalFailed += batch.length;
-          }
-          setBatchProgress({ sent: totalSent, failed: totalFailed, total: totalCount });
+      let totalSent = 0;
+      let totalFailed = 0;
+      let totalSkipped = 0;
+      const totalCount = allRecipients.length;
+      setBatchProgress({ sent: 0, failed: 0, skipped: 0, total: totalCount });
 
-          // Small delay between batches
-          if (i + BATCH_SIZE < allRecipients.length && !abortRef.current) {
-            await new Promise(r => setTimeout(r, 1000));
-          }
+      for (let i = 0; i < allRecipients.length; i += BATCH_SIZE) {
+        if (abortRef.current) break;
+
+        const batch = allRecipients.slice(i, i + BATCH_SIZE);
+        try {
+          const { data, error } = await supabase.functions.invoke("send-makelaar-email", {
+            body: {
+              recipients: batch,
+              subject,
+              htmlContent,
+              templateName: selectedTemplate,
+              userId: user?.id,
+            },
+          });
+          if (error) throw error;
+          totalSent += data?.sent || 0;
+          totalFailed += data?.failed || 0;
+          totalSkipped += data?.skipped || 0;
+        } catch {
+          totalFailed += batch.length;
         }
 
-        setBatchProgress(null);
-        return { sent: totalSent, failed: totalFailed, skipped: totalSkipped };
+        setBatchProgress({ sent: totalSent, failed: totalFailed, skipped: totalSkipped, total: totalCount });
+
+        if (i + BATCH_SIZE < allRecipients.length && !abortRef.current) {
+          await new Promise((r) => setTimeout(r, 1000));
+        }
       }
+
+      setBatchProgress(null);
+      return { sent: totalSent, failed: totalFailed, skipped: totalSkipped };
     },
     onSuccess: (data) => {
       const sent = data?.sent || 0;
@@ -408,13 +401,15 @@ const AdminEmailSender = () => {
                   <div className="space-y-2 rounded-lg border bg-muted/50 p-4">
                     <div className="flex items-center justify-between text-sm">
                       <span className="font-medium">
-                        Verzenden... {batchProgress.sent + batchProgress.failed} / {batchProgress.total}
+                        Verzenden... {batchProgress.sent + batchProgress.failed + batchProgress.skipped} / {batchProgress.total}
                       </span>
                       <span className="text-muted-foreground">
-                        {batchProgress.sent} verzonden{batchProgress.failed > 0 ? `, ${batchProgress.failed} mislukt` : ""}
+                        {batchProgress.sent} verzonden
+                        {batchProgress.skipped > 0 ? `, ${batchProgress.skipped} overgeslagen` : ""}
+                        {batchProgress.failed > 0 ? `, ${batchProgress.failed} mislukt` : ""}
                       </span>
                     </div>
-                    <Progress value={((batchProgress.sent + batchProgress.failed) / batchProgress.total) * 100} />
+                    <Progress value={((batchProgress.sent + batchProgress.failed + batchProgress.skipped) / batchProgress.total) * 100} />
                     <Button variant="destructive" size="sm" onClick={() => { abortRef.current = true; }}>
                       Stoppen
                     </Button>
