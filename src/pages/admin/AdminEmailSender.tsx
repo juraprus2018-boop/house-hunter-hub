@@ -162,6 +162,7 @@ const AdminEmailSender = () => {
 
         let totalSent = 0;
         let totalFailed = 0;
+        let totalSkipped = 0;
         const totalCount = allRecipients.length;
         setBatchProgress({ sent: 0, failed: 0, total: totalCount });
 
