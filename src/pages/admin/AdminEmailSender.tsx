@@ -17,7 +17,7 @@ import { format } from "date-fns";
 import { nl } from "date-fns/locale";
 
 // Email templates
-const LOGO_URL = "https://woonpeek.nl/logo-woonpeek.png";
+const LOGO_URL = "https://www.woonpeek.nl/assets/logo-woonpeek-CMQsaJz-.png";
 
 const EMAIL_TEMPLATES: Record<string, { name: string; subject: string; getHtml: (recipientName?: string) => string }> = {
   "makelaar-welkom": {
@@ -40,7 +40,7 @@ const EMAIL_TEMPLATES: Record<string, { name: string; subject: string; getHtml: 
 </table>
 <p style="color:#333333;font-size:14px;line-height:1.6;margin:0 0 25px;">De koppeling is eenvoudig. Of u een XML-feed heeft, handmatig wilt plaatsen of een andere voorkeur heeft, wij denken graag met u mee.</p>
 <div style="text-align:center;margin:0 0 25px;">
-<a href="https://woonpeek.nl/makelaar-koppelen" style="display:inline-block;background:#1a365d;color:#ffffff;text-decoration:none;padding:12px 30px;font-size:14px;font-weight:600;">Gratis aanmelden</a>
+<a href="https://www.woonpeek.nl/makelaar-koppelen" style="display:inline-block;background:#1a365d;color:#ffffff;text-decoration:none;padding:12px 30px;font-size:14px;font-weight:600;">Gratis aanmelden</a>
 </div>
 <p style="color:#333333;font-size:14px;line-height:1.6;margin:0 0 5px;">Met vriendelijke groet,</p>
 <p style="color:#1a365d;font-size:14px;font-weight:600;margin:0;">Team WoonPeek</p>
@@ -62,7 +62,7 @@ const EMAIL_TEMPLATES: Record<string, { name: string; subject: string; getHtml: 
 <p style="color:#333333;font-size:14px;line-height:1.6;margin:0 0 15px;">Onlangs hebben wij u benaderd over de mogelijkheid om kosteloos uw woningaanbod op WoonPeek te plaatsen. Graag herinneren wij u aan dit aanbod.</p>
 <p style="color:#333333;font-size:14px;line-height:1.6;margin:0 0 20px;">Makelaars die op WoonPeek staan, bereiken dagelijks extra woningzoekers zonder dat daar kosten aan verbonden zijn. De koppeling is snel geregeld.</p>
 <div style="text-align:center;margin:0 0 25px;">
-<a href="https://woonpeek.nl/makelaar-koppelen" style="display:inline-block;background:#1a365d;color:#ffffff;text-decoration:none;padding:12px 30px;font-size:14px;font-weight:600;">Nu aanmelden</a>
+<a href="https://www.woonpeek.nl/makelaar-koppelen" style="display:inline-block;background:#1a365d;color:#ffffff;text-decoration:none;padding:12px 30px;font-size:14px;font-weight:600;">Nu aanmelden</a>
 </div>
 <p style="color:#333333;font-size:14px;line-height:1.6;margin:0 0 15px;">Heeft u vragen of wilt u meer informatie? Neem gerust contact met ons op via <a href="mailto:info@woonpeek.nl" style="color:#1a365d;">info@woonpeek.nl</a>.</p>
 <p style="color:#333333;font-size:14px;line-height:1.6;margin:0 0 5px;">Met vriendelijke groet,</p>
