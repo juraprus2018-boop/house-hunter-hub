@@ -104,6 +104,80 @@ export type Database = {
         }
         Relationships: []
       }
+      chat_messages: {
+        Row: {
+          content: string
+          conversation_id: string
+          created_at: string
+          id: string
+          is_read: boolean
+          sender_id: string
+        }
+        Insert: {
+          content: string
+          conversation_id: string
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          sender_id: string
+        }
+        Update: {
+          content?: string
+          conversation_id?: string
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          sender_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      conversations: {
+        Row: {
+          admin_id: string | null
+          admin_unread_count: number
+          created_at: string
+          id: string
+          is_closed: boolean
+          last_message_at: string
+          subject: string | null
+          updated_at: string
+          user_id: string
+          user_unread_count: number
+        }
+        Insert: {
+          admin_id?: string | null
+          admin_unread_count?: number
+          created_at?: string
+          id?: string
+          is_closed?: boolean
+          last_message_at?: string
+          subject?: string | null
+          updated_at?: string
+          user_id: string
+          user_unread_count?: number
+        }
+        Update: {
+          admin_id?: string | null
+          admin_unread_count?: number
+          created_at?: string
+          id?: string
+          is_closed?: boolean
+          last_message_at?: string
+          subject?: string | null
+          updated_at?: string
+          user_id?: string
+          user_unread_count?: number
+        }
+        Relationships: []
+      }
       daily_alert_subscribers: {
         Row: {
           city: string | null

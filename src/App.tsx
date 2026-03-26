@@ -50,6 +50,8 @@ import DailyAlert from "./pages/DailyAlert";
 import About from "./pages/About";
 import MakelaarKoppelen from "./pages/MakelaarKoppelen";
 import Samenwerking from "./pages/Samenwerking";
+import AdminChat from "./pages/admin/AdminChat";
+import UserChat from "./pages/UserChat";
 import CookieConsent from "@/components/CookieConsent";
 import { cityPath } from "@/lib/cities";
 
@@ -97,6 +99,7 @@ const App = () => (
             <Route path="/admin/leads" element={<AdminMakelaarLeads />} />
             <Route path="/admin/email" element={<AdminEmailSender />} />
             <Route path="/admin/alerts" element={<AdminAlertSubscribers />} />
+            <Route path="/admin/berichten" element={<AdminChat />} />
             <Route path="/voorwaarden" element={<TermsAndConditions />} />
             <Route path="/privacy" element={<PrivacyPolicy />} />
             <Route path="/disclaimer" element={<Disclaimer />} />
@@ -105,6 +108,7 @@ const App = () => (
             <Route path="/blog/:slug" element={<BlogPostPage />} />
             <Route path="/zoekalerts" element={<SearchAlerts />} />
             <Route path="/profiel" element={<Profile />} />
+            <Route path="/berichten" element={<UserChat />} />
             <Route path="/steden" element={<Cities />} />
             <Route path="/nieuw-aanbod" element={<NewListings />} />
             <Route path="/nieuw-aanbod/:city" element={<NewListingsCity />} />
