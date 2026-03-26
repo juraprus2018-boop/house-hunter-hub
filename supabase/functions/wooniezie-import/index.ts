@@ -12,6 +12,29 @@ const WOONIEZIE_BASE = "https://www.wooniezie.nl";
 const SOURCE_SITE = "Wooniezie";
 const SYSTEM_USER_ID = "0d02a609-fde3-435a-9154-078fdce7ed34";
 
+const SITE_URL = "https://www.woonpeek.nl";
+const INDEXNOW_KEY = "b8f3e2a1d4c5f6e7a9b0c1d2e3f4a5b6";
+
+async function submitToIndexNow(urls: string[]) {
+  if (urls.length === 0) return;
+  try {
+    const body = {
+      host: "www.woonpeek.nl",
+      key: INDEXNOW_KEY,
+      keyLocation: `${SITE_URL}/${INDEXNOW_KEY}.txt`,
+      urlList: urls.slice(0, 10000),
+    };
+    const resp = await fetch("https://api.indexnow.org/indexnow", {
+      method: "POST",
+      headers: { "Content-Type": "application/json; charset=utf-8" },
+      body: JSON.stringify(body),
+    });
+    console.log(`IndexNow: submitted ${urls.length} URLs, status ${resp.status}`);
+  } catch (e) {
+    console.error("IndexNow submission error:", e);
+  }
+}
+
 interface WooniezieProperty {
   id: string;
   urlKey: string;
@@ -126,6 +149,7 @@ Deno.serve(async (req) => {
     let totalSkipped = 0;
     let totalErrors = 0;
     let totalDeactivated = 0;
+    const indexNowUrls: string[] = [];
 
     // Collect all active source URLs from the API
     const activeSourceUrls = new Set<string>();
@@ -178,22 +202,28 @@ Deno.serve(async (req) => {
 
         const propertyData = mapToProperty(item);
 
-        const { error: insertErr } = await supabase
+        const { data: inserted, error: insertErr } = await supabase
           .from("properties")
-          .insert(propertyData);
+          .insert(propertyData)
+          .select("slug")
+          .maybeSingle();
 
         if (insertErr) {
           console.error(`Insert error for "${propertyData.title}": ${insertErr.message}`);
           totalErrors++;
         } else {
           totalImported++;
+          if (inserted?.slug) indexNowUrls.push(`${SITE_URL}/woning/${inserted.slug}`);
+        }
         }
       }
     }
 
     // Note: Deactivation is handled by the separate deactivate-properties function
 
-    // Update scraper record if exists
+    // Submit new URLs to IndexNow for instant indexing
+    await submitToIndexNow(indexNowUrls);
+
     const { data: scraper } = await supabase
       .from("scrapers")
       .select("id, properties_found")
