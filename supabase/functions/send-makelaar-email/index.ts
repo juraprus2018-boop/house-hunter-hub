@@ -16,10 +16,11 @@ Deno.serve(async (req) => {
     const { recipientEmail, recipientName, subject, htmlContent, templateName, trackingId, userId } = await req.json();
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
-    const projectRef = supabaseUrl.replace("https://", "").replace(".supabase.co", "");
     const trackingPixelUrl = `${supabaseUrl}/functions/v1/track-email-open?t=${trackingId}`;
 
-    const finalHtml = htmlContent + `<img src="${trackingPixelUrl}" width="1" height="1" style="display:none" alt="" />`;
+    // Remove excessive whitespace/newlines to prevent =20 quoted-printable encoding issues
+    const cleanHtml = htmlContent.replace(/\n\s+/g, '\n').replace(/\s{2,}/g, ' ').trim();
+    const finalHtml = cleanHtml + `<img src="${trackingPixelUrl}" width="1" height="1" style="display:none" alt="" />`;
 
     const client = new SMTPClient({
       connection: {
@@ -37,8 +38,9 @@ Deno.serve(async (req) => {
       from: "WoonPeek <info@woonpeek.nl>",
       to: recipientEmail,
       subject,
-      content: "text/html",
+      content: "auto",
       html: finalHtml,
+      encoding: "8bit",
     });
 
     await client.close();

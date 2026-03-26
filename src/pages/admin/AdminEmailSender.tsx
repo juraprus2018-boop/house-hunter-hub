@@ -17,109 +17,61 @@ import { format } from "date-fns";
 import { nl } from "date-fns/locale";
 
 // Email templates
+const LOGO_URL = "https://woonpeek.nl/logo-woonpeek.png";
+
 const EMAIL_TEMPLATES: Record<string, { name: string; subject: string; getHtml: (recipientName?: string) => string }> = {
   "makelaar-welkom": {
     name: "Makelaar Welkom",
-    subject: "Vergroot uw bereik met WoonPeek – Gratis woningen plaatsen",
-    getHtml: (name?: string) => `
-      <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff;">
-        <div style="background: linear-gradient(135deg, #1a365d 0%, #2563eb 100%); padding: 40px 30px; text-align: center; border-radius: 0 0 24px 24px;">
-          <h1 style="color: #ffffff; font-size: 28px; margin: 0; font-weight: 700;">🏠 WoonPeek</h1>
-          <p style="color: #bfdbfe; font-size: 14px; margin: 8px 0 0;">Het snelst groeiende woningplatform van Nederland</p>
-        </div>
-        
-        <div style="padding: 35px 30px;">
-          <h2 style="color: #1a365d; font-size: 22px; margin: 0 0 15px;">
-            ${name ? `Beste ${name},` : "Beste makelaar,"}
-          </h2>
-          
-          <p style="color: #374151; font-size: 15px; line-height: 1.7; margin: 0 0 20px;">
-            Wij zijn <strong>WoonPeek</strong> – een ambitieus woningplatform dat dagelijks groeit. 
-            Wij helpen makelaars zoals u om meer potentiële huurders en kopers te bereiken, 
-            volledig <strong>gratis</strong>.
-          </p>
-
-          <div style="background: #f0f9ff; border-left: 4px solid #2563eb; padding: 20px; border-radius: 0 12px 12px 0; margin: 25px 0;">
-            <h3 style="color: #1a365d; font-size: 16px; margin: 0 0 12px;">✨ Waarom WoonPeek?</h3>
-            <ul style="color: #374151; font-size: 14px; line-height: 2; margin: 0; padding-left: 20px;">
-              <li><strong>Gratis</strong> uw woningaanbod plaatsen</li>
-              <li>Extra verkeer naar uw website via doorverwijzingen</li>
-              <li>Automatische koppeling via XML/JSON feed mogelijk</li>
-              <li>Dagelijks nieuwe bezoekers die actief zoeken</li>
-              <li>Professionele presentatie van uw aanbod</li>
-            </ul>
-          </div>
-
-          <p style="color: #374151; font-size: 15px; line-height: 1.7; margin: 20px 0;">
-            Wij bieden een eenvoudige manier om uw aanbod te koppelen. Of u nu een XML-feed heeft, 
-            handmatig wilt plaatsen of een andere koppeling prefereert – wij denken graag mee.
-          </p>
-
-          <div style="text-align: center; margin: 30px 0;">
-            <a href="https://woonpeek.nl/makelaar-koppelen" 
-               style="display: inline-block; background: linear-gradient(135deg, #2563eb, #1d4ed8); color: #ffffff; text-decoration: none; padding: 14px 35px; border-radius: 10px; font-size: 16px; font-weight: 600; box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);">
-              Gratis Aanmelden →
-            </a>
-          </div>
-
-          <p style="color: #6b7280; font-size: 13px; line-height: 1.6; margin: 25px 0 0; text-align: center;">
-            Heeft u vragen? Reageer gerust op deze e-mail of neem contact op via 
-            <a href="mailto:info@woonpeek.nl" style="color: #2563eb;">info@woonpeek.nl</a>
-          </p>
-        </div>
-
-        <div style="background: #f8fafc; padding: 25px 30px; text-align: center; border-top: 1px solid #e5e7eb;">
-          <p style="color: #9ca3af; font-size: 12px; margin: 0;">
-            © ${new Date().getFullYear()} WoonPeek.nl – Met passie gebouwd voor de woningmarkt
-          </p>
-        </div>
-      </div>
-    `,
+    subject: "Vergroot uw bereik met WoonPeek",
+    getHtml: (name?: string) => `<div style="font-family:Arial,Helvetica,sans-serif;max-width:600px;margin:0 auto;background:#ffffff;border:1px solid #e2e8f0;">
+<div style="background:#1a365d;padding:30px;text-align:center;">
+<img src="${LOGO_URL}" alt="WoonPeek" height="50" style="display:inline-block;" />
+</div>
+<div style="padding:30px;">
+<p style="color:#1a365d;font-size:16px;margin:0 0 20px;">${name ? `Geachte ${name},` : "Geachte heer/mevrouw,"}</p>
+<p style="color:#333333;font-size:14px;line-height:1.6;margin:0 0 15px;">Graag stellen wij ons voor: wij zijn <strong>WoonPeek</strong>, een groeiend woningplatform in Nederland. Wij bieden makelaars de mogelijkheid om kosteloos hun woningaanbod bij ons te plaatsen.</p>
+<p style="color:#333333;font-size:14px;line-height:1.6;margin:0 0 20px;">Door uw aanbod op WoonPeek te plaatsen profiteert u van:</p>
+<table style="width:100%;border-collapse:collapse;margin:0 0 20px;">
+<tr><td style="padding:10px 12px;border-bottom:1px solid #e2e8f0;color:#333333;font-size:14px;">Kosteloos uw woningen plaatsen</td></tr>
+<tr><td style="padding:10px 12px;border-bottom:1px solid #e2e8f0;color:#333333;font-size:14px;">Extra bezoekers naar uw eigen website</td></tr>
+<tr><td style="padding:10px 12px;border-bottom:1px solid #e2e8f0;color:#333333;font-size:14px;">Automatische koppeling via XML of JSON feed</td></tr>
+<tr><td style="padding:10px 12px;border-bottom:1px solid #e2e8f0;color:#333333;font-size:14px;">Professionele presentatie van uw aanbod</td></tr>
+<tr><td style="padding:10px 12px;color:#333333;font-size:14px;">Dagelijks nieuwe woningzoekers op ons platform</td></tr>
+</table>
+<p style="color:#333333;font-size:14px;line-height:1.6;margin:0 0 25px;">De koppeling is eenvoudig. Of u een XML-feed heeft, handmatig wilt plaatsen of een andere voorkeur heeft, wij denken graag met u mee.</p>
+<div style="text-align:center;margin:0 0 25px;">
+<a href="https://woonpeek.nl/makelaar-koppelen" style="display:inline-block;background:#1a365d;color:#ffffff;text-decoration:none;padding:12px 30px;font-size:14px;font-weight:600;">Gratis aanmelden</a>
+</div>
+<p style="color:#333333;font-size:14px;line-height:1.6;margin:0 0 5px;">Met vriendelijke groet,</p>
+<p style="color:#1a365d;font-size:14px;font-weight:600;margin:0;">Team WoonPeek</p>
+</div>
+<div style="background:#f8fafc;padding:20px 30px;border-top:1px solid #e2e8f0;">
+<p style="color:#94a3b8;font-size:12px;margin:0;text-align:center;">WoonPeek.nl | info@woonpeek.nl</p>
+</div>
+</div>`,
   },
   "makelaar-herinnering": {
     name: "Makelaar Herinnering",
-    subject: "Nog niet aangemeld? Uw woningen verdienen meer bereik!",
-    getHtml: (name?: string) => `
-      <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff;">
-        <div style="background: linear-gradient(135deg, #1a365d 0%, #2563eb 100%); padding: 35px 30px; text-align: center; border-radius: 0 0 24px 24px;">
-          <h1 style="color: #ffffff; font-size: 26px; margin: 0;">🏠 WoonPeek</h1>
-        </div>
-        
-        <div style="padding: 35px 30px;">
-          <h2 style="color: #1a365d; font-size: 20px; margin: 0 0 15px;">
-            ${name ? `Hallo ${name},` : "Hallo,"}
-          </h2>
-          
-          <p style="color: #374151; font-size: 15px; line-height: 1.7; margin: 0 0 20px;">
-            Onlangs hebben wij u geïnformeerd over de mogelijkheid om <strong>gratis</strong> uw 
-            woningaanbod te plaatsen op WoonPeek. Wij wilden u er even aan herinneren dat deze 
-            kans er nog steeds is!
-          </p>
-
-          <div style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 18px; border-radius: 0 12px 12px 0; margin: 20px 0;">
-            <p style="color: #92400e; font-size: 14px; margin: 0; font-weight: 500;">
-              💡 Wist u dat makelaars die op WoonPeek staan gemiddeld <strong>meer bereik</strong> genereren 
-              voor hun woningen? En het kost u niets.
-            </p>
-          </div>
-
-          <div style="text-align: center; margin: 30px 0;">
-            <a href="https://woonpeek.nl/makelaar-koppelen" 
-               style="display: inline-block; background: linear-gradient(135deg, #2563eb, #1d4ed8); color: #ffffff; text-decoration: none; padding: 14px 35px; border-radius: 10px; font-size: 16px; font-weight: 600;">
-              Nu Gratis Aanmelden →
-            </a>
-          </div>
-
-          <p style="color: #6b7280; font-size: 13px; line-height: 1.6; margin: 20px 0 0; text-align: center;">
-            Vragen? Mail ons op <a href="mailto:info@woonpeek.nl" style="color: #2563eb;">info@woonpeek.nl</a>
-          </p>
-        </div>
-
-        <div style="background: #f8fafc; padding: 20px 30px; text-align: center; border-top: 1px solid #e5e7eb;">
-          <p style="color: #9ca3af; font-size: 12px; margin: 0;">© ${new Date().getFullYear()} WoonPeek.nl</p>
-        </div>
-      </div>
-    `,
+    subject: "Herinnering: plaats kosteloos uw woningen op WoonPeek",
+    getHtml: (name?: string) => `<div style="font-family:Arial,Helvetica,sans-serif;max-width:600px;margin:0 auto;background:#ffffff;border:1px solid #e2e8f0;">
+<div style="background:#1a365d;padding:30px;text-align:center;">
+<img src="${LOGO_URL}" alt="WoonPeek" height="50" style="display:inline-block;" />
+</div>
+<div style="padding:30px;">
+<p style="color:#1a365d;font-size:16px;margin:0 0 20px;">${name ? `Geachte ${name},` : "Geachte heer/mevrouw,"}</p>
+<p style="color:#333333;font-size:14px;line-height:1.6;margin:0 0 15px;">Onlangs hebben wij u benaderd over de mogelijkheid om kosteloos uw woningaanbod op WoonPeek te plaatsen. Graag herinneren wij u aan dit aanbod.</p>
+<p style="color:#333333;font-size:14px;line-height:1.6;margin:0 0 20px;">Makelaars die op WoonPeek staan, bereiken dagelijks extra woningzoekers zonder dat daar kosten aan verbonden zijn. De koppeling is snel geregeld.</p>
+<div style="text-align:center;margin:0 0 25px;">
+<a href="https://woonpeek.nl/makelaar-koppelen" style="display:inline-block;background:#1a365d;color:#ffffff;text-decoration:none;padding:12px 30px;font-size:14px;font-weight:600;">Nu aanmelden</a>
+</div>
+<p style="color:#333333;font-size:14px;line-height:1.6;margin:0 0 15px;">Heeft u vragen of wilt u meer informatie? Neem gerust contact met ons op via <a href="mailto:info@woonpeek.nl" style="color:#1a365d;">info@woonpeek.nl</a>.</p>
+<p style="color:#333333;font-size:14px;line-height:1.6;margin:0 0 5px;">Met vriendelijke groet,</p>
+<p style="color:#1a365d;font-size:14px;font-weight:600;margin:0;">Team WoonPeek</p>
+</div>
+<div style="background:#f8fafc;padding:20px 30px;border-top:1px solid #e2e8f0;">
+<p style="color:#94a3b8;font-size:12px;margin:0;text-align:center;">WoonPeek.nl | info@woonpeek.nl</p>
+</div>
+</div>`,
   },
 };
 
