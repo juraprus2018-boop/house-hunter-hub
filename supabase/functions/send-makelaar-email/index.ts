@@ -36,13 +36,31 @@ Deno.serve(async (req) => {
       },
     });
 
-    const results: { email: string; success: boolean; error?: string }[] = [];
+    const results: { email: string; success: boolean; error?: string; skipped?: boolean }[] = [];
+
+    // Check which recipients already received this template
+    const emails = recipients.map((r: { email: string }) => r.email.toLowerCase());
+    const { data: alreadySent } = await supabase
+      .from("admin_sent_emails")
+      .select("recipient_email")
+      .eq("template_name", templateName)
+      .in("recipient_email", emails);
+
+    const alreadySentSet = new Set(
+      (alreadySent || []).map((r: { recipient_email: string }) => r.recipient_email.toLowerCase())
+    );
 
     for (const recipient of recipients) {
+      const emailLower = recipient.email.toLowerCase();
+
+      if (alreadySentSet.has(emailLower)) {
+        results.push({ email: recipient.email, success: true, skipped: true });
+        continue;
+      }
+
       const trackingId = crypto.randomUUID();
       const trackingPixelUrl = `${supabaseUrl}/functions/v1/track-email-open?t=${trackingId}`;
 
-      // Personalize HTML with recipient name if template uses it
       let personalizedHtml = htmlContent;
       if (recipient.name) {
         personalizedHtml = htmlContent.replace(/Geachte heer\/mevrouw,/g, `Geachte ${recipient.name},`);
@@ -77,7 +95,6 @@ Deno.serve(async (req) => {
         results.push({ email: recipient.email, success: false, error: err instanceof Error ? err.message : "Unknown" });
       }
 
-      // Small delay between sends to avoid rate limiting
       if (recipients.length > 1) {
         await new Promise(r => setTimeout(r, 500));
       }
@@ -85,10 +102,11 @@ Deno.serve(async (req) => {
 
     await client.close();
 
-    const sent = results.filter(r => r.success).length;
+    const sent = results.filter(r => r.success && !r.skipped).length;
     const failed = results.filter(r => !r.success).length;
+    const skipped = results.filter(r => r.skipped).length;
 
-    return new Response(JSON.stringify({ success: true, sent, failed, results }), {
+    return new Response(JSON.stringify({ success: true, sent, failed, skipped, results }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {

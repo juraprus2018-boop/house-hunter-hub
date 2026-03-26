@@ -162,6 +162,7 @@ const AdminEmailSender = () => {
 
         let totalSent = 0;
         let totalFailed = 0;
+        let totalSkipped = 0;
         const totalCount = allRecipients.length;
         setBatchProgress({ sent: 0, failed: 0, total: totalCount });
 
@@ -183,6 +184,7 @@ const AdminEmailSender = () => {
             if (error) throw error;
             totalSent += data?.sent || 0;
             totalFailed += data?.failed || 0;
+            totalSkipped += data?.skipped || 0;
           } catch {
             totalFailed += batch.length;
           }
@@ -195,16 +197,20 @@ const AdminEmailSender = () => {
         }
 
         setBatchProgress(null);
-        return { sent: totalSent, failed: totalFailed };
+        return { sent: totalSent, failed: totalFailed, skipped: totalSkipped };
       }
     },
     onSuccess: (data) => {
-      const sent = data?.sent || 1;
+      const sent = data?.sent || 0;
       const failed = data?.failed || 0;
+      const skipped = data?.skipped || 0;
+      const parts = [`${sent} verzonden`];
+      if (skipped > 0) parts.push(`${skipped} overgeslagen (al verzonden)`);
+      if (failed > 0) parts.push(`${failed} mislukt`);
       if (failed > 0) {
-        toast.warning(`${sent} verzonden, ${failed} mislukt`);
+        toast.warning(parts.join(", "));
       } else {
-        toast.success(`${sent} e-mail(s) succesvol verzonden!`);
+        toast.success(parts.join(", "));
       }
       setRecipientEmail("");
       setRecipientName("");
