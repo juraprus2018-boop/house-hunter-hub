@@ -67,12 +67,23 @@ const AdminEmailSender = () => {
       .map((line) => line.trim())
       .filter((line) => line.length > 0)
       .map((line) => {
-        // Support formats: "email" or "email,name" or "email;name"
+        // Support formats: "email" or "name, email" or "name; email"
         const parts = line.split(/[,;]\s*/);
+        if (parts.length >= 2) {
+          // Check which part is the email
+          const first = parts[0]?.trim();
+          const second = parts[1]?.trim();
+          if (second?.includes("@")) {
+            return { email: second, name: first || undefined };
+          }
+          if (first?.includes("@")) {
+            return { email: first, name: second || undefined };
+          }
+          return null;
+        }
         const email = parts[0]?.trim();
-        const name = parts[1]?.trim();
         if (!email || !email.includes("@")) return null;
-        return { email, name: name || undefined };
+        return { email };
       })
       .filter(Boolean) as { email: string; name?: string }[];
   };
@@ -93,10 +104,16 @@ const AdminEmailSender = () => {
         .slice(startIndex)
         .map((line) => {
           const parts = line.split(/[,;]\s*/);
-          const email = parts[0]?.trim();
-          const name = parts[1]?.trim();
-          if (!email || !email.includes("@")) return "";
-          return name ? `${email}, ${name}` : email;
+          const first = parts[0]?.trim();
+          const second = parts[1]?.trim();
+          // Detect which is email
+          if (second?.includes("@")) {
+            return first ? `${first}, ${second}` : second;
+          }
+          if (first?.includes("@")) {
+            return second ? `${second}, ${first}` : first;
+          }
+          return "";
         })
         .filter(Boolean)
         .join("\n");
@@ -282,7 +299,7 @@ const AdminEmailSender = () => {
                     <div className="flex items-end gap-3">
                       <div className="flex-1 space-y-2">
                         <Label>
-                          E-mailadressen (één per regel, optioneel met naam: email, naam)
+                          E-mailadressen (één per regel, optioneel met naam: naam, email)
                         </Label>
                       </div>
                       <div>
@@ -304,7 +321,7 @@ const AdminEmailSender = () => {
                       </div>
                     </div>
                     <Textarea
-                      placeholder={`makelaar1@kantoor.nl, Jan de Vries\nmakelaar2@kantoor.nl\ninfo@vastgoed.nl, Piet Jansen`}
+                      placeholder={`Jan de Vries, makelaar1@kantoor.nl\nmakelaar2@kantoor.nl\nPiet Jansen, info@vastgoed.nl`}
                       value={bulkEmails}
                       onChange={(e) => setBulkEmails(e.target.value)}
                       rows={8}
