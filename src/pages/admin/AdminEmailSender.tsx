@@ -131,7 +131,7 @@ const AdminEmailSender = () => {
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
-  const BATCH_SIZE = 10;
+  const BATCH_SIZE = 2;
 
   const sendMutation = useMutation({
     mutationFn: async () => {
