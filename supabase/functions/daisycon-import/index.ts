@@ -714,7 +714,9 @@ Deno.serve(async (req) => {
     }
     // Note: Deactivation is handled by the separate deactivate-properties function
 
-    // Mark job as completed
+    // Submit new URLs to IndexNow for instant indexing
+    await submitToIndexNow(indexNowUrls);
+
     if (jobId) {
       await supabase.from("import_jobs").update({
         status: "completed",
