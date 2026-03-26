@@ -18,6 +18,7 @@ import {
   Handshake,
   Mail,
   BellRing,
+  MessageCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -73,6 +74,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
     { to: "/admin/leads", label: "Makelaar Leads", icon: Handshake },
     { to: "/admin/email", label: "E-mail Sender", icon: Mail },
     { to: "/admin/alerts", label: "Alert Abonnees", icon: BellRing },
+    { to: "/admin/berichten", label: "Berichten", icon: MessageCircle },
     { to: "/admin/instellingen", label: "Instellingen", icon: Settings },
   ];
 
