@@ -10,6 +10,29 @@ const DAISYCON_TOKEN_URL = "https://login.daisycon.com/oauth/access-token";
 const DAISYCON_CLI_REDIRECT = "https://login.daisycon.com/oauth/cli";
 const SYSTEM_USER_ID = "0d02a609-fde3-435a-9154-078fdce7ed34";
 
+const SITE_URL = "https://www.woonpeek.nl";
+const INDEXNOW_KEY = "b8f3e2a1d4c5f6e7a9b0c1d2e3f4a5b6";
+
+async function submitToIndexNow(urls: string[]) {
+  if (urls.length === 0) return;
+  try {
+    const body = {
+      host: "www.woonpeek.nl",
+      key: INDEXNOW_KEY,
+      keyLocation: `${SITE_URL}/${INDEXNOW_KEY}.txt`,
+      urlList: urls.slice(0, 10000),
+    };
+    const resp = await fetch("https://api.indexnow.org/indexnow", {
+      method: "POST",
+      headers: { "Content-Type": "application/json; charset=utf-8" },
+      body: JSON.stringify(body),
+    });
+    console.log(`IndexNow: submitted ${urls.length} URLs, status ${resp.status}`);
+  } catch (e) {
+    console.error("IndexNow submission error:", e);
+  }
+}
+
 async function getValidAccessToken(supabase: any): Promise<string> {
   const { data: tokenRow, error } = await supabase
     .from("daisycon_tokens")
@@ -631,22 +654,28 @@ Deno.serve(async (req) => {
           const { error: batchErr, data: insertedData } = await supabase
             .from("properties")
             .insert(batch)
-            .select("id");
+            .select("id, slug");
           
           if (batchErr) {
             console.error(`Batch insert error at ${i}: ${batchErr.message}`);
             // Fallback: try individual inserts for this batch
             for (const item of batch) {
-              const { error: singleErr } = await supabase.from("properties").insert(item);
+              const { data: single, error: singleErr } = await supabase.from("properties").insert(item).select("slug").maybeSingle();
               if (singleErr) {
                 console.error(`Single insert error: ${singleErr.message} - ${item.title}`);
                 skipped++;
               } else {
                 imported++;
+                if (single?.slug) indexNowUrls.push(`${SITE_URL}/woning/${single.slug}`);
               }
             }
           } else {
             imported += insertedData?.length || batch.length;
+            if (insertedData) {
+              for (const row of insertedData) {
+                if (row.slug) indexNowUrls.push(`${SITE_URL}/woning/${row.slug}`);
+              }
+            }
           }
 
           // Update job progress periodically
