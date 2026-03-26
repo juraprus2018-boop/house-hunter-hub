@@ -37,6 +37,7 @@ import AdminDailyActivity from "./pages/admin/AdminDailyActivity";
 import AdminFacebookQueue from "./pages/admin/AdminFacebookQueue";
 import AdminMakelaarLeads from "./pages/admin/AdminMakelaarLeads";
 import AdminEmailSender from "./pages/admin/AdminEmailSender";
+import AdminAlertSubscribers from "./pages/admin/AdminAlertSubscribers";
 import ListingTypePage from "./pages/ListingTypePage";
 import PropertyTypeCityPage from "./pages/PropertyTypeCityPage";
 import FilteredLandingPage from "./pages/FilteredLandingPage";
@@ -95,6 +96,7 @@ const App = () => (
             <Route path="/admin/facebook" element={<AdminFacebookQueue />} />
             <Route path="/admin/leads" element={<AdminMakelaarLeads />} />
             <Route path="/admin/email" element={<AdminEmailSender />} />
+            <Route path="/admin/alerts" element={<AdminAlertSubscribers />} />
             <Route path="/voorwaarden" element={<TermsAndConditions />} />
             <Route path="/privacy" element={<PrivacyPolicy />} />
             <Route path="/disclaimer" element={<Disclaimer />} />
