@@ -183,6 +183,7 @@ const AdminEmailSender = () => {
             if (error) throw error;
             totalSent += data?.sent || 0;
             totalFailed += data?.failed || 0;
+            totalSkipped += data?.skipped || 0;
           } catch {
             totalFailed += batch.length;
           }
@@ -195,7 +196,7 @@ const AdminEmailSender = () => {
         }
 
         setBatchProgress(null);
-        return { sent: totalSent, failed: totalFailed };
+        return { sent: totalSent, failed: totalFailed, skipped: totalSkipped };
       }
     },
     onSuccess: (data) => {
