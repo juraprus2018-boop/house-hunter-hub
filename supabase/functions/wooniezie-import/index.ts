@@ -215,7 +215,6 @@ Deno.serve(async (req) => {
           totalImported++;
           if (inserted?.slug) indexNowUrls.push(`${SITE_URL}/woning/${inserted.slug}`);
         }
-        }
       }
     }
 
