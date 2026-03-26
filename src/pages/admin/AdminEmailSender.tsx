@@ -17,7 +17,7 @@ import { format } from "date-fns";
 import { nl } from "date-fns/locale";
 
 // Email templates
-const LOGO_URL = "https://woonpeek.nl/logo-woonpeek.png";
+const LOGO_URL = "https://www.woonpeek.nl/assets/logo-woonpeek-CMQsaJz-.png";
 
 const EMAIL_TEMPLATES: Record<string, { name: string; subject: string; getHtml: (recipientName?: string) => string }> = {
   "makelaar-welkom": {
