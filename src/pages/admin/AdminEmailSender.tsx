@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useCallback } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -36,6 +36,10 @@ const AdminEmailSender = () => {
   // Shared
   const [selectedTemplate, setSelectedTemplate] = useState<string>("");
   const [customSubject, setCustomSubject] = useState("");
+
+  // Batch progress
+  const [batchProgress, setBatchProgress] = useState<{ sent: number; failed: number; total: number } | null>(null);
+  const abortRef = useRef(false);
 
   // Fetch sent emails history
   const { data: sentEmails, isLoading: loadingHistory } = useQuery({
