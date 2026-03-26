@@ -130,6 +130,8 @@ const AdminEmailSender = () => {
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
+  const BATCH_SIZE = 10;
+
   const sendMutation = useMutation({
     mutationFn: async () => {
       if (!selectedTemplate) throw new Error("Selecteer een template");
@@ -138,9 +140,9 @@ const AdminEmailSender = () => {
 
       const subject = customSubject || template.subject;
       const htmlContent = template.getHtml();
+      abortRef.current = false;
 
       if (sendMode === "single") {
-        if (!recipientEmail) throw new Error("Vul een e-mailadres in");
         const { data, error } = await supabase.functions.invoke("send-makelaar-email", {
           body: {
             recipients: [{ email: recipientEmail, name: recipientName || undefined }],
@@ -154,21 +156,45 @@ const AdminEmailSender = () => {
         if (data?.error) throw new Error(data.error);
         return data;
       } else {
-        const recipients = parseBulkEmails();
-        if (recipients.length === 0) throw new Error("Geen geldige e-mailadressen gevonden");
+        const allRecipients = parseBulkEmails();
+        if (allRecipients.length === 0) throw new Error("Geen geldige e-mailadressen gevonden");
 
-        const { data, error } = await supabase.functions.invoke("send-makelaar-email", {
-          body: {
-            recipients,
-            subject,
-            htmlContent,
-            templateName: selectedTemplate,
-            userId: user?.id,
-          },
-        });
-        if (error) throw error;
-        if (data?.error) throw new Error(data.error);
-        return data;
+        let totalSent = 0;
+        let totalFailed = 0;
+        const totalCount = allRecipients.length;
+        setBatchProgress({ sent: 0, failed: 0, total: totalCount });
+
+        // Split into batches
+        for (let i = 0; i < allRecipients.length; i += BATCH_SIZE) {
+          if (abortRef.current) break;
+          
+          const batch = allRecipients.slice(i, i + BATCH_SIZE);
+          try {
+            const { data, error } = await supabase.functions.invoke("send-makelaar-email", {
+              body: {
+                recipients: batch,
+                subject,
+                htmlContent,
+                templateName: selectedTemplate,
+                userId: user?.id,
+              },
+            });
+            if (error) throw error;
+            totalSent += data?.sent || 0;
+            totalFailed += data?.failed || 0;
+          } catch {
+            totalFailed += batch.length;
+          }
+          setBatchProgress({ sent: totalSent, failed: totalFailed, total: totalCount });
+
+          // Small delay between batches
+          if (i + BATCH_SIZE < allRecipients.length && !abortRef.current) {
+            await new Promise(r => setTimeout(r, 1000));
+          }
+        }
+
+        setBatchProgress(null);
+        return { sent: totalSent, failed: totalFailed };
       }
     },
     onSuccess: (data) => {
@@ -186,6 +212,7 @@ const AdminEmailSender = () => {
       queryClient.invalidateQueries({ queryKey: ["admin-sent-emails"] });
     },
     onError: (err: Error) => {
+      setBatchProgress(null);
       toast.error(`Fout bij verzenden: ${err.message}`);
     },
   });
