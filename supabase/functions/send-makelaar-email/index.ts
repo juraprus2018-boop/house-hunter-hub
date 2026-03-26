@@ -102,10 +102,11 @@ Deno.serve(async (req) => {
 
     await client.close();
 
-    const sent = results.filter(r => r.success).length;
+    const sent = results.filter(r => r.success && !r.skipped).length;
     const failed = results.filter(r => !r.success).length;
+    const skipped = results.filter(r => r.skipped).length;
 
-    return new Response(JSON.stringify({ success: true, sent, failed, results }), {
+    return new Response(JSON.stringify({ success: true, sent, failed, skipped, results }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {
