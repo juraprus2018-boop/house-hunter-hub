@@ -17,6 +17,7 @@ import {
   Facebook,
   Handshake,
   Mail,
+  BellRing,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -71,6 +72,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
     { to: "/admin/facebook", label: "Facebook Groep", icon: Facebook },
     { to: "/admin/leads", label: "Makelaar Leads", icon: Handshake },
     { to: "/admin/email", label: "E-mail Sender", icon: Mail },
+    { to: "/admin/alerts", label: "Alert Abonnees", icon: BellRing },
     { to: "/admin/instellingen", label: "Instellingen", icon: Settings },
   ];
 
