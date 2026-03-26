@@ -396,25 +396,45 @@ const AdminEmailSender = () => {
                   />
                 </div>
 
-                <Button
-                  onClick={() => sendMutation.mutate()}
-                  disabled={
-                    !selectedTemplate ||
-                    sendMutation.isPending ||
-                    (sendMode === "single" && !recipientEmail) ||
-                    (sendMode === "bulk" && bulkCount === 0)
-                  }
-                  className="w-full sm:w-auto"
-                >
-                  {sendMutation.isPending ? (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  ) : (
-                    <Send className="mr-2 h-4 w-4" />
-                  )}
-                  {sendMode === "bulk"
-                    ? `Verstuur naar ${bulkCount} ontvanger${bulkCount !== 1 ? "s" : ""}`
-                    : "Verstuur E-mail"}
-                </Button>
+                {/* Batch progress */}
+                {batchProgress && (
+                  <div className="space-y-2 rounded-lg border bg-muted/50 p-4">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="font-medium">
+                        Verzenden... {batchProgress.sent + batchProgress.failed} / {batchProgress.total}
+                      </span>
+                      <span className="text-muted-foreground">
+                        {batchProgress.sent} verzonden{batchProgress.failed > 0 ? `, ${batchProgress.failed} mislukt` : ""}
+                      </span>
+                    </div>
+                    <Progress value={((batchProgress.sent + batchProgress.failed) / batchProgress.total) * 100} />
+                    <Button variant="destructive" size="sm" onClick={() => { abortRef.current = true; }}>
+                      Stoppen
+                    </Button>
+                  </div>
+                )}
+
+                <div className="flex gap-2">
+                  <Button
+                    onClick={() => sendMutation.mutate()}
+                    disabled={
+                      !selectedTemplate ||
+                      sendMutation.isPending ||
+                      (sendMode === "single" && !recipientEmail) ||
+                      (sendMode === "bulk" && bulkCount === 0)
+                    }
+                    className="w-full sm:w-auto"
+                  >
+                    {sendMutation.isPending ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                      <Send className="mr-2 h-4 w-4" />
+                    )}
+                    {sendMode === "bulk"
+                      ? `Verstuur naar ${bulkCount} ontvanger${bulkCount !== 1 ? "s" : ""}`
+                      : "Verstuur E-mail"}
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
