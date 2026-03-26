@@ -15,7 +15,6 @@ Deno.serve(async (req) => {
   try {
     const body = await req.json();
     
-    // Support both single and bulk sending
     const recipients: { email: string; name?: string }[] = body.recipients || [
       { email: body.recipientEmail, name: body.recipientName }
     ];
@@ -23,18 +22,6 @@ Deno.serve(async (req) => {
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
     const supabase = createClient(supabaseUrl, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "");
-
-    const client = new SMTPClient({
-      connection: {
-        hostname: "woonpeek.nl",
-        port: 465,
-        tls: true,
-        auth: {
-          username: "info@woonpeek.nl",
-          password: Deno.env.get("SMTP_PASSWORD") || "",
-        },
-      },
-    });
 
     const results: { email: string; success: boolean; error?: string; skipped?: boolean }[] = [];
 
@@ -69,7 +56,21 @@ Deno.serve(async (req) => {
       const cleanHtml = personalizedHtml.replace(/\n\s+/g, '\n').replace(/\s{2,}/g, ' ').trim();
       const finalHtml = cleanHtml + `<img src="${trackingPixelUrl}" width="1" height="1" style="display:none" alt="" />`;
 
+      // Create a fresh SMTP client per email to avoid connection timeout issues
+      let client: SMTPClient | null = null;
       try {
+        client = new SMTPClient({
+          connection: {
+            hostname: "woonpeek.nl",
+            port: 465,
+            tls: true,
+            auth: {
+              username: "info@woonpeek.nl",
+              password: Deno.env.get("SMTP_PASSWORD") || "",
+            },
+          },
+        });
+
         await client.send({
           from: "WoonPeek <info@woonpeek.nl>",
           to: recipient.email,
@@ -78,6 +79,9 @@ Deno.serve(async (req) => {
           html: finalHtml,
           encoding: "8bit",
         });
+
+        await client.close();
+        client = null;
 
         await supabase.from("admin_sent_emails").insert({
           recipient_email: recipient.email,
@@ -92,15 +96,12 @@ Deno.serve(async (req) => {
 
         results.push({ email: recipient.email, success: true });
       } catch (err) {
+        if (client) {
+          try { await client.close(); } catch { /* ignore */ }
+        }
         results.push({ email: recipient.email, success: false, error: err instanceof Error ? err.message : "Unknown" });
       }
-
-      if (recipients.length > 1) {
-        await new Promise(r => setTimeout(r, 500));
-      }
     }
-
-    await client.close();
 
     const sent = results.filter(r => r.success && !r.skipped).length;
     const failed = results.filter(r => !r.success).length;
