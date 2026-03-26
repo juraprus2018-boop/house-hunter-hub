@@ -42,27 +42,39 @@ const AdminEmailSender = () => {
   const [batchProgress, setBatchProgress] = useState<{ sent: number; failed: number; skipped: number; total: number } | null>(null);
   const abortRef = useRef(false);
 
-  // Fetch sent emails history
+  type SentEmail = {
+    id: string;
+    recipient_email: string;
+    recipient_name: string | null;
+    subject: string;
+    template_name: string;
+    status: string;
+    opened_at: string | null;
+    tracking_id: string;
+    created_at: string;
+  };
+
+  // Fetch ALL sent emails using batch loop to bypass 1000-row limit
   const { data: sentEmails, isLoading: loadingHistory } = useQuery({
     queryKey: ["admin-sent-emails"],
     queryFn: async () => {
-      const { data, error } = await (supabase as any)
-        .from("admin_sent_emails")
-        .select("*")
-        .order("created_at", { ascending: false })
-        .limit(100);
-      if (error) throw error;
-      return data as {
-        id: string;
-        recipient_email: string;
-        recipient_name: string | null;
-        subject: string;
-        template_name: string;
-        status: string;
-        opened_at: string | null;
-        tracking_id: string;
-        created_at: string;
-      }[];
+      const PAGE_SIZE = 1000;
+      let from = 0;
+      const all: SentEmail[] = [];
+
+      while (true) {
+        const { data, error } = await (supabase as any)
+          .from("admin_sent_emails")
+          .select("*")
+          .order("created_at", { ascending: false })
+          .range(from, from + PAGE_SIZE - 1);
+        if (error) throw error;
+        all.push(...(data as SentEmail[]));
+        if (data.length < PAGE_SIZE) break;
+        from += PAGE_SIZE;
+      }
+
+      return all;
     },
   });
 
