@@ -37,7 +37,7 @@ export const useAdminConversations = () => {
       if (error) throw error;
 
       // Fetch profiles for user_ids
-      const userIds = [...new Set((convos || []).map((c: any) => c.user_id))];
+      const userIds = [...new Set((convos || []).map((c: any) => c.user_id))] as string[];
       const { data: profiles } = await supabase
         .from("profiles")
         .select("user_id, display_name")
