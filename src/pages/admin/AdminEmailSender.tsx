@@ -201,12 +201,16 @@ const AdminEmailSender = () => {
       }
     },
     onSuccess: (data) => {
-      const sent = data?.sent || 1;
+      const sent = data?.sent || 0;
       const failed = data?.failed || 0;
+      const skipped = data?.skipped || 0;
+      const parts = [`${sent} verzonden`];
+      if (skipped > 0) parts.push(`${skipped} overgeslagen (al verzonden)`);
+      if (failed > 0) parts.push(`${failed} mislukt`);
       if (failed > 0) {
-        toast.warning(`${sent} verzonden, ${failed} mislukt`);
+        toast.warning(parts.join(", "));
       } else {
-        toast.success(`${sent} e-mail(s) succesvol verzonden!`);
+        toast.success(parts.join(", "));
       }
       setRecipientEmail("");
       setRecipientName("");
