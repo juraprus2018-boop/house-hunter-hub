@@ -149,6 +149,7 @@ Deno.serve(async (req) => {
     let totalSkipped = 0;
     let totalErrors = 0;
     let totalDeactivated = 0;
+    const indexNowUrls: string[] = [];
 
     // Collect all active source URLs from the API
     const activeSourceUrls = new Set<string>();
@@ -201,15 +202,19 @@ Deno.serve(async (req) => {
 
         const propertyData = mapToProperty(item);
 
-        const { error: insertErr } = await supabase
+        const { data: inserted, error: insertErr } = await supabase
           .from("properties")
-          .insert(propertyData);
+          .insert(propertyData)
+          .select("slug")
+          .maybeSingle();
 
         if (insertErr) {
           console.error(`Insert error for "${propertyData.title}": ${insertErr.message}`);
           totalErrors++;
         } else {
           totalImported++;
+          if (inserted?.slug) indexNowUrls.push(`${SITE_URL}/woning/${inserted.slug}`);
+        }
         }
       }
     }
