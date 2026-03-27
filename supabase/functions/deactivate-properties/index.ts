@@ -131,6 +131,7 @@ Deno.serve(async (req) => {
         if (feeds && feeds.length > 0) {
           const activeSourceUrls = new Set<string>();
           const feedNames: string[] = [];
+          const feedsWithProducts = new Set<string>();
 
           for (const feed of feeds) {
             feedNames.push(feed.name);
@@ -171,6 +172,10 @@ Deno.serve(async (req) => {
               const products = extractProducts(feedData);
               console.log(`Deactivation check: Feed ${feed.name} has ${products.length} products`);
 
+              if (products.length > 0) {
+                feedsWithProducts.add(feed.name);
+              }
+
               for (const product of products) {
                 const url = buildAffiliateLink(product, feed.media_id, feed.program_id);
                 if (url) activeSourceUrls.add(url);
@@ -182,15 +187,25 @@ Deno.serve(async (req) => {
 
           // Deactivate properties not in any feed
           console.log(`Daisycon: ${activeSourceUrls.size} active URLs across ${feedNames.length} feeds`);
+          
+          // SAFETY: Skip deactivation for feeds that returned 0 products
+          // This prevents mass deactivation when a feed API is temporarily down
+          const feedsWithoutProducts = feedNames.filter(n => !feedsWithProducts.has(n));
+          if (feedsWithoutProducts.length > 0) {
+            console.log(`Daisycon: Skipping deactivation for feeds with 0 products: ${feedsWithoutProducts.join(', ')}`);
+          }
+          // Only deactivate from feeds that actually returned products
+          const feedsToDeactivate = feedNames.filter(n => feedsWithProducts.has(n));
+          
           let daisyconDeactivated = 0;
           const pageSize = 1000;
           let from = 0;
 
-          while (true) {
+          while (feedsToDeactivate.length > 0) {
             const { data: existingProps, error: fetchErr } = await supabase
               .from("properties")
               .select("id, source_url")
-              .in("source_site", feedNames)
+              .in("source_site", feedsToDeactivate)
               .eq("status", "actief")
               .range(from, from + pageSize - 1);
 
