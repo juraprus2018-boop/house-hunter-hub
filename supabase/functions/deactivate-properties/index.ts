@@ -203,11 +203,11 @@ Deno.serve(async (req) => {
           const pageSize = 1000;
           let from = 0;
 
-          while (true) {
+          while (feedsToDeactivate.length > 0) {
             const { data: existingProps, error: fetchErr } = await supabase
               .from("properties")
               .select("id, source_url")
-              .in("source_site", feedNames)
+              .in("source_site", feedsToDeactivate)
               .eq("status", "actief")
               .range(from, from + pageSize - 1);
 
