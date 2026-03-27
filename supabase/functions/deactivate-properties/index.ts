@@ -131,6 +131,7 @@ Deno.serve(async (req) => {
         if (feeds && feeds.length > 0) {
           const activeSourceUrls = new Set<string>();
           const feedNames: string[] = [];
+          const feedsWithProducts = new Set<string>();
 
           for (const feed of feeds) {
             feedNames.push(feed.name);
@@ -171,6 +172,10 @@ Deno.serve(async (req) => {
               const products = extractProducts(feedData);
               console.log(`Deactivation check: Feed ${feed.name} has ${products.length} products`);
 
+              if (products.length > 0) {
+                feedsWithProducts.add(feed.name);
+              }
+
               for (const product of products) {
                 const url = buildAffiliateLink(product, feed.media_id, feed.program_id);
                 if (url) activeSourceUrls.add(url);
@@ -185,13 +190,6 @@ Deno.serve(async (req) => {
           
           // SAFETY: Skip deactivation for feeds that returned 0 products
           // This prevents mass deactivation when a feed API is temporarily down
-          const feedsWithProducts = new Set<string>();
-          for (const url of activeSourceUrls) {
-            for (const name of feedNames) {
-              // If we found at least one URL for this feed, it's working
-              feedsWithProducts.add(name);
-            }
-          }
           const feedsWithoutProducts = feedNames.filter(n => !feedsWithProducts.has(n));
           if (feedsWithoutProducts.length > 0) {
             console.log(`Daisycon: Skipping deactivation for feeds with 0 products: ${feedsWithoutProducts.join(', ')}`);
