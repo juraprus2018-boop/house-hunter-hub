@@ -292,12 +292,24 @@ const AdminProperties = () => {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Titel</TableHead>
-                  <TableHead>Locatie</TableHead>
-                  <TableHead>Prijs</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Toegevoegd</TableHead>
+                  <TableHead className="cursor-pointer select-none" onClick={() => handleSort("title")}>
+                    <span className="inline-flex items-center">Titel <SortIcon column="title" /></span>
+                  </TableHead>
+                  <TableHead className="cursor-pointer select-none" onClick={() => handleSort("city")}>
+                    <span className="inline-flex items-center">Locatie <SortIcon column="city" /></span>
+                  </TableHead>
+                  <TableHead className="cursor-pointer select-none" onClick={() => handleSort("price")}>
+                    <span className="inline-flex items-center">Prijs <SortIcon column="price" /></span>
+                  </TableHead>
+                  <TableHead className="cursor-pointer select-none" onClick={() => handleSort("property_type")}>
+                    <span className="inline-flex items-center">Type <SortIcon column="property_type" /></span>
+                  </TableHead>
+                  <TableHead className="cursor-pointer select-none" onClick={() => handleSort("status")}>
+                    <span className="inline-flex items-center">Status <SortIcon column="status" /></span>
+                  </TableHead>
+                  <TableHead className="cursor-pointer select-none" onClick={() => handleSort("created_at")}>
+                    <span className="inline-flex items-center">Toegevoegd <SortIcon column="created_at" /></span>
+                  </TableHead>
                   <TableHead className="text-right">Acties</TableHead>
                 </TableRow>
               </TableHeader>
