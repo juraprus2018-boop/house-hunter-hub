@@ -30,7 +30,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useAdminPropertiesPaginated, useUpdatePropertyAdmin, useDeletePropertyAdmin, usePostToFacebook } from "@/hooks/useAdmin";
-import { Search, Pencil, Trash2, Loader2, ExternalLink, Filter, Facebook, CheckCircle, ChevronLeft, ChevronRight, Copy } from "lucide-react";
+import { Search, Pencil, Trash2, Loader2, ExternalLink, Filter, Facebook, CheckCircle, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Copy, ArrowUp, ArrowDown, ArrowUpDown } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { nl } from "date-fns/locale";

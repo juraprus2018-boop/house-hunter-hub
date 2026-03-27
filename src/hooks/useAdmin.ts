@@ -59,6 +59,8 @@ export const useAdminPropertiesPaginated = (
     search?: string;
     source?: string;
     status?: string;
+    sortColumn?: string;
+    sortAscending?: boolean;
   }
 ) => {
   return useQuery({
@@ -66,6 +68,9 @@ export const useAdminPropertiesPaginated = (
     queryFn: async () => {
       const from = page * pageSize;
       const to = from + pageSize - 1;
+
+      const sortCol = filters.sortColumn || "created_at";
+      const sortAsc = filters.sortAscending ?? false;
 
       // Build count query
       let countQuery = supabase
@@ -76,7 +81,7 @@ export const useAdminPropertiesPaginated = (
       let dataQuery = supabase
         .from("properties")
         .select("*")
-        .order("created_at", { ascending: false })
+        .order(sortCol, { ascending: sortAsc })
         .range(from, to);
 
       // Apply filters to both queries
