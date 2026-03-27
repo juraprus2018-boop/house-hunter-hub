@@ -43,6 +43,8 @@ const AdminProperties = () => {
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [sourceFilter, setSourceFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [sortColumn, setSortColumn] = useState<string>("created_at");
+  const [sortAscending, setSortAscending] = useState(false);
 
   // Debounce search
   const [searchTimeout, setSearchTimeout] = useState<ReturnType<typeof setTimeout> | null>(null);
@@ -56,10 +58,27 @@ const AdminProperties = () => {
     setSearchTimeout(timeout);
   };
 
+  const handleSort = (column: string) => {
+    if (sortColumn === column) {
+      setSortAscending((prev) => !prev);
+    } else {
+      setSortColumn(column);
+      setSortAscending(true);
+    }
+    setCurrentPage(0);
+  };
+
+  const SortIcon = ({ column }: { column: string }) => {
+    if (sortColumn !== column) return <ArrowUpDown className="h-3 w-3 ml-1 opacity-40" />;
+    return sortAscending ? <ArrowUp className="h-3 w-3 ml-1" /> : <ArrowDown className="h-3 w-3 ml-1" />;
+  };
+
   const { data, isLoading } = useAdminPropertiesPaginated(currentPage, PAGE_SIZE, {
     search: debouncedSearch,
     source: sourceFilter,
     status: statusFilter,
+    sortColumn,
+    sortAscending,
   });
 
   const updateProperty = useUpdatePropertyAdmin();
