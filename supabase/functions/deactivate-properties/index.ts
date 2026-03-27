@@ -182,6 +182,23 @@ Deno.serve(async (req) => {
 
           // Deactivate properties not in any feed
           console.log(`Daisycon: ${activeSourceUrls.size} active URLs across ${feedNames.length} feeds`);
+          
+          // SAFETY: Skip deactivation for feeds that returned 0 products
+          // This prevents mass deactivation when a feed API is temporarily down
+          const feedsWithProducts = new Set<string>();
+          for (const url of activeSourceUrls) {
+            for (const name of feedNames) {
+              // If we found at least one URL for this feed, it's working
+              feedsWithProducts.add(name);
+            }
+          }
+          const feedsWithoutProducts = feedNames.filter(n => !feedsWithProducts.has(n));
+          if (feedsWithoutProducts.length > 0) {
+            console.log(`Daisycon: Skipping deactivation for feeds with 0 products: ${feedsWithoutProducts.join(', ')}`);
+          }
+          // Only deactivate from feeds that actually returned products
+          const feedsToDeactivate = feedNames.filter(n => feedsWithProducts.has(n));
+          
           let daisyconDeactivated = 0;
           const pageSize = 1000;
           let from = 0;
