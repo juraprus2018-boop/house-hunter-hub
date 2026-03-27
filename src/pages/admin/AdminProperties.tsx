@@ -420,7 +420,17 @@ const AdminProperties = () => {
                 <p className="text-sm text-muted-foreground">
                   {currentPage * PAGE_SIZE + 1}–{Math.min((currentPage + 1) * PAGE_SIZE, totalCount)} van {totalCount}
                 </p>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-8 w-8"
+                    disabled={currentPage === 0}
+                    onClick={() => setCurrentPage(0)}
+                    title="Eerste pagina"
+                  >
+                    <ChevronsLeft className="h-4 w-4" />
+                  </Button>
                   <Button
                     variant="outline"
                     size="sm"
@@ -430,6 +440,9 @@ const AdminProperties = () => {
                     <ChevronLeft className="h-4 w-4 mr-1" />
                     Vorige
                   </Button>
+                  <span className="text-sm text-muted-foreground px-2">
+                    {currentPage + 1} / {totalPages}
+                  </span>
                   <Button
                     variant="outline"
                     size="sm"
@@ -438,6 +451,16 @@ const AdminProperties = () => {
                   >
                     Volgende
                     <ChevronRight className="h-4 w-4 ml-1" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-8 w-8"
+                    disabled={currentPage >= totalPages - 1}
+                    onClick={() => setCurrentPage(totalPages - 1)}
+                    title="Laatste pagina"
+                  >
+                    <ChevronsRight className="h-4 w-4" />
                   </Button>
                 </div>
               </div>
