@@ -30,7 +30,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useAdminPropertiesPaginated, useUpdatePropertyAdmin, useDeletePropertyAdmin, usePostToFacebook } from "@/hooks/useAdmin";
-import { Search, Pencil, Trash2, Loader2, ExternalLink, Filter, Facebook, CheckCircle, ChevronLeft, ChevronRight, Copy } from "lucide-react";
+import { Search, Pencil, Trash2, Loader2, ExternalLink, Filter, Facebook, CheckCircle, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Copy, ArrowUp, ArrowDown, ArrowUpDown } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { nl } from "date-fns/locale";
@@ -43,6 +43,8 @@ const AdminProperties = () => {
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [sourceFilter, setSourceFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [sortColumn, setSortColumn] = useState<string>("created_at");
+  const [sortAscending, setSortAscending] = useState(false);
 
   // Debounce search
   const [searchTimeout, setSearchTimeout] = useState<ReturnType<typeof setTimeout> | null>(null);
@@ -56,10 +58,27 @@ const AdminProperties = () => {
     setSearchTimeout(timeout);
   };
 
+  const handleSort = (column: string) => {
+    if (sortColumn === column) {
+      setSortAscending((prev) => !prev);
+    } else {
+      setSortColumn(column);
+      setSortAscending(true);
+    }
+    setCurrentPage(0);
+  };
+
+  const SortIcon = ({ column }: { column: string }) => {
+    if (sortColumn !== column) return <ArrowUpDown className="h-3 w-3 ml-1 opacity-40" />;
+    return sortAscending ? <ArrowUp className="h-3 w-3 ml-1" /> : <ArrowDown className="h-3 w-3 ml-1" />;
+  };
+
   const { data, isLoading } = useAdminPropertiesPaginated(currentPage, PAGE_SIZE, {
     search: debouncedSearch,
     source: sourceFilter,
     status: statusFilter,
+    sortColumn,
+    sortAscending,
   });
 
   const updateProperty = useUpdatePropertyAdmin();
@@ -273,12 +292,24 @@ const AdminProperties = () => {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Titel</TableHead>
-                  <TableHead>Locatie</TableHead>
-                  <TableHead>Prijs</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Toegevoegd</TableHead>
+                  <TableHead className="cursor-pointer select-none" onClick={() => handleSort("title")}>
+                    <span className="inline-flex items-center">Titel <SortIcon column="title" /></span>
+                  </TableHead>
+                  <TableHead className="cursor-pointer select-none" onClick={() => handleSort("city")}>
+                    <span className="inline-flex items-center">Locatie <SortIcon column="city" /></span>
+                  </TableHead>
+                  <TableHead className="cursor-pointer select-none" onClick={() => handleSort("price")}>
+                    <span className="inline-flex items-center">Prijs <SortIcon column="price" /></span>
+                  </TableHead>
+                  <TableHead className="cursor-pointer select-none" onClick={() => handleSort("property_type")}>
+                    <span className="inline-flex items-center">Type <SortIcon column="property_type" /></span>
+                  </TableHead>
+                  <TableHead className="cursor-pointer select-none" onClick={() => handleSort("status")}>
+                    <span className="inline-flex items-center">Status <SortIcon column="status" /></span>
+                  </TableHead>
+                  <TableHead className="cursor-pointer select-none" onClick={() => handleSort("created_at")}>
+                    <span className="inline-flex items-center">Toegevoegd <SortIcon column="created_at" /></span>
+                  </TableHead>
                   <TableHead className="text-right">Acties</TableHead>
                 </TableRow>
               </TableHeader>
@@ -389,7 +420,17 @@ const AdminProperties = () => {
                 <p className="text-sm text-muted-foreground">
                   {currentPage * PAGE_SIZE + 1}–{Math.min((currentPage + 1) * PAGE_SIZE, totalCount)} van {totalCount}
                 </p>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-8 w-8"
+                    disabled={currentPage === 0}
+                    onClick={() => setCurrentPage(0)}
+                    title="Eerste pagina"
+                  >
+                    <ChevronsLeft className="h-4 w-4" />
+                  </Button>
                   <Button
                     variant="outline"
                     size="sm"
@@ -399,6 +440,9 @@ const AdminProperties = () => {
                     <ChevronLeft className="h-4 w-4 mr-1" />
                     Vorige
                   </Button>
+                  <span className="text-sm text-muted-foreground px-2">
+                    {currentPage + 1} / {totalPages}
+                  </span>
                   <Button
                     variant="outline"
                     size="sm"
@@ -407,6 +451,16 @@ const AdminProperties = () => {
                   >
                     Volgende
                     <ChevronRight className="h-4 w-4 ml-1" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-8 w-8"
+                    disabled={currentPage >= totalPages - 1}
+                    onClick={() => setCurrentPage(totalPages - 1)}
+                    title="Laatste pagina"
+                  >
+                    <ChevronsRight className="h-4 w-4" />
                   </Button>
                 </div>
               </div>
