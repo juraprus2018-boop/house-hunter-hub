@@ -839,6 +839,9 @@ const PropertyDetail = () => {
           </section>
         )}
 
+        {/* ── Comments Section ── */}
+        <PropertyComments propertyId={property.id} />
+
         {/* ── FAQ Section ── */}
         <section className="border-t bg-muted/30 py-12 lg:py-16">
           <div className="container max-w-3xl">
