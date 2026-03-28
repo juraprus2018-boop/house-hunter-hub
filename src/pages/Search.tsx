@@ -7,8 +7,8 @@ import Breadcrumbs from "@/components/seo/Breadcrumbs";
 import SEOHead from "@/components/seo/SEOHead";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useProperties, useFilterFacets, useMapProperties } from "@/hooks/useProperties";
-import { Search, SlidersHorizontal, List, Map as MapIcon } from "lucide-react";
+import { useInfiniteProperties, useFilterFacets, useMapProperties } from "@/hooks/useProperties";
+import { Search, SlidersHorizontal, List, Map as MapIcon, Loader2 } from "lucide-react";
 import ExploreMap from "@/components/explore/ExploreMap";
 import {
   Sheet,
@@ -76,7 +76,7 @@ const SearchPage = () => {
     includeInactive: filters.includeInactive,
   });
 
-  const { data, isLoading } = useProperties({
+  const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteProperties({
     city: debouncedCity || undefined,
     propertyType: filters.propertyType || undefined,
     listingType: filters.listingType || undefined,
@@ -84,12 +84,22 @@ const SearchPage = () => {
     minBedrooms: filters.minBedrooms,
     minSurface: filters.minSurface,
     includeInactive: filters.includeInactive,
-    page: currentPage,
     pageSize,
   });
-  const properties = data?.properties;
-  const totalCount = data?.totalCount || 0;
-  const totalPages = Math.ceil(totalCount / pageSize);
+  const properties = data?.pages.flatMap(p => p.properties) || [];
+  const totalCount = data?.pages[0]?.totalCount || 0;
+
+  // Infinite scroll observer
+  const loadMoreRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!loadMoreRef.current || !hasNextPage) return;
+    const observer = new IntersectionObserver(
+      (entries) => { if (entries[0].isIntersecting && !isFetchingNextPage) fetchNextPage(); },
+      { rootMargin: "400px" }
+    );
+    observer.observe(loadMoreRef.current);
+    return () => observer.disconnect();
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   // Separate query for map view: all properties with coordinates
   const { data: mapProperties, isLoading: isMapLoading } = useMapProperties({
@@ -242,11 +252,20 @@ const SearchPage = () => {
                 </div>
               ) : properties && properties.length > 0 ? (
               viewMode === "list" ? (
-                  <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                    {properties.map((property) => (
-                      <PropertyCard key={property.id} property={property} />
-                    ))}
-                  </div>
+                  <>
+                    <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                      {properties.map((property) => (
+                        <PropertyCard key={property.id} property={property} />
+                      ))}
+                    </div>
+                    {/* Infinite scroll trigger */}
+                    <div ref={loadMoreRef} className="flex justify-center py-8">
+                      {isFetchingNextPage && <Loader2 className="h-6 w-6 animate-spin text-primary" />}
+                      {!hasNextPage && properties.length > 12 && (
+                        <p className="text-sm text-muted-foreground">Alle {totalCount} woningen geladen</p>
+                      )}
+                    </div>
+                  </>
                 ) : (
                   <div className="h-[500px] rounded-lg border overflow-hidden">
                     {isMapLoading ? (
@@ -274,20 +293,7 @@ const SearchPage = () => {
                 </div>
               )}
 
-              {/* Pagination */}
-              {totalPages > 1 && (
-                <div className="mt-8 flex items-center justify-center gap-2">
-                  <Button variant="outline" size="sm" disabled={currentPage <= 1} onClick={() => setCurrentPage(p => p - 1)}>
-                    Vorige
-                  </Button>
-                  <span className="px-4 text-sm text-muted-foreground">
-                    Pagina {currentPage} van {totalPages}
-                  </span>
-                  <Button variant="outline" size="sm" disabled={currentPage >= totalPages} onClick={() => setCurrentPage(p => p + 1)}>
-                    Volgende
-                  </Button>
-                </div>
-              )}
+              {/* Pagination removed - using infinite scroll */}
             </div>
           </div>
         </div>
