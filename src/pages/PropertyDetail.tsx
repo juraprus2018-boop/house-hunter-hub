@@ -16,6 +16,7 @@ import Breadcrumbs from "@/components/seo/Breadcrumbs";
 import PropertyCard from "@/components/properties/PropertyCard";
 import PriceAnalysis from "@/components/properties/PriceAnalysis";
 import NearbyAmenities from "@/components/properties/NearbyAmenities";
+import PropertyComments from "@/components/properties/PropertyComments";
 import {
   Heart,
   Share2,
@@ -837,6 +838,9 @@ const PropertyDetail = () => {
             </div>
           </section>
         )}
+
+        {/* ── Comments Section ── */}
+        <PropertyComments propertyId={property.id} />
 
         {/* ── FAQ Section ── */}
         <section className="border-t bg-muted/30 py-12 lg:py-16">
