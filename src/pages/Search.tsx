@@ -33,7 +33,6 @@ const EMPTY_FILTERS: SearchFilterValues = {
 const SearchPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [viewMode, setViewMode] = useState<"list" | "map">("list");
-  const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 12;
 
   const [filters, setFilters] = useState<SearchFilterValues>({
