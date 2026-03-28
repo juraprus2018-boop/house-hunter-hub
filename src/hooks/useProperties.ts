@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Database } from "@/integrations/supabase/types";
@@ -112,6 +112,35 @@ export const useProperties = (filters?: PropertyFilters) => {
 
       return { properties: allProperties, totalCount: count || allProperties.length };
     },
+  });
+};
+
+export const useInfiniteProperties = (filters?: Omit<PropertyFilters, "page" | "disablePagination"> & { pageSize?: number }) => {
+  const pageSize = filters?.pageSize || 12;
+  return useInfiniteQuery({
+    queryKey: ["infinite-properties", filters],
+    queryFn: async ({ pageParam = 1 }) => {
+      const from = (pageParam - 1) * pageSize;
+      const to = from + pageSize - 1;
+
+      let query = supabase
+        .from("properties")
+        .select("*", { count: "exact" })
+        .order("created_at", { ascending: false })
+        .range(from, to);
+
+      query = applyPropertyFilters(query, { ...filters, page: pageParam, pageSize });
+
+      const { data, error, count } = await query;
+      if (error) throw error;
+
+      return { properties: (data as Property[]) || [], totalCount: count || 0, page: pageParam };
+    },
+    getNextPageParam: (lastPage) => {
+      const totalPages = Math.ceil(lastPage.totalCount / pageSize);
+      return lastPage.page < totalPages ? lastPage.page + 1 : undefined;
+    },
+    initialPageParam: 1,
   });
 };
 

@@ -1,5 +1,6 @@
 import { useParams, Link } from "react-router-dom";
 import { useMemo } from "react";
+import { addBlogAutoLinks } from "@/lib/blogAutoLinks";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import PageBanner from "@/components/layout/PageBanner";
@@ -52,7 +53,7 @@ function parseSeoMeta(metaDescription: string | null): {
 const BlogPostPage = () => {
   const { slug } = useParams<{ slug: string }>();
   const { data: post, isLoading } = useBlogPost(slug || "");
-  const cleanedContent = useMemo(() => post ? cleanBlogHtml(post.content) : "", [post]);
+  const cleanedContent = useMemo(() => post ? addBlogAutoLinks(cleanBlogHtml(post.content)) : "", [post]);
 
   const seoMeta = useMemo(() => parseSeoMeta(post?.meta_description || null), [post]);
 

@@ -1,0 +1,108 @@
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, OPTIONS",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+};
+
+const SITE_URL = "https://www.woonpeek.nl";
+
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/"/g, "&quot;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
+Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response("ok", { headers: corsHeaders });
+  }
+
+  const url = new URL(req.url);
+  const citySlug = url.searchParams.get("city");
+
+  if (!citySlug) {
+    return new Response("Missing city", { status: 400, headers: corsHeaders });
+  }
+
+  const cityName = decodeURIComponent(citySlug)
+    .replace(/-/g, " ")
+    .replace(/\b\w/g, (l) => l.toUpperCase());
+
+  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+  const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+  const supabase = createClient(supabaseUrl, supabaseKey);
+
+  // Get counts and a sample image
+  const [huurResult, koopResult, imageResult] = await Promise.all([
+    supabase
+      .from("properties")
+      .select("id", { count: "exact", head: true })
+      .eq("status", "actief")
+      .ilike("city", `%${cityName}%`)
+      .eq("listing_type", "huur"),
+    supabase
+      .from("properties")
+      .select("id", { count: "exact", head: true })
+      .eq("status", "actief")
+      .ilike("city", `%${cityName}%`)
+      .eq("listing_type", "koop"),
+    supabase
+      .from("properties")
+      .select("images")
+      .eq("status", "actief")
+      .ilike("city", `%${cityName}%`)
+      .not("images", "is", null)
+      .limit(1)
+      .maybeSingle(),
+  ]);
+
+  const huurCount = huurResult.count || 0;
+  const koopCount = koopResult.count || 0;
+  const totalCount = huurCount + koopCount;
+  const ogImage =
+    imageResult.data?.images?.find((img: string) => img?.trim()) ||
+    `${SITE_URL}/facebook-cover.png`;
+
+  const pageUrl = `${SITE_URL}/woningen-${citySlug}`;
+  const title = `Woningen in ${cityName} – ${totalCount} beschikbaar | WoonPeek`;
+  const description = `Bekijk ${huurCount} huurwoningen en ${koopCount} koopwoningen in ${cityName}. Dagelijks bijgewerkt op WoonPeek.`;
+
+  const html = `<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8">
+  <title>${escapeHtml(title)}</title>
+  <meta name="description" content="${escapeHtml(description)}">
+  <meta property="og:title" content="${escapeHtml(title)}">
+  <meta property="og:description" content="${escapeHtml(description)}">
+  <meta property="og:image" content="${escapeHtml(ogImage)}">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:url" content="${escapeHtml(pageUrl)}">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="WoonPeek">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="${escapeHtml(title)}">
+  <meta name="twitter:description" content="${escapeHtml(description)}">
+  <meta name="twitter:image" content="${escapeHtml(ogImage)}">
+  <meta http-equiv="refresh" content="0;url=${escapeHtml(pageUrl)}">
+  <link rel="canonical" href="${escapeHtml(pageUrl)}">
+</head>
+<body>
+  <p>Doorsturen naar <a href="${escapeHtml(pageUrl)}">${escapeHtml(title)}</a>...</p>
+</body>
+</html>`;
+
+  return new Response(html, {
+    headers: {
+      ...corsHeaders,
+      "Content-Type": "text/html; charset=utf-8",
+      "Cache-Control": "public, max-age=3600",
+    },
+  });
+});
