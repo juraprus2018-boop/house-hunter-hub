@@ -629,6 +629,44 @@ export type Database = {
         }
         Relationships: []
       }
+      property_comments: {
+        Row: {
+          content: string
+          created_at: string
+          email: string
+          id: string
+          is_approved: boolean
+          name: string
+          property_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          email: string
+          id?: string
+          is_approved?: boolean
+          name: string
+          property_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          email?: string
+          id?: string
+          is_approved?: boolean
+          name?: string
+          property_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "property_comments_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       scraped_properties: {
         Row: {
           bathrooms: number | null
