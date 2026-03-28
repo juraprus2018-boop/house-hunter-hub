@@ -52,6 +52,7 @@ import MakelaarKoppelen from "./pages/MakelaarKoppelen";
 import Samenwerking from "./pages/Samenwerking";
 import AdminChat from "./pages/admin/AdminChat";
 import UserChat from "./pages/UserChat";
+import BudgetTool from "./pages/BudgetTool";
 import CookieConsent from "@/components/CookieConsent";
 import { cityPath } from "@/lib/cities";
 
@@ -116,6 +117,7 @@ const App = () => (
             <Route path="/over-woonpeek" element={<About />} />
             <Route path="/makelaar-koppelen" element={<MakelaarKoppelen />} />
             <Route path="/samenwerking" element={<Samenwerking />} />
+            <Route path="/budget-tool" element={<BudgetTool />} />
             <Route path="/alerts/afmelden/:token" element={<AlertUnsubscribe />} />
             <Route path="/huurwoningen/:city?" element={<ListingTypePage listingType="huur" />} />
             <Route path="/koopwoningen/:city?" element={<ListingTypePage listingType="koop" />} />
