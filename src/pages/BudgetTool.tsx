@@ -107,8 +107,8 @@ const BudgetTool = () => {
         avgBedrooms,
       };
     })
-      .filter(Boolean)
-      .sort((a, b) => b!.percentage - a!.percentage) as NonNullable<ReturnType<typeof Array.prototype.map>[number]>[];
+      .filter((x): x is Exclude<typeof x, null> => x !== null)
+      .sort((a, b) => b.percentage - a.percentage);
   }, [cityData, budget]);
 
   const formatPrice = (price: number) =>

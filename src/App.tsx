@@ -52,6 +52,7 @@ import MakelaarKoppelen from "./pages/MakelaarKoppelen";
 import Samenwerking from "./pages/Samenwerking";
 import AdminChat from "./pages/admin/AdminChat";
 import UserChat from "./pages/UserChat";
+import BudgetTool from "./pages/BudgetTool";
 import CookieConsent from "@/components/CookieConsent";
 import { cityPath } from "@/lib/cities";
 
