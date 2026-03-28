@@ -112,13 +112,11 @@ const SearchPage = () => {
 
   const handleFilterChange = useCallback((newFilters: SearchFilterValues) => {
     setFilters(newFilters);
-    setCurrentPage(1);
   }, []);
 
   const clearFilters = useCallback(() => {
     setFilters(EMPTY_FILTERS);
     setDebouncedCity("");
-    setCurrentPage(1);
     setSearchParams(new URLSearchParams());
   }, [setSearchParams]);
 
