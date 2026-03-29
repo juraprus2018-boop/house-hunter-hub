@@ -111,8 +111,11 @@ const CityPage = () => {
       filters.includeInactive
   );
 
-  const pageTitle = `Woningen in ${cityName} – huurwoningen, appartementen en huizen | WoonPeek`;
-  const pageDescription = `Ben je op zoek naar een woning in ${cityName}? Bekijk ${totalCount} huurwoningen, appartementen, studio's en huizen in ${cityName}. Filter op prijs, kamers en oppervlakte.`;
+  const currentMonth = new Date().toLocaleString("nl-NL", { month: "long" });
+  const currentYear = new Date().getFullYear();
+
+  const pageTitle = `Huurwoningen & Koopwoningen ${cityName} (${totalCount}) | ${currentMonth} ${currentYear} | WoonPeek`;
+  const pageDescription = `Bekijk ${huurCount} huurwoningen en ${koopCount} koopwoningen in ${cityName}. Appartementen, huizen, studio's en kamers. ✓ Dagelijks bijgewerkt ✓ Gratis alerts ✓ ${currentMonth} ${currentYear}`;
   const canonical = `https://www.woonpeek.nl${cityPath(cityName)}`;
 
   // ── City FAQ items ──
@@ -209,10 +212,10 @@ const CityPage = () => {
 
             <div className="max-w-3xl">
               <h1 className="font-display text-3xl font-bold text-foreground md:text-4xl">
-                Woningen in {cityName}
+                Huurwoningen en koopwoningen in {cityName}
               </h1>
               <p className="mt-3 text-base leading-relaxed text-muted-foreground">
-                Ben je op zoek naar een woning in {cityName}? Op deze pagina vind je het actuele aanbod van huurwoningen, appartementen, studio's en huizen in {cityName}. Bekijk beschikbare woningen en ontdek welke woning bij jouw wensen past.
+                Zoek je een <strong>huurwoning in {cityName}</strong> of wil je een <strong>huis kopen in {cityName}</strong>? Bekijk {totalCount} woningen: {huurCount} huurwoningen en {koopCount} koopwoningen. Dagelijks bijgewerkt met nieuw aanbod van appartementen, huizen, studio's en kamers in {cityName}.
               </p>
               <div className="mt-4 flex flex-wrap gap-3">
                 <div className="rounded-full bg-card px-4 py-2 text-sm text-foreground shadow-sm">
@@ -243,18 +246,20 @@ const CityPage = () => {
           <div className="mb-8 grid gap-6 lg:grid-cols-[minmax(0,1.3fr)_minmax(320px,0.7fr)]">
             <div className="rounded-2xl border bg-card p-6">
               <h2 className="font-display text-2xl font-semibold text-foreground">
-                Wonen in {cityName}
+                Huis huren of kopen in {cityName}
               </h2>
               <div className="mt-4 space-y-3 text-sm leading-relaxed text-muted-foreground">
                 <p>
-                  {cityName} biedt een divers aanbod aan huurwoningen en koopwoningen. Of je nu zoekt naar een 
-                  <strong> appartement in {cityName}</strong>, een ruim <strong>huis huren in {cityName}</strong> of een 
-                  compacte studio: op WoonPeek vind je het meest actuele overzicht.
+                  De woningmarkt in {cityName} is dynamisch en het aanbod wisselt snel. Of je nu zoekt naar een{" "}
+                  <strong>huurwoning in {cityName}</strong>, een <strong>appartement te huur in {cityName}</strong>,
+                  een ruim <strong>huis huren in {cityName}</strong> of een <strong>koopwoning in {cityName}</strong>:
+                  WoonPeek bundelt dagelijks het nieuwste aanbod van tientallen bronnen op een plek.
                 </p>
                 <p>
-                  Op dit moment zijn er {totalCount} woningen beschikbaar in {cityName}, 
-                  waarvan {huurCount} huurwoningen en {koopCount} koopwoningen. Het aanbod wordt dagelijks bijgewerkt 
-                  zodat je altijd de nieuwste woningen ziet.
+                  Op dit moment zijn er <strong>{totalCount} woningen in {cityName}</strong> beschikbaar,
+                  waarvan <strong>{huurCount} huurwoningen</strong> en <strong>{koopCount} koopwoningen</strong>.
+                  Het aanbod omvat appartementen, huizen, studio's en kamers. Het wordt dagelijks ververst
+                  zodat je altijd het meest actuele overzicht hebt.
                 </p>
               </div>
             </div>
@@ -292,9 +297,9 @@ const CityPage = () => {
             <div className="min-w-0 flex-1">
               <div className="mb-6 flex flex-col gap-3 rounded-2xl border bg-card p-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                  <h2 className="font-display text-2xl font-semibold text-foreground">
-                    Woningen van {cityName}
-                  </h2>
+              <h2 className="font-display text-2xl font-semibold text-foreground">
+                Beschikbare woningen in {cityName}
+              </h2>
                   <p className="text-sm text-muted-foreground">
                     {isLoading
                       ? "Aanbod laden..."
@@ -451,37 +456,56 @@ const CityPage = () => {
         <section className="border-t bg-muted/30 py-12">
           <div className="container max-w-4xl">
             <h2 className="font-display text-2xl font-bold text-foreground">
-              Wonen in {cityName}
+              Huurwoning zoeken in {cityName}
             </h2>
             <div className="mt-4 space-y-4 text-sm leading-relaxed text-muted-foreground">
               <p>
-                Ben je op zoek naar een <strong>huurwoning {cityName}</strong>? Op WoonPeek vind je het meest actuele overzicht
-                van huur- en koopwoningen in {cityName}. Of je nu een <strong>appartement {cityName}</strong> zoekt of liever
-                een ruim <strong>huis huren {cityName}</strong>, wij verzamelen dagelijks nieuw aanbod uit tientallen bronnen
-                zodat jij niets mist.
+                Zoek je een <strong>huurwoning in {cityName}</strong>? De huurwoningmarkt in {cityName} is competitief:
+                populaire woningen zijn vaak binnen enkele dagen verhuurd. Daarom is het belangrijk om snel te reageren.
+                WoonPeek doorzoekt dagelijks tientallen bronnen en toont het nieuwste aanbod
+                van <Link to={`/huurwoningen/${citySlug}`} className="text-primary underline hover:no-underline">huurwoningen in {cityName}</Link> direct
+                op deze pagina. Momenteel staan er <strong>{huurCount} huurwoningen in {cityName}</strong> online.
               </p>
+
+              <h3 className="font-display text-lg font-semibold text-foreground pt-2">
+                Koopwoningen in {cityName}
+              </h3>
               <p>
-                Het aanbod bevat alle woningtypes: <Link to={`/appartementen/${citySlug}`} className="text-primary underline hover:no-underline">appartementen</Link>,{" "}
-                <Link to={`/huizen/${citySlug}`} className="text-primary underline hover:no-underline">huizen</Link>,{" "}
-                <Link to={`/studios/${citySlug}`} className="text-primary underline hover:no-underline">studio&apos;s</Link> en{" "}
-                <Link to={`/kamers/${citySlug}`} className="text-primary underline hover:no-underline">kamers</Link>.
-                Momenteel staan er {totalCount} woningen in {cityName} op WoonPeek, waarvan {huurCount} huurwoningen en {koopCount} koopwoningen.
+                Wil je liever een <strong>huis kopen in {cityName}</strong>? Bekijk ons overzicht
+                van <Link to={`/koopwoningen/${citySlug}`} className="text-primary underline hover:no-underline">koopwoningen in {cityName}</Link>.
+                Op dit moment zijn er <strong>{koopCount} koopwoningen in {cityName}</strong> beschikbaar.
+                Vergelijk prijzen, bekijk foto's en reageer direct bij de makelaar.
               </p>
+
+              <h3 className="font-display text-lg font-semibold text-foreground pt-2">
+                Zoek op woningtype in {cityName}
+              </h3>
               <p>
-                Op zoek naar een <strong>goedkope huurwoning {cityName}</strong>? Bekijk woningen{" "}
+                Het aanbod in {cityName} omvat alle woningtypes:{" "}
+                <Link to={`/appartementen/${citySlug}`} className="text-primary underline hover:no-underline">appartementen in {cityName}</Link>,{" "}
+                <Link to={`/huizen/${citySlug}`} className="text-primary underline hover:no-underline">huizen in {cityName}</Link>,{" "}
+                <Link to={`/studios/${citySlug}`} className="text-primary underline hover:no-underline">studio's in {cityName}</Link> en{" "}
+                <Link to={`/kamers/${citySlug}`} className="text-primary underline hover:no-underline">kamers in {cityName}</Link>.
+              </p>
+
+              <h3 className="font-display text-lg font-semibold text-foreground pt-2">
+                Zoek op budget in {cityName}
+              </h3>
+              <p>
+                Op zoek naar een <strong>goedkope huurwoning in {cityName}</strong>? Bekijk woningen{" "}
+                <Link to={`/woningen/${citySlug}/onder-750`} className="text-primary underline hover:no-underline">onder €750</Link>,{" "}
                 <Link to={`/woningen/${citySlug}/onder-1000`} className="text-primary underline hover:no-underline">onder €1.000</Link> of{" "}
-                <Link to={`/woningen/${citySlug}/onder-750`} className="text-primary underline hover:no-underline">onder €750</Link>.
-                Zoek je een woning met meer ruimte? Filter op{" "}
-                <Link to={`/woningen/${citySlug}/2-kamers`} className="text-primary underline hover:no-underline">2 kamers</Link> of{" "}
-                <Link to={`/woningen/${citySlug}/3-kamers`} className="text-primary underline hover:no-underline">3 kamers</Link>.
+                <Link to={`/woningen/${citySlug}/onder-1500`} className="text-primary underline hover:no-underline">onder €1.500</Link>.
+                Zoek je meer ruimte? Filter op{" "}
+                <Link to={`/woningen/${citySlug}/2-kamers`} className="text-primary underline hover:no-underline">2 kamers</Link>,{" "}
+                <Link to={`/woningen/${citySlug}/3-kamers`} className="text-primary underline hover:no-underline">3 kamers</Link> of{" "}
+                <Link to={`/woningen/${citySlug}/4-kamers`} className="text-primary underline hover:no-underline">4+ kamers</Link>.
               </p>
+
               <p>
-                Bekijk ook de aparte overzichtspagina&apos;s
-                voor <Link to={`/huurwoningen/${citySlug}`} className="text-primary underline hover:no-underline">huurwoningen in {cityName}</Link> en{" "}
-                <Link to={`/koopwoningen/${citySlug}`} className="text-primary underline hover:no-underline">koopwoningen in {cityName}</Link>.
-                Stel een{" "}
-                <Link to="/dagelijkse-alert" className="text-primary underline hover:no-underline">dagelijkse alert</Link>{" "}
-                in en mis geen enkel nieuw aanbod in {cityName}.
+                Stel een gratis{" "}
+                <Link to="/dagelijkse-alert" className="text-primary underline hover:no-underline">dagelijkse woningalert</Link>{" "}
+                in en ontvang elke dag het nieuwste aanbod van {cityName} in je inbox. Zo mis je geen enkele nieuwe woning.
               </p>
             </div>
           </div>
