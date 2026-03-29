@@ -69,8 +69,8 @@ Deno.serve(async (req) => {
     `${SITE_URL}/facebook-cover.png`;
 
   const pageUrl = `${SITE_URL}/woningen-${citySlug}`;
-  const title = `Woningen in ${cityName} – ${totalCount} beschikbaar | WoonPeek`;
-  const description = `Bekijk ${huurCount} huurwoningen en ${koopCount} koopwoningen in ${cityName}. Dagelijks bijgewerkt op WoonPeek.`;
+  const title = `Huurwoningen & Koopwoningen ${cityName} (${totalCount}) | WoonPeek`;
+  const description = `${huurCount} huurwoningen en ${koopCount} koopwoningen in ${cityName}. Appartementen, huizen en studio's. ✓ Dagelijks bijgewerkt ✓ Gratis alerts`;
 
   const html = `<!DOCTYPE html>
 <html lang="nl">

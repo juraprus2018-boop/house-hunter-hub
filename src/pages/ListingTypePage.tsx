@@ -55,14 +55,17 @@ const ListingTypePage = ({ listingType }: ListingTypePageProps) => {
   const properties = data?.properties || [];
   const totalCount = data?.totalCount || 0;
 
-  // SEO metadata
+  const currentMonth = new Date().toLocaleString("nl-NL", { month: "long" });
+  const currentYear = new Date().getFullYear();
+
+  // SEO metadata - keyword-first titles matching search intent
   const pageTitle = cityName
-    ? `${label.plural} in ${cityName} – ${totalCount} ${label.plural.toLowerCase()} beschikbaar | WoonPeek`
-    : `${label.plural} in Nederland – actueel aanbod | WoonPeek`;
+    ? `${label.plural} ${cityName}: ${totalCount} woningen te ${listingType} (${currentMonth} ${currentYear}) | WoonPeek`
+    : `${label.plural} Nederland: actueel aanbod te ${listingType} | WoonPeek`;
 
   const pageDesc = cityName
-    ? `Bekijk ${totalCount} ${label.plural.toLowerCase()} in ${cityName}. Vergelijk prijzen, foto's en details. Dagelijks bijgewerkt op WoonPeek.`
-    : `Bekijk ${totalCount} ${label.plural.toLowerCase()} in heel Nederland. Vergelijk prijzen en vind jouw ${label.singular} op WoonPeek.`;
+    ? `${totalCount} ${label.plural.toLowerCase()} in ${cityName}. Bekijk ${listingType === "huur" ? "huurprijzen" : "koopprijzen"}, foto's en details van beschikbare woningen. ✓ Dagelijks bijgewerkt ✓ Gratis alerts ✓ ${currentMonth} ${currentYear}`
+    : `Bekijk ${totalCount} ${label.plural.toLowerCase()} in heel Nederland. Vergelijk prijzen, bekijk foto's en vind jouw ${label.singular} op WoonPeek.`;
 
   const canonical = cityName
     ? `https://www.woonpeek.nl/${label.slug}/${citySlug}`
@@ -166,13 +169,12 @@ const ListingTypePage = ({ listingType }: ListingTypePageProps) => {
             </div>
             <div className="max-w-3xl">
               <h1 className="font-display text-3xl font-bold text-foreground md:text-4xl">
-                Vind jouw <span className="text-primary">{label.singular}</span> of <span className="text-primary">appartement</span> in {locationLabel}
+                {label.plural} in {locationLabel}{listingType === "huur" ? ": huis en appartement te huur" : ": huizen en appartementen te koop"}
               </h1>
               <p className="mt-3 text-base leading-relaxed text-muted-foreground">
-                Op zoek naar een <strong>{label.singular} in {locationLabel}</strong>? WoonPeek verzamelt dagelijks
-                het nieuwste aanbod van {label.plural.toLowerCase()} uit meerdere bronnen. Vergelijk{" "}
-                {listingType === "huur" ? "huurprijzen" : "koopprijzen"}, bekijk foto's en vind snel jouw ideale{" "}
-                <strong>{label.singular} in {locationLabel}</strong>.
+                Zoek je een <strong>{label.singular} in {locationLabel}</strong>? Bekijk {totalCount} beschikbare{" "}
+                {label.plural.toLowerCase()} met {listingType === "huur" ? "huurprijzen" : "koopprijzen"}, foto's en details.
+                WoonPeek verzamelt dagelijks het nieuwste aanbod uit tientallen bronnen, zodat je sneller vindt wat je zoekt.
               </p>
               <div className="mt-4 flex flex-wrap gap-3">
                 <div className="rounded-full bg-card px-4 py-2 text-sm text-foreground shadow-sm">

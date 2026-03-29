@@ -81,11 +81,14 @@ const FilteredLandingPage = () => {
   const properties = data?.properties || [];
   const totalCount = data?.totalCount || 0;
 
+  const currentMonth = new Date().toLocaleString("nl-NL", { month: "long" });
+  const currentYear = new Date().getFullYear();
+
   // SEO content
   const filterLabel = parsed.label;
   const h1 = `Woningen in ${cityName} ${filterLabel}`;
-  const pageTitle = `Woningen in ${cityName} ${filterLabel} – beschikbaar aanbod | WoonPeek`;
-  const pageDescription = `Bekijk ${totalCount} woningen in ${cityName} ${filterLabel}. Vergelijk huurwoningen, appartementen en huizen. Dagelijks bijgewerkt op WoonPeek.`;
+  const pageTitle = `Woningen ${cityName} ${filterLabel}: ${totalCount} beschikbaar (${currentMonth} ${currentYear}) | WoonPeek`;
+  const pageDescription = `${totalCount} woningen in ${cityName} ${filterLabel}. Huurwoningen, appartementen en huizen. ✓ Dagelijks bijgewerkt ✓ Gratis alerts ✓ ${currentMonth} ${currentYear}`;
   const canonical = `https://www.woonpeek.nl/woningen/${citySlug}/${filter}`;
 
   const breadcrumbs = [

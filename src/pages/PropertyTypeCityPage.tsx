@@ -86,13 +86,16 @@ const PropertyTypeCityPage = ({ propertyType }: PropertyTypeCityPageProps) => {
     filters.listingType || filters.maxPrice || filters.minBedrooms || filters.minSurface
   );
 
+  const currentMonth = new Date().toLocaleString("nl-NL", { month: "long" });
+  const currentYear = new Date().getFullYear();
+
   // SEO
   const pageTitle = cityName
-    ? `${label.plural} in ${cityName} – ${totalCount} ${label.plural.toLowerCase()} te huur & koop | WoonPeek`
-    : `${label.plural} in Nederland – huur en koop aanbod | WoonPeek`;
+    ? `${label.plural} ${cityName}: ${totalCount} ${label.plural.toLowerCase()} te huur & koop (${currentMonth} ${currentYear}) | WoonPeek`
+    : `${label.plural} Nederland: huur en koop aanbod | WoonPeek`;
   const pageDescription = cityName
-    ? `Bekijk ${totalCount} ${label.plural.toLowerCase()} in ${cityName}. Vergelijk huurprijzen, foto's en details van beschikbare ${label.plural.toLowerCase()} in ${cityName}. Dagelijks bijgewerkt op WoonPeek.`
-    : `Op zoek naar een ${label.singular}? Bekijk het actuele aanbod van ${label.plural.toLowerCase()} in heel Nederland. Vergelijk prijzen, foto's en details op WoonPeek.`;
+    ? `${totalCount} ${label.plural.toLowerCase()} in ${cityName}. Bekijk huurprijzen, foto's en details. ✓ Dagelijks bijgewerkt ✓ Gratis alerts ✓ ${currentMonth} ${currentYear}`
+    : `Op zoek naar een ${label.singular}? Bekijk het actuele aanbod van ${label.plural.toLowerCase()} in heel Nederland op WoonPeek.`;
   const canonical = citySlug
     ? `https://www.woonpeek.nl/${label.slug}/${citySlug}`
     : `https://www.woonpeek.nl/${label.slug}`;
@@ -181,13 +184,13 @@ const PropertyTypeCityPage = ({ propertyType }: PropertyTypeCityPageProps) => {
             </div>
             <div className="max-w-3xl">
               <h1 className="font-display text-3xl font-bold text-foreground md:text-4xl">
-                {label.plural} in {locationLabel}
+                {label.plural} in {locationLabel}: te huur en te koop
               </h1>
               <p className="mt-3 text-base leading-relaxed text-muted-foreground">
-                Op zoek naar een <strong>{label.singular} in {locationLabel}</strong>? WoonPeek verzamelt dagelijks
-                het nieuwste aanbod van {label.plural.toLowerCase()} uit meerdere bronnen. Of je nu een{" "}
-                <strong>{label.singular} wilt huren</strong> of <strong>kopen in {locationLabel}</strong>, hier
-                vind je het actuele overzicht met prijzen, foto's en details.
+                Zoek je een <strong>{label.singular} in {locationLabel}</strong>? Bekijk {totalCount} beschikbare{" "}
+                {label.plural.toLowerCase()} met prijzen, foto's en details. Of je nu een{" "}
+                <strong>{label.singular} wilt huren</strong> of <strong>kopen in {locationLabel}</strong>, WoonPeek
+                bundelt dagelijks het nieuwste aanbod uit tientallen bronnen.
               </p>
               <div className="mt-4 flex flex-wrap gap-3">
                 <div className="rounded-full bg-card px-4 py-2 text-sm text-foreground shadow-sm">
