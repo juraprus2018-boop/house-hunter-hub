@@ -84,17 +84,48 @@ const FilteredLandingPage = () => {
   const currentMonth = new Date().toLocaleString("nl-NL", { month: "long" });
   const currentYear = new Date().getFullYear();
 
-  // SEO content
+  // Calculate data-driven stats
+  const avgPrice = properties.length > 0
+    ? Math.round(properties.reduce((sum, p) => sum + p.price, 0) / properties.length)
+    : 0;
+  const avgSurface = properties.length > 0
+    ? Math.round(properties.filter(p => p.surface_area).reduce((sum, p) => sum + (p.surface_area || 0), 0) / properties.filter(p => p.surface_area).length) || 0
+    : 0;
+  const huurCount = properties.filter(p => p.listing_type === "huur").length;
+  const koopCount = properties.filter(p => p.listing_type === "koop").length;
+  const typeBreakdown = Object.entries(
+    properties.reduce((acc, p) => { acc[p.property_type] = (acc[p.property_type] || 0) + 1; return acc; }, {} as Record<string, number>)
+  ).sort((a, b) => b[1] - a[1]);
+
+  // Unique SEO content based on filter type
   const filterLabel = parsed.label;
-  const h1 = `Woningen in ${cityName} ${filterLabel}`;
-  const pageTitle = `Woningen ${cityName} ${filterLabel}: ${totalCount} beschikbaar (${currentMonth} ${currentYear}) | WoonPeek`;
-  const pageDescription = `${totalCount} woningen in ${cityName} ${filterLabel}. Huurwoningen, appartementen en huizen. ✓ Dagelijks bijgewerkt ✓ Gratis alerts ✓ ${currentMonth} ${currentYear}`;
+  const isPriceFilter = !!parsed.maxPrice;
+  const isBedroomFilter = !!parsed.minBedrooms;
+
+  const h1 = isPriceFilter
+    ? `Woningen in ${cityName} onder ${formatEuro(parsed.maxPrice!)}`
+    : isBedroomFilter
+    ? `${parsed.minBedrooms}-kamer woningen in ${cityName}`
+    : `Woningen in ${cityName} ${filterLabel}`;
+
+  const pageTitle = isPriceFilter
+    ? `Woningen ${cityName} onder ${formatEuro(parsed.maxPrice!)}: ${totalCount} betaalbare woningen (${currentMonth} ${currentYear}) | WoonPeek`
+    : isBedroomFilter
+    ? `${parsed.minBedrooms}-kamer woningen ${cityName}: ${totalCount} beschikbaar (${currentMonth} ${currentYear}) | WoonPeek`
+    : `Woningen ${cityName} ${filterLabel}: ${totalCount} beschikbaar (${currentMonth} ${currentYear}) | WoonPeek`;
+
+  const pageDescription = isPriceFilter
+    ? `${totalCount} betaalbare woningen in ${cityName} onder ${formatEuro(parsed.maxPrice!)}. Gemiddelde prijs: ${formatEuro(avgPrice)}. ✓ Dagelijks bijgewerkt ✓ ${currentMonth} ${currentYear}`
+    : isBedroomFilter
+    ? `${totalCount} woningen met ${parsed.minBedrooms}+ kamers in ${cityName}. ${huurCount} huurwoningen, ${koopCount} koopwoningen. ✓ Dagelijks bijgewerkt ✓ ${currentMonth} ${currentYear}`
+    : `${totalCount} woningen in ${cityName} ${filterLabel}. ✓ Dagelijks bijgewerkt ✓ Gratis alerts ✓ ${currentMonth} ${currentYear}`;
+
   const canonical = `https://www.woonpeek.nl/woningen/${citySlug}/${filter}`;
 
   const breadcrumbs = [
     { label: "Home", href: "/" },
     { label: cityName, href: cityPath(cityName) },
-    { label: `Woningen ${filterLabel}` },
+    { label: isPriceFilter ? `Onder ${formatEuro(parsed.maxPrice!)}` : isBedroomFilter ? `${parsed.minBedrooms} kamers` : `Woningen ${filterLabel}` },
   ];
 
   // FAQ items
