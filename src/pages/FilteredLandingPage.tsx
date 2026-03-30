@@ -230,11 +230,28 @@ const FilteredLandingPage = () => {
                 {h1}
               </h1>
               <p className="mt-3 text-base leading-relaxed text-muted-foreground">
-                Op zoek naar een woning in {cityName} {filterLabel}? Hier vind je het actuele aanbod van
-                beschikbare woningen. Gebruik de filters om snel een woning te vinden die bij jouw wensen past.
+                {isPriceFilter ? (
+                  <>Bekijk {totalCount} betaalbare woningen in {cityName} onder {formatEuro(parsed.maxPrice!)}. De gemiddelde vraagprijs is {formatEuro(avgPrice)}{avgSurface > 0 ? ` met een gemiddelde oppervlakte van ${avgSurface} m²` : ""}. Het aanbod bestaat uit {huurCount} huurwoningen en {koopCount} koopwoningen.</>
+                ) : isBedroomFilter ? (
+                  <>Vind {totalCount} ruime woningen met {parsed.minBedrooms} of meer kamers in {cityName}. Gemiddelde prijs: {formatEuro(avgPrice)}{avgSurface > 0 ? `, gemiddelde oppervlakte: ${avgSurface} m²` : ""}. Ideaal voor {parsed.minBedrooms! >= 3 ? "gezinnen" : "stellen en alleenstaanden"}.</>
+                ) : (
+                  <>Op zoek naar een woning in {cityName} {filterLabel}? Hier vind je het actuele aanbod. Gebruik de filters om snel een woning te vinden die bij jouw wensen past.</>
+                )}
               </p>
-              <div className="mt-4 rounded-full bg-card px-4 py-2 text-sm text-foreground shadow-sm inline-block">
-                {totalCount} woningen gevonden
+              <div className="mt-4 flex flex-wrap gap-2">
+                <span className="rounded-full bg-card px-4 py-2 text-sm text-foreground shadow-sm">
+                  {totalCount} woningen gevonden
+                </span>
+                {avgPrice > 0 && (
+                  <span className="rounded-full bg-card px-4 py-2 text-sm text-muted-foreground shadow-sm">
+                    Gem. prijs: {formatEuro(avgPrice)}
+                  </span>
+                )}
+                {avgSurface > 0 && (
+                  <span className="rounded-full bg-card px-4 py-2 text-sm text-muted-foreground shadow-sm">
+                    Gem. oppervlakte: {avgSurface} m²
+                  </span>
+                )}
               </div>
             </div>
           </div>
@@ -274,22 +291,53 @@ const FilteredLandingPage = () => {
         <section className="border-t bg-muted/30 py-12">
           <div className="container max-w-4xl">
             <h2 className="font-display text-2xl font-bold text-foreground">
-              Wonen in {cityName}
+              {isPriceFilter
+                ? `Betaalbaar wonen in ${cityName} onder ${formatEuro(parsed.maxPrice!)}`
+                : isBedroomFilter
+                ? `${parsed.minBedrooms}-kamer woningen vinden in ${cityName}`
+                : `Wonen in ${cityName}`}
             </h2>
             <div className="mt-4 space-y-4 text-sm leading-relaxed text-muted-foreground">
-              <p>
-                {cityName} biedt een divers woningaanbod voor elke woningzoeker. Of je nu zoekt naar een
-                <strong> betaalbare huurwoning in {cityName}</strong>, een <strong>appartement in {cityName}</strong> of
-                een <strong>ruim huis</strong>: op WoonPeek vind je dagelijks nieuw aanbod uit meerdere bronnen.
-              </p>
-              <p>
-                Op dit moment zijn er {totalCount} woningen beschikbaar in {cityName} {filterLabel}.
-                Stel een{" "}
-                <Link to="/dagelijkse-alert" className="text-primary underline hover:no-underline">
-                  dagelijkse alert
-                </Link>{" "}
-                in om als eerste op de hoogte te zijn van nieuwe woningen in {cityName}.
-              </p>
+              {isPriceFilter ? (
+                <>
+                  <p>
+                    De woningmarkt in {cityName} is competitief, maar met een budget onder {formatEuro(parsed.maxPrice!)} zijn er nog steeds {totalCount} opties.
+                    {typeBreakdown.length > 0 && <> Het aanbod bestaat voornamelijk uit <strong>{typeBreakdown[0][1]} {TYPE_LABELS[typeBreakdown[0][0]]?.plural?.toLowerCase() || typeBreakdown[0][0]}</strong>{typeBreakdown.length > 1 ? <> en <strong>{typeBreakdown[1][1]} {TYPE_LABELS[typeBreakdown[1][0]]?.plural?.toLowerCase() || typeBreakdown[1][0]}</strong></> : ""}.</>}
+                  </p>
+                  <p>
+                    Tip: stel een{" "}
+                    <Link to="/dagelijkse-alert" className="text-primary underline hover:no-underline">gratis dagelijkse alert</Link>{" "}
+                    in voor woningen in {cityName} onder {formatEuro(parsed.maxPrice!)}. Zo ben je altijd als eerste op de hoogte van betaalbaar nieuw aanbod.
+                  </p>
+                </>
+              ) : isBedroomFilter ? (
+                <>
+                  <p>
+                    Zoek je een ruime woning met minimaal {parsed.minBedrooms} slaapkamers in {cityName}? Op dit moment zijn er {totalCount} woningen beschikbaar die aan deze eis voldoen.
+                    {avgSurface > 0 && <> De gemiddelde oppervlakte is <strong>{avgSurface} m²</strong>, met prijzen vanaf <strong>{formatEuro(Math.min(...properties.map(p => p.price)))}</strong>.</>}
+                  </p>
+                  <p>
+                    Bekijk ook{" "}
+                    <Link to={`/huurwoningen/${citySlug}`} className="text-primary underline hover:no-underline">alle huurwoningen in {cityName}</Link>{" "}
+                    of ga naar de{" "}
+                    <Link to={cityPath(cityName)} className="text-primary underline hover:no-underline">stadspagina van {cityName}</Link>{" "}
+                    voor het volledige overzicht.
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p>
+                    {cityName} biedt een divers woningaanbod voor elke woningzoeker. Of je nu zoekt naar een
+                    <strong> betaalbare huurwoning in {cityName}</strong>, een <strong>appartement in {cityName}</strong> of
+                    een <strong>ruim huis</strong>: op WoonPeek vind je dagelijks nieuw aanbod uit meerdere bronnen.
+                  </p>
+                  <p>
+                    Stel een{" "}
+                    <Link to="/dagelijkse-alert" className="text-primary underline hover:no-underline">dagelijkse alert</Link>{" "}
+                    in om als eerste op de hoogte te zijn van nieuwe woningen in {cityName}.
+                  </p>
+                </>
+              )}
             </div>
           </div>
         </section>
