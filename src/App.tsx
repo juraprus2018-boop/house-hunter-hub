@@ -55,6 +55,8 @@ import AdminComments from "./pages/admin/AdminComments";
 import AdminSearchQueries from "./pages/admin/AdminSearchQueries";
 import UserChat from "./pages/UserChat";
 import BudgetTool from "./pages/BudgetTool";
+import CityComparePage from "./pages/CityComparePage";
+import HuurprijsMonitor from "./pages/HuurprijsMonitor";
 import CookieConsent from "@/components/CookieConsent";
 import { cityPath } from "@/lib/cities";
 
