@@ -129,20 +129,50 @@ const FilteredLandingPage = () => {
   ];
 
   // FAQ items
-  const faqItems = useMemo(() => [
-    {
-      question: `Hoeveel woningen zijn er in ${cityName} ${filterLabel}?`,
-      answer: `Op dit moment zijn er ${totalCount} woningen beschikbaar in ${cityName} ${filterLabel}. Het aanbod wordt dagelijks bijgewerkt op WoonPeek.`,
-    },
-    {
-      question: `Hoe vind ik snel een woning in ${cityName} ${filterLabel}?`,
-      answer: `Gebruik de filters op deze pagina om te zoeken op woningtype, prijs en oppervlakte. Je kunt ook een dagelijkse alert instellen om als eerste op de hoogte te zijn van nieuwe woningen in ${cityName}.`,
-    },
-    {
-      question: `Wat voor soort woningen zijn er in ${cityName} ${filterLabel}?`,
-      answer: `In ${cityName} vind je appartementen, huizen, studio's en kamers. Filter op woningtype om direct het juiste aanbod te bekijken.`,
-    },
-  ], [cityName, filterLabel, totalCount]);
+  const faqItems = useMemo(() => {
+    if (isPriceFilter) return [
+      {
+        question: `Hoeveel woningen in ${cityName} zijn er onder ${formatEuro(parsed.maxPrice!)}?`,
+        answer: `Op dit moment zijn er ${totalCount} woningen beschikbaar in ${cityName} onder ${formatEuro(parsed.maxPrice!)}. Hiervan zijn ${huurCount} huurwoningen en ${koopCount} koopwoningen. De gemiddelde prijs is ${formatEuro(avgPrice)}.`,
+      },
+      {
+        question: `Welke woningtypes zijn beschikbaar in ${cityName} onder ${formatEuro(parsed.maxPrice!)}?`,
+        answer: `Het aanbod bestaat uit ${typeBreakdown.map(([type, count]) => `${count} ${TYPE_LABELS[type]?.plural?.toLowerCase() || type}`).join(", ")}. ${avgSurface > 0 ? `De gemiddelde oppervlakte is ${avgSurface} m².` : ""}`,
+      },
+      {
+        question: `Hoe kan ik een betaalbare woning vinden in ${cityName}?`,
+        answer: `Stel een gratis dagelijkse alert in op WoonPeek. Je ontvangt dan elke dag een overzicht van nieuwe woningen in ${cityName} onder ${formatEuro(parsed.maxPrice!)} zodra ze online komen.`,
+      },
+    ];
+    if (isBedroomFilter) return [
+      {
+        question: `Hoeveel ${parsed.minBedrooms}-kamer woningen zijn er in ${cityName}?`,
+        answer: `Er zijn momenteel ${totalCount} woningen met ${parsed.minBedrooms} of meer kamers in ${cityName}. ${huurCount > 0 ? `${huurCount} zijn huurwoningen` : ""}${huurCount > 0 && koopCount > 0 ? " en " : ""}${koopCount > 0 ? `${koopCount} zijn koopwoningen` : ""}.`,
+      },
+      {
+        question: `Wat is de gemiddelde prijs van een ${parsed.minBedrooms}-kamer woning in ${cityName}?`,
+        answer: `De gemiddelde vraagprijs voor woningen met ${parsed.minBedrooms}+ kamers in ${cityName} is ${formatEuro(avgPrice)}. ${avgSurface > 0 ? `De gemiddelde oppervlakte is ${avgSurface} m².` : ""}`,
+      },
+      {
+        question: `Welke ${parsed.minBedrooms}-kamer woningtypes zijn beschikbaar in ${cityName}?`,
+        answer: `Het aanbod bestaat uit ${typeBreakdown.map(([type, count]) => `${count} ${TYPE_LABELS[type]?.plural?.toLowerCase() || type}`).join(", ")}. Bekijk de woningen op deze pagina voor het actuele aanbod.`,
+      },
+    ];
+    return [
+      {
+        question: `Hoeveel woningen zijn er in ${cityName} ${filterLabel}?`,
+        answer: `Op dit moment zijn er ${totalCount} woningen beschikbaar in ${cityName} ${filterLabel}. Het aanbod wordt dagelijks bijgewerkt op WoonPeek.`,
+      },
+      {
+        question: `Hoe vind ik snel een woning in ${cityName} ${filterLabel}?`,
+        answer: `Gebruik de filters op deze pagina om te zoeken op woningtype, prijs en oppervlakte. Je kunt ook een dagelijkse alert instellen om als eerste op de hoogte te zijn van nieuwe woningen in ${cityName}.`,
+      },
+      {
+        question: `Wat voor soort woningen zijn er in ${cityName} ${filterLabel}?`,
+        answer: `In ${cityName} vind je appartementen, huizen, studio's en kamers. Filter op woningtype om direct het juiste aanbod te bekijken.`,
+      },
+    ];
+  }, [cityName, filterLabel, totalCount, parsed, huurCount, koopCount, avgPrice, avgSurface, typeBreakdown, isPriceFilter, isBedroomFilter]);
 
   const jsonLd = useMemo(
     () => [
