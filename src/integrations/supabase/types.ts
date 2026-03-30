@@ -500,6 +500,48 @@ export type Database = {
         }
         Relationships: []
       }
+      neighborhood_reviews: {
+        Row: {
+          city: string
+          comment: string | null
+          cons: string | null
+          created_at: string
+          id: string
+          is_approved: boolean
+          name: string
+          neighborhood: string
+          pros: string | null
+          rating: number
+          user_id: string | null
+        }
+        Insert: {
+          city: string
+          comment?: string | null
+          cons?: string | null
+          created_at?: string
+          id?: string
+          is_approved?: boolean
+          name: string
+          neighborhood: string
+          pros?: string | null
+          rating: number
+          user_id?: string | null
+        }
+        Update: {
+          city?: string
+          comment?: string | null
+          cons?: string | null
+          created_at?: string
+          id?: string
+          is_approved?: boolean
+          name?: string
+          neighborhood?: string
+          pros?: string | null
+          rating?: number
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
