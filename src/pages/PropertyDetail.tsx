@@ -860,6 +860,15 @@ const PropertyDetail = () => {
           </section>
         )}
 
+        {/* ── Mortgage Calculator for koop ── */}
+        {property.listing_type === "koop" && (
+          <section className="border-t py-12">
+            <div className="container max-w-lg">
+              <MortgageCalculator propertyPrice={property.price} />
+            </div>
+          </section>
+        )}
+
         {/* ── Comments Section ── */}
         <PropertyComments propertyId={property.id} />
 
