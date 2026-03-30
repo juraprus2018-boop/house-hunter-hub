@@ -51,6 +51,8 @@ import About from "./pages/About";
 import MakelaarKoppelen from "./pages/MakelaarKoppelen";
 import Samenwerking from "./pages/Samenwerking";
 import AdminChat from "./pages/admin/AdminChat";
+import AdminComments from "./pages/admin/AdminComments";
+import AdminSearchQueries from "./pages/admin/AdminSearchQueries";
 import UserChat from "./pages/UserChat";
 import BudgetTool from "./pages/BudgetTool";
 import CookieConsent from "@/components/CookieConsent";
@@ -101,6 +103,8 @@ const App = () => (
             <Route path="/admin/email" element={<AdminEmailSender />} />
             <Route path="/admin/alerts" element={<AdminAlertSubscribers />} />
             <Route path="/admin/berichten" element={<AdminChat />} />
+            <Route path="/admin/reacties" element={<AdminComments />} />
+            <Route path="/admin/zoekopdrachten" element={<AdminSearchQueries />} />
             <Route path="/voorwaarden" element={<TermsAndConditions />} />
             <Route path="/privacy" element={<PrivacyPolicy />} />
             <Route path="/disclaimer" element={<Disclaimer />} />
