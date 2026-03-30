@@ -66,6 +66,34 @@ const SearchPage = () => {
     setSearchParams(params, { replace: true });
   }, [debouncedCity, filters.propertyType, filters.listingType, filters.maxPrice, filters.minBedrooms, setSearchParams]);
 
+  // Log search queries for analytics
+  const lastLoggedRef = useRef("");
+  useEffect(() => {
+    const hasFilters = debouncedCity || filters.propertyType || filters.listingType || filters.maxPrice || filters.minBedrooms;
+    if (!hasFilters) return;
+    const key = `${debouncedCity}|${filters.listingType}|${filters.propertyType}|${filters.maxPrice}|${filters.minBedrooms}`;
+    if (key === lastLoggedRef.current) return;
+    lastLoggedRef.current = key;
+    const timeout = setTimeout(() => {
+      import("@/integrations/supabase/client").then(({ supabase }) => {
+        supabase.from("search_queries" as any).upsert(
+          {
+            query: debouncedCity || null,
+            city: debouncedCity || null,
+            listing_type: filters.listingType || null,
+            property_type: filters.propertyType || null,
+            max_price: filters.maxPrice || null,
+            min_bedrooms: filters.minBedrooms || null,
+            count: 1,
+            last_searched_at: new Date().toISOString(),
+          },
+          { onConflict: "coalesce_query_coalesce_city_coalesce_listing_type_coalesce_property_type" as any }
+        ).then(() => {});
+      });
+    }, 2000);
+    return () => clearTimeout(timeout);
+  }, [debouncedCity, filters.propertyType, filters.listingType, filters.maxPrice, filters.minBedrooms]);
+
   const { data: facets } = useFilterFacets({
     city: debouncedCity || undefined,
     propertyType: filters.propertyType || undefined,

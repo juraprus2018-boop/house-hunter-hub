@@ -912,6 +912,45 @@ export type Database = {
         }
         Relationships: []
       }
+      search_queries: {
+        Row: {
+          city: string | null
+          count: number
+          first_searched_at: string
+          id: string
+          last_searched_at: string
+          listing_type: string | null
+          max_price: number | null
+          min_bedrooms: number | null
+          property_type: string | null
+          query: string | null
+        }
+        Insert: {
+          city?: string | null
+          count?: number
+          first_searched_at?: string
+          id?: string
+          last_searched_at?: string
+          listing_type?: string | null
+          max_price?: number | null
+          min_bedrooms?: number | null
+          property_type?: string | null
+          query?: string | null
+        }
+        Update: {
+          city?: string | null
+          count?: number
+          first_searched_at?: string
+          id?: string
+          last_searched_at?: string
+          listing_type?: string | null
+          max_price?: number | null
+          min_bedrooms?: number | null
+          property_type?: string | null
+          query?: string | null
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string

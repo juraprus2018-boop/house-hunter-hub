@@ -84,34 +84,95 @@ const FilteredLandingPage = () => {
   const currentMonth = new Date().toLocaleString("nl-NL", { month: "long" });
   const currentYear = new Date().getFullYear();
 
-  // SEO content
+  // Calculate data-driven stats
+  const avgPrice = properties.length > 0
+    ? Math.round(properties.reduce((sum, p) => sum + p.price, 0) / properties.length)
+    : 0;
+  const avgSurface = properties.length > 0
+    ? Math.round(properties.filter(p => p.surface_area).reduce((sum, p) => sum + (p.surface_area || 0), 0) / properties.filter(p => p.surface_area).length) || 0
+    : 0;
+  const huurCount = properties.filter(p => p.listing_type === "huur").length;
+  const koopCount = properties.filter(p => p.listing_type === "koop").length;
+  const typeBreakdown = Object.entries(
+    properties.reduce((acc, p) => { acc[p.property_type] = (acc[p.property_type] || 0) + 1; return acc; }, {} as Record<string, number>)
+  ).sort((a, b) => b[1] - a[1]);
+
+  // Unique SEO content based on filter type
   const filterLabel = parsed.label;
-  const h1 = `Woningen in ${cityName} ${filterLabel}`;
-  const pageTitle = `Woningen ${cityName} ${filterLabel}: ${totalCount} beschikbaar (${currentMonth} ${currentYear}) | WoonPeek`;
-  const pageDescription = `${totalCount} woningen in ${cityName} ${filterLabel}. Huurwoningen, appartementen en huizen. ✓ Dagelijks bijgewerkt ✓ Gratis alerts ✓ ${currentMonth} ${currentYear}`;
+  const isPriceFilter = !!parsed.maxPrice;
+  const isBedroomFilter = !!parsed.minBedrooms;
+
+  const h1 = isPriceFilter
+    ? `Woningen in ${cityName} onder ${formatEuro(parsed.maxPrice!)}`
+    : isBedroomFilter
+    ? `${parsed.minBedrooms}-kamer woningen in ${cityName}`
+    : `Woningen in ${cityName} ${filterLabel}`;
+
+  const pageTitle = isPriceFilter
+    ? `Woningen ${cityName} onder ${formatEuro(parsed.maxPrice!)}: ${totalCount} betaalbare woningen (${currentMonth} ${currentYear}) | WoonPeek`
+    : isBedroomFilter
+    ? `${parsed.minBedrooms}-kamer woningen ${cityName}: ${totalCount} beschikbaar (${currentMonth} ${currentYear}) | WoonPeek`
+    : `Woningen ${cityName} ${filterLabel}: ${totalCount} beschikbaar (${currentMonth} ${currentYear}) | WoonPeek`;
+
+  const pageDescription = isPriceFilter
+    ? `${totalCount} betaalbare woningen in ${cityName} onder ${formatEuro(parsed.maxPrice!)}. Gemiddelde prijs: ${formatEuro(avgPrice)}. ✓ Dagelijks bijgewerkt ✓ ${currentMonth} ${currentYear}`
+    : isBedroomFilter
+    ? `${totalCount} woningen met ${parsed.minBedrooms}+ kamers in ${cityName}. ${huurCount} huurwoningen, ${koopCount} koopwoningen. ✓ Dagelijks bijgewerkt ✓ ${currentMonth} ${currentYear}`
+    : `${totalCount} woningen in ${cityName} ${filterLabel}. ✓ Dagelijks bijgewerkt ✓ Gratis alerts ✓ ${currentMonth} ${currentYear}`;
+
   const canonical = `https://www.woonpeek.nl/woningen/${citySlug}/${filter}`;
 
   const breadcrumbs = [
     { label: "Home", href: "/" },
     { label: cityName, href: cityPath(cityName) },
-    { label: `Woningen ${filterLabel}` },
+    { label: isPriceFilter ? `Onder ${formatEuro(parsed.maxPrice!)}` : isBedroomFilter ? `${parsed.minBedrooms} kamers` : `Woningen ${filterLabel}` },
   ];
 
   // FAQ items
-  const faqItems = useMemo(() => [
-    {
-      question: `Hoeveel woningen zijn er in ${cityName} ${filterLabel}?`,
-      answer: `Op dit moment zijn er ${totalCount} woningen beschikbaar in ${cityName} ${filterLabel}. Het aanbod wordt dagelijks bijgewerkt op WoonPeek.`,
-    },
-    {
-      question: `Hoe vind ik snel een woning in ${cityName} ${filterLabel}?`,
-      answer: `Gebruik de filters op deze pagina om te zoeken op woningtype, prijs en oppervlakte. Je kunt ook een dagelijkse alert instellen om als eerste op de hoogte te zijn van nieuwe woningen in ${cityName}.`,
-    },
-    {
-      question: `Wat voor soort woningen zijn er in ${cityName} ${filterLabel}?`,
-      answer: `In ${cityName} vind je appartementen, huizen, studio's en kamers. Filter op woningtype om direct het juiste aanbod te bekijken.`,
-    },
-  ], [cityName, filterLabel, totalCount]);
+  const faqItems = useMemo(() => {
+    if (isPriceFilter) return [
+      {
+        question: `Hoeveel woningen in ${cityName} zijn er onder ${formatEuro(parsed.maxPrice!)}?`,
+        answer: `Op dit moment zijn er ${totalCount} woningen beschikbaar in ${cityName} onder ${formatEuro(parsed.maxPrice!)}. Hiervan zijn ${huurCount} huurwoningen en ${koopCount} koopwoningen. De gemiddelde prijs is ${formatEuro(avgPrice)}.`,
+      },
+      {
+        question: `Welke woningtypes zijn beschikbaar in ${cityName} onder ${formatEuro(parsed.maxPrice!)}?`,
+        answer: `Het aanbod bestaat uit ${typeBreakdown.map(([type, count]) => `${count} ${TYPE_LABELS[type]?.plural?.toLowerCase() || type}`).join(", ")}. ${avgSurface > 0 ? `De gemiddelde oppervlakte is ${avgSurface} m².` : ""}`,
+      },
+      {
+        question: `Hoe kan ik een betaalbare woning vinden in ${cityName}?`,
+        answer: `Stel een gratis dagelijkse alert in op WoonPeek. Je ontvangt dan elke dag een overzicht van nieuwe woningen in ${cityName} onder ${formatEuro(parsed.maxPrice!)} zodra ze online komen.`,
+      },
+    ];
+    if (isBedroomFilter) return [
+      {
+        question: `Hoeveel ${parsed.minBedrooms}-kamer woningen zijn er in ${cityName}?`,
+        answer: `Er zijn momenteel ${totalCount} woningen met ${parsed.minBedrooms} of meer kamers in ${cityName}. ${huurCount > 0 ? `${huurCount} zijn huurwoningen` : ""}${huurCount > 0 && koopCount > 0 ? " en " : ""}${koopCount > 0 ? `${koopCount} zijn koopwoningen` : ""}.`,
+      },
+      {
+        question: `Wat is de gemiddelde prijs van een ${parsed.minBedrooms}-kamer woning in ${cityName}?`,
+        answer: `De gemiddelde vraagprijs voor woningen met ${parsed.minBedrooms}+ kamers in ${cityName} is ${formatEuro(avgPrice)}. ${avgSurface > 0 ? `De gemiddelde oppervlakte is ${avgSurface} m².` : ""}`,
+      },
+      {
+        question: `Welke ${parsed.minBedrooms}-kamer woningtypes zijn beschikbaar in ${cityName}?`,
+        answer: `Het aanbod bestaat uit ${typeBreakdown.map(([type, count]) => `${count} ${TYPE_LABELS[type]?.plural?.toLowerCase() || type}`).join(", ")}. Bekijk de woningen op deze pagina voor het actuele aanbod.`,
+      },
+    ];
+    return [
+      {
+        question: `Hoeveel woningen zijn er in ${cityName} ${filterLabel}?`,
+        answer: `Op dit moment zijn er ${totalCount} woningen beschikbaar in ${cityName} ${filterLabel}. Het aanbod wordt dagelijks bijgewerkt op WoonPeek.`,
+      },
+      {
+        question: `Hoe vind ik snel een woning in ${cityName} ${filterLabel}?`,
+        answer: `Gebruik de filters op deze pagina om te zoeken op woningtype, prijs en oppervlakte. Je kunt ook een dagelijkse alert instellen om als eerste op de hoogte te zijn van nieuwe woningen in ${cityName}.`,
+      },
+      {
+        question: `Wat voor soort woningen zijn er in ${cityName} ${filterLabel}?`,
+        answer: `In ${cityName} vind je appartementen, huizen, studio's en kamers. Filter op woningtype om direct het juiste aanbod te bekijken.`,
+      },
+    ];
+  }, [cityName, filterLabel, totalCount, parsed, huurCount, koopCount, avgPrice, avgSurface, typeBreakdown, isPriceFilter, isBedroomFilter]);
 
   const jsonLd = useMemo(
     () => [
@@ -169,11 +230,28 @@ const FilteredLandingPage = () => {
                 {h1}
               </h1>
               <p className="mt-3 text-base leading-relaxed text-muted-foreground">
-                Op zoek naar een woning in {cityName} {filterLabel}? Hier vind je het actuele aanbod van
-                beschikbare woningen. Gebruik de filters om snel een woning te vinden die bij jouw wensen past.
+                {isPriceFilter ? (
+                  <>Bekijk {totalCount} betaalbare woningen in {cityName} onder {formatEuro(parsed.maxPrice!)}. De gemiddelde vraagprijs is {formatEuro(avgPrice)}{avgSurface > 0 ? ` met een gemiddelde oppervlakte van ${avgSurface} m²` : ""}. Het aanbod bestaat uit {huurCount} huurwoningen en {koopCount} koopwoningen.</>
+                ) : isBedroomFilter ? (
+                  <>Vind {totalCount} ruime woningen met {parsed.minBedrooms} of meer kamers in {cityName}. Gemiddelde prijs: {formatEuro(avgPrice)}{avgSurface > 0 ? `, gemiddelde oppervlakte: ${avgSurface} m²` : ""}. Ideaal voor {parsed.minBedrooms! >= 3 ? "gezinnen" : "stellen en alleenstaanden"}.</>
+                ) : (
+                  <>Op zoek naar een woning in {cityName} {filterLabel}? Hier vind je het actuele aanbod. Gebruik de filters om snel een woning te vinden die bij jouw wensen past.</>
+                )}
               </p>
-              <div className="mt-4 rounded-full bg-card px-4 py-2 text-sm text-foreground shadow-sm inline-block">
-                {totalCount} woningen gevonden
+              <div className="mt-4 flex flex-wrap gap-2">
+                <span className="rounded-full bg-card px-4 py-2 text-sm text-foreground shadow-sm">
+                  {totalCount} woningen gevonden
+                </span>
+                {avgPrice > 0 && (
+                  <span className="rounded-full bg-card px-4 py-2 text-sm text-muted-foreground shadow-sm">
+                    Gem. prijs: {formatEuro(avgPrice)}
+                  </span>
+                )}
+                {avgSurface > 0 && (
+                  <span className="rounded-full bg-card px-4 py-2 text-sm text-muted-foreground shadow-sm">
+                    Gem. oppervlakte: {avgSurface} m²
+                  </span>
+                )}
               </div>
             </div>
           </div>
@@ -213,22 +291,53 @@ const FilteredLandingPage = () => {
         <section className="border-t bg-muted/30 py-12">
           <div className="container max-w-4xl">
             <h2 className="font-display text-2xl font-bold text-foreground">
-              Wonen in {cityName}
+              {isPriceFilter
+                ? `Betaalbaar wonen in ${cityName} onder ${formatEuro(parsed.maxPrice!)}`
+                : isBedroomFilter
+                ? `${parsed.minBedrooms}-kamer woningen vinden in ${cityName}`
+                : `Wonen in ${cityName}`}
             </h2>
             <div className="mt-4 space-y-4 text-sm leading-relaxed text-muted-foreground">
-              <p>
-                {cityName} biedt een divers woningaanbod voor elke woningzoeker. Of je nu zoekt naar een
-                <strong> betaalbare huurwoning in {cityName}</strong>, een <strong>appartement in {cityName}</strong> of
-                een <strong>ruim huis</strong>: op WoonPeek vind je dagelijks nieuw aanbod uit meerdere bronnen.
-              </p>
-              <p>
-                Op dit moment zijn er {totalCount} woningen beschikbaar in {cityName} {filterLabel}.
-                Stel een{" "}
-                <Link to="/dagelijkse-alert" className="text-primary underline hover:no-underline">
-                  dagelijkse alert
-                </Link>{" "}
-                in om als eerste op de hoogte te zijn van nieuwe woningen in {cityName}.
-              </p>
+              {isPriceFilter ? (
+                <>
+                  <p>
+                    De woningmarkt in {cityName} is competitief, maar met een budget onder {formatEuro(parsed.maxPrice!)} zijn er nog steeds {totalCount} opties.
+                    {typeBreakdown.length > 0 && <> Het aanbod bestaat voornamelijk uit <strong>{typeBreakdown[0][1]} {TYPE_LABELS[typeBreakdown[0][0]]?.plural?.toLowerCase() || typeBreakdown[0][0]}</strong>{typeBreakdown.length > 1 ? <> en <strong>{typeBreakdown[1][1]} {TYPE_LABELS[typeBreakdown[1][0]]?.plural?.toLowerCase() || typeBreakdown[1][0]}</strong></> : ""}.</>}
+                  </p>
+                  <p>
+                    Tip: stel een{" "}
+                    <Link to="/dagelijkse-alert" className="text-primary underline hover:no-underline">gratis dagelijkse alert</Link>{" "}
+                    in voor woningen in {cityName} onder {formatEuro(parsed.maxPrice!)}. Zo ben je altijd als eerste op de hoogte van betaalbaar nieuw aanbod.
+                  </p>
+                </>
+              ) : isBedroomFilter ? (
+                <>
+                  <p>
+                    Zoek je een ruime woning met minimaal {parsed.minBedrooms} slaapkamers in {cityName}? Op dit moment zijn er {totalCount} woningen beschikbaar die aan deze eis voldoen.
+                    {avgSurface > 0 && <> De gemiddelde oppervlakte is <strong>{avgSurface} m²</strong>, met prijzen vanaf <strong>{formatEuro(Math.min(...properties.map(p => p.price)))}</strong>.</>}
+                  </p>
+                  <p>
+                    Bekijk ook{" "}
+                    <Link to={`/huurwoningen/${citySlug}`} className="text-primary underline hover:no-underline">alle huurwoningen in {cityName}</Link>{" "}
+                    of ga naar de{" "}
+                    <Link to={cityPath(cityName)} className="text-primary underline hover:no-underline">stadspagina van {cityName}</Link>{" "}
+                    voor het volledige overzicht.
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p>
+                    {cityName} biedt een divers woningaanbod voor elke woningzoeker. Of je nu zoekt naar een
+                    <strong> betaalbare huurwoning in {cityName}</strong>, een <strong>appartement in {cityName}</strong> of
+                    een <strong>ruim huis</strong>: op WoonPeek vind je dagelijks nieuw aanbod uit meerdere bronnen.
+                  </p>
+                  <p>
+                    Stel een{" "}
+                    <Link to="/dagelijkse-alert" className="text-primary underline hover:no-underline">dagelijkse alert</Link>{" "}
+                    in om als eerste op de hoogte te zijn van nieuwe woningen in {cityName}.
+                  </p>
+                </>
+              )}
             </div>
           </div>
         </section>
