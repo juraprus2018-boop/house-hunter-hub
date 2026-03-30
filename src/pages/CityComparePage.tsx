@@ -165,7 +165,7 @@ const CityComparePage = () => {
                 <h2 className="font-display text-xl font-bold text-foreground mb-4">Prijsvergelijking</h2>
                 <div className="rounded-xl border bg-card p-6">
                   <ResponsiveContainer width="100%" height={300}>
-                    <BarChart data={chartData.filter(d => d[cityName1] > 0 || d[cityName2] > 0)}>
+                    <BarChart data={chartData.filter(d => Number(d[cityName1]) > 0 || Number(d[cityName2]) > 0)}>
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis dataKey="name" />
                       <YAxis tickFormatter={(v) => `€${(v / 1000).toFixed(0)}k`} />

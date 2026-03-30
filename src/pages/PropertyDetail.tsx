@@ -41,7 +41,9 @@ import {
   Tag,
   X,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRecentlyViewed } from "@/hooks/useRecentlyViewed";
+import MortgageCalculator from "@/components/properties/MortgageCalculator";
 import { cn } from "@/lib/utils";
 import { cityPath } from "@/lib/cities";
 import {
