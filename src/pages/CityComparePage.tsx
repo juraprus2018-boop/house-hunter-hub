@@ -189,10 +189,10 @@ const CityComparePage = () => {
                   In {cityName1} zijn momenteel <strong>{s1.total} woningen</strong> beschikbaar met een gemiddelde huurprijs van <strong>{formatEuro(s1.avgHuur)}</strong>.
                   In {cityName2} zijn er <strong>{s2.total} woningen</strong> met een gemiddelde huurprijs van <strong>{formatEuro(s2.avgHuur)}</strong>.
                 </p>
-                {s1.avgSurface > 0 && s2.avgSurface > 0 && (
+                {Number(s1.avgSurface) > 0 && Number(s2.avgSurface) > 0 && (
                   <p>
-                    Qua woonoppervlakte biedt {s1.avgSurface > s2.avgSurface ? cityName1 : cityName2} gemiddeld meer ruimte
-                    ({Math.max(s1.avgSurface, s2.avgSurface)} m² vs {Math.min(s1.avgSurface, s2.avgSurface)} m²).
+                    Qua woonoppervlakte biedt {Number(s1.avgSurface) > Number(s2.avgSurface) ? cityName1 : cityName2} gemiddeld meer ruimte
+                    ({Math.max(Number(s1.avgSurface), Number(s2.avgSurface))} m² vs {Math.min(Number(s1.avgSurface), Number(s2.avgSurface))} m²).
                   </p>
                 )}
                 <p>
