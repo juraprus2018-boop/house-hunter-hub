@@ -59,7 +59,7 @@ const CityComparePage = () => {
       avgHuur: huur.length ? Math.round(huur.reduce((s, d) => s + d.price, 0) / huur.length) : 0,
       avgKoop: koop.length ? Math.round(koop.reduce((s, d) => s + d.price, 0) / koop.length) : 0,
       avgSurface: withSurface.length ? Math.round(withSurface.reduce((s, d) => s + d.surface_area, 0) / withSurface.length) : 0,
-      avgBedrooms: withBedrooms.length ? Number((withBedrooms.reduce((s, d) => s + d.bedrooms, 0) / withBedrooms.length).toFixed(1)) : 0,
+      avgBedrooms: withBedrooms.length ? Math.round(withBedrooms.reduce((s, d) => s + d.bedrooms, 0) / withBedrooms.length * 10) / 10 : 0,
       huurCount: huur.length,
       koopCount: koop.length,
     };
