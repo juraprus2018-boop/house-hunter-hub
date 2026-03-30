@@ -86,11 +86,28 @@ const PropertyDetail = () => {
   const { user } = useAuth();
   const { toggle, isFavorite, isLoading: favoriteLoading } = useToggleFavorite();
   const { data: feedLogos } = useFeedLogos();
+  const { addProperty } = useRecentlyViewed();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [contactOpen, setContactOpen] = useState(false);
   const [contactForm, setContactForm] = useState({ name: "", email: "", phone: "", message: "" });
   const [sending, setSending] = useState(false);
+
+  // Track recently viewed
+  useEffect(() => {
+    if (property) {
+      addProperty({
+        id: property.id,
+        slug: property.slug,
+        title: property.title,
+        city: property.city,
+        price: property.price,
+        listing_type: property.listing_type,
+        property_type: property.property_type,
+        image: property.images?.[0] || undefined,
+      });
+    }
+  }, [property?.id]);
 
   const handleShare = async () => {
     const url = window.location.href;
