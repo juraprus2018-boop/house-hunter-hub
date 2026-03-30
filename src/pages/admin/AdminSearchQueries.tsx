@@ -9,12 +9,12 @@ const AdminSearchQueries = () => {
     queryKey: ["admin-search-queries"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("search_queries")
+        .from("search_queries" as any)
         .select("*")
         .order("count", { ascending: false })
         .limit(100);
       if (error) throw error;
-      return data || [];
+      return (data as any[]) || [];
     },
   });
 
