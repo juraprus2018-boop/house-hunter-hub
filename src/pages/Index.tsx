@@ -9,6 +9,8 @@ import HowItWorksSection from "@/components/home/HowItWorksSection";
 import WhyUsSection from "@/components/home/WhyUsSection";
 import DailyAlertSection from "@/components/home/DailyAlertSection";
 import SEOContentSection from "@/components/home/SEOContentSection";
+import RecentlyViewed from "@/components/home/RecentlyViewed";
+import ExitIntentPopup from "@/components/ExitIntentPopup";
 import SEOHead from "@/components/seo/SEOHead";
 
 const Index = () => {
@@ -58,6 +60,7 @@ const Index = () => {
       <main className="flex-1">
         <HeroSection />
         <FeaturedListings />
+        <RecentlyViewed />
         <HowItWorksSection />
         <PopularCities />
         <WhyUsSection />
@@ -66,6 +69,7 @@ const Index = () => {
       </main>
       <CitySkyline />
       <Footer />
+      <ExitIntentPopup />
     </div>
   );
 };

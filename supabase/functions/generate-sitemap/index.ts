@@ -47,6 +47,7 @@ function buildPagesSitemap(now: string): string {
     { loc: "/blog", changefreq: "daily", priority: "0.8" },
     { loc: "/dagelijkse-alert", changefreq: "monthly", priority: "0.6" },
     { loc: "/veelgestelde-vragen", changefreq: "monthly", priority: "0.5" },
+    { loc: "/budget-tool", changefreq: "monthly", priority: "0.5" },
   ];
 
   let xml = `<?xml version="1.0" encoding="UTF-8"?>
@@ -164,6 +165,14 @@ function buildCitiesSitemap(
     <lastmod>${date}</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
+  </url>
+`;
+    // Huurprijzen monitor per city
+    xml += `  <url>
+    <loc>${SITE_URL}/huurprijzen/${citySlug}</loc>
+    <lastmod>${date}</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.7</priority>
   </url>
 `;
     // Neighborhood pages per city (limit to 20 per city)

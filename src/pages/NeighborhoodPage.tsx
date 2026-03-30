@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import NeighborhoodReviews from "@/components/properties/NeighborhoodReviews";
 import { useParams, Link } from "react-router-dom";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
@@ -270,6 +271,9 @@ const NeighborhoodPage = () => {
             </div>
           </div>
         </section>
+
+        {/* Reviews */}
+        <NeighborhoodReviews city={cityName} neighborhood={neighborhoodName} />
 
         <RelatedCities currentCity={cityName} />
       </main>

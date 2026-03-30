@@ -55,6 +55,8 @@ import AdminComments from "./pages/admin/AdminComments";
 import AdminSearchQueries from "./pages/admin/AdminSearchQueries";
 import UserChat from "./pages/UserChat";
 import BudgetTool from "./pages/BudgetTool";
+import CityComparePage from "./pages/CityComparePage";
+import HuurprijsMonitor from "./pages/HuurprijsMonitor";
 import CookieConsent from "@/components/CookieConsent";
 import { cityPath } from "@/lib/cities";
 
@@ -122,6 +124,8 @@ const App = () => (
             <Route path="/makelaar-koppelen" element={<MakelaarKoppelen />} />
             <Route path="/samenwerking" element={<Samenwerking />} />
             <Route path="/budget-tool" element={<BudgetTool />} />
+            <Route path="/vergelijk/:city1-vs-:city2" element={<CityComparePage />} />
+            <Route path="/huurprijzen/:city" element={<HuurprijsMonitor />} />
             <Route path="/alerts/afmelden/:token" element={<AlertUnsubscribe />} />
             <Route path="/huurwoningen/:city?" element={<ListingTypePage listingType="huur" />} />
             <Route path="/koopwoningen/:city?" element={<ListingTypePage listingType="koop" />} />
