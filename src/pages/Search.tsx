@@ -76,19 +76,14 @@ const SearchPage = () => {
     lastLoggedRef.current = key;
     const timeout = setTimeout(() => {
       import("@/integrations/supabase/client").then(({ supabase }) => {
-        supabase.from("search_queries" as any).upsert(
-          {
-            query: debouncedCity || null,
-            city: debouncedCity || null,
-            listing_type: filters.listingType || null,
-            property_type: filters.propertyType || null,
-            max_price: filters.maxPrice || null,
-            min_bedrooms: filters.minBedrooms || null,
-            count: 1,
-            last_searched_at: new Date().toISOString(),
-          },
-          { onConflict: "coalesce_query_coalesce_city_coalesce_listing_type_coalesce_property_type" as any }
-        ).then(() => {});
+        supabase.rpc("log_search_query", {
+          _query: debouncedCity || null,
+          _city: debouncedCity || null,
+          _listing_type: filters.listingType || null,
+          _property_type: filters.propertyType || null,
+          _max_price: filters.maxPrice || null,
+          _min_bedrooms: filters.minBedrooms || null,
+        }).then(() => {});
       });
     }, 2000);
     return () => clearTimeout(timeout);
