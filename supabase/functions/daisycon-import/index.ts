@@ -670,7 +670,7 @@ Deno.serve(async (req) => {
           }
         }
 
-        // Batch insert new properties in chunks of 100 using upsert to handle duplicates gracefully
+        // Batch insert new properties in chunks of 100
         console.log(`Feed ${feed.name}: inserting ${toInsert.length} new properties in batches...`);
         for (let i = 0; i < toInsert.length; i += 100) {
           // Check time budget within large insert loops
@@ -683,12 +683,25 @@ Deno.serve(async (req) => {
           const batch = toInsert.slice(i, i + 100);
           const { error: batchErr, data: insertedData } = await supabase
             .from("properties")
-            .upsert(batch, { onConflict: "source_url", ignoreDuplicates: true })
+            .insert(batch)
             .select("id, slug");
           
           if (batchErr) {
-            console.error(`Batch upsert error at ${i}: ${batchErr.message}`);
-            skipped += batch.length;
+            // If batch fails (e.g. duplicate), try individual inserts
+            console.warn(`Batch insert error at ${i}: ${batchErr.message}, falling back to individual inserts`);
+            for (const item of batch) {
+              const { data: singleData, error: singleErr } = await supabase
+                .from("properties")
+                .insert(item)
+                .select("id, slug")
+                .single();
+              if (singleErr) {
+                skipped++;
+              } else {
+                imported++;
+                if (singleData?.slug) indexNowUrls.push(`${SITE_URL}/woning/${singleData.slug}`);
+              }
+            }
           } else {
             imported += insertedData?.length || batch.length;
             if (insertedData) {
