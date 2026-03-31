@@ -740,13 +740,14 @@ Deno.serve(async (req) => {
     await submitToIndexNow(indexNowUrls);
 
     if (jobId) {
+      const skippedMsg = skippedFeeds.length > 0 ? ` (${skippedFeeds.join(', ')} overgeslagen wegens timeout)` : '';
       await supabase.from("import_jobs").update({
         status: "completed",
-        processed_feeds: feeds.length,
+        processed_feeds: feeds.length - skippedFeeds.length,
         imported: totalImported,
         updated: totalUpdated,
         skipped: totalSkipped,
-        message: `Klaar: ${totalImported} nieuw, ${totalUpdated} bijgewerkt, ${totalSkipped} overgeslagen, ${totalDeactivated} gedeactiveerd`,
+        message: `Klaar: ${totalImported} nieuw, ${totalUpdated} bijgewerkt, ${totalSkipped} overgeslagen, ${totalDeactivated} gedeactiveerd${skippedMsg}`,
         completed_at: new Date().toISOString(),
       }).eq("id", jobId);
     }
