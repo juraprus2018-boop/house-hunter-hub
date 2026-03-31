@@ -402,6 +402,9 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const startTime = Date.now();
+  const TIME_BUDGET_MS = 120_000; // 120 seconds, leave buffer before edge function timeout
+
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -431,6 +434,13 @@ Deno.serve(async (req) => {
         JSON.stringify({ success: true, message: "No active feeds to import", imported: 0 }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
+    }
+
+    // Sort feeds: smallest first (by properties_imported) so small feeds like Kamernet
+    // get processed before large ones like Huurwoningen.nl that may cause timeouts
+    if (!feedId) {
+      feeds.sort((a: any, b: any) => (a.properties_imported || 0) - (b.properties_imported || 0));
+      console.log(`Feed processing order: ${feeds.map((f: any) => `${f.name} (${f.properties_imported || 0})`).join(', ')}`);
     }
 
     // Create import job for progress tracking
