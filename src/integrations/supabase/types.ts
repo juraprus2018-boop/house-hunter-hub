@@ -1027,6 +1027,17 @@ export type Database = {
         }
         Returns: boolean
       }
+      log_search_query: {
+        Args: {
+          _city?: string
+          _listing_type?: string
+          _max_price?: number
+          _min_bedrooms?: number
+          _property_type?: string
+          _query?: string
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       app_role: "admin" | "user"
