@@ -79,6 +79,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
     { to: "/admin/berichten", label: "Berichten", icon: MessageCircle },
     { to: "/admin/reacties", label: "Reacties", icon: MessageSquare },
     { to: "/admin/zoekopdrachten", label: "Zoekopdrachten", icon: Search },
+    { to: "/admin/google-ranking", label: "Google Ranking", icon: Activity },
     { to: "/admin/instellingen", label: "Instellingen", icon: Settings },
   ];
 
