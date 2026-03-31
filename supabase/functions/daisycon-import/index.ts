@@ -467,8 +467,20 @@ Deno.serve(async (req) => {
     // Collect all active source URLs across all feeds for deactivation check
     const allActiveSourceUrls = new Set<string>();
 
+    const skippedFeeds: string[] = [];
+
     for (let feedIndex = 0; feedIndex < feeds.length; feedIndex++) {
       const feed = feeds[feedIndex];
+
+      // Time budget check: skip remaining feeds if running low on time
+      const elapsed = Date.now() - startTime;
+      if (elapsed > TIME_BUDGET_MS && feedIndex > 0) {
+        const remaining = feeds.slice(feedIndex).map((f: any) => f.name);
+        console.log(`Time budget exceeded (${Math.round(elapsed / 1000)}s). Skipping feeds: ${remaining.join(', ')}`);
+        skippedFeeds.push(...remaining);
+        break;
+      }
+
       // Update job progress
       if (jobId) {
         await supabase.from("import_jobs").update({
