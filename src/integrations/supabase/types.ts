@@ -390,6 +390,72 @@ export type Database = {
           },
         ]
       }
+      google_indexing_log: {
+        Row: {
+          created_at: string
+          id: string
+          response_body: string | null
+          response_status: number | null
+          status: string
+          url: string
+          url_type: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          response_body?: string | null
+          response_status?: number | null
+          status?: string
+          url: string
+          url_type?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          response_body?: string | null
+          response_status?: number | null
+          status?: string
+          url?: string
+          url_type?: string
+        }
+        Relationships: []
+      }
+      google_rank_tracking: {
+        Row: {
+          clicks: number | null
+          created_at: string
+          ctr: number | null
+          id: string
+          impressions: number | null
+          keyword: string
+          position: number | null
+          tracked_date: string
+          tracked_url: string
+        }
+        Insert: {
+          clicks?: number | null
+          created_at?: string
+          ctr?: number | null
+          id?: string
+          impressions?: number | null
+          keyword: string
+          position?: number | null
+          tracked_date?: string
+          tracked_url: string
+        }
+        Update: {
+          clicks?: number | null
+          created_at?: string
+          ctr?: number | null
+          id?: string
+          impressions?: number | null
+          keyword?: string
+          position?: number | null
+          tracked_date?: string
+          tracked_url?: string
+        }
+        Relationships: []
+      }
       import_jobs: {
         Row: {
           completed_at: string | null
