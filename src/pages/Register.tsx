@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import logoWoonpeek from "@/assets/logo-woonpeek.png";
+import logoWoonpeek from "@/assets/logo-woonpeek-v2.png";
 import loginSide from "@/assets/login-side.jpg";
 
 const Register = () => {

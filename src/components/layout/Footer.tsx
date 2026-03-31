@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { Mail, Facebook, Linkedin, Instagram } from "lucide-react";
-import logoWoonpeek from "@/assets/logo-woonpeek.png";
+import logoWoonpeek from "@/assets/logo-woonpeek-v2.png";
 
 const Footer = () => {
   return (

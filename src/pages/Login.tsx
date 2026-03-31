@@ -9,7 +9,7 @@ import { Loader2, Mail } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
-import logoWoonpeek from "@/assets/logo-woonpeek.png";
+import logoWoonpeek from "@/assets/logo-woonpeek-v2.png";
 import loginSide from "@/assets/login-side.jpg";
 
 const Login = () => {

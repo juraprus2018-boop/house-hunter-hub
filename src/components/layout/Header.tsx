@@ -5,7 +5,7 @@ import {
   MapPin, CalendarDays, Home, Building2, DoorOpen, BedDouble, ChevronDown,
   ChevronRight, Handshake, MessageCircle
 } from "lucide-react";
-import logoWoonpeek from "@/assets/logo-woonpeek.png";
+import logoWoonpeek from "@/assets/logo-woonpeek-v2.png";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
