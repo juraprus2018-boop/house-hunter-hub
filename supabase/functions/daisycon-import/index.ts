@@ -402,6 +402,9 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const startTime = Date.now();
+  const TIME_BUDGET_MS = 120_000; // 120 seconds, leave buffer before edge function timeout
+
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -433,6 +436,13 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Sort feeds: smallest first (by properties_imported) so small feeds like Kamernet
+    // get processed before large ones like Huurwoningen.nl that may cause timeouts
+    if (!feedId) {
+      feeds.sort((a: any, b: any) => (a.properties_imported || 0) - (b.properties_imported || 0));
+      console.log(`Feed processing order: ${feeds.map((f: any) => `${f.name} (${f.properties_imported || 0})`).join(', ')}`);
+    }
+
     // Create import job for progress tracking
     const { data: job } = await supabase
       .from("import_jobs")
@@ -457,8 +467,20 @@ Deno.serve(async (req) => {
     // Collect all active source URLs across all feeds for deactivation check
     const allActiveSourceUrls = new Set<string>();
 
+    const skippedFeeds: string[] = [];
+
     for (let feedIndex = 0; feedIndex < feeds.length; feedIndex++) {
       const feed = feeds[feedIndex];
+
+      // Time budget check: skip remaining feeds if running low on time
+      const elapsed = Date.now() - startTime;
+      if (elapsed > TIME_BUDGET_MS && feedIndex > 0) {
+        const remaining = feeds.slice(feedIndex).map((f: any) => f.name);
+        console.log(`Time budget exceeded (${Math.round(elapsed / 1000)}s). Skipping feeds: ${remaining.join(', ')}`);
+        skippedFeeds.push(...remaining);
+        break;
+      }
+
       // Update job progress
       if (jobId) {
         await supabase.from("import_jobs").update({
@@ -718,13 +740,14 @@ Deno.serve(async (req) => {
     await submitToIndexNow(indexNowUrls);
 
     if (jobId) {
+      const skippedMsg = skippedFeeds.length > 0 ? ` (${skippedFeeds.join(', ')} overgeslagen wegens timeout)` : '';
       await supabase.from("import_jobs").update({
         status: "completed",
-        processed_feeds: feeds.length,
+        processed_feeds: feeds.length - skippedFeeds.length,
         imported: totalImported,
         updated: totalUpdated,
         skipped: totalSkipped,
-        message: `Klaar: ${totalImported} nieuw, ${totalUpdated} bijgewerkt, ${totalSkipped} overgeslagen, ${totalDeactivated} gedeactiveerd`,
+        message: `Klaar: ${totalImported} nieuw, ${totalUpdated} bijgewerkt, ${totalSkipped} overgeslagen, ${totalDeactivated} gedeactiveerd${skippedMsg}`,
         completed_at: new Date().toISOString(),
       }).eq("id", jobId);
     }
