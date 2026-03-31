@@ -58,13 +58,12 @@ Deno.serve(async (req) => {
       iat: now,
     }));
 
-    // Import the private key for signing
     const pemContent = serviceAccount.private_key
       .replace(/-----BEGIN PRIVATE KEY-----/, "")
       .replace(/-----END PRIVATE KEY-----/, "")
       .replace(/\n/g, "");
 
-    const binaryKey = Uint8Array.from(atob(pemContent), (c) => c.charCodeAt(0));
+    const binaryKey = Uint8Array.from(atob(pemContent), (c: string) => c.charCodeAt(0));
 
     const cryptoKey = await crypto.subtle.importKey(
       "pkcs8",
@@ -83,7 +82,6 @@ Deno.serve(async (req) => {
 
     const jwt = `${header}.${claim}.${encodedSignature}`;
 
-    // Exchange JWT for access token
     const tokenRes = await fetch("https://oauth2.googleapis.com/token", {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -98,8 +96,9 @@ Deno.serve(async (req) => {
     const accessToken = tokenData.access_token;
     let submitted = 0;
     let errors = 0;
+    const logEntries: Array<{url: string; url_type: string; status: string; response_status: number | null; response_body: string | null}> = [];
 
-    // Submit URLs to Google Indexing API
+    // Submit property URLs
     for (const prop of newProperties) {
       const url = `https://www.woonpeek.nl/woning/${prop.slug}`;
       try {
@@ -112,31 +111,45 @@ Deno.serve(async (req) => {
           body: JSON.stringify({ url, type: "URL_UPDATED" }),
         });
 
+        const resBody = await res.text();
+        logEntries.push({
+          url,
+          url_type: "property",
+          status: res.ok ? "submitted" : "error",
+          response_status: res.status,
+          response_body: resBody.substring(0, 500),
+        });
+
         if (res.ok) {
           submitted++;
         } else {
-          const errText = await res.text();
-          console.error(`Failed to index ${url}: ${errText}`);
+          console.error(`Failed to index ${url}: ${resBody}`);
           errors++;
         }
       } catch (e) {
         console.error(`Error indexing ${url}:`, e);
+        logEntries.push({
+          url,
+          url_type: "property",
+          status: "error",
+          response_status: null,
+          response_body: e.message?.substring(0, 500) || "Unknown error",
+        });
         errors++;
       }
 
-      // Rate limit: max ~200/min
-      if (submitted % 50 === 0) {
+      if (submitted % 50 === 0 && submitted > 0) {
         await new Promise((r) => setTimeout(r, 1000));
       }
     }
 
-    // Also submit city pages for cities with new properties
+    // Submit city pages
     const uniqueCities = [...new Set(newProperties.map((p) => p.city))];
     for (const city of uniqueCities.slice(0, 20)) {
       const citySlug = city.toLowerCase().replace(/\s+/g, "-");
       const url = `https://www.woonpeek.nl/woningen-${citySlug}`;
       try {
-        await fetch(INDEXING_API_URL, {
+        const res = await fetch(INDEXING_API_URL, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -144,9 +157,36 @@ Deno.serve(async (req) => {
           },
           body: JSON.stringify({ url, type: "URL_UPDATED" }),
         });
-        submitted++;
+
+        const resBody = await res.text();
+        logEntries.push({
+          url,
+          url_type: "city",
+          status: res.ok ? "submitted" : "error",
+          response_status: res.status,
+          response_body: resBody.substring(0, 500),
+        });
+
+        if (res.ok) submitted++;
       } catch (e) {
         console.error(`Error indexing city ${city}:`, e);
+        logEntries.push({
+          url,
+          url_type: "city",
+          status: "error",
+          response_status: null,
+          response_body: e.message?.substring(0, 500) || "Unknown error",
+        });
+      }
+    }
+
+    // Batch insert log entries
+    if (logEntries.length > 0) {
+      const { error: logError } = await supabase
+        .from("google_indexing_log")
+        .insert(logEntries);
+      if (logError) {
+        console.error("Failed to insert indexing log:", logError);
       }
     }
 
@@ -159,6 +199,7 @@ Deno.serve(async (req) => {
         cities: uniqueCities.length,
         submitted,
         errors,
+        logged: logEntries.length,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
