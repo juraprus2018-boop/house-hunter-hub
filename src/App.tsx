@@ -53,6 +53,7 @@ import Samenwerking from "./pages/Samenwerking";
 import AdminChat from "./pages/admin/AdminChat";
 import AdminComments from "./pages/admin/AdminComments";
 import AdminSearchQueries from "./pages/admin/AdminSearchQueries";
+import AdminGoogleRanking from "./pages/admin/AdminGoogleRanking";
 import UserChat from "./pages/UserChat";
 import BudgetTool from "./pages/BudgetTool";
 import CityComparePage from "./pages/CityComparePage";
