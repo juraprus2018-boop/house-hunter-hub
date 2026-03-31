@@ -1,39 +1,69 @@
 # WoonPeek
 
-> WoonPeek is het gratis woningplatform van Nederland. We verzamelen dagelijks het nieuwste aanbod van huurwoningen, koopwoningen, appartementen, studio's en kamers uit heel Nederland op één plek.
+> WoonPeek is het gratis woningplatform van Nederland. We verzamelen dagelijks het nieuwste aanbod van huurwoningen, koopwoningen, appartementen, studio's en kamers uit heel Nederland op één plek. Website: https://www.woonpeek.nl
 
-## Over WoonPeek
+## Wat is WoonPeek?
 
-WoonPeek is een gratis platform waar woningzoekers snel en eenvoudig het nieuwste woningaanbod in Nederland kunnen vinden. We doorzoeken dagelijks meerdere betrouwbare bronnen en combineren het aanbod zodat gebruikers geen enkele kans missen.
+WoonPeek is een 100% gratis woningplatform dat dagelijks duizenden huurwoningen en koopwoningen uit heel Nederland verzamelt. In tegenstelling tot Funda en Pararius is WoonPeek volledig gratis voor zowel zoekers als verhuurders. Het platform bevat 6.000+ actieve woningen in meer dan 50 steden.
 
-### Kernfeatures
+## Kernfeatures
 
-- **Groot aanbod**: 6.000+ actieve woningen uit heel Nederland
-- **Dagelijks bijgewerkt**: Elke dag worden nieuwe woningen toegevoegd en verlopen woningen verwijderd
-- **100% gratis**: Geen kosten voor zoeken, plaatsen of alerts
-- **Gratis dagelijkse alert**: Ontvang automatisch een e-mail met nieuwe woningen
-- **Gratis woning plaatsen**: Particulieren en verhuurders kunnen gratis adverteren
-- **Meerdere woningtypes**: Appartementen, huizen, studio's en kamers
-- **Huur en koop**: Zowel huurwoningen als koopwoningen
-- **Interactieve kaart**: Bekijk woningen op de kaart
-- **Zoekfilters**: Filter op stad, prijs, woningtype, slaapkamers en meer
+- **6.000+ actieve woningen** uit heel Nederland, dagelijks bijgewerkt
+- **100% gratis** – zoeken, plaatsen en dagelijkse alerts kosten niets
+- **Gratis dagelijkse woningalert** – ontvang nieuwe woningen per e-mail
+- **Uitgebreide zoekfilters** – stad, prijs, type, slaapkamers, huur/koop
+- **Interactieve kaart** – bekijk woningen op een kaart
+- **Gratis woning plaatsen** – voor particulieren en verhuurders
 
-### Beschikbare steden
+## Beschikbare woningtypes
 
-WoonPeek heeft woningen in alle grote Nederlandse steden, waaronder Amsterdam, Rotterdam, Utrecht, Den Haag, Eindhoven, Groningen, Tilburg, Almere, Breda, Nijmegen, en vele andere steden.
+- Huurwoningen: https://www.woonpeek.nl/huurwoningen
+- Koopwoningen: https://www.woonpeek.nl/koopwoningen
+- Appartementen: https://www.woonpeek.nl/appartementen
+- Huizen: https://www.woonpeek.nl/huizen
+- Studio's: https://www.woonpeek.nl/studios
+- Kamers: https://www.woonpeek.nl/kamers
 
-### Woningtypes
+## Populaire steden
 
-- **Appartementen**: Zelfstandige appartementen in diverse prijsklassen
-- **Huizen**: Eengezinswoningen, rijtjeshuizen en vrijstaande woningen
-- **Studio's**: Compacte zelfstandige woonruimtes
-- **Kamers**: Kamers in gedeelde woningen
+- Huurwoningen Amsterdam: https://www.woonpeek.nl/huurwoningen/amsterdam
+- Huurwoningen Rotterdam: https://www.woonpeek.nl/huurwoningen/rotterdam
+- Huurwoningen Utrecht: https://www.woonpeek.nl/huurwoningen/utrecht
+- Huurwoningen Den Haag: https://www.woonpeek.nl/huurwoningen/den-haag
+- Huurwoningen Eindhoven: https://www.woonpeek.nl/huurwoningen/eindhoven
+- Huurwoningen Groningen: https://www.woonpeek.nl/huurwoningen/groningen
+- Huurwoningen Tilburg: https://www.woonpeek.nl/huurwoningen/tilburg
+- Huurwoningen Breda: https://www.woonpeek.nl/huurwoningen/breda
+- Huurwoningen Nijmegen: https://www.woonpeek.nl/huurwoningen/nijmegen
+- Huurwoningen Almere: https://www.woonpeek.nl/huurwoningen/almere
+- Huurwoningen Helmond: https://www.woonpeek.nl/huurwoningen/helmond
+- Huurwoningen Arnhem: https://www.woonpeek.nl/huurwoningen/arnhem
+- Huurwoningen Haarlem: https://www.woonpeek.nl/huurwoningen/haarlem
+- Huurwoningen Enschede: https://www.woonpeek.nl/huurwoningen/enschede
+- Huurwoningen Apeldoorn: https://www.woonpeek.nl/huurwoningen/apeldoorn
+- Huurwoningen Amersfoort: https://www.woonpeek.nl/huurwoningen/amersfoort
+- Huurwoningen Den Bosch: https://www.woonpeek.nl/huurwoningen/s-hertogenbosch
+- Huurwoningen Zwolle: https://www.woonpeek.nl/huurwoningen/zwolle
+- Huurwoningen Leiden: https://www.woonpeek.nl/huurwoningen/leiden
+- Huurwoningen Maastricht: https://www.woonpeek.nl/huurwoningen/maastricht
 
-### Contact
+## Hoofdpagina's
+
+- Home: https://www.woonpeek.nl
+- Zoeken: https://www.woonpeek.nl/zoeken
+- Alle steden: https://www.woonpeek.nl/steden
+- Verkennen (kaart): https://www.woonpeek.nl/verkennen
+- Nieuw aanbod: https://www.woonpeek.nl/nieuw-aanbod
+- Blog: https://www.woonpeek.nl/blog
+- Over WoonPeek: https://www.woonpeek.nl/over-woonpeek
+- FAQ: https://www.woonpeek.nl/veelgestelde-vragen
+- Dagelijkse alert: https://www.woonpeek.nl/dagelijkse-alert
+
+## Contact
 
 - Website: https://www.woonpeek.nl
 - Over ons: https://www.woonpeek.nl/over-woonpeek
 
-## Documentatie
+## Uitgebreide documentatie
 
-- [llms-full.txt](https://www.woonpeek.nl/llms-full.txt): Uitgebreide versie met alle pagina's en features
+- [llms-full.txt](https://www.woonpeek.nl/llms-full.txt): Volledige technische documentatie met alle pagina's, URL-patronen, steden en features
