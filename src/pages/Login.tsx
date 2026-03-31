@@ -141,7 +141,7 @@ const Login = () => {
         <Card className="w-full max-w-md border-0 shadow-none bg-transparent">
           <CardHeader className="text-center">
             <Link to="/" className="mx-auto mb-4">
-              <img src={logoWoonpeek} alt="WoonPeek" className="h-[55px]" />
+              <img src={logoWoonpeek} alt="WoonPeek" className="h-[250px]" />
             </Link>
             <CardTitle className="text-2xl">Inloggen</CardTitle>
             <CardDescription>
