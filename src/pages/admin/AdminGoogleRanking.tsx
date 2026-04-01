@@ -160,38 +160,54 @@ const AdminGoogleRanking = () => {
     "den-bosch": [51.6978, 5.3037], "the-hague": [52.0705, 4.3007],
   };
 
-  // Extract city markers from active page URLs
+  // Extract city markers from ALL session pages (not just current page)
   const visitorMarkers = useMemo(() => {
-    if (!activePages.length) return [];
+    if (!liveVisitors?.sessions) return [];
     const cityVisitors: Record<string, number> = {};
-    for (const p of activePages) {
-      const url = p.url.toLowerCase();
-      // Match patterns: /woningen-{city}, /huurwoningen/{city}, /koopwoningen/{city}, /appartementen/{city}, etc.
-      const patterns = [
-        /\/woningen-([a-z-]+)/,
-        /\/huurwoningen\/([a-z-]+)/,
-        /\/koopwoningen\/([a-z-]+)/,
-        /\/appartementen\/([a-z-]+)/,
-        /\/huizen\/([a-z-]+)/,
-        /\/studios\/([a-z-]+)/,
-        /\/kamers\/([a-z-]+)/,
-        /\/nieuw-aanbod\/([a-z-]+)/,
-        /\/huurprijzen\/([a-z-]+)/,
-        /\/wijk\/([a-z-]+)\//,
-      ];
-      for (const pat of patterns) {
-        const m = url.match(pat);
-        if (m && m[1]) {
-          const city = m[1];
-          cityVisitors[city] = (cityVisitors[city] || 0) + p.count;
-          break;
+    const cityPatterns = [
+      /\/woningen-([a-z-]+)/,
+      /\/huurwoningen\/([a-z-]+)/,
+      /\/koopwoningen\/([a-z-]+)/,
+      /\/appartementen\/([a-z-]+)/,
+      /\/huizen\/([a-z-]+)/,
+      /\/studios\/([a-z-]+)/,
+      /\/kamers\/([a-z-]+)/,
+      /\/nieuw-aanbod\/([a-z-]+)/,
+      /\/huurprijzen\/([a-z-]+)/,
+      /\/wijk\/([a-z-]+)\//,
+    ];
+
+    for (const session of Object.values(liveVisitors.sessions)) {
+      let foundCity: string | null = null;
+      // Check all pages visited by this session
+      for (const pageUrl of session.pages) {
+        const url = pageUrl.toLowerCase();
+        // Try city patterns first
+        for (const pat of cityPatterns) {
+          const m = url.match(pat);
+          if (m?.[1] && CITY_COORDS[m[1]]) { foundCity = m[1]; break; }
         }
+        if (foundCity) break;
+        // Try /woning/{slug} — slug format: street-housenumber-city
+        const woningMatch = url.match(/\/woning\/([a-z0-9-]+)/);
+        if (woningMatch?.[1]) {
+          const parts = woningMatch[1].split("-");
+          // Try last 1-2 parts as city
+          for (let len = 1; len <= Math.min(2, parts.length); len++) {
+            const candidate = parts.slice(-len).join("-");
+            if (CITY_COORDS[candidate]) { foundCity = candidate; break; }
+          }
+        }
+        if (foundCity) break;
+      }
+      if (foundCity) {
+        cityVisitors[foundCity] = (cityVisitors[foundCity] || 0) + 1;
       }
     }
     return Object.entries(cityVisitors)
       .filter(([city]) => CITY_COORDS[city])
       .map(([city, count]) => ({ city, count, coords: CITY_COORDS[city] }));
-  }, [activePages]);
+  }, [liveVisitors]);
 
   // Leaflet map ref
   const mapContainerRef = useRef<HTMLDivElement>(null);
