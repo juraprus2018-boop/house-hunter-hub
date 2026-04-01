@@ -156,7 +156,7 @@ const AdminGoogleRanking = () => {
     veenendaal: [52.0269, 5.5552], zeist: [52.0891, 5.2310], ede: [52.0480, 5.6641],
     hoorn: [52.6428, 5.0596], harderwijk: [52.3416, 5.6200], alphen: [52.1287, 4.6571],
     kampen: [52.5555, 5.9115], middelburg: [51.4988, 3.6136], vlissingen: [51.4427, 3.5727],
-    den-bosch: [51.6978, 5.3037], "the-hague": [52.0705, 4.3007],
+    "den-bosch": [51.6978, 5.3037], "the-hague": [52.0705, 4.3007],
   };
 
   // Extract city markers from active page URLs
