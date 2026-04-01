@@ -74,7 +74,9 @@ const AdminGoogleRanking = () => {
       if (pvRes.error) throw pvRes.error;
       if (clickRes.error) throw clickRes.error;
 
-      const pageViews = pvRes.data || [];
+      const pageViews = (pvRes.data || []).filter((pv: any) =>
+        !pv.page_url.startsWith("/admin") && !pv.page_url.includes("forceHideBadge")
+      );
       const clicks = clickRes.data || [];
       const uniqueSessions = new Set(pageViews.map((p: any) => p.session_id)).size;
 
