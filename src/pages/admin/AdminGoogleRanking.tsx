@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import AdminLayout from "./AdminLayout";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -10,17 +10,29 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer } from "recharts";
-import { Search, TrendingUp, TrendingDown, Minus, Globe, RefreshCw, BarChart3 } from "lucide-react";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, BarChart, Bar, PieChart, Pie, Cell } from "recharts";
+import {
+  Search, TrendingUp, TrendingDown, Minus, Globe, RefreshCw, BarChart3,
+  MousePointerClick, Eye, Target, ArrowLeft, ExternalLink, Award, Percent
+} from "lucide-react";
 import { format } from "date-fns";
 import { nl } from "date-fns/locale";
 import { toast } from "sonner";
+
+type ViewMode = "overview" | "top-pages" | "all-clicks" | "impressions" | "indexed" | "detail";
+
+const COLORS = [
+  "hsl(var(--primary))", "hsl(142, 76%, 36%)", "hsl(217, 91%, 60%)",
+  "hsl(38, 92%, 50%)", "hsl(0, 72%, 51%)", "hsl(280, 68%, 60%)",
+  "hsl(190, 80%, 42%)", "hsl(330, 70%, 50%)",
+];
 
 const AdminGoogleRanking = () => {
   const [searchFilter, setSearchFilter] = useState("");
   const [selectedUrl, setSelectedUrl] = useState<string | null>(null);
   const [selectedKeyword, setSelectedKeyword] = useState<string | null>(null);
   const [fetchingConsole, setFetchingConsole] = useState(false);
+  const [viewMode, setViewMode] = useState<ViewMode>("overview");
 
   // Fetch indexing log
   const { data: indexingLog, isLoading: logLoading } = useQuery({
@@ -30,7 +42,7 @@ const AdminGoogleRanking = () => {
         .from("google_indexing_log")
         .select("*")
         .order("created_at", { ascending: false })
-        .limit(200);
+        .limit(500);
       if (error) throw error;
       return data;
     },
@@ -50,62 +62,120 @@ const AdminGoogleRanking = () => {
     },
   });
 
-  // Get unique tracked URLs with their latest position
-  const urlSummary = rankData
-    ? Object.values(
-        rankData.reduce((acc: Record<string, { url: string; keywords: Set<string>; latestPosition: number; latestDate: string; clicks: number; impressions: number }>, row) => {
-          if (!acc[row.tracked_url]) {
-            acc[row.tracked_url] = {
-              url: row.tracked_url,
-              keywords: new Set(),
-              latestPosition: row.position || 0,
-              latestDate: row.tracked_date,
-              clicks: 0,
-              impressions: 0,
-            };
-          }
-          acc[row.tracked_url].keywords.add(row.keyword);
-          acc[row.tracked_url].clicks += row.clicks || 0;
-          acc[row.tracked_url].impressions += row.impressions || 0;
-          if (row.tracked_date > acc[row.tracked_url].latestDate) {
-            acc[row.tracked_url].latestPosition = row.position || 0;
-            acc[row.tracked_url].latestDate = row.tracked_date;
-          }
-          return acc;
-        }, {})
-      )
-        .map((item) => ({
-          ...item,
-          keywords: Array.from(item.keywords),
-          keywordCount: item.keywords.size,
-        }))
-        .filter((item) =>
-          searchFilter
-            ? item.url.toLowerCase().includes(searchFilter.toLowerCase()) ||
-              item.keywords.some((k: string) => k.toLowerCase().includes(searchFilter.toLowerCase()))
-            : true
-        )
-        .sort((a, b) => b.impressions - a.impressions)
-    : [];
+  // Compute URL summaries
+  const urlSummary = useMemo(() => {
+    if (!rankData) return [];
+    const acc: Record<string, {
+      url: string; keywords: Set<string>; latestPosition: number;
+      latestDate: string; clicks: number; impressions: number; ctr: number; entries: number;
+    }> = {};
 
-  // Get chart data for selected URL + keyword
-  const chartData = rankData && selectedUrl
-    ? rankData
-        .filter((r) => r.tracked_url === selectedUrl && (!selectedKeyword || r.keyword === selectedKeyword))
-        .sort((a, b) => a.tracked_date.localeCompare(b.tracked_date))
-        .map((r) => ({
-          date: r.tracked_date,
-          position: r.position,
-          clicks: r.clicks,
-          impressions: r.impressions,
-          ctr: r.ctr,
-        }))
-    : [];
+    for (const row of rankData) {
+      if (!acc[row.tracked_url]) {
+        acc[row.tracked_url] = {
+          url: row.tracked_url, keywords: new Set(), latestPosition: row.position || 0,
+          latestDate: row.tracked_date, clicks: 0, impressions: 0, ctr: 0, entries: 0,
+        };
+      }
+      const item = acc[row.tracked_url];
+      item.keywords.add(row.keyword);
+      item.clicks += row.clicks || 0;
+      item.impressions += row.impressions || 0;
+      item.ctr += row.ctr || 0;
+      item.entries++;
+      if (row.tracked_date > item.latestDate) {
+        item.latestPosition = row.position || 0;
+        item.latestDate = row.tracked_date;
+      }
+    }
 
-  // Keywords for selected URL
-  const keywordsForUrl = rankData && selectedUrl
-    ? [...new Set(rankData.filter((r) => r.tracked_url === selectedUrl).map((r) => r.keyword))]
-    : [];
+    return Object.values(acc)
+      .map((item) => ({
+        ...item,
+        keywords: Array.from(item.keywords),
+        keywordCount: item.keywords.size,
+        avgCtr: item.entries > 0 ? Math.round((item.ctr / item.entries) * 100) / 100 : 0,
+      }))
+      .filter((item) =>
+        searchFilter
+          ? item.url.toLowerCase().includes(searchFilter.toLowerCase()) ||
+            item.keywords.some((k: string) => k.toLowerCase().includes(searchFilter.toLowerCase()))
+          : true
+      );
+  }, [rankData, searchFilter]);
+
+  // Derived data
+  const topPages = useMemo(() =>
+    [...urlSummary].filter(u => u.latestPosition > 0 && u.latestPosition <= 10)
+      .sort((a, b) => a.latestPosition - b.latestPosition),
+    [urlSummary]
+  );
+
+  const allByClicks = useMemo(() =>
+    [...urlSummary].sort((a, b) => b.clicks - a.clicks),
+    [urlSummary]
+  );
+
+  const allByImpressions = useMemo(() =>
+    [...urlSummary].sort((a, b) => b.impressions - a.impressions),
+    [urlSummary]
+  );
+
+  const totalClicks = useMemo(() => urlSummary.reduce((s, u) => s + u.clicks, 0), [urlSummary]);
+  const totalImpressions = useMemo(() => urlSummary.reduce((s, u) => s + u.impressions, 0), [urlSummary]);
+  const indexedCount = useMemo(() => indexingLog?.filter(l => l.status === "submitted").length || 0, [indexingLog]);
+
+  // Chart data for selected URL
+  const chartData = useMemo(() => {
+    if (!rankData || !selectedUrl) return [];
+    return rankData
+      .filter((r) => r.tracked_url === selectedUrl && (!selectedKeyword || r.keyword === selectedKeyword))
+      .sort((a, b) => a.tracked_date.localeCompare(b.tracked_date))
+      .map((r) => ({
+        date: r.tracked_date,
+        position: r.position,
+        clicks: r.clicks,
+        impressions: r.impressions,
+        ctr: r.ctr,
+      }));
+  }, [rankData, selectedUrl, selectedKeyword]);
+
+  const keywordsForUrl = useMemo(() => {
+    if (!rankData || !selectedUrl) return [];
+    return [...new Set(rankData.filter(r => r.tracked_url === selectedUrl).map(r => r.keyword))];
+  }, [rankData, selectedUrl]);
+
+  // Page type distribution for pie chart
+  const pageTypeDistribution = useMemo(() => {
+    const types: Record<string, number> = {};
+    for (const item of urlSummary) {
+      let type = "Overig";
+      if (item.url.includes("/huurwoningen/")) type = "Huurwoningen";
+      else if (item.url.includes("/koopwoningen/")) type = "Koopwoningen";
+      else if (item.url.includes("/appartementen/")) type = "Appartementen";
+      else if (item.url.includes("/kamers/")) type = "Kamers";
+      else if (item.url.includes("/woning/")) type = "Woningdetail";
+      else if (item.url.includes("/woningen-")) type = "Stadspagina";
+      else if (item.url.includes("/blog/")) type = "Blog";
+      types[type] = (types[type] || 0) + 1;
+    }
+    return Object.entries(types).map(([name, value]) => ({ name, value }));
+  }, [urlSummary]);
+
+  // Top keywords bar chart
+  const topKeywordsChart = useMemo(() => {
+    if (!rankData) return [];
+    const kwClicks: Record<string, { clicks: number; impressions: number }> = {};
+    for (const row of rankData) {
+      if (!kwClicks[row.keyword]) kwClicks[row.keyword] = { clicks: 0, impressions: 0 };
+      kwClicks[row.keyword].clicks += row.clicks || 0;
+      kwClicks[row.keyword].impressions += row.impressions || 0;
+    }
+    return Object.entries(kwClicks)
+      .map(([keyword, data]) => ({ keyword: keyword.length > 25 ? keyword.slice(0, 25) + "…" : keyword, ...data }))
+      .sort((a, b) => b.clicks - a.clicks)
+      .slice(0, 15);
+  }, [rankData]);
 
   const handleFetchConsole = async () => {
     setFetchingConsole(true);
@@ -128,20 +198,513 @@ const AdminGoogleRanking = () => {
     return <Badge variant="outline">#{Math.round(position)}</Badge>;
   };
 
-  const getTrendIcon = (data: typeof chartData) => {
-    if (data.length < 2) return <Minus className="h-4 w-4 text-muted-foreground" />;
-    const latest = data[data.length - 1].position || 0;
-    const previous = data[data.length - 2].position || 0;
-    if (latest < previous) return <TrendingUp className="h-4 w-4 text-green-500" />;
-    if (latest > previous) return <TrendingDown className="h-4 w-4 text-red-500" />;
-    return <Minus className="h-4 w-4 text-muted-foreground" />;
+  const openDetail = (url: string) => {
+    setSelectedUrl(url);
+    setSelectedKeyword(null);
+    setViewMode("detail");
+  };
+
+  const goBack = () => {
+    setViewMode("overview");
+    setSelectedUrl(null);
+    setSelectedKeyword(null);
   };
 
   const chartConfig = {
     position: { label: "Positie", color: "hsl(var(--primary))" },
     clicks: { label: "Klikken", color: "hsl(142, 76%, 36%)" },
     impressions: { label: "Impressies", color: "hsl(217, 91%, 60%)" },
+    ctr: { label: "CTR %", color: "hsl(38, 92%, 50%)" },
   };
+
+  const renderUrlTable = (data: typeof urlSummary, sortLabel: string) => (
+    <Card>
+      <CardHeader>
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <CardTitle>{sortLabel}</CardTitle>
+            <CardDescription>{data.length} pagina's</CardDescription>
+          </div>
+          <Button variant="ghost" size="sm" onClick={goBack}>
+            <ArrowLeft className="mr-2 h-4 w-4" /> Terug
+          </Button>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className="relative mb-4 w-full sm:w-64">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input placeholder="Zoek..." value={searchFilter} onChange={(e) => setSearchFilter(e.target.value)} className="pl-9" />
+        </div>
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Pagina</TableHead>
+                <TableHead className="text-center">Positie</TableHead>
+                <TableHead className="text-center">Klikken</TableHead>
+                <TableHead className="text-center">Impressies</TableHead>
+                <TableHead className="text-center">CTR</TableHead>
+                <TableHead className="text-center">Zoekwoorden</TableHead>
+                <TableHead></TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {data.slice(0, 100).map((item) => (
+                <TableRow key={item.url} className="cursor-pointer hover:bg-muted/50" onClick={() => openDetail(item.url)}>
+                  <TableCell className="max-w-xs">
+                    <p className="truncate text-sm font-medium">{item.url.replace("https://www.woonpeek.nl", "")}</p>
+                    <p className="truncate text-xs text-muted-foreground">{item.keywords.slice(0, 2).join(", ")}{item.keywordCount > 2 && ` +${item.keywordCount - 2}`}</p>
+                  </TableCell>
+                  <TableCell className="text-center">{getPositionBadge(item.latestPosition)}</TableCell>
+                  <TableCell className="text-center font-medium">{item.clicks.toLocaleString()}</TableCell>
+                  <TableCell className="text-center">{item.impressions.toLocaleString()}</TableCell>
+                  <TableCell className="text-center">{item.avgCtr}%</TableCell>
+                  <TableCell className="text-center">{item.keywordCount}</TableCell>
+                  <TableCell>
+                    <Button variant="ghost" size="sm"><BarChart3 className="h-4 w-4" /></Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      </CardContent>
+    </Card>
+  );
+
+  // Detail view for a specific URL
+  const renderDetailView = () => {
+    if (!selectedUrl) return null;
+    const urlData = urlSummary.find(u => u.url === selectedUrl);
+    if (!urlData) return null;
+
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center gap-4">
+          <Button variant="ghost" size="sm" onClick={goBack}><ArrowLeft className="mr-2 h-4 w-4" /> Terug</Button>
+          <div className="flex-1 min-w-0">
+            <h2 className="text-lg font-bold truncate">{selectedUrl.replace("https://www.woonpeek.nl", "")}</h2>
+            <a href={selectedUrl} target="_blank" rel="noopener" className="text-xs text-muted-foreground hover:underline flex items-center gap-1">
+              <ExternalLink className="h-3 w-3" /> Open in browser
+            </a>
+          </div>
+        </div>
+
+        {/* Stats */}
+        <div className="grid gap-4 grid-cols-2 md:grid-cols-5">
+          <Card>
+            <CardContent className="pt-4 pb-3">
+              <p className="text-xs text-muted-foreground">Positie</p>
+              <p className="text-2xl font-bold">#{Math.round(urlData.latestPosition)}</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-4 pb-3">
+              <p className="text-xs text-muted-foreground">Klikken</p>
+              <p className="text-2xl font-bold">{urlData.clicks.toLocaleString()}</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-4 pb-3">
+              <p className="text-xs text-muted-foreground">Impressies</p>
+              <p className="text-2xl font-bold">{urlData.impressions.toLocaleString()}</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-4 pb-3">
+              <p className="text-xs text-muted-foreground">CTR</p>
+              <p className="text-2xl font-bold">{urlData.avgCtr}%</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-4 pb-3">
+              <p className="text-xs text-muted-foreground">Zoekwoorden</p>
+              <p className="text-2xl font-bold">{urlData.keywordCount}</p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Keyword filter */}
+        <div className="flex gap-2">
+          <Select value={selectedKeyword || "all"} onValueChange={(v) => setSelectedKeyword(v === "all" ? null : v)}>
+            <SelectTrigger className="w-[280px]">
+              <SelectValue placeholder="Alle zoekwoorden" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Alle zoekwoorden ({keywordsForUrl.length})</SelectItem>
+              {keywordsForUrl.map((kw) => (
+                <SelectItem key={kw} value={kw}>{kw}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Position chart */}
+        {chartData.length > 0 && (
+          <>
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Positie verloop</CardTitle>
+                <CardDescription>Lager = beter (positie 1 is bovenaan Google)</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ChartContainer config={chartConfig} className="h-[280px] w-full">
+                  <LineChart data={chartData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="date" tick={{ fontSize: 11 }} />
+                    <YAxis reversed domain={[1, "auto"]} tick={{ fontSize: 11 }} />
+                    <ChartTooltip content={<ChartTooltipContent />} />
+                    <Line type="monotone" dataKey="position" stroke="var(--color-position)" strokeWidth={2} dot={{ r: 3 }} />
+                  </LineChart>
+                </ChartContainer>
+              </CardContent>
+            </Card>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">Klikken & Impressies</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ChartContainer config={chartConfig} className="h-[220px] w-full">
+                    <LineChart data={chartData}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="date" tick={{ fontSize: 11 }} />
+                      <YAxis tick={{ fontSize: 11 }} />
+                      <ChartTooltip content={<ChartTooltipContent />} />
+                      <Line type="monotone" dataKey="clicks" stroke="var(--color-clicks)" strokeWidth={2} dot={{ r: 2 }} />
+                      <Line type="monotone" dataKey="impressions" stroke="var(--color-impressions)" strokeWidth={2} dot={{ r: 2 }} />
+                    </LineChart>
+                  </ChartContainer>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">CTR %</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ChartContainer config={chartConfig} className="h-[220px] w-full">
+                    <LineChart data={chartData}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="date" tick={{ fontSize: 11 }} />
+                      <YAxis tick={{ fontSize: 11 }} />
+                      <ChartTooltip content={<ChartTooltipContent />} />
+                      <Line type="monotone" dataKey="ctr" stroke="var(--color-ctr)" strokeWidth={2} dot={{ r: 2 }} />
+                    </LineChart>
+                  </ChartContainer>
+                </CardContent>
+              </Card>
+            </div>
+          </>
+        )}
+
+        {/* Keywords table */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Zoekwoorden voor deze pagina</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Zoekwoord</TableHead>
+                    <TableHead className="text-center">Positie</TableHead>
+                    <TableHead className="text-center">Klikken</TableHead>
+                    <TableHead className="text-center">Impressies</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {keywordsForUrl.map(kw => {
+                    const kwData = rankData?.filter(r => r.tracked_url === selectedUrl && r.keyword === kw) || [];
+                    const latest = kwData.sort((a, b) => b.tracked_date.localeCompare(a.tracked_date))[0];
+                    const totalClicks = kwData.reduce((s, r) => s + (r.clicks || 0), 0);
+                    const totalImpr = kwData.reduce((s, r) => s + (r.impressions || 0), 0);
+                    return (
+                      <TableRow
+                        key={kw}
+                        className="cursor-pointer hover:bg-muted/50"
+                        onClick={() => setSelectedKeyword(kw === selectedKeyword ? null : kw)}
+                      >
+                        <TableCell className="font-medium">
+                          {kw}
+                          {selectedKeyword === kw && <Badge className="ml-2 bg-primary/10 text-primary">Actief</Badge>}
+                        </TableCell>
+                        <TableCell className="text-center">{getPositionBadge(latest?.position || 0)}</TableCell>
+                        <TableCell className="text-center">{totalClicks}</TableCell>
+                        <TableCell className="text-center">{totalImpr}</TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  };
+
+  // Indexed URLs view
+  const renderIndexedView = () => (
+    <div className="space-y-4">
+      <div className="flex items-center gap-4">
+        <Button variant="ghost" size="sm" onClick={goBack}><ArrowLeft className="mr-2 h-4 w-4" /> Terug</Button>
+        <div>
+          <h2 className="text-lg font-bold">Geïndexeerde URLs</h2>
+          <p className="text-sm text-muted-foreground">{indexedCount} URLs naar Google gestuurd</p>
+        </div>
+      </div>
+
+      {/* Stats by type */}
+      <div className="grid gap-4 md:grid-cols-3">
+        <Card>
+          <CardContent className="pt-4 pb-3">
+            <p className="text-xs text-muted-foreground">Woningen</p>
+            <p className="text-2xl font-bold">{indexingLog?.filter(l => l.url_type === "property" && l.status === "submitted").length || 0}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-4 pb-3">
+            <p className="text-xs text-muted-foreground">Stadspagina's</p>
+            <p className="text-2xl font-bold">{indexingLog?.filter(l => l.url_type === "city" && l.status === "submitted").length || 0}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-4 pb-3">
+            <p className="text-xs text-muted-foreground">Fouten</p>
+            <p className="text-2xl font-bold text-destructive">{indexingLog?.filter(l => l.status === "error").length || 0}</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      <Card>
+        <CardHeader><CardTitle>Indexering Log</CardTitle></CardHeader>
+        <CardContent>
+          {logLoading ? (
+            <p className="text-muted-foreground">Laden...</p>
+          ) : !indexingLog?.length ? (
+            <div className="py-8 text-center text-muted-foreground">
+              <Globe className="mx-auto mb-2 h-8 w-8" />
+              <p>Nog geen URLs naar Google gestuurd.</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto max-h-[600px] overflow-y-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>URL</TableHead>
+                    <TableHead>Type</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>HTTP</TableHead>
+                    <TableHead>Datum</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {indexingLog.map((log) => (
+                    <TableRow key={log.id}>
+                      <TableCell className="max-w-xs">
+                        <p className="truncate text-sm">{log.url.replace("https://www.woonpeek.nl", "")}</p>
+                      </TableCell>
+                      <TableCell><Badge variant="outline">{log.url_type}</Badge></TableCell>
+                      <TableCell>
+                        <Badge className={log.status === "submitted" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}>
+                          {log.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>{log.response_status || "-"}</TableCell>
+                      <TableCell className="whitespace-nowrap text-sm text-muted-foreground">
+                        {format(new Date(log.created_at), "dd MMM HH:mm", { locale: nl })}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+
+  // Overview
+  const renderOverview = () => (
+    <div className="space-y-6">
+      {/* Clickable Stats Cards */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <Card
+          className="cursor-pointer transition-all hover:shadow-md hover:border-primary/30"
+          onClick={() => setViewMode("indexed")}
+        >
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium">URLs Geïndexeerd</CardTitle>
+            <Globe className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{indexedCount}</div>
+            <p className="text-xs text-muted-foreground">naar Google gestuurd →</p>
+          </CardContent>
+        </Card>
+
+        <Card
+          className="cursor-pointer transition-all hover:shadow-md hover:border-primary/30"
+          onClick={() => setViewMode("top-pages")}
+        >
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium">Top 10 Pagina's</CardTitle>
+            <Award className="h-4 w-4 text-green-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{topPages.length}</div>
+            <p className="text-xs text-muted-foreground">in de top 10 →</p>
+          </CardContent>
+        </Card>
+
+        <Card
+          className="cursor-pointer transition-all hover:shadow-md hover:border-primary/30"
+          onClick={() => setViewMode("all-clicks")}
+        >
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium">Totaal Klikken</CardTitle>
+            <MousePointerClick className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{totalClicks.toLocaleString()}</div>
+            <p className="text-xs text-muted-foreground">vanuit Google →</p>
+          </CardContent>
+        </Card>
+
+        <Card
+          className="cursor-pointer transition-all hover:shadow-md hover:border-primary/30"
+          onClick={() => setViewMode("impressions")}
+        >
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium">Totaal Impressies</CardTitle>
+            <Eye className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{totalImpressions.toLocaleString()}</div>
+            <p className="text-xs text-muted-foreground">gezien in Google →</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Charts row */}
+      <div className="grid gap-4 md:grid-cols-2">
+        {/* Top Keywords */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Top Zoekwoorden (klikken)</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {topKeywordsChart.length > 0 ? (
+              <ChartContainer config={chartConfig} className="h-[300px] w-full">
+                <BarChart data={topKeywordsChart} layout="vertical" margin={{ left: 10 }}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis type="number" tick={{ fontSize: 11 }} />
+                  <YAxis dataKey="keyword" type="category" width={140} tick={{ fontSize: 10 }} />
+                  <ChartTooltip content={<ChartTooltipContent />} />
+                  <Bar dataKey="clicks" fill="hsl(142, 76%, 36%)" radius={[0, 4, 4, 0]} />
+                </BarChart>
+              </ChartContainer>
+            ) : (
+              <p className="text-center text-muted-foreground py-8">Nog geen data</p>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Page Type Distribution */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Verdeling pagina-types</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {pageTypeDistribution.length > 0 ? (
+              <div className="flex items-center gap-4">
+                <ChartContainer config={chartConfig} className="h-[250px] w-[250px]">
+                  <PieChart>
+                    <Pie data={pageTypeDistribution} cx="50%" cy="50%" outerRadius={100} dataKey="value" label={({ name, value }) => `${name} (${value})`}>
+                      {pageTypeDistribution.map((_, i) => (
+                        <Cell key={i} fill={COLORS[i % COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <ChartTooltip content={<ChartTooltipContent />} />
+                  </PieChart>
+                </ChartContainer>
+                <div className="space-y-2">
+                  {pageTypeDistribution.map((item, i) => (
+                    <div key={item.name} className="flex items-center gap-2 text-sm">
+                      <div className="h-3 w-3 rounded-full" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
+                      <span>{item.name}</span>
+                      <span className="text-muted-foreground">({item.value})</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <p className="text-center text-muted-foreground py-8">Nog geen data</p>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Quick table: Top movers */}
+      <Card>
+        <CardHeader>
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <CardTitle>Alle Getrackte Pagina's</CardTitle>
+              <CardDescription>{urlSummary.length} pagina's met positiedata</CardDescription>
+            </div>
+            <div className="relative w-full sm:w-64">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input placeholder="Zoek op URL of zoekwoord..." value={searchFilter} onChange={(e) => setSearchFilter(e.target.value)} className="pl-9" />
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {rankLoading ? (
+            <p className="text-muted-foreground">Laden...</p>
+          ) : urlSummary.length === 0 ? (
+            <div className="py-8 text-center text-muted-foreground">
+              <BarChart3 className="mx-auto mb-2 h-8 w-8" />
+              <p>Nog geen rankingdata. Klik op "Search Console ophalen".</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto max-h-[500px] overflow-y-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Pagina</TableHead>
+                    <TableHead className="text-center">Positie</TableHead>
+                    <TableHead className="text-center">Klikken</TableHead>
+                    <TableHead className="text-center">Impressies</TableHead>
+                    <TableHead className="text-center">CTR</TableHead>
+                    <TableHead></TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {[...urlSummary].sort((a, b) => b.impressions - a.impressions).slice(0, 50).map((item) => (
+                    <TableRow key={item.url} className="cursor-pointer hover:bg-muted/50" onClick={() => openDetail(item.url)}>
+                      <TableCell className="max-w-xs">
+                        <p className="truncate text-sm font-medium">{item.url.replace("https://www.woonpeek.nl", "")}</p>
+                        <p className="truncate text-xs text-muted-foreground">{item.keywords.slice(0, 2).join(", ")}</p>
+                      </TableCell>
+                      <TableCell className="text-center">{getPositionBadge(item.latestPosition)}</TableCell>
+                      <TableCell className="text-center font-medium">{item.clicks}</TableCell>
+                      <TableCell className="text-center">{item.impressions.toLocaleString()}</TableCell>
+                      <TableCell className="text-center">{item.avgCtr}%</TableCell>
+                      <TableCell><Button variant="ghost" size="sm"><BarChart3 className="h-4 w-4" /></Button></TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
 
   return (
     <AdminLayout>
@@ -157,259 +720,12 @@ const AdminGoogleRanking = () => {
           </Button>
         </div>
 
-        {/* Stats cards */}
-        <div className="grid gap-4 md:grid-cols-4">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">URLs Geïndexeerd</CardTitle>
-              <Globe className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {indexingLog?.filter((l) => l.status === "submitted").length || 0}
-              </div>
-              <p className="text-xs text-muted-foreground">naar Google gestuurd</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">Getrackte Pagina's</CardTitle>
-              <BarChart3 className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{urlSummary.length}</div>
-              <p className="text-xs text-muted-foreground">met positiedata</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">Top 10 Pagina's</CardTitle>
-              <TrendingUp className="h-4 w-4 text-green-500" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {urlSummary.filter((u) => u.latestPosition > 0 && u.latestPosition <= 10).length}
-              </div>
-              <p className="text-xs text-muted-foreground">in de top 10</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">Totaal Klikken</CardTitle>
-              <Search className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {urlSummary.reduce((sum, u) => sum + u.clicks, 0).toLocaleString()}
-              </div>
-              <p className="text-xs text-muted-foreground">vanuit Google</p>
-            </CardContent>
-          </Card>
-        </div>
-
-        <Tabs defaultValue="ranking" className="space-y-4">
-          <TabsList>
-            <TabsTrigger value="ranking">Ranking Tracker</TabsTrigger>
-            <TabsTrigger value="indexing">Indexering Log</TabsTrigger>
-          </TabsList>
-
-          {/* Ranking Tracker Tab */}
-          <TabsContent value="ranking" className="space-y-4">
-            {/* Chart */}
-            {selectedUrl && chartData.length > 0 && (
-              <Card>
-                <CardHeader>
-                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                    <div>
-                      <CardTitle className="text-base">
-                        Positie verloop {getTrendIcon(chartData)}
-                      </CardTitle>
-                      <p className="mt-1 text-xs text-muted-foreground truncate max-w-lg">
-                        {selectedUrl.replace("https://www.woonpeek.nl", "")}
-                      </p>
-                    </div>
-                    <div className="flex gap-2">
-                      <Select value={selectedKeyword || "all"} onValueChange={(v) => setSelectedKeyword(v === "all" ? null : v)}>
-                        <SelectTrigger className="w-[220px]">
-                          <SelectValue placeholder="Alle zoekwoorden" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">Alle zoekwoorden</SelectItem>
-                          {keywordsForUrl.map((kw) => (
-                            <SelectItem key={kw} value={kw}>{kw}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <Button variant="ghost" size="sm" onClick={() => { setSelectedUrl(null); setSelectedKeyword(null); }}>
-                        ✕
-                      </Button>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <ChartContainer config={chartConfig} className="h-[300px] w-full">
-                    <LineChart data={chartData}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="date" tick={{ fontSize: 11 }} />
-                      <YAxis reversed domain={[1, "auto"]} tick={{ fontSize: 11 }} label={{ value: "Positie", angle: -90, position: "insideLeft", style: { fontSize: 11 } }} />
-                      <ChartTooltip content={<ChartTooltipContent />} />
-                      <Line type="monotone" dataKey="position" stroke="var(--color-position)" strokeWidth={2} dot={{ r: 3 }} />
-                    </LineChart>
-                  </ChartContainer>
-
-                  {/* Secondary chart: clicks & impressions */}
-                  <div className="mt-4">
-                    <ChartContainer config={chartConfig} className="h-[200px] w-full">
-                      <LineChart data={chartData}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="date" tick={{ fontSize: 11 }} />
-                        <YAxis tick={{ fontSize: 11 }} />
-                        <ChartTooltip content={<ChartTooltipContent />} />
-                        <Line type="monotone" dataKey="clicks" stroke="var(--color-clicks)" strokeWidth={2} dot={{ r: 2 }} />
-                        <Line type="monotone" dataKey="impressions" stroke="var(--color-impressions)" strokeWidth={2} dot={{ r: 2 }} />
-                      </LineChart>
-                    </ChartContainer>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* URL List */}
-            <Card>
-              <CardHeader>
-                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                  <CardTitle>Getrackte Pagina's</CardTitle>
-                  <div className="relative w-full sm:w-64">
-                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <Input
-                      placeholder="Zoek op URL of zoekwoord..."
-                      value={searchFilter}
-                      onChange={(e) => setSearchFilter(e.target.value)}
-                      className="pl-9"
-                    />
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                {rankLoading ? (
-                  <p className="text-muted-foreground">Laden...</p>
-                ) : urlSummary.length === 0 ? (
-                  <div className="py-8 text-center text-muted-foreground">
-                    <BarChart3 className="mx-auto mb-2 h-8 w-8" />
-                    <p>Nog geen rankingdata. Klik op "Search Console ophalen" om te starten.</p>
-                  </div>
-                ) : (
-                  <div className="overflow-x-auto">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Pagina</TableHead>
-                          <TableHead className="text-center">Positie</TableHead>
-                          <TableHead className="text-center">Zoekwoorden</TableHead>
-                          <TableHead className="text-center">Klikken</TableHead>
-                          <TableHead className="text-center">Impressies</TableHead>
-                          <TableHead></TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {urlSummary.slice(0, 50).map((item) => (
-                          <TableRow
-                            key={item.url}
-                            className={`cursor-pointer ${selectedUrl === item.url ? "bg-muted" : ""}`}
-                            onClick={() => { setSelectedUrl(item.url); setSelectedKeyword(null); }}
-                          >
-                            <TableCell className="max-w-xs">
-                              <p className="truncate text-sm font-medium">
-                                {item.url.replace("https://www.woonpeek.nl", "")}
-                              </p>
-                              <p className="truncate text-xs text-muted-foreground">
-                                {item.keywords.slice(0, 3).join(", ")}
-                                {item.keywordCount > 3 && ` +${item.keywordCount - 3}`}
-                              </p>
-                            </TableCell>
-                            <TableCell className="text-center">
-                              {getPositionBadge(item.latestPosition)}
-                            </TableCell>
-                            <TableCell className="text-center">{item.keywordCount}</TableCell>
-                            <TableCell className="text-center">{item.clicks.toLocaleString()}</TableCell>
-                            <TableCell className="text-center">{item.impressions.toLocaleString()}</TableCell>
-                            <TableCell>
-                              <Button variant="ghost" size="sm" onClick={() => { setSelectedUrl(item.url); setSelectedKeyword(null); }}>
-                                <BarChart3 className="h-4 w-4" />
-                              </Button>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Indexing Log Tab */}
-          <TabsContent value="indexing">
-            <Card>
-              <CardHeader>
-                <CardTitle>Indexering Log</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {logLoading ? (
-                  <p className="text-muted-foreground">Laden...</p>
-                ) : !indexingLog?.length ? (
-                  <div className="py-8 text-center text-muted-foreground">
-                    <Globe className="mx-auto mb-2 h-8 w-8" />
-                    <p>Nog geen URLs naar Google gestuurd. De volgende cron-run logt alles automatisch.</p>
-                  </div>
-                ) : (
-                  <div className="overflow-x-auto">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>URL</TableHead>
-                          <TableHead>Type</TableHead>
-                          <TableHead>Status</TableHead>
-                          <TableHead>HTTP</TableHead>
-                          <TableHead>Datum</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {indexingLog.map((log) => (
-                          <TableRow key={log.id}>
-                            <TableCell className="max-w-xs">
-                              <p className="truncate text-sm">
-                                {log.url.replace("https://www.woonpeek.nl", "")}
-                              </p>
-                            </TableCell>
-                            <TableCell>
-                              <Badge variant="outline">{log.url_type}</Badge>
-                            </TableCell>
-                            <TableCell>
-                              <Badge
-                                className={
-                                  log.status === "submitted"
-                                    ? "bg-green-100 text-green-700"
-                                    : "bg-red-100 text-red-700"
-                                }
-                              >
-                                {log.status}
-                              </Badge>
-                            </TableCell>
-                            <TableCell>{log.response_status || "-"}</TableCell>
-                            <TableCell className="whitespace-nowrap text-sm text-muted-foreground">
-                              {format(new Date(log.created_at), "dd MMM HH:mm", { locale: nl })}
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+        {viewMode === "overview" && renderOverview()}
+        {viewMode === "top-pages" && renderUrlTable(topPages, "Top 10 Pagina's in Google")}
+        {viewMode === "all-clicks" && renderUrlTable(allByClicks, "Pagina's gesorteerd op Klikken")}
+        {viewMode === "impressions" && renderUrlTable(allByImpressions, "Pagina's gesorteerd op Impressies")}
+        {viewMode === "indexed" && renderIndexedView()}
+        {viewMode === "detail" && renderDetailView()}
       </div>
     </AdminLayout>
   );
