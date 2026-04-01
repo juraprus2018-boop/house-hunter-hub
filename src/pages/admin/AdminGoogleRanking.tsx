@@ -804,26 +804,247 @@ const AdminGoogleRanking = () => {
     </div>
   );
 
+  const liveChartConfig = {
+    views: { label: "Pageviews", color: "hsl(217, 91%, 60%)" },
+    clicks: { label: "Affiliate klikken", color: "hsl(142, 76%, 36%)" },
+  };
+
+  const renderLiveView = () => (
+    <div className="space-y-6">
+      {/* Live stats cards */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <Card className="border-green-500/30 bg-green-50/50 dark:bg-green-950/20">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium">Nu Online</CardTitle>
+            <Activity className="h-4 w-4 text-green-500 animate-pulse" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold text-green-600">{liveVisitors?.count || 0}</div>
+            <p className="text-xs text-muted-foreground">bezoekers (laatste 5 min)</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium">Pageviews 24u</CardTitle>
+            <Eye className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats24h?.totalViews?.toLocaleString() || 0}</div>
+            <p className="text-xs text-muted-foreground">{stats24h?.uniqueSessions || 0} unieke sessies</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium">Affiliate Klikken 24u</CardTitle>
+            <Zap className="h-4 w-4 text-amber-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats24h?.totalClicks || 0}</div>
+            <p className="text-xs text-muted-foreground">doorkliks naar aanbieders</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium">Conversieratio</CardTitle>
+            <Percent className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {stats24h?.totalViews && stats24h.totalClicks
+                ? ((stats24h.totalClicks / stats24h.totalViews) * 100).toFixed(2) + "%"
+                : "0%"}
+            </div>
+            <p className="text-xs text-muted-foreground">klikken / pageviews</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Active pages */}
+      {activePages.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Activity className="h-4 w-4 text-green-500 animate-pulse" />
+              Live Actieve Pagina's
+            </CardTitle>
+            <CardDescription>{liveVisitors?.count || 0} bezoekers op {activePages.length} pagina's</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              {activePages.slice(0, 15).map((p) => (
+                <div key={p.url} className="flex items-center justify-between rounded-md border px-3 py-2">
+                  <span className="text-sm truncate max-w-md">{p.url}</span>
+                  <Badge variant="secondary">{p.count} {p.count === 1 ? "bezoeker" : "bezoekers"}</Badge>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Hourly chart */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Traffic per uur (24u)</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {stats24h?.hourlyChart?.length ? (
+            <ChartContainer config={liveChartConfig} className="h-[280px] w-full">
+              <AreaChart data={stats24h.hourlyChart}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="hour" tick={{ fontSize: 11 }} />
+                <YAxis tick={{ fontSize: 11 }} />
+                <ChartTooltip content={<ChartTooltipContent />} />
+                <Area type="monotone" dataKey="views" stroke="var(--color-views)" fill="var(--color-views)" fillOpacity={0.15} strokeWidth={2} />
+                <Area type="monotone" dataKey="clicks" stroke="var(--color-clicks)" fill="var(--color-clicks)" fillOpacity={0.15} strokeWidth={2} />
+              </AreaChart>
+            </ChartContainer>
+          ) : (
+            <p className="py-8 text-center text-muted-foreground">Nog geen data beschikbaar</p>
+          )}
+        </CardContent>
+      </Card>
+
+      <div className="grid gap-4 md:grid-cols-2">
+        {/* Top pages 24h */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Meest Bezochte Pagina's (24u)</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {stats24h?.topPages?.length ? (
+              <div className="overflow-x-auto max-h-[400px] overflow-y-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Pagina</TableHead>
+                      <TableHead className="text-right">Views</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {stats24h.topPages.map((p) => (
+                      <TableRow key={p.url}>
+                        <TableCell className="max-w-xs truncate text-sm">{p.url}</TableCell>
+                        <TableCell className="text-right font-medium">{p.views}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            ) : (
+              <p className="py-8 text-center text-muted-foreground">Nog geen data</p>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Daisycon clicks by source */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Affiliate Klikken per Bron (24u)</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {stats24h?.sourceCounts?.length ? (
+              <div className="space-y-3">
+                {stats24h.sourceCounts.map((s, i) => (
+                  <div key={s.name} className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="h-3 w-3 rounded-full" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
+                      <span className="text-sm">{s.name}</span>
+                    </div>
+                    <span className="font-medium">{s.value} klikken</span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="py-8 text-center text-muted-foreground">Nog geen affiliate klikken</p>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Recent clicks table */}
+      {stats24h?.clicks?.length ? (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Recente Affiliate Klikken</CardTitle>
+            <CardDescription>Laatste 24 uur</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="overflow-x-auto max-h-[400px] overflow-y-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Bron</TableHead>
+                    <TableHead>Pagina</TableHead>
+                    <TableHead>Tijd</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {stats24h.clicks.slice(0, 50).map((c: any) => (
+                    <TableRow key={c.id}>
+                      <TableCell><Badge variant="outline">{c.source_site || "Onbekend"}</Badge></TableCell>
+                      <TableCell className="max-w-xs truncate text-sm">{c.page_url}</TableCell>
+                      <TableCell className="whitespace-nowrap text-sm text-muted-foreground">
+                        {format(new Date(c.created_at), "HH:mm", { locale: nl })}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </CardContent>
+        </Card>
+      ) : null}
+    </div>
+  );
+
   return (
     <AdminLayout>
       <div className="space-y-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-2xl font-bold">Google Ranking & Indexering</h1>
-            <p className="text-muted-foreground">Volg je Google-posities en indexeringsstatus</p>
+            <h1 className="text-2xl font-bold">Google Ranking & Traffic</h1>
+            <p className="text-muted-foreground">Volg je posities, bezoekers en affiliate klikken</p>
           </div>
-          <Button onClick={handleFetchConsole} disabled={fetchingConsole}>
-            <RefreshCw className={`mr-2 h-4 w-4 ${fetchingConsole ? "animate-spin" : ""}`} />
-            Search Console ophalen
-          </Button>
+          <div className="flex gap-2">
+            {mainTab === "ranking" && (
+              <Button onClick={handleFetchConsole} disabled={fetchingConsole}>
+                <RefreshCw className={`mr-2 h-4 w-4 ${fetchingConsole ? "animate-spin" : ""}`} />
+                Search Console ophalen
+              </Button>
+            )}
+          </div>
         </div>
 
-        {viewMode === "overview" && renderOverview()}
-        {viewMode === "top-pages" && renderUrlTable(topPages, "Top 10 Pagina's in Google")}
-        {viewMode === "all-clicks" && renderUrlTable(allByClicks, "Pagina's gesorteerd op Klikken")}
-        {viewMode === "impressions" && renderUrlTable(allByImpressions, "Pagina's gesorteerd op Impressies")}
-        {viewMode === "indexed" && renderIndexedView()}
-        {viewMode === "detail" && renderDetailView()}
+        <Tabs value={mainTab} onValueChange={(v) => setMainTab(v as MainTab)}>
+          <TabsList>
+            <TabsTrigger value="ranking" className="gap-2">
+              <BarChart3 className="h-4 w-4" /> Ranking
+            </TabsTrigger>
+            <TabsTrigger value="live" className="gap-2">
+              <Activity className="h-4 w-4" /> Live & Traffic
+              {(liveVisitors?.count || 0) > 0 && (
+                <Badge className="ml-1 bg-green-500 text-white text-xs px-1.5 py-0">{liveVisitors?.count}</Badge>
+              )}
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="ranking" className="mt-4">
+            {viewMode === "overview" && renderOverview()}
+            {viewMode === "top-pages" && renderUrlTable(topPages, "Top 10 Pagina's in Google")}
+            {viewMode === "all-clicks" && renderUrlTable(allByClicks, "Pagina's gesorteerd op Klikken")}
+            {viewMode === "impressions" && renderUrlTable(allByImpressions, "Pagina's gesorteerd op Impressies")}
+            {viewMode === "indexed" && renderIndexedView()}
+            {viewMode === "detail" && renderDetailView()}
+          </TabsContent>
+
+          <TabsContent value="live" className="mt-4">
+            {renderLiveView()}
+          </TabsContent>
+        </Tabs>
       </div>
     </AdminLayout>
   );
