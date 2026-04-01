@@ -18,6 +18,14 @@ export const usePageTracking = () => {
   useEffect(() => {
     const fullPath = location.pathname + location.search;
     if (fullPath === lastPath.current) return;
+
+    // Skip admin pages, preview params, and Lovable internal routes
+    if (
+      location.pathname.startsWith("/admin") ||
+      location.search.includes("forceHideBadge") ||
+      location.pathname.includes("lovable")
+    ) return;
+
     lastPath.current = fullPath;
 
     const sessionId = getSessionId();
