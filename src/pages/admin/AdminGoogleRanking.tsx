@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import AdminLayout from "./AdminLayout";
@@ -10,16 +10,18 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, BarChart, Bar, PieChart, Pie, Cell } from "recharts";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, BarChart, Bar, PieChart, Pie, Cell, AreaChart, Area } from "recharts";
 import {
   Search, TrendingUp, TrendingDown, Minus, Globe, RefreshCw, BarChart3,
-  MousePointerClick, Eye, Target, ArrowLeft, ExternalLink, Award, Percent
+  MousePointerClick, Eye, Target, ArrowLeft, ExternalLink, Award, Percent,
+  Users, Activity, Zap, Clock
 } from "lucide-react";
-import { format } from "date-fns";
+import { format, subHours, subMinutes } from "date-fns";
 import { nl } from "date-fns/locale";
 import { toast } from "sonner";
 
 type ViewMode = "overview" | "top-pages" | "all-clicks" | "impressions" | "indexed" | "detail";
+type MainTab = "ranking" | "live";
 
 const COLORS = [
   "hsl(var(--primary))", "hsl(142, 76%, 36%)", "hsl(217, 91%, 60%)",
