@@ -43,6 +43,7 @@ import {
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useRecentlyViewed } from "@/hooks/useRecentlyViewed";
+import { trackDaisyconClick } from "@/hooks/usePageTracking";
 import MortgageCalculator from "@/components/properties/MortgageCalculator";
 import { cn } from "@/lib/utils";
 import { cityPath } from "@/lib/cities";
@@ -746,11 +747,12 @@ const PropertyDetail = () => {
 
                     {/* Primary CTA */}
                     {sourceInfo.source_url ? (
-                      <Button asChild className="w-full" size="lg">
-                        <a href={sourceInfo.source_url} target="_blank" rel="noopener noreferrer">
-                          <ExternalLink className="mr-2 h-4 w-4" />
-                          Reageer op deze woning
-                        </a>
+                      <Button className="w-full" size="lg" onClick={() => {
+                        trackDaisyconClick(property.id, sourceInfo.source_url!, sourceInfo.source_site || null);
+                        window.open(sourceInfo.source_url!, "_blank", "noopener,noreferrer");
+                      }}>
+                        <ExternalLink className="mr-2 h-4 w-4" />
+                        Reageer op deze woning
                       </Button>
                     ) : (
                       <Dialog open={contactOpen} onOpenChange={setContactOpen}>
@@ -818,11 +820,12 @@ const PropertyDetail = () => {
                         </div>
                       </div>
                       {sourceInfo.source_url && (
-                        <Button asChild variant="outline" className="mt-3 w-full" size="sm">
-                          <a href={sourceInfo.source_url} target="_blank" rel="noopener noreferrer">
-                            <ExternalLink className="mr-2 h-3.5 w-3.5" />
-                            Bekijk bij {sourceMeta?.label || sourceInfo.source_site}
-                          </a>
+                        <Button variant="outline" className="mt-3 w-full" size="sm" onClick={() => {
+                          trackDaisyconClick(property.id, sourceInfo.source_url!, sourceInfo.source_site || null);
+                          window.open(sourceInfo.source_url!, "_blank", "noopener,noreferrer");
+                        }}>
+                          <ExternalLink className="mr-2 h-3.5 w-3.5" />
+                          Bekijk bij {sourceMeta?.label || sourceInfo.source_site}
                         </Button>
                       )}
                     </CardContent>

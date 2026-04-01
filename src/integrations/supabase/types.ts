@@ -226,6 +226,44 @@ export type Database = {
         }
         Relationships: []
       }
+      daisycon_clicks: {
+        Row: {
+          created_at: string
+          id: string
+          page_url: string | null
+          property_id: string | null
+          session_id: string | null
+          source_site: string | null
+          source_url: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          page_url?: string | null
+          property_id?: string | null
+          session_id?: string | null
+          source_site?: string | null
+          source_url: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          page_url?: string | null
+          property_id?: string | null
+          session_id?: string | null
+          source_site?: string | null
+          source_url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "daisycon_clicks_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       daisycon_feeds: {
         Row: {
           created_at: string
@@ -605,6 +643,33 @@ export type Database = {
           pros?: string | null
           rating?: number
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      page_views: {
+        Row: {
+          created_at: string
+          id: string
+          page_url: string
+          referrer: string | null
+          session_id: string
+          user_agent: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          page_url: string
+          referrer?: string | null
+          session_id: string
+          user_agent?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          page_url?: string
+          referrer?: string | null
+          session_id?: string
+          user_agent?: string | null
         }
         Relationships: []
       }
