@@ -48,9 +48,12 @@ const AdminGoogleRanking = () => {
         .gte("created_at", fiveMinAgo)
         .order("created_at", { ascending: false }) as any;
       if (error) throw error;
-      // Group by session
+      // Filter out admin/preview pages
+      const filtered = (data || []).filter((pv: any) =>
+        !pv.page_url.startsWith("/admin") && !pv.page_url.includes("forceHideBadge")
+      );
       const sessions: Record<string, { pages: string[]; lastSeen: string }> = {};
-      for (const pv of (data || [])) {
+      for (const pv of filtered) {
         if (!sessions[pv.session_id]) sessions[pv.session_id] = { pages: [], lastSeen: pv.created_at };
         sessions[pv.session_id].pages.push(pv.page_url);
       }
