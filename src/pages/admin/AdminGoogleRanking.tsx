@@ -974,6 +974,34 @@ const AdminGoogleRanking = () => {
         </Card>
       </div>
 
+      {/* Visitor Map */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <MapPin className="h-4 w-4 text-green-500" />
+            Bezoekers op de kaart
+          </CardTitle>
+          <CardDescription>
+            {visitorMarkers.length > 0
+              ? `${visitorMarkers.reduce((s, v) => s + v.count, 0)} bezoekers in ${visitorMarkers.length} steden`
+              : "Bezoekers worden getoond op basis van de stadspagina die ze bekijken"}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div ref={mapContainerRef} className="h-[400px] w-full rounded-lg border" style={{ zIndex: 0 }} />
+          {visitorMarkers.length > 0 && (
+            <div className="mt-3 flex flex-wrap gap-2">
+              {visitorMarkers.map((m) => (
+                <Badge key={m.city} variant="secondary" className="gap-1">
+                  <span className="h-2 w-2 rounded-full bg-green-500 inline-block" />
+                  {m.city.replace(/-/g, " ").replace(/\b\w/g, l => l.toUpperCase())} ({m.count})
+                </Badge>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       {/* Active pages */}
       {activePages.length > 0 && (
         <Card>
