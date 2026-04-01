@@ -747,11 +747,12 @@ const PropertyDetail = () => {
 
                     {/* Primary CTA */}
                     {sourceInfo.source_url ? (
-                      <Button asChild className="w-full" size="lg">
-                        <a href={sourceInfo.source_url} target="_blank" rel="noopener noreferrer">
-                          <ExternalLink className="mr-2 h-4 w-4" />
-                          Reageer op deze woning
-                        </a>
+                      <Button className="w-full" size="lg" onClick={() => {
+                        trackDaisyconClick(property.id, sourceInfo.source_url!, sourceInfo.source_site || null);
+                        window.open(sourceInfo.source_url!, "_blank", "noopener,noreferrer");
+                      }}>
+                        <ExternalLink className="mr-2 h-4 w-4" />
+                        Reageer op deze woning
                       </Button>
                     ) : (
                       <Dialog open={contactOpen} onOpenChange={setContactOpen}>
