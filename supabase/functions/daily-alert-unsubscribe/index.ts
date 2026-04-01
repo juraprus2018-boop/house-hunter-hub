@@ -34,10 +34,11 @@ Deno.serve(async (req) => {
       });
     }
 
+    // The unsubscribe link uses subscriber.id as the token
     const { data: existing, error: findError } = await supabase
       .from("daily_alert_subscribers")
       .select("id, is_active")
-      .eq("unsubscribe_token", tokenValue)
+      .eq("id", tokenValue)
       .maybeSingle();
 
     if (findError) throw findError;
