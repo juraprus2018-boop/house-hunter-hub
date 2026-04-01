@@ -20,6 +20,7 @@ import { format, subHours, subMinutes } from "date-fns";
 import { nl } from "date-fns/locale";
 import { toast } from "sonner";
 import L from "leaflet";
+import "leaflet/dist/leaflet.css";
 
 type ViewMode = "overview" | "top-pages" | "all-clicks" | "impressions" | "indexed" | "detail";
 type MainTab = "ranking" | "live";
