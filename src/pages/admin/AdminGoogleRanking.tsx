@@ -138,6 +138,112 @@ const AdminGoogleRanking = () => {
     return Object.entries(counts).map(([url, count]) => ({ url, count })).sort((a, b) => b.count - a.count);
   }, [liveVisitors]);
 
+  // City coordinates for the visitor map
+  const CITY_COORDS: Record<string, [number, number]> = {
+    amsterdam: [52.3676, 4.9041], rotterdam: [51.9225, 4.4792], utrecht: [52.0907, 5.1214],
+    "den-haag": [52.0705, 4.3007], eindhoven: [51.4416, 5.4697], groningen: [53.2194, 6.5665],
+    tilburg: [51.5555, 5.0913], almere: [52.3508, 5.2647], breda: [51.5719, 4.7683],
+    nijmegen: [51.8126, 5.8372], arnhem: [51.9851, 5.8987], haarlem: [52.3874, 4.6462],
+    enschede: [52.2215, 6.8937], apeldoorn: [52.2112, 5.9699], amersfoort: [52.1561, 5.3878],
+    zaanstad: [52.4389, 4.8267], "s-hertogenbosch": [51.6978, 5.3037], zwolle: [52.5168, 6.0830],
+    leiden: [52.1601, 4.4970], maastricht: [50.8514, 5.6910], dordrecht: [51.8133, 4.6901],
+    zoetermeer: [52.0575, 4.4931], deventer: [52.2554, 6.1603], delft: [52.0116, 4.3571],
+    leeuwarden: [53.2012, 5.7999], alkmaar: [52.6324, 4.7534], hilversum: [52.2292, 5.1669],
+    heerlen: [50.8882, 5.9795], oss: [51.7652, 5.5183], roosendaal: [51.5309, 4.4655],
+    venlo: [51.3704, 6.1724], helmond: [51.4816, 5.6614], vlaardingen: [51.9128, 4.3410],
+    gouda: [52.0115, 4.7106], leidschendam: [52.0854, 4.3987], purmerend: [52.5054, 4.9571],
+    schiedam: [51.9173, 4.3895], spijkenisse: [51.8451, 4.3291], capelle: [51.9291, 4.5781],
+    veenendaal: [52.0269, 5.5552], zeist: [52.0891, 5.2310], ede: [52.0480, 5.6641],
+    hoorn: [52.6428, 5.0596], harderwijk: [52.3416, 5.6200], alphen: [52.1287, 4.6571],
+    kampen: [52.5555, 5.9115], middelburg: [51.4988, 3.6136], vlissingen: [51.4427, 3.5727],
+    den-bosch: [51.6978, 5.3037], "the-hague": [52.0705, 4.3007],
+  };
+
+  // Extract city markers from active page URLs
+  const visitorMarkers = useMemo(() => {
+    if (!activePages.length) return [];
+    const cityVisitors: Record<string, number> = {};
+    for (const p of activePages) {
+      const url = p.url.toLowerCase();
+      // Match patterns: /woningen-{city}, /huurwoningen/{city}, /koopwoningen/{city}, /appartementen/{city}, etc.
+      const patterns = [
+        /\/woningen-([a-z-]+)/,
+        /\/huurwoningen\/([a-z-]+)/,
+        /\/koopwoningen\/([a-z-]+)/,
+        /\/appartementen\/([a-z-]+)/,
+        /\/huizen\/([a-z-]+)/,
+        /\/studios\/([a-z-]+)/,
+        /\/kamers\/([a-z-]+)/,
+        /\/nieuw-aanbod\/([a-z-]+)/,
+        /\/huurprijzen\/([a-z-]+)/,
+        /\/wijk\/([a-z-]+)\//,
+      ];
+      for (const pat of patterns) {
+        const m = url.match(pat);
+        if (m && m[1]) {
+          const city = m[1];
+          cityVisitors[city] = (cityVisitors[city] || 0) + p.count;
+          break;
+        }
+      }
+    }
+    return Object.entries(cityVisitors)
+      .filter(([city]) => CITY_COORDS[city])
+      .map(([city, count]) => ({ city, count, coords: CITY_COORDS[city] }));
+  }, [activePages]);
+
+  // Leaflet map ref
+  const mapContainerRef = useRef<HTMLDivElement>(null);
+  const mapInstanceRef = useRef<L.Map | null>(null);
+
+  useEffect(() => {
+    if (mainTab !== "live" || !mapContainerRef.current) return;
+
+    if (!mapInstanceRef.current) {
+      mapInstanceRef.current = L.map(mapContainerRef.current, {
+        center: [52.1326, 5.2913],
+        zoom: 7,
+        zoomControl: true,
+        scrollWheelZoom: false,
+        maxBounds: [[50.5, 3.0], [53.7, 7.5]],
+      });
+      L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>',
+      }).addTo(mapInstanceRef.current);
+    }
+
+    const map = mapInstanceRef.current;
+    // Clear existing markers
+    map.eachLayer((layer) => {
+      if (layer instanceof L.CircleMarker) map.removeLayer(layer);
+    });
+
+    // Add visitor markers
+    for (const m of visitorMarkers) {
+      const radius = Math.min(8 + m.count * 4, 25);
+      L.circleMarker(m.coords, {
+        radius,
+        fillColor: "#22c55e",
+        color: "#16a34a",
+        weight: 2,
+        opacity: 0.9,
+        fillOpacity: 0.6,
+      })
+        .bindPopup(`<strong>${m.city.replace(/-/g, " ").replace(/\b\w/g, l => l.toUpperCase())}</strong><br/>${m.count} ${m.count === 1 ? "bezoeker" : "bezoekers"}`)
+        .addTo(map);
+    }
+
+    // Also show a general dot at center for visitors without city
+    const totalMapped = visitorMarkers.reduce((s, v) => s + v.count, 0);
+    const totalLive = liveVisitors?.count || 0;
+    const unmapped = totalLive - totalMapped;
+    if (unmapped > 0) {
+      // Don't show unmapped - they just don't have a city page
+    }
+
+    setTimeout(() => map.invalidateSize(), 100);
+  }, [mainTab, visitorMarkers, liveVisitors?.count]);
+
   // Fetch indexing log
   const { data: indexingLog, isLoading: logLoading } = useQuery({
     queryKey: ["google-indexing-log"],
