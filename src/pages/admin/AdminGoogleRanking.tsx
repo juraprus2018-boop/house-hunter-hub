@@ -213,27 +213,35 @@ const AdminGoogleRanking = () => {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
 
+  // Clean up map when leaving live tab
+  useEffect(() => {
+    if (mainTab !== "live" && mapInstanceRef.current) {
+      mapInstanceRef.current.remove();
+      mapInstanceRef.current = null;
+    }
+  }, [mainTab]);
+
   useEffect(() => {
     if (mainTab !== "live" || !mapContainerRef.current) return;
 
-    if (!mapInstanceRef.current) {
-      mapInstanceRef.current = L.map(mapContainerRef.current, {
-        center: [52.1326, 5.2913],
-        zoom: 7,
-        zoomControl: true,
-        scrollWheelZoom: false,
-        maxBounds: [[50.5, 3.0], [53.7, 7.5]],
-      });
-      L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>',
-      }).addTo(mapInstanceRef.current);
+    // Always create a fresh map when entering the live tab
+    if (mapInstanceRef.current) {
+      mapInstanceRef.current.remove();
+      mapInstanceRef.current = null;
     }
 
-    const map = mapInstanceRef.current;
-    // Clear existing markers
-    map.eachLayer((layer) => {
-      if (layer instanceof L.CircleMarker) map.removeLayer(layer);
+    const map = L.map(mapContainerRef.current, {
+      center: [52.1326, 5.2913],
+      zoom: 7,
+      zoomControl: true,
+      scrollWheelZoom: false,
+      maxBounds: [[50.5, 3.0], [53.7, 7.5]],
     });
+    L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>',
+    }).addTo(map);
+
+    mapInstanceRef.current = map;
 
     // Add visitor markers
     for (const m of visitorMarkers) {
@@ -250,15 +258,26 @@ const AdminGoogleRanking = () => {
         .addTo(map);
     }
 
-    // Also show a general dot at center for visitors without city
-    const totalMapped = visitorMarkers.reduce((s, v) => s + v.count, 0);
-    const totalLive = liveVisitors?.count || 0;
-    const unmapped = totalLive - totalMapped;
-    if (unmapped > 0) {
-      // Don't show unmapped - they just don't have a city page
+    // If no city markers found, show all live sessions as a pulsing dot at center
+    if (visitorMarkers.length === 0 && (liveVisitors?.count || 0) > 0) {
+      L.circleMarker([52.1326, 5.2913], {
+        radius: 12,
+        fillColor: "#22c55e",
+        color: "#16a34a",
+        weight: 2,
+        opacity: 0.9,
+        fillOpacity: 0.4,
+      })
+        .bindPopup(`<strong>${liveVisitors?.count} bezoekers</strong><br/>Stad onbekend`)
+        .addTo(map);
     }
 
-    setTimeout(() => map.invalidateSize(), 100);
+    setTimeout(() => map.invalidateSize(), 150);
+
+    return () => {
+      map.remove();
+      mapInstanceRef.current = null;
+    };
   }, [mainTab, visitorMarkers, liveVisitors?.count]);
 
   // Fetch indexing log
