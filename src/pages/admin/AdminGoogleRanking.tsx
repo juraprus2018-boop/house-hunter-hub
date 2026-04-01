@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import AdminLayout from "./AdminLayout";
@@ -14,11 +14,12 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, BarChart, Bar, PieChart, 
 import {
   Search, TrendingUp, TrendingDown, Minus, Globe, RefreshCw, BarChart3,
   MousePointerClick, Eye, Target, ArrowLeft, ExternalLink, Award, Percent,
-  Users, Activity, Zap, Clock
+  Users, Activity, Zap, Clock, MapPin
 } from "lucide-react";
 import { format, subHours, subMinutes } from "date-fns";
 import { nl } from "date-fns/locale";
 import { toast } from "sonner";
+import L from "leaflet";
 
 type ViewMode = "overview" | "top-pages" | "all-clicks" | "impressions" | "indexed" | "detail";
 type MainTab = "ranking" | "live";
