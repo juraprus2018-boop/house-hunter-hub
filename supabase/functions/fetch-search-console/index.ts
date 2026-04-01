@@ -77,6 +77,27 @@ Deno.serve(async (req) => {
 
     const accessToken = tokenData.access_token;
 
+    // First, list available sites to find the correct site URL
+    const sitesRes = await fetch(`${SEARCH_CONSOLE_API}`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    const sitesData = await sitesRes.json();
+    console.log("Available Search Console sites:", JSON.stringify(sitesData));
+
+    // Find the woonpeek site (could be domain property or URL prefix)
+    const woonpeekSite = sitesData.siteEntry?.find((s: any) =>
+      s.siteUrl.includes("woonpeek.nl")
+    );
+
+    if (!woonpeekSite) {
+      throw new Error(
+        `woonpeek.nl not found in Search Console. Available sites: ${JSON.stringify(sitesData.siteEntry?.map((s: any) => s.siteUrl) || [])}`
+      );
+    }
+
+    const siteUrl = woonpeekSite.siteUrl;
+    console.log("Using site URL:", siteUrl);
+
     // Fetch Search Console data for yesterday (data is usually 2-3 days delayed)
     const endDate = new Date();
     endDate.setDate(endDate.getDate() - 1);
@@ -87,7 +108,7 @@ Deno.serve(async (req) => {
 
     // Query Search Console for page+query data
     const searchRes = await fetch(
-      `${SEARCH_CONSOLE_API}/${encodeURIComponent(SITE_URL)}/searchAnalytics/query`,
+      `${SEARCH_CONSOLE_API}/${encodeURIComponent(siteUrl)}/searchAnalytics/query`,
       {
         method: "POST",
         headers: {
