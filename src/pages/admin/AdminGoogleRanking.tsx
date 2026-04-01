@@ -35,6 +35,102 @@ const AdminGoogleRanking = () => {
   const [selectedKeyword, setSelectedKeyword] = useState<string | null>(null);
   const [fetchingConsole, setFetchingConsole] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>("overview");
+  const [mainTab, setMainTab] = useState<MainTab>("ranking");
+
+  // Live stats: page views last 5 min
+  const { data: liveVisitors } = useQuery({
+    queryKey: ["live-visitors"],
+    queryFn: async () => {
+      const fiveMinAgo = subMinutes(new Date(), 5).toISOString();
+      const { data, error } = await supabase
+        .from("page_views")
+        .select("session_id, page_url, created_at")
+        .gte("created_at", fiveMinAgo)
+        .order("created_at", { ascending: false }) as any;
+      if (error) throw error;
+      // Group by session
+      const sessions: Record<string, { pages: string[]; lastSeen: string }> = {};
+      for (const pv of (data || [])) {
+        if (!sessions[pv.session_id]) sessions[pv.session_id] = { pages: [], lastSeen: pv.created_at };
+        sessions[pv.session_id].pages.push(pv.page_url);
+      }
+      return { count: Object.keys(sessions).length, sessions };
+    },
+    refetchInterval: 15000,
+  });
+
+  // 24h stats
+  const { data: stats24h } = useQuery({
+    queryKey: ["stats-24h"],
+    queryFn: async () => {
+      const dayAgo = subHours(new Date(), 24).toISOString();
+      const [pvRes, clickRes] = await Promise.all([
+        supabase.from("page_views").select("session_id, page_url, created_at").gte("created_at", dayAgo).order("created_at", { ascending: false }).limit(5000) as any,
+        supabase.from("daisycon_clicks").select("*").gte("created_at", dayAgo).order("created_at", { ascending: false }).limit(1000) as any,
+      ]);
+      if (pvRes.error) throw pvRes.error;
+      if (clickRes.error) throw clickRes.error;
+
+      const pageViews = pvRes.data || [];
+      const clicks = clickRes.data || [];
+      const uniqueSessions = new Set(pageViews.map((p: any) => p.session_id)).size;
+
+      // Top pages
+      const pageCounts: Record<string, number> = {};
+      for (const pv of pageViews) {
+        pageCounts[pv.page_url] = (pageCounts[pv.page_url] || 0) + 1;
+      }
+      const topPages24h = Object.entries(pageCounts)
+        .map(([url, views]) => ({ url, views }))
+        .sort((a, b) => b.views - a.views)
+        .slice(0, 20);
+
+      // Hourly chart
+      const hourly: Record<string, { views: number; clicks: number }> = {};
+      for (let i = 23; i >= 0; i--) {
+        const h = format(subHours(new Date(), i), "HH:00");
+        hourly[h] = { views: 0, clicks: 0 };
+      }
+      for (const pv of pageViews) {
+        const h = format(new Date(pv.created_at), "HH:00");
+        if (hourly[h]) hourly[h].views++;
+      }
+      for (const c of clicks) {
+        const h = format(new Date(c.created_at), "HH:00");
+        if (hourly[h]) hourly[h].clicks++;
+      }
+      const hourlyChart = Object.entries(hourly).map(([hour, d]) => ({ hour, ...d }));
+
+      // Click sources
+      const sourceCounts: Record<string, number> = {};
+      for (const c of clicks) {
+        const src = c.source_site || "Onbekend";
+        sourceCounts[src] = (sourceCounts[src] || 0) + 1;
+      }
+
+      return {
+        totalViews: pageViews.length,
+        uniqueSessions,
+        totalClicks: clicks.length,
+        topPages: topPages24h,
+        hourlyChart,
+        clicks,
+        sourceCounts: Object.entries(sourceCounts).map(([name, value]) => ({ name, value })),
+      };
+    },
+    refetchInterval: 30000,
+  });
+
+  // Active pages (last 5 min)
+  const activePages = useMemo(() => {
+    if (!liveVisitors?.sessions) return [];
+    const counts: Record<string, number> = {};
+    for (const s of Object.values(liveVisitors.sessions)) {
+      const latestPage = s.pages[0];
+      counts[latestPage] = (counts[latestPage] || 0) + 1;
+    }
+    return Object.entries(counts).map(([url, count]) => ({ url, count })).sort((a, b) => b.count - a.count);
+  }, [liveVisitors]);
 
   // Fetch indexing log
   const { data: indexingLog, isLoading: logLoading } = useQuery({
