@@ -1,4 +1,4 @@
-const CACHE_NAME = "woonpeek-v1";
+const CACHE_NAME = "woonpeek-v2";
 const STATIC_ASSETS = [
   "/favicon.png",
   "/placeholder.svg",
@@ -22,7 +22,7 @@ self.addEventListener("activate", (event) => {
   self.clients.claim();
 });
 
-// Fetch: stale-while-revalidate for static assets, network-first for API
+// Fetch: cache media assets only, keep app code network-driven to avoid stale bundles
 self.addEventListener("fetch", (event) => {
   const { request } = event;
   const url = new URL(request.url);
@@ -31,12 +31,10 @@ self.addEventListener("fetch", (event) => {
   if (request.method !== "GET") return;
   if (url.hostname.includes("supabase")) return;
 
-  // For static assets (images, fonts, CSS, JS): cache-first
+  // For media assets: cache-first
   if (
     request.destination === "image" ||
-    request.destination === "font" ||
-    request.destination === "style" ||
-    request.destination === "script"
+    request.destination === "font"
   ) {
     event.respondWith(
       caches.match(request).then((cached) => {

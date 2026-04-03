@@ -4,7 +4,6 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate, useLocation, useParams } from "react-router-dom";
 import ScrollToTop from "@/components/ScrollToTop";
-import { PageTracker } from "@/components/PageTracker";
 import { AuthProvider } from "@/contexts/AuthContext";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
@@ -61,6 +60,7 @@ import CityComparePage from "./pages/CityComparePage";
 import HuurprijsMonitor from "./pages/HuurprijsMonitor";
 import CookieConsent from "@/components/CookieConsent";
 import { cityPath } from "@/lib/cities";
+import { usePageTracking } from "@/hooks/usePageTracking";
 
 const queryClient = new QueryClient();
 
@@ -74,6 +74,11 @@ const LegacyCityRedirect = () => {
   return <Navigate to={`${cityPath(city)}${location.search}`} replace />;
 };
 
+const RouterSideEffects = () => {
+  usePageTracking();
+  return <ScrollToTop />;
+};
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
@@ -81,8 +86,7 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
-          <ScrollToTop />
-          <PageTracker />
+          <RouterSideEffects />
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/inloggen" element={<Login />} />
