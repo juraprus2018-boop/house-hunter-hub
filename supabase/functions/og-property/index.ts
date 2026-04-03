@@ -58,10 +58,11 @@ Deno.serve(async (req) => {
   }).format(property.price);
   const priceLabel = property.listing_type === "huur" ? `${priceFormatted} p/m` : priceFormatted;
 
-  const title = `${property.title} - ${priceLabel}`;
+  const title = `${property.title} - ${priceLabel} | WoonPeek`;
   const descParts = [`${property.street} ${property.house_number}, ${property.city}`];
   if (property.surface_area) descParts.push(`${property.surface_area} m²`);
   if (property.bedrooms) descParts.push(`${property.bedrooms} slaapkamer${property.bedrooms > 1 ? "s" : ""}`);
+  descParts.push(`Bekijk op WoonPeek`);
   const description = descParts.join(" • ");
 
   const html = `<!DOCTYPE html>
