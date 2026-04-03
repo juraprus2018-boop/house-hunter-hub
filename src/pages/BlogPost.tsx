@@ -10,6 +10,7 @@ import { useBlogPost } from "@/hooks/useBlog";
 import { Button } from "@/components/ui/button";
 import { Loader2, ArrowLeft, Calendar } from "lucide-react";
 import BlogRelatedLinks from "@/components/blog/BlogRelatedLinks";
+import BlogRelatedPosts from "@/components/blog/BlogRelatedPosts";
 import bannerBlog from "@/assets/banner-blog.jpg";
 
 function cleanBlogHtml(html: string): string {
