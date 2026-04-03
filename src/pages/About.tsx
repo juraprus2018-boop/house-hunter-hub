@@ -238,6 +238,27 @@ const About = () => {
             </div>
           </div>
         </section>
+
+        {/* FAQ */}
+        <section className="border-t bg-muted/30 py-16 md:py-20">
+          <div className="container max-w-3xl">
+            <h2 className="font-display text-center text-2xl font-bold text-foreground md:text-3xl mb-8">
+              Veelgestelde vragen over WoonPeek
+            </h2>
+            <div className="space-y-6">
+              {ABOUT_FAQ.map((item, i) => (
+                <div key={i} className="rounded-lg border bg-card p-6">
+                  <h3 className="font-display text-lg font-semibold text-foreground">
+                    {item.question}
+                  </h3>
+                  <p className="mt-2 leading-relaxed text-muted-foreground">
+                    {item.answer}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
       </main>
       <Footer />
     </div>

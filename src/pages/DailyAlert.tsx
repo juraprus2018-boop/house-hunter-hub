@@ -1,9 +1,29 @@
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import PageBanner from "@/components/layout/PageBanner";
+import Breadcrumbs from "@/components/seo/Breadcrumbs";
 import DailyAlertSection from "@/components/home/DailyAlertSection";
 import SEOHead from "@/components/seo/SEOHead";
 import bannerAlert from "@/assets/banner-alert.jpg";
+
+const ALERT_FAQ = [
+  {
+    question: "Hoe vaak ontvang ik een woningalert?",
+    answer: "Je ontvangt maximaal één e-mail per dag, na onze automatische scan van alle bronnen. Geen spam, alleen relevant aanbod.",
+  },
+  {
+    question: "Kan ik de alert filteren op stad?",
+    answer: "Ja, je kunt bij het inschrijven een stad kiezen zodat je alleen woningen uit die regio ontvangt.",
+  },
+  {
+    question: "Hoe schrijf ik me uit voor de alert?",
+    answer: "In elke alert-e-mail staat een uitschrijflink. Eén klik en je bent direct afgemeld.",
+  },
+  {
+    question: "Is de dagelijkse alert gratis?",
+    answer: "Ja, de dagelijkse woningalert is volledig gratis. Er zijn geen kosten aan verbonden.",
+  },
+];
 
 const DailyAlert = () => {
   return (
