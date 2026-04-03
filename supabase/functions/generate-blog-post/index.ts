@@ -489,6 +489,7 @@ Zorg dat het artikel actueel aanvoelt, praktische tips bevat, en relevant is voo
             "Koopmarkt analyse": ["#koopwoning", "#hypotheek", "#huizenprijzen"],
             "Woningmarkt nieuws": ["#woningtekort", "#nieuwbouw", "#woningmarktnieuws"],
             "Actueel woningmarkt nieuws": ["#breaking", "#woningmarktnieuws", "#actueel"],
+            "Populaire zoekopdrachten": ["#woningzoeken", "#woningtips", "#huizenzoeken"],
             "Wonen & lifestyle": ["#verhuizen", "#woontrends", "#lifestyle"],
             "Juridisch & financieel": ["#huurrecht", "#belasting", "#financieel"],
             "Duurzaamheid": ["#duurzaam", "#energielabel", "#verduurzaming"],
