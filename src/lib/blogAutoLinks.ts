@@ -24,6 +24,14 @@ const CITY_LINKS: Record<string, string> = {
   Leeuwarden: "/woningen-leeuwarden",
   Zwolle: "/woningen-zwolle",
   Enschede: "/woningen-enschede",
+  Apeldoorn: "/woningen-apeldoorn",
+  Hilversum: "/woningen-hilversum",
+  Dordrecht: "/woningen-dordrecht",
+  Zaandam: "/woningen-zaandam",
+  Zoetermeer: "/woningen-zoetermeer",
+  "Den Bosch": "/woningen-den-bosch",
+  Roosendaal: "/woningen-roosendaal",
+  Alkmaar: "/woningen-alkmaar",
 };
 
 const KEYWORD_LINKS: Record<string, string> = {
@@ -32,6 +40,18 @@ const KEYWORD_LINKS: Record<string, string> = {
   appartementen: "/appartementen",
   "dagelijkse alert": "/dagelijkse-alert",
   woningalert: "/dagelijkse-alert",
+  "nieuw aanbod": "/nieuw-aanbod",
+  "woningen zoeken": "/zoeken",
+  "woning zoeken": "/zoeken",
+  huurwoning: "/huurwoningen",
+  koopwoning: "/koopwoningen",
+  kamers: "/kamers",
+  "studio huren": "/studios",
+  "huis kopen": "/koopwoningen",
+  "huis huren": "/huurwoningen",
+  woningmarkt: "/blog",
+  "budget tool": "/budget-tool",
+  huurprijsmonitor: "/huurprijsmonitor",
 };
 
 /**

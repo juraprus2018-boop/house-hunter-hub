@@ -136,7 +136,41 @@ const Footer = () => {
           </div>
         </div>
 
-        <div className="mt-12 border-t pt-6">
+        {/* Popular cities row for SEO crawlability */}
+        <div className="mt-8 border-t pt-6">
+          <h4 className="font-display text-sm font-semibold mb-3">Woningen per stad</h4>
+          <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+            {[
+              { label: "Amsterdam", href: "/woningen-amsterdam" },
+              { label: "Rotterdam", href: "/woningen-rotterdam" },
+              { label: "Utrecht", href: "/woningen-utrecht" },
+              { label: "Den Haag", href: "/woningen-den-haag" },
+              { label: "Eindhoven", href: "/woningen-eindhoven" },
+              { label: "Groningen", href: "/woningen-groningen" },
+              { label: "Tilburg", href: "/woningen-tilburg" },
+              { label: "Almere", href: "/woningen-almere" },
+              { label: "Breda", href: "/woningen-breda" },
+              { label: "Nijmegen", href: "/woningen-nijmegen" },
+              { label: "Arnhem", href: "/woningen-arnhem" },
+              { label: "Haarlem", href: "/woningen-haarlem" },
+              { label: "Leiden", href: "/woningen-leiden" },
+              { label: "Maastricht", href: "/woningen-maastricht" },
+              { label: "Delft", href: "/woningen-delft" },
+              { label: "Zwolle", href: "/woningen-zwolle" },
+              { label: "Apeldoorn", href: "/woningen-apeldoorn" },
+              { label: "Amersfoort", href: "/woningen-amersfoort" },
+            ].map((city) => (
+              <Link key={city.href} to={city.href} className="transition-colors hover:text-foreground">
+                {city.label}
+              </Link>
+            ))}
+            <Link to="/steden" className="text-primary transition-colors hover:text-primary/80">
+              Alle steden →
+            </Link>
+          </div>
+        </div>
+
+        <div className="mt-6 border-t pt-6">
           <p className="text-center text-sm text-muted-foreground">
             © {new Date().getFullYear()} WoonPeek. Alle rechten voorbehouden.
           </p>

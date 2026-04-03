@@ -10,16 +10,18 @@ const SEOContentSection = () => {
           </h2>
           <p>
             Op zoek naar een <strong>woning</strong> in Nederland? WoonPeek verzamelt dagelijks het
-            nieuwste aanbod van <strong>huurwoningen</strong>, <strong>appartementen</strong>,
-            studio's en koopwoningen uit heel Nederland op één overzichtelijke plek. Of je nu een
-            starter bent die een eerste <strong>huurwoning</strong> zoekt, een gezin dat een ruimer
-            huis wil kopen, of een student op zoek naar een betaalbare kamer: bij WoonPeek vind je
+            nieuwste aanbod van <Link to="/huurwoningen" className="text-primary hover:underline">huurwoningen</Link>,{" "}
+            <Link to="/appartementen" className="text-primary hover:underline">appartementen</Link>,
+            studio's en <Link to="/koopwoningen" className="text-primary hover:underline">koopwoningen</Link> uit heel Nederland op één overzichtelijke plek. Of je nu een
+            starter bent die een eerste huurwoning zoekt, een gezin dat een ruimer
+            huis wil kopen, of een student op zoek naar een betaalbare{" "}
+            <Link to="/kamers" className="text-primary hover:underline">kamer</Link>: bij WoonPeek vind je
             snel wat je zoekt.
           </p>
           <p>
             We doorzoeken meerdere betrouwbare bronnen en combineren het aanbod zodat je geen enkele
             kans mist. Filter op stad, prijs, woningtype en aantal slaapkamers om direct de meest
-            relevante <strong>woningen in Nederland</strong> te vinden. Populaire zoeksteden zijn
+            relevante <Link to="/zoeken" className="text-primary hover:underline">woningen in Nederland</Link> te vinden. Populaire zoeksteden zijn
             onder andere{" "}
             <Link to="/woningen-amsterdam" className="text-primary hover:underline">
               Amsterdam
@@ -40,12 +42,27 @@ const SEOContentSection = () => {
             <Link to="/woningen-eindhoven" className="text-primary hover:underline">
               Eindhoven
             </Link>
-            .
+            . Bekijk het volledige overzicht op onze{" "}
+            <Link to="/steden" className="text-primary hover:underline">
+              stedenpagina
+            </Link>.
           </p>
           <p>
-            Met onze gratis dagelijkse alert ontvang je automatisch een e-mail wanneer er nieuwe{" "}
-            <strong>woningen</strong> beschikbaar komen. Sla je favorieten op, vergelijk prijzen en
-            reageer sneller dan anderen op de krappe woningmarkt. Start vandaag nog met{" "}
+            Met onze gratis{" "}
+            <Link to="/dagelijkse-alert" className="text-primary hover:underline">dagelijkse alert</Link>{" "}
+            ontvang je automatisch een e-mail wanneer er nieuwe woningen beschikbaar komen. Bekijk ook het{" "}
+            <Link to="/nieuw-aanbod" className="text-primary hover:underline">nieuw aanbod van vandaag</Link>{" "}
+            of gebruik de{" "}
+            <Link to="/budget-tool" className="text-primary hover:underline">budget tool</Link>{" "}
+            om te berekenen wat je kunt besteden. Sla je favorieten op, vergelijk prijzen en
+            reageer sneller dan anderen op de krappe woningmarkt.
+          </p>
+          <p>
+            Lees onze{" "}
+            <Link to="/blog" className="text-primary hover:underline">blog</Link>{" "}
+            voor tips over woningen zoeken, de woningmarkt en huurprijzen. Of bekijk de{" "}
+            <Link to="/huurprijsmonitor" className="text-primary hover:underline">huurprijsmonitor</Link>{" "}
+            voor actuele huurprijzen per stad. Start vandaag nog met{" "}
             <strong>woning zoeken</strong> via WoonPeek. Het is volledig gratis.
           </p>
         </div>
