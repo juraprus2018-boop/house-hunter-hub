@@ -116,8 +116,16 @@ const About = () => {
               }}
             />
           </div>
-          <div className="container relative py-16 md:py-24">
+           <div className="container relative py-16 md:py-24">
             <div className="mx-auto max-w-3xl text-center">
+              <div className="mb-4">
+                <Breadcrumbs
+                  items={[
+                    { label: "Home", href: "/" },
+                    { label: "Over WoonPeek" },
+                  ]}
+                />
+              </div>
               <h1 className="font-display text-3xl font-bold text-primary-foreground md:text-5xl">
                 Over WoonPeek
               </h1>
