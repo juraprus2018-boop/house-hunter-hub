@@ -110,6 +110,27 @@ const DailyAlert = () => {
             </p>
           </div>
         </section>
+
+        {/* FAQ */}
+        <section className="border-t py-12">
+          <div className="container max-w-3xl">
+            <h2 className="font-display text-2xl font-bold text-foreground mb-6">
+              Veelgestelde vragen over de woningalert
+            </h2>
+            <div className="space-y-4">
+              {ALERT_FAQ.map((item, i) => (
+                <div key={i} className="rounded-lg border bg-card p-6">
+                  <h3 className="font-display text-lg font-semibold text-foreground">
+                    {item.question}
+                  </h3>
+                  <p className="mt-2 leading-relaxed text-muted-foreground">
+                    {item.answer}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
       </main>
       <Footer />
     </div>
