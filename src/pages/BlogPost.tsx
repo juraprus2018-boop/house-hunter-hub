@@ -252,6 +252,8 @@ const BlogPostPage = () => {
             </div>
           </div>
         </article>
+
+        <BlogRelatedLinks />
       </main>
       <Footer />
     </div>

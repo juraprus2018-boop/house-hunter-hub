@@ -507,6 +507,16 @@ const CityPage = () => {
                 <Link to="/dagelijkse-alert" className="text-primary underline hover:no-underline">dagelijkse woningalert</Link>{" "}
                 in en ontvang elke dag het nieuwste aanbod van {cityName} in je inbox. Zo mis je geen enkele nieuwe woning.
               </p>
+
+              <p>
+                Lees ook onze{" "}
+                <Link to="/blog" className="text-primary underline hover:no-underline">blog</Link>{" "}
+                voor tips over woningen zoeken en de woningmarkt. Of gebruik de{" "}
+                <Link to="/budget-tool" className="text-primary underline hover:no-underline">budget tool</Link>{" "}
+                om te berekenen hoeveel huur je kunt betalen. Bekijk daarnaast de{" "}
+                <Link to="/huurprijsmonitor" className="text-primary underline hover:no-underline">huurprijsmonitor</Link>{" "}
+                voor actuele huurprijzen in {cityName} en andere steden.
+              </p>
             </div>
           </div>
         </section>
