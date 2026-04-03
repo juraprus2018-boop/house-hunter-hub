@@ -26,6 +26,16 @@ const ALERT_FAQ = [
 ];
 
 const DailyAlert = () => {
+  const faqLd = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: ALERT_FAQ.map((item) => ({
+      "@type": "Question",
+      name: item.question,
+      acceptedAnswer: { "@type": "Answer", text: item.answer },
+    })),
+  };
+
   return (
     <div className="flex min-h-screen flex-col">
       <SEOHead
@@ -33,10 +43,20 @@ const DailyAlert = () => {
         description="Schrijf je gratis in voor de WoonPeek dagelijkse alert en ontvang elke dag een e-mail met het nieuwste woningaanbod in Nederland."
         canonical="https://www.woonpeek.nl/dagelijkse-alert"
       />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqLd) }}
+      />
       <Header />
       <main className="flex-1">
         <PageBanner image={bannerAlert} alt="Dagelijkse woningalert">
-          <h1 className="font-display text-3xl font-bold text-foreground md:text-4xl">
+          <Breadcrumbs
+            items={[
+              { label: "Home", href: "/" },
+              { label: "Dagelijkse Alert" },
+            ]}
+          />
+          <h1 className="mt-4 font-display text-3xl font-bold text-foreground md:text-4xl">
             Dagelijkse Woningalert
           </h1>
           <p className="mt-2 text-muted-foreground">
