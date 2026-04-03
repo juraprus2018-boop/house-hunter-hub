@@ -429,6 +429,7 @@ Zorg dat het artikel actueel aanvoelt, praktische tips bevat, en relevant is voo
       faq_questions: article.faq_questions || [],
       primary_keyword: article.primary_keyword || "",
       news_based: hasNews,
+      search_query_based: popularSearches.length > 0,
     };
 
     const insertData = {
