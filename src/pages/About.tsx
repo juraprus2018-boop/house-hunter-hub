@@ -98,6 +98,10 @@ const About = () => {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(aboutLd) }}
       />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqLd) }}
+      />
       <Header />
       <main className="flex-1">
         {/* Hero */}
