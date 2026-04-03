@@ -254,6 +254,7 @@ const BlogPostPage = () => {
           </div>
         </article>
 
+        <BlogRelatedPosts currentSlug={slug || ""} />
         <BlogRelatedLinks />
       </main>
       <Footer />
