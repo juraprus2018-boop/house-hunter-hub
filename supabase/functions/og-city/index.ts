@@ -37,7 +37,7 @@ Deno.serve(async (req) => {
   const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
   const supabase = createClient(supabaseUrl, supabaseKey);
 
-  // Get counts and a sample image
+  // Get counts and multiple sample images for a better OG image
   const [huurResult, koopResult, imageResult] = await Promise.all([
     supabase
       .from("properties")
@@ -53,12 +53,12 @@ Deno.serve(async (req) => {
       .eq("listing_type", "koop"),
     supabase
       .from("properties")
-      .select("images")
+      .select("images, price, listing_type, property_type")
       .eq("status", "actief")
       .ilike("city", `%${cityName}%`)
       .not("images", "is", null)
-      .limit(1)
-      .maybeSingle(),
+      .order("created_at", { ascending: false })
+      .limit(5),
   ]);
 
   const huurCount = huurResult.count || 0;
