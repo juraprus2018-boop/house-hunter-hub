@@ -277,15 +277,33 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Step 1: Try to fetch relevant news from nu.nl
+    // Step 1: Fetch popular search queries from database
+    console.log("Fetching popular search queries...");
+    const { data: topQueries } = await supabase
+      .from("search_queries")
+      .select("query, city, listing_type, property_type, count")
+      .order("count", { ascending: false })
+      .limit(20);
+
+    const popularSearches = (topQueries || [])
+      .filter((q: any) => q.city || q.query)
+      .slice(0, 10);
+    console.log(`Found ${popularSearches.length} popular search queries`);
+
+    // Step 2: Try to fetch relevant news from nu.nl
     console.log("Fetching housing news from nu.nl...");
     const newsArticles = await fetchNuNlNews();
     const hasNews = newsArticles.length > 0;
     console.log(`Found ${newsArticles.length} relevant news articles`);
 
-    // Step 2: Build the prompt based on news or fallback topic
+    // Step 3: Build the prompt based on search queries + news or fallback topic
     let userPrompt: string;
     let topicCategory: string;
+
+    // Build search query context for the AI
+    const searchContext = popularSearches.length > 0
+      ? `\n\nPOPULAIRE ZOEKOPDRACHTEN VAN GEBRUIKERS (gebruik deze als inspiratie voor relevante content):\n${popularSearches.map((q: any, i: number) => `${i + 1}. ${q.query || ""} ${q.city ? `in ${q.city}` : ""} ${q.listing_type ? `(${q.listing_type})` : ""} ${q.property_type ? `- ${q.property_type}` : ""} [${q.count}x gezocht]`).join("\n")}`
+      : "";
 
     if (hasNews) {
       topicCategory = "Actueel woningmarkt nieuws";
@@ -296,14 +314,37 @@ Deno.serve(async (req) => {
       userPrompt = `Schrijf een uitgebreid, informatief en SEO-geoptimaliseerd blogartikel gebaseerd op dit ACTUELE nieuws over de woningmarkt:
 
 ${newsContext}
+${searchContext}
 
 BELANGRIJK:
 - Gebruik deze nieuwsberichten als inspiratie en context, maar schrijf een EIGEN uniek artikel
 - Verwijs NIET direct naar nu.nl of andere bronnen met links
 - Combineer de nieuwsfeiten tot een samenhangend verhaal met praktische tips
+- Verwerk de populaire zoekopdrachten van onze gebruikers in het artikel (verwijs naar specifieke steden en zoektermen)
 - Maak het artikel actueel en relevant voor woningzoekers
 - Het is vandaag ${new Date().toLocaleDateString("nl-NL", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
-- Zorg dat de FAQ-vragen relevant zijn bij het actuele nieuws`;
+- Zorg dat de FAQ-vragen relevant zijn bij het actuele nieuws en de populaire zoekopdrachten
+- Gebruik GEEN em-dashes`;
+    } else if (popularSearches.length > 0) {
+      // Use popular search queries as the topic source
+      const topSearch = popularSearches[Math.floor(Math.random() * Math.min(5, popularSearches.length))] as any;
+      const searchTopic = topSearch.city
+        ? `woningen zoeken in ${topSearch.city}${topSearch.listing_type ? ` (${topSearch.listing_type})` : ""}${topSearch.property_type ? ` - ${topSearch.property_type}` : ""}`
+        : topSearch.query || "woningen zoeken in Nederland";
+      topicCategory = "Populaire zoekopdrachten";
+      userPrompt = `Schrijf een uitgebreid, informatief en SEO-geoptimaliseerd blogartikel over: "${searchTopic}".
+
+Dit onderwerp is gebaseerd op wat onze gebruikers het meest zoeken.
+${searchContext}
+
+Het is vandaag ${new Date().toLocaleDateString("nl-NL", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}.
+
+BELANGRIJK:
+- Schrijf specifiek over de steden en woningtypes die gebruikers zoeken
+- Geef concrete tips en advies voor woningzoekers in deze regio's
+- Verwijs naar specifieke prijsranges en beschikbaarheid
+- Maak het praktisch en direct toepasbaar
+- Gebruik GEEN em-dashes`;
     } else {
       const topic = pickTopic();
       topicCategory = topic.category;
@@ -312,7 +353,7 @@ BELANGRIJK:
 Categorie: ${topic.category}.
 Het is vandaag ${new Date().toLocaleDateString("nl-NL", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}.
 
-Zorg dat het artikel actueel aanvoelt, praktische tips bevat, en relevant is voor mensen die actief op zoek zijn naar een woning in Nederland. Gebruik concrete voorbeelden en cijfers waar mogelijk.`;
+Zorg dat het artikel actueel aanvoelt, praktische tips bevat, en relevant is voor mensen die actief op zoek zijn naar een woning in Nederland. Gebruik concrete voorbeelden en cijfers waar mogelijk. Gebruik GEEN em-dashes.`;
     }
 
     // Step 3: Generate the article with AI
@@ -388,6 +429,7 @@ Zorg dat het artikel actueel aanvoelt, praktische tips bevat, en relevant is voo
       faq_questions: article.faq_questions || [],
       primary_keyword: article.primary_keyword || "",
       news_based: hasNews,
+      search_query_based: popularSearches.length > 0,
     };
 
     const insertData = {
@@ -447,6 +489,7 @@ Zorg dat het artikel actueel aanvoelt, praktische tips bevat, en relevant is voo
             "Koopmarkt analyse": ["#koopwoning", "#hypotheek", "#huizenprijzen"],
             "Woningmarkt nieuws": ["#woningtekort", "#nieuwbouw", "#woningmarktnieuws"],
             "Actueel woningmarkt nieuws": ["#breaking", "#woningmarktnieuws", "#actueel"],
+            "Populaire zoekopdrachten": ["#woningzoeken", "#woningtips", "#huizenzoeken"],
             "Wonen & lifestyle": ["#verhuizen", "#woontrends", "#lifestyle"],
             "Juridisch & financieel": ["#huurrecht", "#belasting", "#financieel"],
             "Duurzaamheid": ["#duurzaam", "#energielabel", "#verduurzaming"],

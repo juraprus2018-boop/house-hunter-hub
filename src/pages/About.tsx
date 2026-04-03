@@ -3,7 +3,27 @@ import { Link } from "react-router-dom";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import SEOHead from "@/components/seo/SEOHead";
+import Breadcrumbs from "@/components/seo/Breadcrumbs";
 import { Button } from "@/components/ui/button";
+
+const ABOUT_FAQ = [
+  {
+    question: "Is WoonPeek echt gratis?",
+    answer: "Ja, WoonPeek is 100% gratis. Zoeken, alerts instellen en je eigen woning plaatsen kost niets. Er zijn geen verborgen kosten of abonnementen.",
+  },
+  {
+    question: "Hoe verdient WoonPeek geld?",
+    answer: "WoonPeek verdient geld via samenwerkingen met makelaars en woningplatforms. De kosten worden gedragen door partners, niet door woningzoekers.",
+  },
+  {
+    question: "Hoeveel woningen staan er op WoonPeek?",
+    answer: "WoonPeek heeft dagelijks meer dan 6.000 actieve woningen online uit heel Nederland, afkomstig van meerdere bronnen en makelaars.",
+  },
+  {
+    question: "Kan ik zelf een woning plaatsen op WoonPeek?",
+    answer: "Ja, als particuliere verhuurder of verkoper kun je gratis je woning adverteren op WoonPeek en duizenden woningzoekers bereiken.",
+  },
+];
 
 const stats = [
   { label: "Woningen online", value: "6.000+" },
@@ -54,6 +74,19 @@ const About = () => {
     },
   };
 
+  const faqLd = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: ABOUT_FAQ.map((item) => ({
+      "@type": "Question",
+      name: item.question,
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: item.answer,
+      },
+    })),
+  };
+
   return (
     <div className="flex min-h-screen flex-col">
       <SEOHead
@@ -64,6 +97,10 @@ const About = () => {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(aboutLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqLd) }}
       />
       <Header />
       <main className="flex-1">
@@ -79,8 +116,16 @@ const About = () => {
               }}
             />
           </div>
-          <div className="container relative py-16 md:py-24">
+           <div className="container relative py-16 md:py-24">
             <div className="mx-auto max-w-3xl text-center">
+              <div className="mb-4">
+                <Breadcrumbs
+                  items={[
+                    { label: "Home", href: "/" },
+                    { label: "Over WoonPeek" },
+                  ]}
+                />
+              </div>
               <h1 className="font-display text-3xl font-bold text-primary-foreground md:text-5xl">
                 Over WoonPeek
               </h1>
@@ -190,6 +235,27 @@ const About = () => {
                   </Button>
                 </Link>
               </div>
+            </div>
+          </div>
+        </section>
+
+        {/* FAQ */}
+        <section className="border-t bg-muted/30 py-16 md:py-20">
+          <div className="container max-w-3xl">
+            <h2 className="font-display text-center text-2xl font-bold text-foreground md:text-3xl mb-8">
+              Veelgestelde vragen over WoonPeek
+            </h2>
+            <div className="space-y-6">
+              {ABOUT_FAQ.map((item, i) => (
+                <div key={i} className="rounded-lg border bg-card p-6">
+                  <h3 className="font-display text-lg font-semibold text-foreground">
+                    {item.question}
+                  </h3>
+                  <p className="mt-2 leading-relaxed text-muted-foreground">
+                    {item.answer}
+                  </p>
+                </div>
+              ))}
             </div>
           </div>
         </section>

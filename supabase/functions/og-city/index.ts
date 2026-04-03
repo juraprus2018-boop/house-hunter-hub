@@ -37,7 +37,7 @@ Deno.serve(async (req) => {
   const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
   const supabase = createClient(supabaseUrl, supabaseKey);
 
-  // Get counts and a sample image
+  // Get counts and multiple sample images for a better OG image
   const [huurResult, koopResult, imageResult] = await Promise.all([
     supabase
       .from("properties")
@@ -53,24 +53,37 @@ Deno.serve(async (req) => {
       .eq("listing_type", "koop"),
     supabase
       .from("properties")
-      .select("images")
+      .select("images, price, listing_type, property_type")
       .eq("status", "actief")
       .ilike("city", `%${cityName}%`)
       .not("images", "is", null)
-      .limit(1)
-      .maybeSingle(),
+      .order("created_at", { ascending: false })
+      .limit(5),
   ]);
 
   const huurCount = huurResult.count || 0;
   const koopCount = koopResult.count || 0;
   const totalCount = huurCount + koopCount;
-  const ogImage =
-    imageResult.data?.images?.find((img: string) => img?.trim()) ||
-    `${SITE_URL}/facebook-cover.png`;
+  
+  // Pick best OG image from available properties
+  const allImages = (imageResult.data || [])
+    .flatMap((p: any) => p.images || [])
+    .filter((img: string) => img?.trim() && !img.includes("placeholder"));
+  const ogImage = allImages[0] || `${SITE_URL}/facebook-cover.png`;
+
+  // Build price context for richer description
+  const priceContext = huurCount > 0 && koopCount > 0
+    ? `${huurCount} huurwoningen en ${koopCount} koopwoningen`
+    : huurCount > 0
+    ? `${huurCount} huurwoningen`
+    : `${koopCount} koopwoningen`;
+
+  const now = new Date();
+  const monthYear = now.toLocaleDateString("nl-NL", { month: "long", year: "numeric" });
 
   const pageUrl = `${SITE_URL}/woningen-${citySlug}`;
-  const title = `Huurwoningen & Koopwoningen ${cityName} (${totalCount}) | WoonPeek`;
-  const description = `${huurCount} huurwoningen en ${koopCount} koopwoningen in ${cityName}. Appartementen, huizen en studio's. ✓ Dagelijks bijgewerkt ✓ Gratis alerts`;
+  const title = `Woningen ${cityName} (${totalCount}) | ${monthYear} | WoonPeek`;
+  const description = `${priceContext} in ${cityName}. ✓ Dagelijks bijgewerkt ✓ Gratis alerts ✓ Appartementen, huizen en studio's. Bekijk het aanbod op WoonPeek.`;
 
   const html = `<!DOCTYPE html>
 <html lang="nl">
