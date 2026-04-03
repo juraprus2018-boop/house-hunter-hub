@@ -3,7 +3,27 @@ import { Link } from "react-router-dom";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import SEOHead from "@/components/seo/SEOHead";
+import Breadcrumbs from "@/components/seo/Breadcrumbs";
 import { Button } from "@/components/ui/button";
+
+const ABOUT_FAQ = [
+  {
+    question: "Is WoonPeek echt gratis?",
+    answer: "Ja, WoonPeek is 100% gratis. Zoeken, alerts instellen en je eigen woning plaatsen kost niets. Er zijn geen verborgen kosten of abonnementen.",
+  },
+  {
+    question: "Hoe verdient WoonPeek geld?",
+    answer: "WoonPeek verdient geld via samenwerkingen met makelaars en woningplatforms. De kosten worden gedragen door partners, niet door woningzoekers.",
+  },
+  {
+    question: "Hoeveel woningen staan er op WoonPeek?",
+    answer: "WoonPeek heeft dagelijks meer dan 6.000 actieve woningen online uit heel Nederland, afkomstig van meerdere bronnen en makelaars.",
+  },
+  {
+    question: "Kan ik zelf een woning plaatsen op WoonPeek?",
+    answer: "Ja, als particuliere verhuurder of verkoper kun je gratis je woning adverteren op WoonPeek en duizenden woningzoekers bereiken.",
+  },
+];
 
 const stats = [
   { label: "Woningen online", value: "6.000+" },
