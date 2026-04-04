@@ -33,6 +33,7 @@ import BlogPage from "./pages/Blog";
 import BlogPostPage from "./pages/BlogPost";
 import AdminBlog from "./pages/admin/AdminBlog";
 import AdminUsers from "./pages/admin/AdminUsers";
+import AdminUserDetail from "./pages/admin/AdminUserDetail";
 import AdminDailyActivity from "./pages/admin/AdminDailyActivity";
 import AdminFacebookQueue from "./pages/admin/AdminFacebookQueue";
 import AdminMakelaarLeads from "./pages/admin/AdminMakelaarLeads";
