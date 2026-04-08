@@ -55,6 +55,7 @@ import AdminChat from "./pages/admin/AdminChat";
 import AdminComments from "./pages/admin/AdminComments";
 import AdminSearchQueries from "./pages/admin/AdminSearchQueries";
 import AdminGoogleRanking from "./pages/admin/AdminGoogleRanking";
+import AdminPageTypes from "./pages/admin/AdminPageTypes";
 import UserChat from "./pages/UserChat";
 import BudgetTool from "./pages/BudgetTool";
 import CityComparePage from "./pages/CityComparePage";
@@ -117,6 +118,7 @@ const App = () => (
             <Route path="/admin/reacties" element={<AdminComments />} />
             <Route path="/admin/zoekopdrachten" element={<AdminSearchQueries />} />
             <Route path="/admin/google-ranking" element={<AdminGoogleRanking />} />
+            <Route path="/admin/paginatypen" element={<AdminPageTypes />} />
             <Route path="/voorwaarden" element={<TermsAndConditions />} />
             <Route path="/privacy" element={<PrivacyPolicy />} />
             <Route path="/disclaimer" element={<Disclaimer />} />
