@@ -68,6 +68,7 @@ function buildPagesSitemap(now: string): string {
 
 function buildCitiesSitemap(
   properties: Array<{ city: string; updated_at: string; listing_type: string; property_type: string; neighborhood: string | null }>,
+  searchQueries: Array<{ city: string; listing_type: string | null; property_type: string | null; max_price: number | null; min_bedrooms: number | null; count: number }> = [],
 ): string {
   const cityMap = new Map<string, string>();
   for (const p of properties) {
@@ -85,9 +86,7 @@ function buildCitiesSitemap(
     { slug: "kamers", type: "kamer" },
   ];
 
-  // Track which property types exist per city
   const cityTypeSet = new Set<string>();
-  // Track neighborhoods per city
   const cityNeighborhoods = new Map<string, Set<string>>();
   for (const p of properties) {
     const citySlug = p.city.trim().toLowerCase().replace(/\s+/g, "-");
@@ -98,12 +97,35 @@ function buildCitiesSitemap(
     }
   }
 
+  // Pre-defined price/bedroom filters already in sitemap
+  const defaultPrices = new Set([750, 1000, 1250, 1500, 2000]);
+  const defaultBedrooms = new Set([1, 2, 3, 4]);
+
+  // Collect extra filtered URLs from search queries
+  const extraUrls = new Set<string>();
+  for (const q of searchQueries) {
+    if (!q.city) continue;
+    const citySlug = q.city.trim().toLowerCase().replace(/\s+/g, "-");
+    if (!cityMap.has(citySlug)) continue; // only cities with active properties
+
+    if (q.max_price && q.max_price > 0) {
+      const rounded = Math.round(q.max_price);
+      if (!defaultPrices.has(rounded)) {
+        extraUrls.add(`${SITE_URL}/woningen/${citySlug}/onder-${rounded}`);
+      }
+    }
+    if (q.min_bedrooms && q.min_bedrooms > 0) {
+      if (!defaultBedrooms.has(q.min_bedrooms)) {
+        extraUrls.add(`${SITE_URL}/woningen/${citySlug}/${q.min_bedrooms}-kamers`);
+      }
+    }
+  }
+
   let xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 `;
   for (const [citySlug, lastMod] of cityMap) {
     const date = lastMod.split("T")[0];
-    // City landing page
     xml += `  <url>
     <loc>${SITE_URL}/woningen-${citySlug}</loc>
     <lastmod>${date}</lastmod>
@@ -111,7 +133,6 @@ function buildCitiesSitemap(
     <priority>0.8</priority>
   </url>
 `;
-    // Huurwoningen per city
     xml += `  <url>
     <loc>${SITE_URL}/huurwoningen/${citySlug}</loc>
     <lastmod>${date}</lastmod>
@@ -119,7 +140,6 @@ function buildCitiesSitemap(
     <priority>0.7</priority>
   </url>
 `;
-    // Koopwoningen per city
     xml += `  <url>
     <loc>${SITE_URL}/koopwoningen/${citySlug}</loc>
     <lastmod>${date}</lastmod>
@@ -127,7 +147,6 @@ function buildCitiesSitemap(
     <priority>0.7</priority>
   </url>
 `;
-    // Property type per city
     for (const pt of propertyTypeSlugs) {
       if (cityTypeSet.has(`${citySlug}:${pt.type}`)) {
         xml += `  <url>
@@ -139,7 +158,6 @@ function buildCitiesSitemap(
 `;
       }
     }
-    // Price-filtered pages per city
     for (const price of [750, 1000, 1250, 1500, 2000]) {
       xml += `  <url>
     <loc>${SITE_URL}/woningen/${citySlug}/onder-${price}</loc>
@@ -149,7 +167,6 @@ function buildCitiesSitemap(
   </url>
 `;
     }
-    // Bedroom-filtered pages per city
     for (const beds of [1, 2, 3, 4]) {
       xml += `  <url>
     <loc>${SITE_URL}/woningen/${citySlug}/${beds}-kamers</loc>
@@ -159,7 +176,6 @@ function buildCitiesSitemap(
   </url>
 `;
     }
-    // Nieuw aanbod per city
     xml += `  <url>
     <loc>${SITE_URL}/nieuw-aanbod/${citySlug}</loc>
     <lastmod>${date}</lastmod>
@@ -167,7 +183,6 @@ function buildCitiesSitemap(
     <priority>0.6</priority>
   </url>
 `;
-    // Huurprijzen monitor per city
     xml += `  <url>
     <loc>${SITE_URL}/huurprijzen/${citySlug}</loc>
     <lastmod>${date}</lastmod>
@@ -175,7 +190,6 @@ function buildCitiesSitemap(
     <priority>0.7</priority>
   </url>
 `;
-    // Neighborhood pages per city (limit to 20 per city)
     const neighborhoods = cityNeighborhoods.get(citySlug);
     if (neighborhoods) {
       let count = 0;
@@ -192,6 +206,19 @@ function buildCitiesSitemap(
       }
     }
   }
+
+  // Add extra URLs from popular search queries
+  const today = new Date().toISOString().split("T")[0];
+  for (const loc of extraUrls) {
+    xml += `  <url>
+    <loc>${loc}</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.5</priority>
+  </url>
+`;
+  }
+
   xml += `</urlset>`;
   return xml;
 }
@@ -249,7 +276,6 @@ Deno.serve(async (req) => {
   try {
     const now = new Date().toISOString().split("T")[0];
 
-    // For index, just return the sitemap index
     if (type === "index") {
       return new Response(buildSitemapIndex(now), {
         headers: { ...corsHeaders, "Content-Type": "application/xml; charset=utf-8", "Cache-Control": "public, max-age=3600" },
@@ -262,7 +288,6 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Fetch data for cities/properties
     if (type === "steden" || type === "woningen") {
       const pageSize = 1000;
       let from = 0;
@@ -280,15 +305,23 @@ Deno.serve(async (req) => {
         if (data.length < pageSize) break;
         from += pageSize;
       }
-      const properties = allProperties;
 
       if (type === "steden") {
-        return new Response(buildCitiesSitemap(properties), {
+        // Fetch popular search queries (count >= 3) to add extra filtered URLs
+        const { data: searchQueries } = await supabase
+          .from("search_queries")
+          .select("city, listing_type, property_type, max_price, min_bedrooms, count")
+          .gte("count", 3)
+          .not("city", "is", null)
+          .order("count", { ascending: false })
+          .limit(500);
+
+        return new Response(buildCitiesSitemap(allProperties, searchQueries || []), {
           headers: { ...corsHeaders, "Content-Type": "application/xml; charset=utf-8", "Cache-Control": "public, max-age=3600" },
         });
       }
 
-      return new Response(buildPropertiesSitemap(properties), {
+      return new Response(buildPropertiesSitemap(allProperties), {
         headers: { ...corsHeaders, "Content-Type": "application/xml; charset=utf-8", "Cache-Control": "public, max-age=3600" },
       });
     }
