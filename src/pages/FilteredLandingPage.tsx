@@ -17,6 +17,11 @@ import type { Database } from "@/integrations/supabase/types";
 type PropertyType = Database["public"]["Enums"]["property_type"];
 type ListingType = Database["public"]["Enums"]["listing_type"];
 
+interface FilteredLandingPageProps {
+  propertyType?: PropertyType;
+  listingType?: ListingType;
+}
+
 const TYPE_LABELS: Record<string, { singular: string; plural: string; slug: string }> = {
   appartement: { singular: "appartement", plural: "Appartementen", slug: "appartementen" },
   huis: { singular: "huis", plural: "Huizen", slug: "huizen" },
