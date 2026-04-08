@@ -53,7 +53,7 @@ const PropertyCardSkeleton = () => (
  *   /woningen/:city/onder-:price        → max price filter
  *   /woningen/:city/:bedrooms-kamers    → bedroom filter
  */
-const FilteredLandingPage = () => {
+const FilteredLandingPage = ({ propertyType, listingType }: FilteredLandingPageProps = {}) => {
   const { city: citySlug, filter } = useParams<{ city: string; filter: string }>();
   const cityName = citySlug ? citySlugToName(citySlug) : "Nederland";
 
