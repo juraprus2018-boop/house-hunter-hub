@@ -249,7 +249,6 @@ Deno.serve(async (req) => {
   try {
     const now = new Date().toISOString().split("T")[0];
 
-    // For index, just return the sitemap index
     if (type === "index") {
       return new Response(buildSitemapIndex(now), {
         headers: { ...corsHeaders, "Content-Type": "application/xml; charset=utf-8", "Cache-Control": "public, max-age=3600" },
@@ -262,7 +261,6 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Fetch data for cities/properties
     if (type === "steden" || type === "woningen") {
       const pageSize = 1000;
       let from = 0;
@@ -280,15 +278,23 @@ Deno.serve(async (req) => {
         if (data.length < pageSize) break;
         from += pageSize;
       }
-      const properties = allProperties;
 
       if (type === "steden") {
-        return new Response(buildCitiesSitemap(properties), {
+        // Fetch popular search queries (count >= 3) to add extra filtered URLs
+        const { data: searchQueries } = await supabase
+          .from("search_queries")
+          .select("city, listing_type, property_type, max_price, min_bedrooms, count")
+          .gte("count", 3)
+          .not("city", "is", null)
+          .order("count", { ascending: false })
+          .limit(500);
+
+        return new Response(buildCitiesSitemap(allProperties, searchQueries || []), {
           headers: { ...corsHeaders, "Content-Type": "application/xml; charset=utf-8", "Cache-Control": "public, max-age=3600" },
         });
       }
 
-      return new Response(buildPropertiesSitemap(properties), {
+      return new Response(buildPropertiesSitemap(allProperties), {
         headers: { ...corsHeaders, "Content-Type": "application/xml; charset=utf-8", "Cache-Control": "public, max-age=3600" },
       });
     }
