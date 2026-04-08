@@ -218,7 +218,6 @@ function buildCitiesSitemap(
   </url>
 `;
     }
-    }
     xml += `  <url>
     <loc>${SITE_URL}/nieuw-aanbod/${citySlug}</loc>
     <lastmod>${date}</lastmod>
