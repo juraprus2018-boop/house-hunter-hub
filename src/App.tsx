@@ -118,6 +118,7 @@ const App = () => (
             <Route path="/admin/reacties" element={<AdminComments />} />
             <Route path="/admin/zoekopdrachten" element={<AdminSearchQueries />} />
             <Route path="/admin/google-ranking" element={<AdminGoogleRanking />} />
+            <Route path="/admin/paginatypen" element={<AdminPageTypes />} />
             <Route path="/voorwaarden" element={<TermsAndConditions />} />
             <Route path="/privacy" element={<PrivacyPolicy />} />
             <Route path="/disclaimer" element={<Disclaimer />} />
