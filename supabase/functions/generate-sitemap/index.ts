@@ -156,8 +156,50 @@ function buildCitiesSitemap(
     <priority>0.6</priority>
   </url>
 `;
+        // Combination: property type + price filter
+        for (const price of [750, 1000, 1250, 1500, 2000]) {
+          xml += `  <url>
+    <loc>${SITE_URL}/${pt.slug}/${citySlug}/onder-${price}</loc>
+    <lastmod>${date}</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.5</priority>
+  </url>
+`;
+        }
+        // Combination: property type + bedroom filter
+        for (const beds of [1, 2, 3, 4]) {
+          xml += `  <url>
+    <loc>${SITE_URL}/${pt.slug}/${citySlug}/${beds}-kamers</loc>
+    <lastmod>${date}</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.5</priority>
+  </url>
+`;
+        }
       }
     }
+    // Listing type + price/bedroom combos
+    for (const lt of [{ slug: "huurwoningen" }, { slug: "koopwoningen" }]) {
+      for (const price of [750, 1000, 1250, 1500, 2000]) {
+        xml += `  <url>
+    <loc>${SITE_URL}/${lt.slug}/${citySlug}/onder-${price}</loc>
+    <lastmod>${date}</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.5</priority>
+  </url>
+`;
+      }
+      for (const beds of [1, 2, 3, 4]) {
+        xml += `  <url>
+    <loc>${SITE_URL}/${lt.slug}/${citySlug}/${beds}-kamers</loc>
+    <lastmod>${date}</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.5</priority>
+  </url>
+`;
+      }
+    }
+    // Generic price/bedroom filters (no type/listing prefix)
     for (const price of [750, 1000, 1250, 1500, 2000]) {
       xml += `  <url>
     <loc>${SITE_URL}/woningen/${citySlug}/onder-${price}</loc>
@@ -175,6 +217,7 @@ function buildCitiesSitemap(
     <priority>0.5</priority>
   </url>
 `;
+    }
     }
     xml += `  <url>
     <loc>${SITE_URL}/nieuw-aanbod/${citySlug}</loc>

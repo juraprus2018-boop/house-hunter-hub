@@ -17,6 +17,11 @@ import type { Database } from "@/integrations/supabase/types";
 type PropertyType = Database["public"]["Enums"]["property_type"];
 type ListingType = Database["public"]["Enums"]["listing_type"];
 
+interface FilteredLandingPageProps {
+  propertyType?: PropertyType;
+  listingType?: ListingType;
+}
+
 const TYPE_LABELS: Record<string, { singular: string; plural: string; slug: string }> = {
   appartement: { singular: "appartement", plural: "Appartementen", slug: "appartementen" },
   huis: { singular: "huis", plural: "Huizen", slug: "huizen" },
@@ -48,7 +53,7 @@ const PropertyCardSkeleton = () => (
  *   /woningen/:city/onder-:price        → max price filter
  *   /woningen/:city/:bedrooms-kamers    → bedroom filter
  */
-const FilteredLandingPage = () => {
+const FilteredLandingPage = ({ propertyType, listingType }: FilteredLandingPageProps = {}) => {
   const { city: citySlug, filter } = useParams<{ city: string; filter: string }>();
   const cityName = citySlug ? citySlugToName(citySlug) : "Nederland";
 
@@ -75,11 +80,18 @@ const FilteredLandingPage = () => {
     city: citySlug ? citySlugToName(citySlug) : undefined,
     maxPrice: parsed.maxPrice,
     minBedrooms: parsed.minBedrooms,
+    propertyType: propertyType || undefined,
+    listingType: listingType || undefined,
     disablePagination: true,
   });
 
   const properties = data?.properties || [];
   const totalCount = data?.totalCount || 0;
+
+  const typeLabel = propertyType ? TYPE_LABELS[propertyType] : null;
+  const listingLabel = listingType === "huur" ? "huur" : listingType === "koop" ? "koop" : null;
+  const typePrefix = typeLabel ? typeLabel.plural : listingLabel === "huur" ? "Huurwoningen" : listingLabel === "koop" ? "Koopwoningen" : "Woningen";
+  const typePrefixLower = typePrefix.toLowerCase();
 
   const currentMonth = new Date().toLocaleString("nl-NL", { month: "long" });
   const currentYear = new Date().getFullYear();
@@ -103,24 +115,32 @@ const FilteredLandingPage = () => {
   const isBedroomFilter = !!parsed.minBedrooms;
 
   const h1 = isPriceFilter
-    ? `Woningen in ${cityName} onder ${formatEuro(parsed.maxPrice!)}`
+    ? `${typePrefix} in ${cityName} onder ${formatEuro(parsed.maxPrice!)}`
     : isBedroomFilter
-    ? `${parsed.minBedrooms}-kamer woningen in ${cityName}`
-    : `Woningen in ${cityName} ${filterLabel}`;
+    ? `${parsed.minBedrooms}-kamer ${typePrefixLower} in ${cityName}`
+    : `${typePrefix} in ${cityName} ${filterLabel}`;
 
   const pageTitle = isPriceFilter
-    ? `Woningen ${cityName} onder ${formatEuro(parsed.maxPrice!)}: ${totalCount} betaalbare woningen (${currentMonth} ${currentYear}) | WoonPeek`
+    ? `${typePrefix} ${cityName} onder ${formatEuro(parsed.maxPrice!)}: ${totalCount} beschikbaar (${currentMonth} ${currentYear}) | WoonPeek`
     : isBedroomFilter
-    ? `${parsed.minBedrooms}-kamer woningen ${cityName}: ${totalCount} beschikbaar (${currentMonth} ${currentYear}) | WoonPeek`
-    : `Woningen ${cityName} ${filterLabel}: ${totalCount} beschikbaar (${currentMonth} ${currentYear}) | WoonPeek`;
+    ? `${parsed.minBedrooms}-kamer ${typePrefixLower} ${cityName}: ${totalCount} beschikbaar (${currentMonth} ${currentYear}) | WoonPeek`
+    : `${typePrefix} ${cityName} ${filterLabel}: ${totalCount} beschikbaar (${currentMonth} ${currentYear}) | WoonPeek`;
 
   const pageDescription = isPriceFilter
-    ? `${totalCount} betaalbare woningen in ${cityName} onder ${formatEuro(parsed.maxPrice!)}. Gemiddelde prijs: ${formatEuro(avgPrice)}. ✓ Dagelijks bijgewerkt ✓ ${currentMonth} ${currentYear}`
+    ? `${totalCount} ${typePrefixLower} in ${cityName} onder ${formatEuro(parsed.maxPrice!)}. Gemiddelde prijs: ${formatEuro(avgPrice)}. ✓ Dagelijks bijgewerkt ✓ ${currentMonth} ${currentYear}`
     : isBedroomFilter
-    ? `${totalCount} woningen met ${parsed.minBedrooms}+ kamers in ${cityName}. ${huurCount} huurwoningen, ${koopCount} koopwoningen. ✓ Dagelijks bijgewerkt ✓ ${currentMonth} ${currentYear}`
-    : `${totalCount} woningen in ${cityName} ${filterLabel}. ✓ Dagelijks bijgewerkt ✓ Gratis alerts ✓ ${currentMonth} ${currentYear}`;
+    ? `${totalCount} ${typePrefixLower} met ${parsed.minBedrooms}+ kamers in ${cityName}. ${huurCount} huurwoningen, ${koopCount} koopwoningen. ✓ Dagelijks bijgewerkt ✓ ${currentMonth} ${currentYear}`
+    : `${totalCount} ${typePrefixLower} in ${cityName} ${filterLabel}. ✓ Dagelijks bijgewerkt ✓ Gratis alerts ✓ ${currentMonth} ${currentYear}`;
 
-  const canonical = `https://www.woonpeek.nl/woningen/${citySlug}/${filter}`;
+  // Build canonical based on route type
+  const canonicalBase = typeLabel
+    ? `https://www.woonpeek.nl/${typeLabel.slug}/${citySlug}/${filter}`
+    : listingLabel === "huur"
+    ? `https://www.woonpeek.nl/huurwoningen/${citySlug}/${filter}`
+    : listingLabel === "koop"
+    ? `https://www.woonpeek.nl/koopwoningen/${citySlug}/${filter}`
+    : `https://www.woonpeek.nl/woningen/${citySlug}/${filter}`;
+  const canonical = canonicalBase;
 
   const breadcrumbs = [
     { label: "Home", href: "/" },

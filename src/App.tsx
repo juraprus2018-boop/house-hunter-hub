@@ -137,11 +137,17 @@ const App = () => (
             <Route path="/vergelijk/:city1-vs-:city2" element={<CityComparePage />} />
             <Route path="/huurprijzen/:city" element={<HuurprijsMonitor />} />
             <Route path="/alerts/afmelden/:token" element={<AlertUnsubscribe />} />
+            <Route path="/huurwoningen/:city/:filter" element={<FilteredLandingPage listingType="huur" />} />
             <Route path="/huurwoningen/:city?" element={<ListingTypePage listingType="huur" />} />
+            <Route path="/koopwoningen/:city/:filter" element={<FilteredLandingPage listingType="koop" />} />
             <Route path="/koopwoningen/:city?" element={<ListingTypePage listingType="koop" />} />
+            <Route path="/appartementen/:city/:filter" element={<FilteredLandingPage propertyType="appartement" />} />
             <Route path="/appartementen/:city?" element={<PropertyTypeCityPage propertyType="appartement" />} />
+            <Route path="/huizen/:city/:filter" element={<FilteredLandingPage propertyType="huis" />} />
             <Route path="/huizen/:city?" element={<PropertyTypeCityPage propertyType="huis" />} />
+            <Route path="/studios/:city/:filter" element={<FilteredLandingPage propertyType="studio" />} />
             <Route path="/studios/:city?" element={<PropertyTypeCityPage propertyType="studio" />} />
+            <Route path="/kamers/:city/:filter" element={<FilteredLandingPage propertyType="kamer" />} />
             <Route path="/kamers/:city?" element={<PropertyTypeCityPage propertyType="kamer" />} />
             <Route path="/woningen/:city/:filter" element={<FilteredLandingPage />} />
             <Route path="/wijk/:city/:neighborhood" element={<NeighborhoodPage />} />
