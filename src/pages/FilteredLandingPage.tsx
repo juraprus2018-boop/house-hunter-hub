@@ -80,11 +80,18 @@ const FilteredLandingPage = ({ propertyType, listingType }: FilteredLandingPageP
     city: citySlug ? citySlugToName(citySlug) : undefined,
     maxPrice: parsed.maxPrice,
     minBedrooms: parsed.minBedrooms,
+    propertyType: propertyType || undefined,
+    listingType: listingType || undefined,
     disablePagination: true,
   });
 
   const properties = data?.properties || [];
   const totalCount = data?.totalCount || 0;
+
+  const typeLabel = propertyType ? TYPE_LABELS[propertyType] : null;
+  const listingLabel = listingType === "huur" ? "huur" : listingType === "koop" ? "koop" : null;
+  const typePrefix = typeLabel ? typeLabel.plural : listingLabel === "huur" ? "Huurwoningen" : listingLabel === "koop" ? "Koopwoningen" : "Woningen";
+  const typePrefixLower = typePrefix.toLowerCase();
 
   const currentMonth = new Date().toLocaleString("nl-NL", { month: "long" });
   const currentYear = new Date().getFullYear();
