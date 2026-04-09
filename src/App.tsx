@@ -154,6 +154,7 @@ const App = () => (
             <Route path="/woningen/:city/:filter" element={<FilteredLandingPage />} />
             <Route path="/wijk/:city/:neighborhood" element={<NeighborhoodPage />} />
             <Route path="/:city" element={<LegacyCityRedirect />} />
+            <Route path="/niet-gevonden" element={<NotFound />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
