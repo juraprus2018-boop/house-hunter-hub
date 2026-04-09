@@ -62,12 +62,12 @@ const ListingTypePage = ({ listingType }: ListingTypePageProps) => {
 
   // SEO metadata - keyword-first titles matching search intent
   const pageTitle = cityName
-    ? `${label.plural} ${cityName}: ${totalCount} woningen te ${listingType} (${currentMonth} ${currentYear}) | WoonPeek`
+    ? `${label.plural} ${cityName}: ${hasListings ? `${totalCount} woningen` : "aanbod"} te ${listingType} (${currentMonth} ${currentYear}) | WoonPeek`
     : `${label.plural} Nederland: actueel aanbod te ${listingType} | WoonPeek`;
 
   const pageDesc = cityName
-    ? `${totalCount} ${label.plural.toLowerCase()} in ${cityName}. Bekijk ${listingType === "huur" ? "huurprijzen" : "koopprijzen"}, foto's en details van beschikbare woningen. ✓ Dagelijks bijgewerkt ✓ Gratis alerts ✓ ${currentMonth} ${currentYear}`
-    : `Bekijk ${totalCount} ${label.plural.toLowerCase()} in heel Nederland. Vergelijk prijzen, bekijk foto's en vind jouw ${label.singular} op WoonPeek.`;
+    ? `${hasListings ? totalCount : "Alle"} ${label.plural.toLowerCase()} in ${cityName}. Bekijk ${listingType === "huur" ? "huurprijzen" : "koopprijzen"}, foto's en details van beschikbare woningen. ✓ Dagelijks bijgewerkt ✓ Gratis alerts ✓ ${currentMonth} ${currentYear}`
+    : `Bekijk ${hasListings ? totalCount : "alle"} ${label.plural.toLowerCase()} in heel Nederland. Vergelijk prijzen, bekijk foto's en vind jouw ${label.singular} op WoonPeek.`;
 
   const canonical = cityName
     ? `https://www.woonpeek.nl/${label.slug}/${citySlug}`
