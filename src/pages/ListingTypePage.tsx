@@ -54,6 +54,8 @@ const ListingTypePage = ({ listingType }: ListingTypePageProps) => {
 
   const properties = data?.properties || [];
   const totalCount = data?.totalCount || 0;
+  const hasListings = totalCount > 0;
+  const countLabel = hasListings ? `${totalCount} woningen` : "actueel aanbod";
 
   const currentMonth = new Date().toLocaleString("nl-NL", { month: "long" });
   const currentYear = new Date().getFullYear();
