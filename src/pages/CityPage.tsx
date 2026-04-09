@@ -230,8 +230,8 @@ const CityPage = () => {
             </div>
 
             <div className="max-w-3xl">
-              <h1 className="font-display text-3xl font-bold text-foreground md:text-4xl">
-                Huurwoningen en koopwoningen in {cityName}
+            <h1 className="font-display text-3xl font-bold text-foreground md:text-4xl">
+                Huurwoningen {cityName} - te huur in {cityName}
               </h1>
               <p className="mt-3 text-base leading-relaxed text-muted-foreground">
                 Zoek je een <strong>huurwoning in {cityName}</strong> of wil je een <strong>huis kopen in {cityName}</strong>? Bekijk {totalCount} woningen: {huurCount} huurwoningen en {koopCount} koopwoningen. Dagelijks bijgewerkt met nieuw aanbod van appartementen, huizen, studio's en kamers in {cityName}.
