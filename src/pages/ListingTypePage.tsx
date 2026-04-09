@@ -171,6 +171,11 @@ const ListingTypePage = ({ listingType }: ListingTypePageProps) => {
     [label.plural, locationLabel, pageDesc, canonical, totalCount, properties, faqItems]
   );
 
+  // Redirect invalid cities after all hooks
+  if (shouldRedirect) {
+    return <Navigate to="/niet-gevonden" replace />;
+  }
+
   return (
     <div className="flex min-h-screen flex-col">
       <SEOHead title={pageTitle} description={pageDesc} canonical={canonical} />
