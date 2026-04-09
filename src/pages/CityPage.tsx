@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useParams, Navigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { isValidDutchCity, getValidCityName } from "@/lib/dutchCities";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import PropertyCard from "@/components/properties/PropertyCard";
