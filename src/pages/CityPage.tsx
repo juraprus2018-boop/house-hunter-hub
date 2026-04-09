@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, Navigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
@@ -102,6 +102,21 @@ const CityPage = () => {
   const huurCount = countData?.huur || 0;
   const koopCount = countData?.koop || 0;
 
+  // Validate city exists in database
+  const { data: cityExists, isLoading: cityCheckLoading } = useQuery({
+    queryKey: ["city-exists", cityName],
+    queryFn: async () => {
+      const { count } = await supabase
+        .from("properties")
+        .select("id", { count: "exact", head: true })
+        .ilike("city", `%${cityName}%`)
+        .limit(1);
+      return (count || 0) > 0;
+    },
+    staleTime: 1000 * 60 * 60,
+  });
+
+
   const hasActiveFilters = Boolean(
     filters.propertyType ||
       filters.listingType ||
@@ -114,7 +129,7 @@ const CityPage = () => {
   const currentMonth = new Date().toLocaleString("nl-NL", { month: "long" });
   const currentYear = new Date().getFullYear();
 
-  const pageTitle = `Huurwoningen & Koopwoningen ${cityName} (${totalCount}) | ${currentMonth} ${currentYear} | WoonPeek`;
+  const pageTitle = `Huurwoningen ${cityName} - ${totalCount} te huur en te koop in ${cityName} | ${currentMonth} ${currentYear}`;
   const pageDescription = `Bekijk ${huurCount} huurwoningen en ${koopCount} koopwoningen in ${cityName}. Appartementen, huizen, studio's en kamers. ✓ Dagelijks bijgewerkt ✓ Gratis alerts ✓ ${currentMonth} ${currentYear}`;
   const canonical = `https://www.woonpeek.nl${cityPath(cityName)}`;
 
@@ -189,6 +204,11 @@ const CityPage = () => {
     [cityName, filteredCount, filteredProperties, pageDescription, canonical, cityFaqItems]
   );
 
+  // Redirect to 404 if city doesn't exist
+  if (cityExists === false && !cityCheckLoading) {
+    return <Navigate to="/niet-gevonden" replace />;
+  }
+
   return (
     <div className="flex min-h-screen flex-col">
       <SEOHead title={pageTitle} description={pageDescription} canonical={canonical} />
@@ -211,8 +231,8 @@ const CityPage = () => {
             </div>
 
             <div className="max-w-3xl">
-              <h1 className="font-display text-3xl font-bold text-foreground md:text-4xl">
-                Huurwoningen en koopwoningen in {cityName}
+            <h1 className="font-display text-3xl font-bold text-foreground md:text-4xl">
+                Huurwoningen {cityName} - te huur in {cityName}
               </h1>
               <p className="mt-3 text-base leading-relaxed text-muted-foreground">
                 Zoek je een <strong>huurwoning in {cityName}</strong> of wil je een <strong>huis kopen in {cityName}</strong>? Bekijk {totalCount} woningen: {huurCount} huurwoningen en {koopCount} koopwoningen. Dagelijks bijgewerkt met nieuw aanbod van appartementen, huizen, studio's en kamers in {cityName}.
