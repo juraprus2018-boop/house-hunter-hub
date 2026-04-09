@@ -255,8 +255,11 @@ const ListingTypePage = ({ listingType }: ListingTypePageProps) => {
               <p>
                 Op WoonPeek vind je het meest actuele aanbod van <strong>{label.plural.toLowerCase()} in {locationLabel}</strong>.
                 We verzamelen dagelijks het nieuwste woningaanbod van meerdere bronnen zodat je niets mist.
-                Momenteel zijn er <strong>{totalCount} {label.plural.toLowerCase()}</strong> beschikbaar
-                {cityName ? ` in ${cityName}` : ""}.
+                {hasListings ? (
+                  <>Momenteel zijn er <strong>{totalCount} {label.plural.toLowerCase()}</strong> beschikbaar{cityName ? ` in ${cityName}` : ""}.</>
+                ) : (
+                  <>Er zijn momenteel geen {label.plural.toLowerCase()} beschikbaar{cityName ? ` in ${cityName}` : ""}, maar het aanbod wordt dagelijks aangevuld.</>
+                )}
               </p>
               {listingType === "huur" ? (
                 <>
