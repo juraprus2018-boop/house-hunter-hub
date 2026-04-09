@@ -49,7 +49,9 @@ const CityPage = () => {
   const citySlug = rawCitySlug.startsWith("woningen-")
     ? rawCitySlug.replace(/^woningen-/, "")
     : rawCitySlug;
-  const cityName = citySlugToName(citySlug);
+  const validCityName = getValidCityName(citySlug);
+  const isInvalidCity = !validCityName;
+  const cityName = validCityName || citySlugToName(citySlug);
   const [filters, setFilters] = useState<SearchFilterValues>(EMPTY_FILTERS);
 
   const { data: facets } = useFilterFacets({
