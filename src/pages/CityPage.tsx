@@ -204,6 +204,11 @@ const CityPage = () => {
     [cityName, filteredCount, filteredProperties, pageDescription, canonical, cityFaqItems]
   );
 
+  // Redirect to 404 if city doesn't exist
+  if (cityExists === false && !cityCheckLoading) {
+    return <Navigate to="/niet-gevonden" replace />;
+  }
+
   return (
     <div className="flex min-h-screen flex-col">
       <SEOHead title={pageTitle} description={pageDescription} canonical={canonical} />
