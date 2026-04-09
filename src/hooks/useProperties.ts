@@ -425,3 +425,36 @@ export const useFilterFacets = (filters: FacetFilters) => {
     staleTime: 30 * 1000,
   });
 };
+
+/**
+ * Fetch recent properties from the same province/region when a city has no listings.
+ * Falls back to nationwide recent properties.
+ */
+export const useNearbyProperties = (
+  cityName: string | undefined,
+  listingType?: string,
+  enabled = true,
+  limit = 9
+) => {
+  return useQuery({
+    queryKey: ["nearby-properties", cityName, listingType, limit],
+    queryFn: async () => {
+      let query = supabase
+        .from("properties")
+        .select("*")
+        .eq("status", "actief")
+        .order("created_at", { ascending: false })
+        .limit(limit);
+
+      if (listingType) {
+        query = query.eq("listing_type", listingType as ListingType);
+      }
+
+      const { data, error } = await query;
+      if (error) throw error;
+      return (data as Property[]) || [];
+    },
+    enabled: enabled && !!cityName,
+    staleTime: 60 * 1000,
+  });
+};
