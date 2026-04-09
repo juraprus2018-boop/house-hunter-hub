@@ -249,18 +249,53 @@ const ListingTypePage = ({ listingType }: ListingTypePageProps) => {
               </div>
             </>
           ) : (
-            <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed py-16 text-center">
-              <Search className="mb-4 h-12 w-12 text-muted-foreground" />
-              <h2 className="font-display text-xl font-semibold">
-                Geen {label.plural.toLowerCase()} in {locationLabel}
-              </h2>
-              <p className="mt-2 max-w-md text-sm text-muted-foreground">
-                Er zijn momenteel geen {label.plural.toLowerCase()} beschikbaar
-                {cityName ? ` in ${cityName}` : ""}. Probeer later opnieuw.
-              </p>
-              <Link to="/zoeken">
-                <Button className="mt-4">Alle woningen bekijken</Button>
-              </Link>
+            <div className="space-y-8">
+              <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed py-12 text-center">
+                <MapPin className="mb-4 h-12 w-12 text-muted-foreground" />
+                <h2 className="font-display text-xl font-semibold">
+                  Momenteel geen {label.plural.toLowerCase()} in {locationLabel}
+                </h2>
+                <p className="mt-2 max-w-md text-sm text-muted-foreground">
+                  Er zijn op dit moment geen {label.plural.toLowerCase()} beschikbaar in {locationLabel}.
+                  Stel een alert in om als eerste op de hoogte te zijn wanneer er nieuw aanbod komt.
+                </p>
+                <div className="mt-4 flex gap-3">
+                  <Link to="/dagelijkse-alert">
+                    <Button>Alert instellen</Button>
+                  </Link>
+                  <Link to="/zoeken">
+                    <Button variant="outline">Alle woningen bekijken</Button>
+                  </Link>
+                </div>
+              </div>
+
+              {/* Nearby / recent properties */}
+              {nearbyLoading ? (
+                <div>
+                  <h3 className="font-display text-lg font-semibold text-foreground mb-4">
+                    Recente {label.plural.toLowerCase()} in de buurt
+                  </h3>
+                  <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                    {Array.from({ length: 6 }).map((_, i) => (
+                      <PropertyCardSkeleton key={i} />
+                    ))}
+                  </div>
+                </div>
+              ) : nearbyProperties && nearbyProperties.length > 0 ? (
+                <div>
+                  <h3 className="font-display text-lg font-semibold text-foreground mb-1">
+                    Recente {label.plural.toLowerCase()} elders in Nederland
+                  </h3>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Bekijk het nieuwste aanbod {label.plural.toLowerCase()} uit andere plaatsen
+                  </p>
+                  <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                    {nearbyProperties.map((property) => (
+                      <PropertyCard key={property.id} property={property} />
+                    ))}
+                  </div>
+                </div>
+              ) : null}
             </div>
           )}
         </section>
