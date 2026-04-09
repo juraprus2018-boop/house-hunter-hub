@@ -174,14 +174,18 @@ const ListingTypePage = ({ listingType }: ListingTypePageProps) => {
                 {label.plural} in {locationLabel}{listingType === "huur" ? ": huis en appartement te huur" : ": huizen en appartementen te koop"}
               </h1>
               <p className="mt-3 text-base leading-relaxed text-muted-foreground">
-                Zoek je een <strong>{label.singular} in {locationLabel}</strong>? Bekijk {totalCount} beschikbare{" "}
-                {label.plural.toLowerCase()} met {listingType === "huur" ? "huurprijzen" : "koopprijzen"}, foto's en details.
+                Zoek je een <strong>{label.singular} in {locationLabel}</strong>?{" "}
+                {hasListings
+                  ? `Bekijk ${totalCount} beschikbare ${label.plural.toLowerCase()} met ${listingType === "huur" ? "huurprijzen" : "koopprijzen"}, foto's en details.`
+                  : `Er zijn momenteel geen ${label.plural.toLowerCase()} beschikbaar, maar het aanbod wordt dagelijks bijgewerkt.`}{" "}
                 WoonPeek verzamelt dagelijks het nieuwste aanbod uit tientallen bronnen, zodat je sneller vindt wat je zoekt.
               </p>
               <div className="mt-4 flex flex-wrap gap-3">
+                {hasListings && (
                 <div className="rounded-full bg-card px-4 py-2 text-sm text-foreground shadow-sm">
                   {totalCount} {label.plural.toLowerCase()} beschikbaar
                 </div>
+                )}
                 {cityName && (
                   <Link
                     to="/dagelijkse-alert"
