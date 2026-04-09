@@ -88,7 +88,9 @@ const ListingTypePage = ({ listingType }: ListingTypePageProps) => {
     const items = [
       {
         question: `Hoeveel ${label.plural.toLowerCase()} zijn er in ${locationLabel}?`,
-        answer: `Op dit moment staan er ${totalCount} ${label.plural.toLowerCase()} in ${locationLabel} op WoonPeek. Het aanbod wordt dagelijks bijgewerkt uit meerdere bronnen.`,
+        answer: hasListings
+          ? `Op dit moment staan er ${totalCount} ${label.plural.toLowerCase()} in ${locationLabel} op WoonPeek. Het aanbod wordt dagelijks bijgewerkt uit meerdere bronnen.`
+          : `Momenteel zijn er geen ${label.plural.toLowerCase()} beschikbaar in ${locationLabel}. Het aanbod wordt dagelijks bijgewerkt, dus stel een alert in om als eerste op de hoogte te zijn.`,
       },
       {
         question: `Wat kost een ${label.singular} in ${locationLabel}?`,
