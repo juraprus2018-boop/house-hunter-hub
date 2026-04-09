@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, Navigate } from "react-router-dom";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import PropertyCard from "@/components/properties/PropertyCard";
@@ -7,11 +7,12 @@ import Breadcrumbs from "@/components/seo/Breadcrumbs";
 import SEOHead from "@/components/seo/SEOHead";
 import SimilarProperties from "@/components/city/SimilarProperties";
 import RelatedCities from "@/components/city/RelatedCities";
-import { useProperties } from "@/hooks/useProperties";
+import { useProperties, useNearbyProperties } from "@/hooks/useProperties";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowRight, ChevronRight, Search } from "lucide-react";
+import { ArrowRight, ChevronRight, MapPin, Search } from "lucide-react";
 import { cityPath, citySlugToName } from "@/lib/cities";
+import { isValidDutchCity, getValidCityName } from "@/lib/dutchCities";
 import type { Database } from "@/integrations/supabase/types";
 
 type ListingType = Database["public"]["Enums"]["listing_type"];
@@ -42,13 +43,17 @@ const PropertyCardSkeleton = () => (
 
 const ListingTypePage = ({ listingType }: ListingTypePageProps) => {
   const { city: citySlug } = useParams<{ city: string }>();
-  const cityName = citySlug ? citySlugToName(citySlug) : undefined;
   const label = LABELS[listingType];
+
+  // Validate city slug against known Dutch cities
+  const validCityName = citySlug ? getValidCityName(citySlug) : undefined;
+  const isInvalidCity = !!citySlug && !validCityName;
+  const cityName = citySlug ? (validCityName || citySlugToName(citySlug)) : undefined;
   const locationLabel = cityName || "Nederland";
 
   const { data, isLoading } = useProperties({
     listingType: listingType as ListingType,
-    city: cityName,
+    city: isInvalidCity ? undefined : cityName,
     pageSize: 50,
   });
 
@@ -56,6 +61,16 @@ const ListingTypePage = ({ listingType }: ListingTypePageProps) => {
   const totalCount = data?.totalCount || 0;
   const hasListings = totalCount > 0;
   const countLabel = hasListings ? `${totalCount} woningen` : "actueel aanbod";
+
+  // Fetch nearby/recent properties when city has no listings
+  const { data: nearbyProperties, isLoading: nearbyLoading } = useNearbyProperties(
+    cityName,
+    listingType,
+    !isInvalidCity && !hasListings && !isLoading && !!cityName,
+    9
+  );
+
+  const shouldRedirect = isInvalidCity;
 
   const currentMonth = new Date().toLocaleString("nl-NL", { month: "long" });
   const currentYear = new Date().getFullYear();
@@ -156,6 +171,11 @@ const ListingTypePage = ({ listingType }: ListingTypePageProps) => {
     [label.plural, locationLabel, pageDesc, canonical, totalCount, properties, faqItems]
   );
 
+  // Redirect invalid cities after all hooks
+  if (shouldRedirect) {
+    return <Navigate to="/niet-gevonden" replace />;
+  }
+
   return (
     <div className="flex min-h-screen flex-col">
       <SEOHead title={pageTitle} description={pageDesc} canonical={canonical} />
@@ -229,18 +249,53 @@ const ListingTypePage = ({ listingType }: ListingTypePageProps) => {
               </div>
             </>
           ) : (
-            <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed py-16 text-center">
-              <Search className="mb-4 h-12 w-12 text-muted-foreground" />
-              <h2 className="font-display text-xl font-semibold">
-                Geen {label.plural.toLowerCase()} in {locationLabel}
-              </h2>
-              <p className="mt-2 max-w-md text-sm text-muted-foreground">
-                Er zijn momenteel geen {label.plural.toLowerCase()} beschikbaar
-                {cityName ? ` in ${cityName}` : ""}. Probeer later opnieuw.
-              </p>
-              <Link to="/zoeken">
-                <Button className="mt-4">Alle woningen bekijken</Button>
-              </Link>
+            <div className="space-y-8">
+              <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed py-12 text-center">
+                <MapPin className="mb-4 h-12 w-12 text-muted-foreground" />
+                <h2 className="font-display text-xl font-semibold">
+                  Momenteel geen {label.plural.toLowerCase()} in {locationLabel}
+                </h2>
+                <p className="mt-2 max-w-md text-sm text-muted-foreground">
+                  Er zijn op dit moment geen {label.plural.toLowerCase()} beschikbaar in {locationLabel}.
+                  Stel een alert in om als eerste op de hoogte te zijn wanneer er nieuw aanbod komt.
+                </p>
+                <div className="mt-4 flex gap-3">
+                  <Link to="/dagelijkse-alert">
+                    <Button>Alert instellen</Button>
+                  </Link>
+                  <Link to="/zoeken">
+                    <Button variant="outline">Alle woningen bekijken</Button>
+                  </Link>
+                </div>
+              </div>
+
+              {/* Nearby / recent properties */}
+              {nearbyLoading ? (
+                <div>
+                  <h3 className="font-display text-lg font-semibold text-foreground mb-4">
+                    Recente {label.plural.toLowerCase()} in de buurt
+                  </h3>
+                  <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                    {Array.from({ length: 6 }).map((_, i) => (
+                      <PropertyCardSkeleton key={i} />
+                    ))}
+                  </div>
+                </div>
+              ) : nearbyProperties && nearbyProperties.length > 0 ? (
+                <div>
+                  <h3 className="font-display text-lg font-semibold text-foreground mb-1">
+                    Recente {label.plural.toLowerCase()} elders in Nederland
+                  </h3>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Bekijk het nieuwste aanbod {label.plural.toLowerCase()} uit andere plaatsen
+                  </p>
+                  <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                    {nearbyProperties.map((property) => (
+                      <PropertyCard key={property.id} property={property} />
+                    ))}
+                  </div>
+                </div>
+              ) : null}
             </div>
           )}
         </section>

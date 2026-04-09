@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useParams, Navigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { isValidDutchCity, getValidCityName } from "@/lib/dutchCities";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import PropertyCard from "@/components/properties/PropertyCard";
@@ -48,7 +49,9 @@ const CityPage = () => {
   const citySlug = rawCitySlug.startsWith("woningen-")
     ? rawCitySlug.replace(/^woningen-/, "")
     : rawCitySlug;
-  const cityName = citySlugToName(citySlug);
+  const validCityName = getValidCityName(citySlug);
+  const isInvalidCity = !validCityName;
+  const cityName = validCityName || citySlugToName(citySlug);
   const [filters, setFilters] = useState<SearchFilterValues>(EMPTY_FILTERS);
 
   const { data: facets } = useFilterFacets({
@@ -101,20 +104,6 @@ const CityPage = () => {
   });
   const huurCount = countData?.huur || 0;
   const koopCount = countData?.koop || 0;
-
-  // Validate city exists in database
-  const { data: cityExists, isLoading: cityCheckLoading } = useQuery({
-    queryKey: ["city-exists", cityName],
-    queryFn: async () => {
-      const { count } = await supabase
-        .from("properties")
-        .select("id", { count: "exact", head: true })
-        .ilike("city", `%${cityName}%`)
-        .limit(1);
-      return (count || 0) > 0;
-    },
-    staleTime: 1000 * 60 * 60,
-  });
 
 
   const hasActiveFilters = Boolean(
@@ -204,8 +193,8 @@ const CityPage = () => {
     [cityName, filteredCount, filteredProperties, pageDescription, canonical, cityFaqItems]
   );
 
-  // Redirect to 404 if city doesn't exist
-  if (cityExists === false && !cityCheckLoading) {
+  // Redirect to 404 if city doesn't exist in our known list
+  if (isInvalidCity) {
     return <Navigate to="/niet-gevonden" replace />;
   }
 
