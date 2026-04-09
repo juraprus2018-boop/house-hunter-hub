@@ -47,17 +47,13 @@ const ListingTypePage = ({ listingType }: ListingTypePageProps) => {
 
   // Validate city slug against known Dutch cities
   const validCityName = citySlug ? getValidCityName(citySlug) : undefined;
+  const isInvalidCity = !!citySlug && !validCityName;
   const cityName = citySlug ? (validCityName || citySlugToName(citySlug)) : undefined;
   const locationLabel = cityName || "Nederland";
 
-  // If a city slug is provided but not recognized, redirect to 404
-  if (citySlug && !validCityName) {
-    return <Navigate to="/niet-gevonden" replace />;
-  }
-
   const { data, isLoading } = useProperties({
     listingType: listingType as ListingType,
-    city: cityName,
+    city: isInvalidCity ? undefined : cityName,
     pageSize: 50,
   });
 
@@ -70,9 +66,14 @@ const ListingTypePage = ({ listingType }: ListingTypePageProps) => {
   const { data: nearbyProperties, isLoading: nearbyLoading } = useNearbyProperties(
     cityName,
     listingType,
-    !hasListings && !isLoading && !!cityName,
+    !isInvalidCity && !hasListings && !isLoading && !!cityName,
     9
   );
+
+  // Redirect invalid cities after all hooks
+  if (isInvalidCity) {
+    return <Navigate to="/niet-gevonden" replace />;
+  }
 
   const currentMonth = new Date().toLocaleString("nl-NL", { month: "long" });
   const currentYear = new Date().getFullYear();
