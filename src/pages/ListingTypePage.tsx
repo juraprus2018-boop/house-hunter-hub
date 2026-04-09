@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, Navigate } from "react-router-dom";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import PropertyCard from "@/components/properties/PropertyCard";
@@ -7,11 +7,12 @@ import Breadcrumbs from "@/components/seo/Breadcrumbs";
 import SEOHead from "@/components/seo/SEOHead";
 import SimilarProperties from "@/components/city/SimilarProperties";
 import RelatedCities from "@/components/city/RelatedCities";
-import { useProperties } from "@/hooks/useProperties";
+import { useProperties, useNearbyProperties } from "@/hooks/useProperties";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowRight, ChevronRight, Search } from "lucide-react";
+import { ArrowRight, ChevronRight, MapPin, Search } from "lucide-react";
 import { cityPath, citySlugToName } from "@/lib/cities";
+import { isValidDutchCity, getValidCityName } from "@/lib/dutchCities";
 import type { Database } from "@/integrations/supabase/types";
 
 type ListingType = Database["public"]["Enums"]["listing_type"];
