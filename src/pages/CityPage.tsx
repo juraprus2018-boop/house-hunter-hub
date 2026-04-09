@@ -193,8 +193,8 @@ const CityPage = () => {
     [cityName, filteredCount, filteredProperties, pageDescription, canonical, cityFaqItems]
   );
 
-  // Redirect to 404 if city doesn't exist
-  if (cityExists === false && !cityCheckLoading) {
+  // Redirect to 404 if city doesn't exist in our known list
+  if (isInvalidCity) {
     return <Navigate to="/niet-gevonden" replace />;
   }
 
