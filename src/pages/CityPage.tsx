@@ -105,20 +105,6 @@ const CityPage = () => {
   const huurCount = countData?.huur || 0;
   const koopCount = countData?.koop || 0;
 
-  // Validate city exists in database
-  const { data: cityExists, isLoading: cityCheckLoading } = useQuery({
-    queryKey: ["city-exists", cityName],
-    queryFn: async () => {
-      const { count } = await supabase
-        .from("properties")
-        .select("id", { count: "exact", head: true })
-        .ilike("city", `%${cityName}%`)
-        .limit(1);
-      return (count || 0) > 0;
-    },
-    staleTime: 1000 * 60 * 60,
-  });
-
 
   const hasActiveFilters = Boolean(
     filters.propertyType ||
