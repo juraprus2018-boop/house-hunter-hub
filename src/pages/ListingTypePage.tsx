@@ -54,18 +54,20 @@ const ListingTypePage = ({ listingType }: ListingTypePageProps) => {
 
   const properties = data?.properties || [];
   const totalCount = data?.totalCount || 0;
+  const hasListings = totalCount > 0;
+  const countLabel = hasListings ? `${totalCount} woningen` : "actueel aanbod";
 
   const currentMonth = new Date().toLocaleString("nl-NL", { month: "long" });
   const currentYear = new Date().getFullYear();
 
   // SEO metadata - keyword-first titles matching search intent
   const pageTitle = cityName
-    ? `${label.plural} ${cityName}: ${totalCount} woningen te ${listingType} (${currentMonth} ${currentYear}) | WoonPeek`
+    ? `${label.plural} ${cityName}: ${hasListings ? `${totalCount} woningen` : "aanbod"} te ${listingType} (${currentMonth} ${currentYear}) | WoonPeek`
     : `${label.plural} Nederland: actueel aanbod te ${listingType} | WoonPeek`;
 
   const pageDesc = cityName
-    ? `${totalCount} ${label.plural.toLowerCase()} in ${cityName}. Bekijk ${listingType === "huur" ? "huurprijzen" : "koopprijzen"}, foto's en details van beschikbare woningen. ✓ Dagelijks bijgewerkt ✓ Gratis alerts ✓ ${currentMonth} ${currentYear}`
-    : `Bekijk ${totalCount} ${label.plural.toLowerCase()} in heel Nederland. Vergelijk prijzen, bekijk foto's en vind jouw ${label.singular} op WoonPeek.`;
+    ? `${hasListings ? totalCount : "Alle"} ${label.plural.toLowerCase()} in ${cityName}. Bekijk ${listingType === "huur" ? "huurprijzen" : "koopprijzen"}, foto's en details van beschikbare woningen. ✓ Dagelijks bijgewerkt ✓ Gratis alerts ✓ ${currentMonth} ${currentYear}`
+    : `Bekijk ${hasListings ? totalCount : "alle"} ${label.plural.toLowerCase()} in heel Nederland. Vergelijk prijzen, bekijk foto's en vind jouw ${label.singular} op WoonPeek.`;
 
   const canonical = cityName
     ? `https://www.woonpeek.nl/${label.slug}/${citySlug}`
@@ -86,7 +88,9 @@ const ListingTypePage = ({ listingType }: ListingTypePageProps) => {
     const items = [
       {
         question: `Hoeveel ${label.plural.toLowerCase()} zijn er in ${locationLabel}?`,
-        answer: `Op dit moment staan er ${totalCount} ${label.plural.toLowerCase()} in ${locationLabel} op WoonPeek. Het aanbod wordt dagelijks bijgewerkt uit meerdere bronnen.`,
+        answer: hasListings
+          ? `Op dit moment staan er ${totalCount} ${label.plural.toLowerCase()} in ${locationLabel} op WoonPeek. Het aanbod wordt dagelijks bijgewerkt uit meerdere bronnen.`
+          : `Momenteel zijn er geen ${label.plural.toLowerCase()} beschikbaar in ${locationLabel}. Het aanbod wordt dagelijks bijgewerkt, dus stel een alert in om als eerste op de hoogte te zijn.`,
       },
       {
         question: `Wat kost een ${label.singular} in ${locationLabel}?`,
@@ -172,14 +176,18 @@ const ListingTypePage = ({ listingType }: ListingTypePageProps) => {
                 {label.plural} in {locationLabel}{listingType === "huur" ? ": huis en appartement te huur" : ": huizen en appartementen te koop"}
               </h1>
               <p className="mt-3 text-base leading-relaxed text-muted-foreground">
-                Zoek je een <strong>{label.singular} in {locationLabel}</strong>? Bekijk {totalCount} beschikbare{" "}
-                {label.plural.toLowerCase()} met {listingType === "huur" ? "huurprijzen" : "koopprijzen"}, foto's en details.
+                Zoek je een <strong>{label.singular} in {locationLabel}</strong>?{" "}
+                {hasListings
+                  ? `Bekijk ${totalCount} beschikbare ${label.plural.toLowerCase()} met ${listingType === "huur" ? "huurprijzen" : "koopprijzen"}, foto's en details.`
+                  : `Er zijn momenteel geen ${label.plural.toLowerCase()} beschikbaar, maar het aanbod wordt dagelijks bijgewerkt.`}{" "}
                 WoonPeek verzamelt dagelijks het nieuwste aanbod uit tientallen bronnen, zodat je sneller vindt wat je zoekt.
               </p>
               <div className="mt-4 flex flex-wrap gap-3">
+                {hasListings && (
                 <div className="rounded-full bg-card px-4 py-2 text-sm text-foreground shadow-sm">
                   {totalCount} {label.plural.toLowerCase()} beschikbaar
                 </div>
+                )}
                 {cityName && (
                   <Link
                     to="/dagelijkse-alert"
@@ -247,8 +255,11 @@ const ListingTypePage = ({ listingType }: ListingTypePageProps) => {
               <p>
                 Op WoonPeek vind je het meest actuele aanbod van <strong>{label.plural.toLowerCase()} in {locationLabel}</strong>.
                 We verzamelen dagelijks het nieuwste woningaanbod van meerdere bronnen zodat je niets mist.
-                Momenteel zijn er <strong>{totalCount} {label.plural.toLowerCase()}</strong> beschikbaar
-                {cityName ? ` in ${cityName}` : ""}.
+                {hasListings ? (
+                  <>Momenteel zijn er <strong>{totalCount} {label.plural.toLowerCase()}</strong> beschikbaar{cityName ? ` in ${cityName}` : ""}.</>
+                ) : (
+                  <>Er zijn momenteel geen {label.plural.toLowerCase()} beschikbaar{cityName ? ` in ${cityName}` : ""}, maar het aanbod wordt dagelijks aangevuld.</>
+                )}
               </p>
               {listingType === "huur" ? (
                 <>
