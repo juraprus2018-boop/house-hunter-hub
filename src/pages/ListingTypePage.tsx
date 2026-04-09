@@ -43,9 +43,17 @@ const PropertyCardSkeleton = () => (
 
 const ListingTypePage = ({ listingType }: ListingTypePageProps) => {
   const { city: citySlug } = useParams<{ city: string }>();
-  const cityName = citySlug ? citySlugToName(citySlug) : undefined;
   const label = LABELS[listingType];
+
+  // Validate city slug against known Dutch cities
+  const validCityName = citySlug ? getValidCityName(citySlug) : undefined;
+  const cityName = citySlug ? (validCityName || citySlugToName(citySlug)) : undefined;
   const locationLabel = cityName || "Nederland";
+
+  // If a city slug is provided but not recognized, redirect to 404
+  if (citySlug && !validCityName) {
+    return <Navigate to="/niet-gevonden" replace />;
+  }
 
   const { data, isLoading } = useProperties({
     listingType: listingType as ListingType,
@@ -57,6 +65,14 @@ const ListingTypePage = ({ listingType }: ListingTypePageProps) => {
   const totalCount = data?.totalCount || 0;
   const hasListings = totalCount > 0;
   const countLabel = hasListings ? `${totalCount} woningen` : "actueel aanbod";
+
+  // Fetch nearby/recent properties when city has no listings
+  const { data: nearbyProperties, isLoading: nearbyLoading } = useNearbyProperties(
+    cityName,
+    listingType,
+    !hasListings && !isLoading && !!cityName,
+    9
+  );
 
   const currentMonth = new Date().toLocaleString("nl-NL", { month: "long" });
   const currentYear = new Date().getFullYear();
