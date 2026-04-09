@@ -70,10 +70,7 @@ const ListingTypePage = ({ listingType }: ListingTypePageProps) => {
     9
   );
 
-  // Redirect invalid cities after all hooks
-  if (isInvalidCity) {
-    return <Navigate to="/niet-gevonden" replace />;
-  }
+  const shouldRedirect = isInvalidCity;
 
   const currentMonth = new Date().toLocaleString("nl-NL", { month: "long" });
   const currentYear = new Date().getFullYear();
