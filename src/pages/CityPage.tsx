@@ -116,10 +116,6 @@ const CityPage = () => {
     staleTime: 1000 * 60 * 60,
   });
 
-  // Redirect to 404 if city doesn't exist
-  if (cityExists === false && !cityCheckLoading) {
-    return <Navigate to="/niet-gevonden" replace />;
-  }
 
   const hasActiveFilters = Boolean(
     filters.propertyType ||
