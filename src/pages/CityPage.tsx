@@ -133,7 +133,7 @@ const CityPage = () => {
   const currentMonth = new Date().toLocaleString("nl-NL", { month: "long" });
   const currentYear = new Date().getFullYear();
 
-  const pageTitle = `Huurwoningen & Koopwoningen ${cityName} (${totalCount}) | ${currentMonth} ${currentYear} | WoonPeek`;
+  const pageTitle = `Huurwoningen ${cityName} - ${totalCount} te huur en te koop in ${cityName} | ${currentMonth} ${currentYear}`;
   const pageDescription = `Bekijk ${huurCount} huurwoningen en ${koopCount} koopwoningen in ${cityName}. Appartementen, huizen, studio's en kamers. ✓ Dagelijks bijgewerkt ✓ Gratis alerts ✓ ${currentMonth} ${currentYear}`;
   const canonical = `https://www.woonpeek.nl${cityPath(cityName)}`;
 
