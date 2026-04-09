@@ -102,6 +102,25 @@ const CityPage = () => {
   const huurCount = countData?.huur || 0;
   const koopCount = countData?.koop || 0;
 
+  // Validate city exists in database
+  const { data: cityExists, isLoading: cityCheckLoading } = useQuery({
+    queryKey: ["city-exists", cityName],
+    queryFn: async () => {
+      const { count } = await supabase
+        .from("properties")
+        .select("id", { count: "exact", head: true })
+        .ilike("city", `%${cityName}%`)
+        .limit(1);
+      return (count || 0) > 0;
+    },
+    staleTime: 1000 * 60 * 60,
+  });
+
+  // Redirect to 404 if city doesn't exist
+  if (cityExists === false && !cityCheckLoading) {
+    return <Navigate to="/niet-gevonden" replace />;
+  }
+
   const hasActiveFilters = Boolean(
     filters.propertyType ||
       filters.listingType ||
