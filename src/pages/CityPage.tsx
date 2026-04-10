@@ -11,7 +11,9 @@ import SEOHead from "@/components/seo/SEOHead";
 import SearchFilters, { type SearchFilterValues } from "@/components/search/SearchFilters";
 import RelatedCities from "@/components/city/RelatedCities";
 import SimilarProperties from "@/components/city/SimilarProperties";
-import CityPriceStats from "@/components/city/CityPriceStats";
+import CityMarketStats, { useCityMarketData } from "@/components/city/CityMarketStats";
+import CityNeighborhoods from "@/components/city/CityNeighborhoods";
+import CityRentalTips from "@/components/city/CityRentalTips";
 import { useProperties, useFilterFacets } from "@/hooks/useProperties";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -104,6 +106,7 @@ const CityPage = () => {
   });
   const huurCount = countData?.huur || 0;
   const koopCount = countData?.koop || 0;
+  const { data: marketData } = useCityMarketData(cityName);
 
 
   const hasActiveFilters = Boolean(
@@ -352,7 +355,11 @@ const CityPage = () => {
               ) : filteredProperties.length > 0 ? (
                 <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
                   {filteredProperties.map((property) => (
-                    <PropertyCard key={property.id} property={property} />
+                    <PropertyCard
+                      key={property.id}
+                      property={property}
+                      cityAvgPrice={marketData?.avgPriceByType?.[property.property_type]}
+                    />
                   ))}
                 </div>
               ) : (
@@ -375,8 +382,14 @@ const CityPage = () => {
           </div>
         </section>
 
-        {/* Price stats */}
-        <CityPriceStats cityName={cityName} />
+        {/* Market stats */}
+        <CityMarketStats cityName={cityName} />
+
+        {/* Neighborhoods */}
+        <CityNeighborhoods cityName={cityName} citySlug={citySlug} />
+
+        {/* Rental tips */}
+        <CityRentalTips cityName={cityName} totalCount={totalCount} />
 
         {/* Nieuwste woningen in [stad] */}
         <SimilarProperties

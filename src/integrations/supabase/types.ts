@@ -139,6 +139,51 @@ export type Database = {
           },
         ]
       }
+      city_realtors: {
+        Row: {
+          address: string | null
+          city: string
+          created_at: string
+          id: string
+          name: string
+          phone: string | null
+          photo_url: string | null
+          place_id: string | null
+          rating: number | null
+          reviews_count: number | null
+          updated_at: string
+          website: string | null
+        }
+        Insert: {
+          address?: string | null
+          city: string
+          created_at?: string
+          id?: string
+          name: string
+          phone?: string | null
+          photo_url?: string | null
+          place_id?: string | null
+          rating?: number | null
+          reviews_count?: number | null
+          updated_at?: string
+          website?: string | null
+        }
+        Update: {
+          address?: string | null
+          city?: string
+          created_at?: string
+          id?: string
+          name?: string
+          phone?: string | null
+          photo_url?: string | null
+          place_id?: string | null
+          rating?: number | null
+          reviews_count?: number | null
+          updated_at?: string
+          website?: string | null
+        }
+        Relationships: []
+      }
       conversations: {
         Row: {
           admin_id: string | null

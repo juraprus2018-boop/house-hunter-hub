@@ -14,9 +14,11 @@ type Property = Database["public"]["Tables"]["properties"]["Row"];
 
 interface PropertyCardProps {
   property: Property;
+  /** Average price for this property type in the same city (used for deal labels) */
+  cityAvgPrice?: number;
 }
 
-const PropertyCard = ({ property }: PropertyCardProps) => {
+const PropertyCard = ({ property, cityAvgPrice }: PropertyCardProps) => {
   const { user } = useAuth();
   const { toggle, isFavorite, isLoading } = useToggleFavorite();
   const { data: feedLogos } = useFeedLogos();
@@ -58,6 +60,15 @@ const PropertyCard = ({ property }: PropertyCardProps) => {
   const hoursAgo = (Date.now() - new Date(property.created_at).getTime()) / (1000 * 60 * 60);
   const isToday = hoursAgo < 24;
   const isNew = hoursAgo < 7 * 24;
+
+  // Deal label: compare price with city average for same type
+  const dealLabel = (() => {
+    if (!cityAvgPrice || cityAvgPrice <= 0) return null;
+    const diff = (property.price - cityAvgPrice) / cityAvgPrice;
+    if (diff <= -0.15) return "goede-deal";
+    if (diff >= 0.15) return "te-duur";
+    return null;
+  })();
 
   const energyLabelColor: Record<string, string> = {
     "A++": "bg-success text-success-foreground",
@@ -106,6 +117,12 @@ const PropertyCard = ({ property }: PropertyCardProps) => {
             )}
             {!isToday && isNew && property.status === "actief" && (
               <Badge className="bg-accent/80 text-accent-foreground text-xs">Nieuw</Badge>
+            )}
+            {dealLabel === "goede-deal" && (
+              <Badge className="bg-success text-success-foreground text-xs font-semibold">Goede deal</Badge>
+            )}
+            {dealLabel === "te-duur" && (
+              <Badge className="bg-destructive/80 text-destructive-foreground text-xs">Boven gemiddeld</Badge>
             )}
             <Badge variant="secondary" className="capitalize text-xs">
               {property.listing_type}
