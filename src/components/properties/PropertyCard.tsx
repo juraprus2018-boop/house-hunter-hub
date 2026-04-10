@@ -14,6 +14,8 @@ type Property = Database["public"]["Tables"]["properties"]["Row"];
 
 interface PropertyCardProps {
   property: Property;
+  /** Average price for this property type in the same city (used for deal labels) */
+  cityAvgPrice?: number;
 }
 
 const PropertyCard = ({ property }: PropertyCardProps) => {
