@@ -70,6 +70,7 @@ const PropertyCard = ({ property, cityAvgPrice }: PropertyCardProps) => {
     return null;
   })();
 
+  const energyLabelColor: Record<string, string> = {
     "A++": "bg-success text-success-foreground",
     "A+": "bg-success text-success-foreground",
     "A": "bg-success text-success-foreground",
