@@ -107,7 +107,6 @@ const CityPage = () => {
   const huurCount = countData?.huur || 0;
   const koopCount = countData?.koop || 0;
   const { data: marketData } = useCityMarketData(cityName);
-  const { data: marketData } = useCityMarketData(cityName);
 
 
   const hasActiveFilters = Boolean(
