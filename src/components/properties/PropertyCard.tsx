@@ -61,7 +61,15 @@ const PropertyCard = ({ property, cityAvgPrice }: PropertyCardProps) => {
   const isToday = hoursAgo < 24;
   const isNew = hoursAgo < 7 * 24;
 
-  const energyLabelColor: Record<string, string> = {
+  // Deal label: compare price with city average for same type
+  const dealLabel = (() => {
+    if (!cityAvgPrice || cityAvgPrice <= 0) return null;
+    const diff = (property.price - cityAvgPrice) / cityAvgPrice;
+    if (diff <= -0.15) return "goede-deal";
+    if (diff >= 0.15) return "te-duur";
+    return null;
+  })();
+
     "A++": "bg-success text-success-foreground",
     "A+": "bg-success text-success-foreground",
     "A": "bg-success text-success-foreground",
