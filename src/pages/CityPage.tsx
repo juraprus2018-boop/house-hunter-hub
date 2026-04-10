@@ -392,6 +392,9 @@ const CityPage = () => {
         {/* Rental tips */}
         <CityRentalTips cityName={cityName} totalCount={totalCount} />
 
+        {/* Local realtors */}
+        <CityRealtors cityName={cityName} />
+
         {/* Nieuwste woningen in [stad] */}
         <SimilarProperties
           cityName={cityName}
