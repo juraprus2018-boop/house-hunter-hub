@@ -355,7 +355,12 @@ const CityPage = () => {
               ) : filteredProperties.length > 0 ? (
                 <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
                   {filteredProperties.map((property) => (
-                    <PropertyCard key={property.id} property={property} />
+                    <PropertyCard
+                      key={property.id}
+                      property={property}
+                      cityAvgPrice={marketData?.avgPriceByType?.[property.property_type]}
+                    />
+                  ))}
                   ))}
                 </div>
               ) : (
