@@ -18,7 +18,7 @@ interface PropertyCardProps {
   cityAvgPrice?: number;
 }
 
-const PropertyCard = ({ property }: PropertyCardProps) => {
+const PropertyCard = ({ property, cityAvgPrice }: PropertyCardProps) => {
   const { user } = useAuth();
   const { toggle, isFavorite, isLoading } = useToggleFavorite();
   const { data: feedLogos } = useFeedLogos();
