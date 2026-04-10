@@ -377,8 +377,14 @@ const CityPage = () => {
           </div>
         </section>
 
-        {/* Price stats */}
-        <CityPriceStats cityName={cityName} />
+        {/* Market stats */}
+        <CityMarketStats cityName={cityName} />
+
+        {/* Neighborhoods */}
+        <CityNeighborhoods cityName={cityName} citySlug={citySlug} />
+
+        {/* Rental tips */}
+        <CityRentalTips cityName={cityName} totalCount={totalCount} />
 
         {/* Nieuwste woningen in [stad] */}
         <SimilarProperties
