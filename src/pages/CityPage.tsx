@@ -361,7 +361,6 @@ const CityPage = () => {
                       cityAvgPrice={marketData?.avgPriceByType?.[property.property_type]}
                     />
                   ))}
-                  ))}
                 </div>
               ) : (
                 <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed py-16 text-center">
