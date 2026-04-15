@@ -227,7 +227,7 @@ const CityMarketStats = ({ cityName }: CityMarketStatsProps) => {
           </div>
         )}
 
-        <p className="mt-6 text-xs text-muted-foreground">
+        <p className="mt-6 text-sm text-muted-foreground">
           Alle prijzen zijn gebaseerd op het huidige actieve aanbod in {cityName} en worden dagelijks bijgewerkt. Prijzen per m² zijn berekend op basis van woningen met bekende oppervlakte.
         </p>
       </div>

@@ -85,7 +85,7 @@ const CityPriceStats = ({ cityName }: CityPriceStatsProps) => {
 
   return (
     <section className="border-t py-12">
-      <div className="container max-w-4xl">
+      <div className="container">
         <div className="flex items-center gap-3 mb-6">
           <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
             <TrendingUp className="h-5 w-5 text-primary" />
@@ -112,7 +112,7 @@ const CityPriceStats = ({ cityName }: CityPriceStatsProps) => {
             </div>
           ))}
         </div>
-        <p className="mt-4 text-xs text-muted-foreground">
+        <p className="mt-4 text-base text-muted-foreground">
           Prijzen zijn gebaseerd op het huidige actieve aanbod in {cityName} en worden dagelijks bijgewerkt.
         </p>
       </div>
