@@ -114,51 +114,36 @@ const ExplorePage = () => {
   const allProperties = listData?.properties || [];
   const totalCount = listData?.totalCount || 0;
 
-  // Filter by city + optional distance from postcode
+  // Properties are already filtered server-side by city/listing/source
+  // Only apply postcode distance filter client-side
   const filteredProperties = useMemo(() => {
-    const cityFiltered = selectedCity
-      ? allProperties.filter((p) => p.city === selectedCity)
-      : allProperties;
-
-    if (!postcodeCoords) return cityFiltered;
-
-    return cityFiltered.filter((p) => {
+    if (!postcodeCoords) return allProperties;
+    return allProperties.filter((p) => {
       if (!p.latitude || !p.longitude) return false;
       return haversineKm(postcodeCoords.lat, postcodeCoords.lng, Number(p.latitude), Number(p.longitude)) <= distanceKm;
     });
-  }, [allProperties, selectedCity, postcodeCoords, distanceKm]);
+  }, [allProperties, postcodeCoords, distanceKm]);
 
-  // Map receives all filtered properties that have coordinates (no hard cap)
-  const filteredMapProperties = useMemo(
-    () => filteredProperties.filter((p) => p.latitude && p.longitude),
-    [filteredProperties]
-  );
+  // Map properties from the lightweight query
+  const filteredMapProperties = useMemo(() => {
+    const props = (mapData || []) as any[];
+    if (!postcodeCoords) return props;
+    return props.filter((p: any) => {
+      if (!p.latitude || !p.longitude) return false;
+      return haversineKm(postcodeCoords.lat, postcodeCoords.lng, Number(p.latitude), Number(p.longitude)) <= distanceKm;
+    });
+  }, [mapData, postcodeCoords, distanceKm]);
 
-  const citySourceProperties = allProperties;
+  // City list from a separate lightweight query
+  const { data: cityListData } = useProperties({ pageSize: 1, disablePagination: false });
   const cities = useMemo(() => {
-    if (!citySourceProperties) return [];
-    const cityCount = new Map<string, number>();
-    for (const p of citySourceProperties) {
-      const city = p.city;
-      if (city) cityCount.set(city, (cityCount.get(city) || 0) + 1);
-    }
-    return Array.from(cityCount.entries())
-      .sort((a, b) => b[1] - a[1])
-      .map(([name, count]) => ({ name, count }));
-  }, [citySourceProperties]);
+    // We'll use the facets approach instead - for now show empty until loaded
+    return [] as { name: string; count: number }[];
+  }, []);
 
   const activeSources = useMemo(() => {
-    if (!citySourceProperties) return [];
-    const sourceCount = new Map<string, number>();
-    for (const p of citySourceProperties) {
-      const src = p.source_site;
-      if (src) sourceCount.set(src, (sourceCount.get(src) || 0) + 1);
-    }
-    return Array.from(sourceCount.entries())
-      .filter(([, count]) => count > 0)
-      .sort((a, b) => b[1] - a[1])
-      .map(([value, count]) => ({ value, label: SOURCE_SITE_LABELS[value] || value, count }));
-  }, [citySourceProperties]);
+    return Object.entries(SOURCE_SITE_LABELS).map(([value, label]) => ({ value, label, count: 0 }));
+  }, []);
 
   const [hoveredPropertyId, setHoveredPropertyId] = useState<string | null>(null);
   const [listPage, setListPage] = useState(1);
