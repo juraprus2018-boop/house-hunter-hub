@@ -78,7 +78,7 @@ const CityNeighborhoods = ({ cityName, citySlug }: CityNeighborhoodsProps) => {
 
   return (
     <section className="border-t py-12">
-      <div className="container max-w-5xl">
+      <div className="container">
         <div className="flex items-center gap-3 mb-2">
           <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
             <MapPin className="h-5 w-5 text-primary" />
@@ -87,7 +87,7 @@ const CityNeighborhoods = ({ cityName, citySlug }: CityNeighborhoodsProps) => {
             Beste wijken in {cityName} om te huren
           </h2>
         </div>
-        <p className="mb-6 text-sm text-muted-foreground">
+        <p className="mb-6 text-base text-muted-foreground">
           Ontdek welke wijken in {cityName} het meeste aanbod hebben en waar de huurprijzen het laagst zijn.
           {cheapest && mostExpensive && cheapest.name !== mostExpensive.name && (
             <> De goedkoopste wijk is <strong>{cheapest.name}</strong> (gem. {formatEuro(cheapest.avgPrice)}), de duurste is <strong>{mostExpensive.name}</strong> (gem. {formatEuro(mostExpensive.avgPrice)}).</>

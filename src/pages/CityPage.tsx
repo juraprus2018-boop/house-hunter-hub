@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useParams, Navigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -31,6 +31,8 @@ const EMPTY_FILTERS: SearchFilterValues = {
   includeInactive: false,
 };
 
+const ITEMS_PER_PAGE = 12;
+
 const PropertyCardSkeleton = () => (
   <div className="overflow-hidden rounded-lg border bg-card">
     <Skeleton className="aspect-[4/3] w-full" />
@@ -55,6 +57,11 @@ const CityPage = () => {
   const isInvalidCity = !validCityName;
   const cityName = validCityName || citySlugToName(citySlug);
   const [filters, setFilters] = useState<SearchFilterValues>(EMPTY_FILTERS);
+  const [visibleCount, setVisibleCount] = useState(ITEMS_PER_PAGE);
+
+  const handleLoadMore = useCallback(() => {
+    setVisibleCount((prev) => prev + ITEMS_PER_PAGE);
+  }, []);
 
   const { data: facets } = useFilterFacets({
     city: cityName,
@@ -222,11 +229,11 @@ const CityPage = () => {
               />
             </div>
 
-            <div className="max-w-3xl">
+            <div>
             <h1 className="font-display text-3xl font-bold text-foreground md:text-4xl">
                 Huurwoningen {cityName} - te huur in {cityName}
               </h1>
-              <p className="mt-3 text-base leading-relaxed text-muted-foreground">
+              <p className="mt-3 text-base leading-relaxed text-muted-foreground max-w-3xl">
                 Zoek je een <strong>huurwoning in {cityName}</strong> of wil je een <strong>huis kopen in {cityName}</strong>? Bekijk {totalCount} woningen: {huurCount} huurwoningen en {koopCount} koopwoningen. Dagelijks bijgewerkt met nieuw aanbod van appartementen, huizen, studio's en kamers in {cityName}.
               </p>
               <div className="mt-4 flex flex-wrap gap-3">
@@ -260,7 +267,7 @@ const CityPage = () => {
               <h2 className="font-display text-2xl font-semibold text-foreground">
                 Huis huren of kopen in {cityName}
               </h2>
-              <div className="mt-4 space-y-3 text-sm leading-relaxed text-muted-foreground">
+              <div className="mt-4 space-y-3 text-base leading-relaxed text-muted-foreground">
                 <p>
                   De woningmarkt in {cityName} is dynamisch en het aanbod wisselt snel. Of je nu zoekt naar een{" "}
                   <strong>huurwoning in {cityName}</strong>, een <strong>appartement te huur in {cityName}</strong>,
@@ -353,15 +360,25 @@ const CityPage = () => {
                   ))}
                 </div>
               ) : filteredProperties.length > 0 ? (
-                <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
-                  {filteredProperties.map((property) => (
-                    <PropertyCard
-                      key={property.id}
-                      property={property}
-                      cityAvgPrice={marketData?.avgPriceByType?.[property.property_type]}
-                    />
-                  ))}
-                </div>
+                <>
+                  <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
+                    {filteredProperties.slice(0, visibleCount).map((property) => (
+                      <PropertyCard
+                        key={property.id}
+                        property={property}
+                        cityAvgPrice={marketData?.avgPriceByType?.[property.property_type]}
+                      />
+                    ))}
+                  </div>
+                  {visibleCount < filteredProperties.length && (
+                    <div className="mt-8 text-center">
+                      <Button variant="outline" size="lg" onClick={handleLoadMore} className="gap-2 px-8">
+                        Meer woningen laden ({filteredProperties.length - visibleCount} resterend)
+                        <ArrowRight className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  )}
+                </>
               ) : (
                 <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed py-16 text-center">
                   <Search className="mb-4 h-12 w-12 text-muted-foreground" />
@@ -402,18 +419,18 @@ const CityPage = () => {
 
         {/* FAQ Section */}
         <section className="border-t py-12">
-          <div className="container max-w-3xl">
+          <div className="container">
             <h2 className="font-display text-2xl font-bold text-foreground mb-6">
               Veelgestelde vragen over woningen in {cityName}
             </h2>
             <div className="space-y-4">
               {cityFaqItems.map((faq, i) => (
                 <details key={i} className="group rounded-xl border bg-card">
-                  <summary className="cursor-pointer px-6 py-4 text-sm font-semibold text-foreground list-none flex items-center justify-between gap-4">
+                  <summary className="cursor-pointer px-6 py-4 text-base font-semibold text-foreground list-none flex items-center justify-between gap-4">
                     {faq.question}
                     <ChevronRight className="h-4 w-4 shrink-0 transition-transform group-open:rotate-90" />
                   </summary>
-                  <div className="px-6 pb-5 text-sm leading-relaxed text-muted-foreground">
+                  <div className="px-6 pb-5 text-base leading-relaxed text-muted-foreground">
                     {faq.answer}
                   </div>
                 </details>
@@ -424,7 +441,7 @@ const CityPage = () => {
 
         {/* Internal links hub */}
         <section className="border-t py-12">
-          <div className="container max-w-4xl">
+          <div className="container">
             <h2 className="font-display text-2xl font-bold text-foreground mb-6">
               Zoek woningen in {cityName}
             </h2>
@@ -438,7 +455,7 @@ const CityPage = () => {
                 { label: "Studio's", href: `/studios/${citySlug}` },
                 { label: "Kamers", href: `/kamers/${citySlug}` },
               ].map((item) => (
-                <Link key={item.href} to={item.href} className="rounded-lg border bg-card px-4 py-3 text-sm font-medium text-foreground transition-shadow hover:shadow-md hover:text-primary">
+                <Link key={item.href} to={item.href} className="rounded-lg border bg-card px-4 py-3 text-base font-medium text-foreground transition-shadow hover:shadow-md hover:text-primary">
                   {item.label} in {cityName}
                 </Link>
               ))}
@@ -447,7 +464,7 @@ const CityPage = () => {
             {/* Nieuw aanbod link */}
             <h3 className="font-display text-lg font-semibold text-foreground mb-3">Nieuw aanbod</h3>
             <div className="grid gap-2 sm:grid-cols-2 md:grid-cols-3 mb-6">
-              <Link to={`/nieuw-aanbod/${citySlug}`} className="rounded-lg border bg-card px-4 py-3 text-sm font-medium text-foreground transition-shadow hover:shadow-md hover:text-primary">
+              <Link to={`/nieuw-aanbod/${citySlug}`} className="rounded-lg border bg-card px-4 py-3 text-base font-medium text-foreground transition-shadow hover:shadow-md hover:text-primary">
                 Nieuw aanbod vandaag in {cityName}
               </Link>
             </div>
@@ -456,7 +473,7 @@ const CityPage = () => {
             <h3 className="font-display text-lg font-semibold text-foreground mb-3">Op maximale prijs</h3>
             <div className="grid gap-2 sm:grid-cols-2 md:grid-cols-3 mb-6">
               {[750, 1000, 1250, 1500, 2000].map((price) => (
-                <Link key={price} to={`/woningen/${citySlug}/onder-${price}`} className="rounded-lg border bg-card px-4 py-3 text-sm font-medium text-foreground transition-shadow hover:shadow-md hover:text-primary">
+                <Link key={price} to={`/woningen/${citySlug}/onder-${price}`} className="rounded-lg border bg-card px-4 py-3 text-base font-medium text-foreground transition-shadow hover:shadow-md hover:text-primary">
                   Woningen onder €{price.toLocaleString("nl-NL")}
                 </Link>
               ))}
@@ -466,7 +483,7 @@ const CityPage = () => {
             <h3 className="font-display text-lg font-semibold text-foreground mb-3">Op aantal kamers</h3>
             <div className="grid gap-2 sm:grid-cols-2 md:grid-cols-4 mb-6">
               {[1, 2, 3, 4].map((beds) => (
-                <Link key={beds} to={`/woningen/${citySlug}/${beds}-kamers`} className="rounded-lg border bg-card px-4 py-3 text-sm font-medium text-foreground transition-shadow hover:shadow-md hover:text-primary">
+                <Link key={beds} to={`/woningen/${citySlug}/${beds}-kamers`} className="rounded-lg border bg-card px-4 py-3 text-base font-medium text-foreground transition-shadow hover:shadow-md hover:text-primary">
                   {beds} {beds === 1 ? "kamer" : "kamers"} in {cityName}
                 </Link>
               ))}
@@ -476,11 +493,11 @@ const CityPage = () => {
 
         {/* SEO Text */}
         <section className="border-t bg-muted/30 py-12">
-          <div className="container max-w-4xl">
+          <div className="container">
             <h2 className="font-display text-2xl font-bold text-foreground">
               Huurwoning zoeken in {cityName}
             </h2>
-            <div className="mt-4 space-y-4 text-sm leading-relaxed text-muted-foreground">
+            <div className="mt-4 space-y-4 text-base leading-relaxed text-muted-foreground">
               <p>
                 Zoek je een <strong>huurwoning in {cityName}</strong>? De huurwoningmarkt in {cityName} is competitief:
                 populaire woningen zijn vaak binnen enkele dagen verhuurd. Daarom is het belangrijk om snel te reageren.
