@@ -271,18 +271,20 @@ const PropertyTypeCityPage = ({ propertyType }: PropertyTypeCityPageProps) => {
                   ))}
                 </div>
               ) : properties.length > 0 ? (
-                <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
-                  {visibleProperties.map((property) => (
-                    <PropertyCard key={property.id} property={property} />
-                  ))}
-                </div>
-                {visibleCount < properties.length && (
-                  <div className="mt-8 text-center">
-                    <Button variant="outline" className="gap-2" onClick={handleLoadMore}>
-                      Meer woningen laden ({properties.length - visibleCount} resterend)
-                    </Button>
+                <>
+                  <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
+                    {visibleProperties.map((property) => (
+                      <PropertyCard key={property.id} property={property} />
+                    ))}
                   </div>
-                )}
+                  {visibleCount < properties.length && (
+                    <div className="mt-8 text-center">
+                      <Button variant="outline" className="gap-2" onClick={handleLoadMore}>
+                        Meer woningen laden ({properties.length - visibleCount} resterend)
+                      </Button>
+                    </div>
+                  )}
+                </>
               ) : (
                 <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed py-16 text-center">
                   <Search className="mb-4 h-12 w-12 text-muted-foreground" />
