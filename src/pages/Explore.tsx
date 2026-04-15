@@ -171,6 +171,13 @@ const ExplorePage = () => {
           <p className="text-sm text-muted-foreground">
             {isLoading ? "Laden..." : `${totalCount} woningen`}
           </p>
+        </div>
+        {isMobile && (
+          <Button variant="ghost" size="icon" onClick={() => setSidebarOpen(false)}>
+            <X className="h-5 w-5" />
+          </Button>
+        )}
+      </div>
 
       <Separator />
 
