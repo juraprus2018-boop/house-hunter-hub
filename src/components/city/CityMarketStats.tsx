@@ -118,7 +118,7 @@ const CityMarketStats = ({ cityName }: CityMarketStatsProps) => {
 
   return (
     <section className="border-t py-12">
-      <div className="container max-w-5xl">
+      <div className="container">
         {/* Header */}
         <div className="flex items-center gap-3 mb-2">
           <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
@@ -128,7 +128,7 @@ const CityMarketStats = ({ cityName }: CityMarketStatsProps) => {
             Huurmarkt {cityName}: cijfers en statistieken
           </h2>
         </div>
-        <p className="mb-6 text-sm text-muted-foreground">
+        <p className="mb-6 text-base text-muted-foreground">
           Op basis van {stats.totalHuur + stats.totalKoop} actieve woningen in {cityName}. Dagelijks bijgewerkt.
         </p>
 
@@ -227,7 +227,7 @@ const CityMarketStats = ({ cityName }: CityMarketStatsProps) => {
           </div>
         )}
 
-        <p className="mt-6 text-xs text-muted-foreground">
+        <p className="mt-6 text-sm text-muted-foreground">
           Alle prijzen zijn gebaseerd op het huidige actieve aanbod in {cityName} en worden dagelijks bijgewerkt. Prijzen per m² zijn berekend op basis van woningen met bekende oppervlakte.
         </p>
       </div>

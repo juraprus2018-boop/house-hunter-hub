@@ -9,7 +9,7 @@ interface CityRentalTipsProps {
 const CityRentalTips = ({ cityName, totalCount }: CityRentalTipsProps) => {
   return (
     <section className="border-t py-12 bg-muted/30">
-      <div className="container max-w-5xl">
+      <div className="container">
         <div className="flex items-center gap-3 mb-2">
           <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
             <Lightbulb className="h-5 w-5 text-primary" />
@@ -18,7 +18,7 @@ const CityRentalTips = ({ cityName, totalCount }: CityRentalTipsProps) => {
             Tips om sneller een woning te vinden in {cityName}
           </h2>
         </div>
-        <p className="mb-8 text-sm text-muted-foreground">
+        <p className="mb-8 text-base text-muted-foreground">
           De woningmarkt in {cityName} is competitief. Met deze tips vergroot je je kans om snel een woning te vinden.
         </p>
 
