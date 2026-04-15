@@ -134,12 +134,7 @@ const ExplorePage = () => {
     });
   }, [mapData, postcodeCoords, distanceKm]);
 
-  // City list from a separate lightweight query
-  const { data: cityListData } = useProperties({ pageSize: 1, disablePagination: false });
-  const cities = useMemo(() => {
-    // We'll use the facets approach instead - for now show empty until loaded
-    return [] as { name: string; count: number }[];
-  }, []);
+  const { data: cities = [] } = useCityList();
 
   const activeSources = useMemo(() => {
     return Object.entries(SOURCE_SITE_LABELS).map(([value, label]) => ({ value, label, count: 0 }));
