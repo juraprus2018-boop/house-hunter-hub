@@ -129,6 +129,10 @@
     font-family: 'Plus Jakarta Sans', sans-serif;
     @apply font-semibold tracking-tight;
   }
+
+  p {
+    @apply text-base leading-relaxed;
+  }
 }
 
 @layer utilities {
