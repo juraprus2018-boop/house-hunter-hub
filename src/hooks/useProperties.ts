@@ -199,6 +199,36 @@ export const useProperty = (slugOrId: string) => {
   });
 };
 
+export const useCityList = () => {
+  return useQuery({
+    queryKey: ["city-list"],
+    queryFn: async () => {
+      const allCities: string[] = [];
+      let from = 0;
+      while (true) {
+        const { data, error } = await supabase
+          .from("properties")
+          .select("city")
+          .eq("status", "actief")
+          .range(from, from + 999);
+        if (error) throw error;
+        if (!data || data.length === 0) break;
+        allCities.push(...data.map((d) => d.city));
+        if (data.length < 1000) break;
+        from += 1000;
+      }
+      const cityCount = new Map<string, number>();
+      for (const city of allCities) {
+        if (city) cityCount.set(city, (cityCount.get(city) || 0) + 1);
+      }
+      return Array.from(cityCount.entries())
+        .sort((a, b) => b[1] - a[1])
+        .map(([name, count]) => ({ name, count }));
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+};
+
 export const generatePropertySlug = (property: { street: string; house_number: string; city: string }) => {
   return `${property.street}-${property.house_number}-${property.city}`
     .toLowerCase()

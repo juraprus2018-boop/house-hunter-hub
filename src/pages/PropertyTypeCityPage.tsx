@@ -60,6 +60,8 @@ const PropertyTypeCityPage = ({ propertyType }: PropertyTypeCityPageProps) => {
   const label = TYPE_LABELS[propertyType];
   const locationLabel = cityName || "Nederland";
 
+  const ITEMS_PER_PAGE = 12;
+  const [visibleCount, setVisibleCount] = useState(ITEMS_PER_PAGE);
   const [filters, setFilters] = useState<SearchFilterValues>(EMPTY_FILTERS);
 
   const { data: facets } = useFilterFacets({
@@ -81,6 +83,8 @@ const PropertyTypeCityPage = ({ propertyType }: PropertyTypeCityPageProps) => {
 
   const properties = data?.properties || [];
   const totalCount = data?.totalCount || 0;
+  const visibleProperties = properties.slice(0, visibleCount);
+  const handleLoadMore = () => setVisibleCount((c) => c + ITEMS_PER_PAGE);
 
   const hasActiveFilters = Boolean(
     filters.listingType || filters.maxPrice || filters.minBedrooms || filters.minSurface
@@ -182,7 +186,7 @@ const PropertyTypeCityPage = ({ propertyType }: PropertyTypeCityPageProps) => {
             <div className="mb-4">
               <Breadcrumbs items={breadcrumbs} />
             </div>
-            <div className="max-w-3xl">
+            <div>
               <h1 className="font-display text-3xl font-bold text-foreground md:text-4xl">
                 {label.plural} in {locationLabel}: te huur en te koop
               </h1>
@@ -267,11 +271,20 @@ const PropertyTypeCityPage = ({ propertyType }: PropertyTypeCityPageProps) => {
                   ))}
                 </div>
               ) : properties.length > 0 ? (
-                <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
-                  {properties.map((property) => (
-                    <PropertyCard key={property.id} property={property} />
-                  ))}
-                </div>
+                <>
+                  <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
+                    {visibleProperties.map((property) => (
+                      <PropertyCard key={property.id} property={property} />
+                    ))}
+                  </div>
+                  {visibleCount < properties.length && (
+                    <div className="mt-8 text-center">
+                      <Button variant="outline" className="gap-2" onClick={handleLoadMore}>
+                        Meer woningen laden ({properties.length - visibleCount} resterend)
+                      </Button>
+                    </div>
+                  )}
+                </>
               ) : (
                 <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed py-16 text-center">
                   <Search className="mb-4 h-12 w-12 text-muted-foreground" />
@@ -294,11 +307,11 @@ const PropertyTypeCityPage = ({ propertyType }: PropertyTypeCityPageProps) => {
 
         {/* SEO text: [Woningtype] in [stad] */}
         <section className="border-t bg-muted/30 py-12">
-          <div className="container max-w-4xl">
+          <div className="container">
             <h2 className="font-display text-2xl font-bold text-foreground">
               {label.singular.charAt(0).toUpperCase() + label.singular.slice(1)} zoeken in {locationLabel}
             </h2>
-            <div className="mt-4 space-y-4 text-sm leading-relaxed text-muted-foreground">
+            <div className="mt-4 space-y-4 text-base leading-relaxed text-muted-foreground">
               <p>
                 Op WoonPeek vind je het meest actuele aanbod van <strong>{label.plural.toLowerCase()} in {locationLabel}</strong>.
                 Of je nu een <strong>{label.singular} huren in {locationLabel}</strong> zoekt of een{" "}
@@ -341,7 +354,7 @@ const PropertyTypeCityPage = ({ propertyType }: PropertyTypeCityPageProps) => {
             <h3 className="mt-10 font-display text-xl font-semibold text-foreground">
               Tips voor het vinden van een {label.singular} in {locationLabel}
             </h3>
-            <div className="mt-3 space-y-4 text-sm leading-relaxed text-muted-foreground">
+            <div className="mt-3 space-y-4 text-base leading-relaxed text-muted-foreground">
               <p>
                 De vraag naar <strong>{label.plural.toLowerCase()} in {locationLabel}</strong> is groot. Het is daarom
                 verstandig om meerdere kanalen te gebruiken. WoonPeek bundelt het aanbod van verschillende websites,
@@ -384,7 +397,7 @@ const PropertyTypeCityPage = ({ propertyType }: PropertyTypeCityPageProps) => {
         {/* Internal links: Andere woningen in [stad] */}
         {cityName && (
           <section className="border-t py-12">
-            <div className="container max-w-4xl">
+            <div className="container">
               <h2 className="font-display text-2xl font-bold text-foreground mb-6">
                 Andere woningen in {cityName}
               </h2>
@@ -431,18 +444,18 @@ const PropertyTypeCityPage = ({ propertyType }: PropertyTypeCityPageProps) => {
         {/* FAQ */}
         {cityName && (
           <section className="border-t py-12">
-            <div className="container max-w-3xl">
+            <div className="container">
               <h2 className="font-display text-2xl font-bold text-foreground mb-6">
                 Veelgestelde vragen over {label.plural.toLowerCase()} in {cityName}
               </h2>
               <div className="space-y-4">
                 {faqItems.map((faq, i) => (
                   <details key={i} className="group rounded-xl border bg-card">
-                    <summary className="cursor-pointer px-6 py-4 text-sm font-semibold text-foreground list-none flex items-center justify-between gap-4">
+                    <summary className="cursor-pointer px-6 py-4 text-base font-semibold text-foreground list-none flex items-center justify-between gap-4">
                       {faq.question}
                       <ChevronRight className="h-4 w-4 shrink-0 transition-transform group-open:rotate-90" />
                     </summary>
-                    <div className="px-6 pb-5 text-sm leading-relaxed text-muted-foreground">
+                    <div className="px-6 pb-5 text-base leading-relaxed text-muted-foreground">
                       {faq.answer}
                     </div>
                   </details>
