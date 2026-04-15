@@ -238,11 +238,18 @@ const ListingTypePage = ({ listingType }: ListingTypePageProps) => {
           ) : properties.length > 0 ? (
             <>
               <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                {properties.map((property) => (
+                {visibleProperties.map((property) => (
                   <PropertyCard key={property.id} property={property} />
                 ))}
               </div>
-              <div className="mt-8 text-center">
+              {visibleCount < properties.length && (
+                <div className="mt-8 text-center">
+                  <Button variant="outline" className="gap-2" onClick={handleLoadMore}>
+                    Meer woningen laden ({properties.length - visibleCount} resterend)
+                  </Button>
+                </div>
+              )}
+              <div className="mt-4 text-center">
                 <Link
                   to={`/zoeken?aanbod=${listingType}${cityName ? `&locatie=${encodeURIComponent(cityName)}` : ""}`}
                 >
