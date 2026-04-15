@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useParams, Link, Navigate } from "react-router-dom";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
@@ -51,6 +51,9 @@ const ListingTypePage = ({ listingType }: ListingTypePageProps) => {
   const cityName = citySlug ? (validCityName || citySlugToName(citySlug)) : undefined;
   const locationLabel = cityName || "Nederland";
 
+  const ITEMS_PER_PAGE = 12;
+  const [visibleCount, setVisibleCount] = useState(ITEMS_PER_PAGE);
+
   const { data, isLoading } = useProperties({
     listingType: listingType as ListingType,
     city: isInvalidCity ? undefined : cityName,
@@ -61,6 +64,9 @@ const ListingTypePage = ({ listingType }: ListingTypePageProps) => {
   const totalCount = data?.totalCount || 0;
   const hasListings = totalCount > 0;
   const countLabel = hasListings ? `${totalCount} woningen` : "actueel aanbod";
+
+  const visibleProperties = properties.slice(0, visibleCount);
+  const handleLoadMore = () => setVisibleCount((c) => c + ITEMS_PER_PAGE);
 
   // Fetch nearby/recent properties when city has no listings
   const { data: nearbyProperties, isLoading: nearbyLoading } = useNearbyProperties(
@@ -191,7 +197,7 @@ const ListingTypePage = ({ listingType }: ListingTypePageProps) => {
             <div className="mb-4">
               <Breadcrumbs items={breadcrumbs} />
             </div>
-            <div className="max-w-3xl">
+            <div>
               <h1 className="font-display text-3xl font-bold text-foreground md:text-4xl">
                 {label.plural} in {locationLabel}{listingType === "huur" ? ": huis en appartement te huur" : ": huizen en appartementen te koop"}
               </h1>
@@ -302,11 +308,11 @@ const ListingTypePage = ({ listingType }: ListingTypePageProps) => {
 
         {/* SEO Text */}
         <section className="border-t bg-muted/30 py-12">
-          <div className="container max-w-4xl">
+          <div className="container">
             <h2 className="font-display text-2xl font-bold text-foreground">
               {label.singular.charAt(0).toUpperCase() + label.singular.slice(1)} zoeken in {locationLabel}
             </h2>
-            <div className="mt-4 space-y-4 text-sm leading-relaxed text-muted-foreground">
+            <div className="mt-4 space-y-4 text-base leading-relaxed text-muted-foreground">
               <p>
                 Op WoonPeek vind je het meest actuele aanbod van <strong>{label.plural.toLowerCase()} in {locationLabel}</strong>.
                 We verzamelen dagelijks het nieuwste woningaanbod van meerdere bronnen zodat je niets mist.
@@ -372,7 +378,7 @@ const ListingTypePage = ({ listingType }: ListingTypePageProps) => {
             <h3 className="mt-10 font-display text-xl font-semibold text-foreground">
               Tips voor het vinden van een {label.singular} in {locationLabel}
             </h3>
-            <div className="mt-3 space-y-4 text-sm leading-relaxed text-muted-foreground">
+            <div className="mt-3 space-y-4 text-base leading-relaxed text-muted-foreground">
               <ul className="list-disc space-y-2 pl-5">
                 <li>
                   <strong>Reageer snel</strong>: Nieuwe {label.plural.toLowerCase()} in {locationLabel} zijn
@@ -402,7 +408,7 @@ const ListingTypePage = ({ listingType }: ListingTypePageProps) => {
         {/* Internal links */}
         {cityName && (
           <section className="border-t py-12">
-            <div className="container max-w-4xl">
+            <div className="container">
               <h2 className="font-display text-2xl font-bold text-foreground mb-6">
                 Andere woningen in {cityName}
               </h2>
@@ -474,18 +480,18 @@ const ListingTypePage = ({ listingType }: ListingTypePageProps) => {
 
         {/* FAQ */}
         <section className="border-t py-12">
-          <div className="container max-w-3xl">
+          <div className="container">
             <h2 className="font-display text-2xl font-bold text-foreground mb-6">
               Veelgestelde vragen over {label.plural.toLowerCase()} in {locationLabel}
             </h2>
             <div className="space-y-4">
               {faqItems.map((faq, i) => (
                 <details key={i} className="group rounded-xl border bg-card">
-                  <summary className="cursor-pointer px-6 py-4 text-sm font-semibold text-foreground list-none flex items-center justify-between gap-4">
+                  <summary className="cursor-pointer px-6 py-4 text-base font-semibold text-foreground list-none flex items-center justify-between gap-4">
                     {faq.question}
                     <ChevronRight className="h-4 w-4 shrink-0 transition-transform group-open:rotate-90" />
                   </summary>
-                  <div className="px-6 pb-5 text-sm leading-relaxed text-muted-foreground">
+                  <div className="px-6 pb-5 text-base leading-relaxed text-muted-foreground">
                     {faq.answer}
                   </div>
                 </details>
