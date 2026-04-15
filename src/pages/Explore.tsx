@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useRef, useCallback } from "react";
+import { useState, useMemo, useEffect, useRef, useCallback, lazy, Suspense } from "react";
 import Header from "@/components/layout/Header";
 import PropertyCard from "@/components/properties/PropertyCard";
 import { Button } from "@/components/ui/button";
@@ -8,10 +8,10 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useProperties } from "@/hooks/useProperties";
+import { useProperties, useMapProperties } from "@/hooks/useProperties";
 import { Loader2, MapPin, ChevronRight, SlidersHorizontal, X, Navigation, Map as MapIcon, List } from "lucide-react";
 import { cn } from "@/lib/utils";
-import ExploreMap from "@/components/explore/ExploreMap";
+const ExploreMap = lazy(() => import("@/components/explore/ExploreMap"));
 import { useIsMobile } from "@/hooks/use-mobile";
 
 type ListingType = "huur" | "koop";
@@ -95,12 +95,24 @@ const ExplorePage = () => {
     return () => { cancelled = true; };
   }, [debouncedPostcode]);
 
-  const { data: allData, isLoading } = useProperties({
+  // Use paginated query for the list (fast initial load)
+  const { data: listData, isLoading } = useProperties({
     listingType: listingType || undefined,
     sourceSite: selectedSource || undefined,
-    disablePagination: true,
+    city: selectedCity || undefined,
+    pageSize: 50,
   });
-  const allProperties = allData?.properties || [];
+
+  // Separate lightweight query for map markers (only when map visible)
+  const showMap = !isMobile || mobileView === "map";
+  const { data: mapData, isLoading: isMapLoading } = useMapProperties({
+    listingType: listingType || undefined,
+    sourceSite: selectedSource || undefined,
+    city: selectedCity || undefined,
+  }, showMap);
+
+  const allProperties = listData?.properties || [];
+  const totalCount = listData?.totalCount || 0;
 
   // Filter by city + optional distance from postcode
   const filteredProperties = useMemo(() => {
