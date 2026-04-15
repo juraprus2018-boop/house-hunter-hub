@@ -43,7 +43,7 @@ const Index = () => {
   return (
     <div className="flex min-h-screen flex-col">
       <SEOHead
-        title="WoonPeek – Vind woningen sneller dan op Funda | Huurwoningen & koopwoningen"
+        title="WoonPeek – Huurwoningen & Koophuizen in Nederland"
         description="Ontdek nieuwe huurwoningen en koopwoningen zodra ze online komen. WoonPeek verzamelt dagelijks het nieuwste woningaanbod uit heel Nederland op één plek."
         canonical="https://www.woonpeek.nl"
       />

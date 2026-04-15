@@ -99,15 +99,15 @@ const Samenwerking = () => {
         <section className="border-t bg-muted/30 py-12">
           <div className="container max-w-3xl space-y-6 text-sm leading-relaxed text-muted-foreground">
             <h2 className="font-display text-2xl font-bold text-foreground">
-              Samenwerking via Daisycon
+              Hoe werkt onze samenwerking?
             </h2>
             <p>
-              WoonPeek maakt gebruik van het Daisycon-affiliate netwerk om woningaanbod van
-              diverse platformen te verzamelen. Dankzij deze samenwerking kunnen we dagelijks
-              duizenden woningen importeren en op één overzichtelijke plek tonen.
+              WoonPeek werkt samen met diverse woningplatformen en aanbieders in heel Nederland.
+              Dankzij ons partnernetwerk verzamelen we dagelijks duizenden woningen en tonen
+              we deze op één overzichtelijke plek.
             </p>
             <p>
-              Elke aanbieder levert een datafeed met actueel woningaanbod. Onze systemen
+              Elke partner levert een datafeed met actueel woningaanbod. Onze systemen
               verwerken deze feeds automatisch, zodat je als bezoeker altijd het meest
               recente aanbod ziet, zonder zelf tientallen websites af te hoeven zoeken.
             </p>
