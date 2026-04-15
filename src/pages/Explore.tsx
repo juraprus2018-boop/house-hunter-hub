@@ -169,15 +169,8 @@ const ExplorePage = () => {
         <div>
           <h2 className="font-display text-lg font-bold">Verkennen</h2>
           <p className="text-sm text-muted-foreground">
-            {isLoading ? "Laden..." : `${filteredProperties.length} woningen`}
+            {isLoading ? "Laden..." : `${totalCount} woningen`}
           </p>
-        </div>
-        {isMobile && (
-          <Button variant="ghost" size="icon" onClick={() => setSidebarOpen(false)}>
-            <X className="h-5 w-5" />
-          </Button>
-        )}
-      </div>
 
       <Separator />
 
@@ -474,15 +467,17 @@ const ExplorePage = () => {
             {!isMobile && (
               <>
                 <div className="relative h-1/2 min-h-[300px] border-b">
-                  {isLoading ? (
+                  {isMapLoading ? (
                     <div className="flex h-full items-center justify-center bg-muted/50">
                       <Loader2 className="h-8 w-8 animate-spin text-primary" />
                     </div>
                   ) : (
-                    <ExploreMap
-                      properties={filteredMapProperties}
-                      hoveredPropertyId={hoveredPropertyId}
-                    />
+                    <Suspense fallback={<div className="flex h-full items-center justify-center bg-muted/50"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>}>
+                      <ExploreMap
+                        properties={filteredMapProperties as any}
+                        hoveredPropertyId={hoveredPropertyId}
+                      />
+                    </Suspense>
                   )}
                 </div>
                 <div className="flex-1 overflow-y-auto p-6">
@@ -494,15 +489,17 @@ const ExplorePage = () => {
             {/* Mobile: tab-based full-screen view */}
             {isMobile && mobileView === "map" && (
               <div className="flex-1 relative">
-                {isLoading ? (
+                {isMapLoading ? (
                   <div className="flex h-full items-center justify-center bg-muted/50">
                     <Loader2 className="h-8 w-8 animate-spin text-primary" />
                   </div>
                 ) : (
-                  <ExploreMap
-                    properties={filteredMapProperties}
-                    hoveredPropertyId={hoveredPropertyId}
-                  />
+                  <Suspense fallback={<div className="flex h-full items-center justify-center bg-muted/50"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>}>
+                    <ExploreMap
+                      properties={filteredMapProperties as any}
+                      hoveredPropertyId={hoveredPropertyId}
+                    />
+                  </Suspense>
                 )}
               </div>
             )}
