@@ -18,6 +18,7 @@ import AdminProperties from "./pages/admin/AdminProperties";
 import AdminScrapers from "./pages/admin/AdminScrapers";
 import AdminSettings from "./pages/admin/AdminSettings";
 import AdminAds from "./pages/admin/AdminAds";
+import AdminSiteSettings from "./pages/admin/AdminSiteSettings";
 
 import MyProperties from "./pages/MyProperties";
 import CreateProperty from "./pages/CreateProperty";
@@ -108,6 +109,7 @@ const App = () => (
             <Route path="/admin/scrapers" element={<AdminScrapers />} />
             <Route path="/admin/instellingen" element={<AdminSettings />} />
             <Route path="/admin/advertenties" element={<AdminAds />} />
+            <Route path="/admin/site-instellingen" element={<AdminSiteSettings />} />
             <Route path="/admin/blog" element={<AdminBlog />} />
             <Route path="/admin/gebruikers" element={<AdminUsers />} />
             <Route path="/admin/gebruikers/:userId" element={<AdminUserDetail />} />
