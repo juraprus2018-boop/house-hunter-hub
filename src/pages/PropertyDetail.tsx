@@ -65,6 +65,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import AdSlot from "@/components/ads/AdSlot";
 
 const SOURCE_SITE_META: Record<string, { label: string; color: string }> = {
   wooniezie: { label: "Wooniezie", color: "#FF6B00" },
@@ -701,6 +702,7 @@ const PropertyDetail = () => {
             {/* ── Sidebar ── */}
             <div className="lg:col-span-1">
               <div className="sticky top-24 space-y-4">
+                <AdSlot slotKey="property_detail" className="my-0" />
                 {/* Price + CTA Card */}
                 <Card className="overflow-hidden shadow-lg">
                   <CardContent className="p-6 space-y-4">

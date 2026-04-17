@@ -19,6 +19,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import SearchFilters, { type SearchFilterValues } from "@/components/search/SearchFilters";
+import AdSlot from "@/components/ads/AdSlot";
 
 const EMPTY_FILTERS: SearchFilterValues = {
   city: "",
@@ -253,6 +254,7 @@ const SearchPage = () => {
 
             {/* Results */}
             <div className="flex-1">
+              <AdSlot slotKey="search_page" />
               {isLoading ? (
                 <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
                   {Array.from({ length: 6 }).map((_, i) => (
