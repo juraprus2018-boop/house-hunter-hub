@@ -22,6 +22,7 @@ import {
   MessageSquare,
   Search,
   Globe,
+  Megaphone,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -82,6 +83,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
     { to: "/admin/zoekopdrachten", label: "Zoekopdrachten", icon: Search },
     { to: "/admin/google-ranking", label: "Google Ranking", icon: Activity },
     { to: "/admin/paginatypen", label: "Paginatypen", icon: Globe },
+    { to: "/admin/advertenties", label: "Advertenties", icon: Megaphone },
     { to: "/admin/instellingen", label: "Instellingen", icon: Settings },
   ];
 

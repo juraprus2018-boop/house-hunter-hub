@@ -21,6 +21,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { ArrowRight, ChevronRight, Search, SlidersHorizontal } from "lucide-react";
 import { cityPath, citySlugToName } from "@/lib/cities";
+import AdSlot from "@/components/ads/AdSlot";
 
 const EMPTY_FILTERS: SearchFilterValues = {
   city: "",
@@ -261,6 +262,10 @@ const CityPage = () => {
             </div>
           </div>
         </section>
+
+        <div className="container">
+          <AdSlot slotKey="city_page" />
+        </div>
 
         <section className="container py-8">
           <div className="mb-8 grid gap-6 lg:grid-cols-[minmax(0,1.3fr)_minmax(320px,0.7fr)]">

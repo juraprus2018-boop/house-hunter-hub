@@ -17,6 +17,7 @@ import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminProperties from "./pages/admin/AdminProperties";
 import AdminScrapers from "./pages/admin/AdminScrapers";
 import AdminSettings from "./pages/admin/AdminSettings";
+import AdminAds from "./pages/admin/AdminAds";
 
 import MyProperties from "./pages/MyProperties";
 import CreateProperty from "./pages/CreateProperty";
@@ -106,6 +107,7 @@ const App = () => (
             {/* Review queue removed - using Daisycon feeds now */}
             <Route path="/admin/scrapers" element={<AdminScrapers />} />
             <Route path="/admin/instellingen" element={<AdminSettings />} />
+            <Route path="/admin/advertenties" element={<AdminAds />} />
             <Route path="/admin/blog" element={<AdminBlog />} />
             <Route path="/admin/gebruikers" element={<AdminUsers />} />
             <Route path="/admin/gebruikers/:userId" element={<AdminUserDetail />} />

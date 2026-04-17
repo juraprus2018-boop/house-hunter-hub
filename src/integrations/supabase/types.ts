@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      ad_slots: {
+        Row: {
+          ad_code: string | null
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          name: string
+          slot_key: string
+          updated_at: string
+        }
+        Insert: {
+          ad_code?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          slot_key: string
+          updated_at?: string
+        }
+        Update: {
+          ad_code?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          slot_key?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       admin_sent_emails: {
         Row: {
           created_at: string
