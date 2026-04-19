@@ -17,16 +17,17 @@ const PostcodePage = () => {
 
   const isValidPostcode = /^\d{4}$/.test(postcode);
 
-  const { data: properties, isLoading } = useProperties({
+  const { data, isLoading } = useProperties({
     city: postcode,
     disablePagination: true,
   });
+  const properties = data?.properties ?? [];
 
   const stats = useMemo(() => {
-    if (!properties || properties.length === 0) return null;
+    if (properties.length === 0) return null;
     const prices = properties.map((p) => Number(p.price)).filter((n) => n > 0);
     const surfaces = properties.map((p) => p.surface_area || 0).filter((n) => n > 0);
-    const cities = [...new Set(properties.map((p) => p.city).filter(Boolean))];
+    const cities = [...new Set(properties.map((p) => p.city).filter((c): c is string => Boolean(c)))];
     return {
       count: properties.length,
       avgPrice: prices.length ? Math.round(prices.reduce((a, b) => a + b, 0) / prices.length) : 0,
@@ -130,7 +131,7 @@ const PostcodePage = () => {
                   <Skeleton key={i} className="h-72 w-full" />
                 ))}
               </div>
-            ) : properties && properties.length > 0 ? (
+            ) : properties.length > 0 ? (
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {properties.map((property) => (
                   <PropertyCard key={property.id} property={property} />

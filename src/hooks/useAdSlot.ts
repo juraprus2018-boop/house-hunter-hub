@@ -1,7 +1,15 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
-export type AdSlotKey = "homepage" | "city_page" | "search_page" | "property_detail";
+export type AdSlotKey =
+  | "homepage"
+  | "city_page"
+  | "search_page"
+  | "property_detail"
+  | "postcode_top"
+  | "budget_top"
+  | "city_guide_top"
+  | "city_guide_middle";
 
 export const useAdSlot = (slotKey: AdSlotKey) => {
   return useQuery({
