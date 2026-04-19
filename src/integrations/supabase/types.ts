@@ -172,6 +172,63 @@ export type Database = {
           },
         ]
       }
+      city_guides: {
+        Row: {
+          city: string
+          city_slug: string
+          created_at: string
+          generated_by: string | null
+          housing_market_info: string | null
+          id: string
+          intro: string | null
+          meta_description: string | null
+          meta_title: string | null
+          neighborhoods_info: string | null
+          parking_info: string | null
+          practical_tips: string | null
+          registration_info: string | null
+          schools_info: string | null
+          transport_info: string | null
+          updated_at: string
+        }
+        Insert: {
+          city: string
+          city_slug: string
+          created_at?: string
+          generated_by?: string | null
+          housing_market_info?: string | null
+          id?: string
+          intro?: string | null
+          meta_description?: string | null
+          meta_title?: string | null
+          neighborhoods_info?: string | null
+          parking_info?: string | null
+          practical_tips?: string | null
+          registration_info?: string | null
+          schools_info?: string | null
+          transport_info?: string | null
+          updated_at?: string
+        }
+        Update: {
+          city?: string
+          city_slug?: string
+          created_at?: string
+          generated_by?: string | null
+          housing_market_info?: string | null
+          id?: string
+          intro?: string | null
+          meta_description?: string | null
+          meta_title?: string | null
+          neighborhoods_info?: string | null
+          parking_info?: string | null
+          practical_tips?: string | null
+          registration_info?: string | null
+          schools_info?: string | null
+          transport_info?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       city_realtors: {
         Row: {
           address: string | null
