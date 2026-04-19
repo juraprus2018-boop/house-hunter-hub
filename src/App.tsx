@@ -62,6 +62,9 @@ import UserChat from "./pages/UserChat";
 import BudgetTool from "./pages/BudgetTool";
 import CityComparePage from "./pages/CityComparePage";
 import HuurprijsMonitor from "./pages/HuurprijsMonitor";
+import PostcodePage from "./pages/PostcodePage";
+import BudgetLandingPage from "./pages/BudgetLandingPage";
+import CityGuidePage from "./pages/CityGuidePage";
 import CookieConsent from "@/components/CookieConsent";
 import { cityPath } from "@/lib/cities";
 import { usePageTracking } from "@/hooks/usePageTracking";
@@ -142,6 +145,10 @@ const App = () => (
             <Route path="/budget-tool" element={<BudgetTool />} />
             <Route path="/vergelijk/:city1-vs-:city2" element={<CityComparePage />} />
             <Route path="/huurprijzen/:city" element={<HuurprijsMonitor />} />
+            <Route path="/woningen-postcode-:postcode" element={<PostcodePage />} />
+            <Route path="/huurwoningen-onder-:budget-:city" element={<BudgetLandingPage listingType="huur" />} />
+            <Route path="/koopwoningen-onder-:budget-:city" element={<BudgetLandingPage listingType="koop" />} />
+            <Route path="/verhuizen-naar-:city" element={<CityGuidePage />} />
             <Route path="/alerts/afmelden/:token" element={<AlertUnsubscribe />} />
             <Route path="/huurwoningen/:city/:filter" element={<FilteredLandingPage listingType="huur" />} />
             <Route path="/huurwoningen/:city?" element={<ListingTypePage listingType="huur" />} />
