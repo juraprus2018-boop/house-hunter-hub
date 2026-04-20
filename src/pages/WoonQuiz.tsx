@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Input } from "@/components/ui/input";
-import { citySlug } from "@/lib/cities";
+import { cityToSlug } from "@/lib/cities";
 import SEOHead from "@/components/seo/SEOHead";
 import { Sparkles, ArrowRight, ArrowLeft, Home, Building2, DoorOpen, Bed } from "lucide-react";
 
@@ -44,7 +44,7 @@ const WoonQuiz = () => {
   const back = () => setStep((s) => Math.max(s - 1, 0));
 
   const finish = () => {
-    const slug = answers.city ? citySlug(answers.city) : "";
+    const slug = answers.city ? cityToSlug(answers.city) : "";
     const base =
       answers.propertyType === "appartement"
         ? "/appartementen"
@@ -76,7 +76,7 @@ const WoonQuiz = () => {
       <SEOHead
         title="Woonquiz: vind jouw ideale woning | WoonPeek"
         description="Beantwoord 5 korte vragen en ontdek welke woningen het beste bij jou passen. Direct gefilterd aanbod in heel Nederland."
-        url="https://www.woonpeek.nl/woonquiz"
+        canonical="https://www.woonpeek.nl/woonquiz"
       />
       <Header />
       <main className="flex-1 py-10 lg:py-16">
