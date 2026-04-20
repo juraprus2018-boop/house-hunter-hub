@@ -45,6 +45,7 @@ import { useState, useEffect } from "react";
 import { useRecentlyViewed } from "@/hooks/useRecentlyViewed";
 import { trackDaisyconClick } from "@/hooks/usePageTracking";
 import MortgageCalculator from "@/components/properties/MortgageCalculator";
+import AffordabilityWidget from "@/components/properties/AffordabilityWidget";
 import { cn } from "@/lib/utils";
 import { cityPath } from "@/lib/cities";
 import {
@@ -868,8 +869,18 @@ const PropertyDetail = () => {
         {/* ── Mortgage Calculator for koop ── */}
         {property.listing_type === "koop" && (
           <section className="border-t py-12">
-            <div className="container max-w-lg">
+            <div className="container grid gap-6 lg:grid-cols-2 lg:max-w-4xl">
+              <AffordabilityWidget price={property.price} listingType="koop" />
               <MortgageCalculator propertyPrice={property.price} />
+            </div>
+          </section>
+        )}
+
+        {/* ── Affordability Widget for huur ── */}
+        {property.listing_type === "huur" && (
+          <section className="border-t py-12">
+            <div className="container max-w-lg">
+              <AffordabilityWidget price={property.price} listingType="huur" />
             </div>
           </section>
         )}

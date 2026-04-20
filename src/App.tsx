@@ -65,6 +65,7 @@ import HuurprijsMonitor from "./pages/HuurprijsMonitor";
 import PostcodePage from "./pages/PostcodePage";
 import BudgetLandingPage from "./pages/BudgetLandingPage";
 import CityGuidePage from "./pages/CityGuidePage";
+import WoonQuiz from "./pages/WoonQuiz";
 import CookieConsent from "@/components/CookieConsent";
 import { cityPath } from "@/lib/cities";
 import { usePageTracking } from "@/hooks/usePageTracking";
@@ -143,6 +144,7 @@ const App = () => (
             <Route path="/makelaar-koppelen" element={<MakelaarKoppelen />} />
             <Route path="/samenwerking" element={<Samenwerking />} />
             <Route path="/budget-tool" element={<BudgetTool />} />
+            <Route path="/woonquiz" element={<WoonQuiz />} />
             <Route path="/vergelijk/:city1-vs-:city2" element={<CityComparePage />} />
             <Route path="/huurprijzen/:city" element={<HuurprijsMonitor />} />
             <Route path="/woningen-postcode-:postcode" element={<PostcodePage />} />
