@@ -305,6 +305,47 @@ const CityPage = () => {
             </div>
           </div>
 
+          {/* SEO: interne links naar budget- en gidspagina's */}
+          <div className="mb-8 rounded-2xl border bg-card p-6">
+            <h2 className="font-display text-xl font-semibold text-foreground">
+              Verken {cityName} verder
+            </h2>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Snel zoeken op budget of meer leren over wonen in {cityName}.
+            </p>
+            <div className="mt-4 flex flex-wrap gap-2">
+              <Link to={`/verhuizen-naar-${citySlug}`}>
+                <Button variant="outline" size="sm">Verhuizen naar {cityName}</Button>
+              </Link>
+              {huurCount > 0 && (
+                <>
+                  <Link to={`/huurwoningen-onder-1000-${citySlug}`}>
+                    <Button variant="outline" size="sm">Huur onder €1.000</Button>
+                  </Link>
+                  <Link to={`/huurwoningen-onder-1500-${citySlug}`}>
+                    <Button variant="outline" size="sm">Huur onder €1.500</Button>
+                  </Link>
+                  <Link to={`/huurwoningen-onder-2000-${citySlug}`}>
+                    <Button variant="outline" size="sm">Huur onder €2.000</Button>
+                  </Link>
+                </>
+              )}
+              {koopCount > 0 && (
+                <>
+                  <Link to={`/koopwoningen-onder-300000-${citySlug}`}>
+                    <Button variant="outline" size="sm">Koop onder €300.000</Button>
+                  </Link>
+                  <Link to={`/koopwoningen-onder-500000-${citySlug}`}>
+                    <Button variant="outline" size="sm">Koop onder €500.000</Button>
+                  </Link>
+                </>
+              )}
+              <Link to={`/huurprijzen/${citySlug}`}>
+                <Button variant="outline" size="sm">Huurprijs monitor</Button>
+              </Link>
+            </div>
+          </div>
+
           <div className="flex gap-6">
             <aside className="hidden w-72 shrink-0 lg:block">
               <div className="sticky top-24 rounded-2xl border bg-card p-6">
