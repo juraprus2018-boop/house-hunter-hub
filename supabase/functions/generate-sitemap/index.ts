@@ -69,6 +69,8 @@ function buildPagesSitemap(now: string): string {
 function buildCitiesSitemap(
   properties: Array<{ city: string; updated_at: string; listing_type: string; property_type: string; neighborhood: string | null }>,
   searchQueries: Array<{ city: string; listing_type: string | null; property_type: string | null; max_price: number | null; min_bedrooms: number | null; count: number }> = [],
+  cityGuides: Array<{ city_slug: string; updated_at: string }> = [],
+  postcodes: string[] = [],
 ): string {
   const cityMap = new Map<string, string>();
   for (const p of properties) {
@@ -133,6 +135,33 @@ function buildCitiesSitemap(
     <priority>0.8</priority>
   </url>
 `;
+    // Verhuizen-naar gids per stad
+    xml += `  <url>
+    <loc>${SITE_URL}/verhuizen-naar-${citySlug}</loc>
+    <lastmod>${date}</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+`;
+    // Budget landingspagina's per stad (huur en koop)
+    for (const budget of [750, 1000, 1250, 1500, 2000, 2500]) {
+      xml += `  <url>
+    <loc>${SITE_URL}/huurwoningen-onder-${budget}-${citySlug}</loc>
+    <lastmod>${date}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+`;
+    }
+    for (const budget of [200000, 300000, 400000, 500000, 750000, 1000000]) {
+      xml += `  <url>
+    <loc>${SITE_URL}/koopwoningen-onder-${budget}-${citySlug}</loc>
+    <lastmod>${date}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+`;
+    }
     xml += `  <url>
     <loc>${SITE_URL}/huurwoningen/${citySlug}</loc>
     <lastmod>${date}</lastmod>
@@ -261,6 +290,17 @@ function buildCitiesSitemap(
 `;
   }
 
+  // Postcode landingspagina's (uniek 4-cijferig)
+  for (const pc of postcodes) {
+    xml += `  <url>
+    <loc>${SITE_URL}/woningen-postcode-${pc}</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+`;
+  }
+
   xml += `</urlset>`;
   return xml;
 }
@@ -337,7 +377,7 @@ Deno.serve(async (req) => {
       while (true) {
         const { data, error } = await supabase
           .from("properties")
-          .select("slug, id, city, updated_at, listing_type, property_type, neighborhood")
+          .select("slug, id, city, updated_at, listing_type, property_type, neighborhood, postal_code")
           .eq("status", "actief")
           .order("updated_at", { ascending: false })
           .range(from, from + pageSize - 1);
@@ -358,9 +398,29 @@ Deno.serve(async (req) => {
           .order("count", { ascending: false })
           .limit(500);
 
-        return new Response(buildCitiesSitemap(allProperties, searchQueries || []), {
+        // Fetch unique 4-digit postcodes from active properties
+        const postcodeSet = new Set<string>();
+        for (const p of allProperties as any[]) {
+          const pc = (p.postal_code || "").toString().trim().slice(0, 4);
+          if (/^\d{4}$/.test(pc)) postcodeSet.add(pc);
+        }
+
+        // Fetch existing city guides for sitemap inclusion
+        const { data: cityGuides } = await supabase
+          .from("city_guides")
+          .select("city_slug, updated_at");
+
+        return new Response(
+          buildCitiesSitemap(
+            allProperties,
+            searchQueries || [],
+            cityGuides || [],
+            Array.from(postcodeSet).sort(),
+          ),
+          {
           headers: { ...corsHeaders, "Content-Type": "application/xml; charset=utf-8", "Cache-Control": "public, max-age=3600" },
-        });
+          },
+        );
       }
 
       return new Response(buildPropertiesSitemap(allProperties), {

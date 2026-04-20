@@ -49,6 +49,21 @@ const Footer = () => {
             </ul>
           </div>
 
+          {/* Stadsgidsen & budget landingspaginas */}
+          <div className="space-y-4">
+            <h4 className="font-display text-sm font-semibold">Stadsgidsen & budget</h4>
+            <ul className="space-y-2 text-sm">
+              <li><Link to="/verhuizen-naar-amsterdam" className="text-muted-foreground transition-colors hover:text-foreground">Verhuizen naar Amsterdam</Link></li>
+              <li><Link to="/verhuizen-naar-rotterdam" className="text-muted-foreground transition-colors hover:text-foreground">Verhuizen naar Rotterdam</Link></li>
+              <li><Link to="/verhuizen-naar-utrecht" className="text-muted-foreground transition-colors hover:text-foreground">Verhuizen naar Utrecht</Link></li>
+              <li><Link to="/huurwoningen-onder-1000-amsterdam" className="text-muted-foreground transition-colors hover:text-foreground">Huur onder €1.000 Amsterdam</Link></li>
+              <li><Link to="/huurwoningen-onder-1500-rotterdam" className="text-muted-foreground transition-colors hover:text-foreground">Huur onder €1.500 Rotterdam</Link></li>
+              <li><Link to="/koopwoningen-onder-300000-utrecht" className="text-muted-foreground transition-colors hover:text-foreground">Koop onder €300k Utrecht</Link></li>
+              <li><Link to="/koopwoningen-onder-500000-amsterdam" className="text-muted-foreground transition-colors hover:text-foreground">Koop onder €500k Amsterdam</Link></li>
+              <li><Link to="/budget-tool" className="text-muted-foreground transition-colors hover:text-foreground">Budget tool</Link></li>
+            </ul>
+          </div>
+
           {/* Support */}
           <div className="space-y-4">
             <h4 className="font-display text-sm font-semibold">Ondersteuning</h4>
