@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Heart, Bed, Bath, Maximize, MapPin, Zap, Share2, Eye, Wallet } from "lucide-react";
+import { Heart, Bed, Bath, Maximize, MapPin, Zap, Share2, Eye, Wallet, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -16,9 +16,11 @@ interface PropertyCardProps {
   property: Property;
   /** Average price for this property type in the same city (used for deal labels) */
   cityAvgPrice?: number;
+  /** Optional: user's gross monthly income (for affordability indicator on rentals) */
+  userIncome?: number;
 }
 
-const PropertyCard = ({ property, cityAvgPrice }: PropertyCardProps) => {
+const PropertyCard = ({ property, cityAvgPrice, userIncome }: PropertyCardProps) => {
   const { user } = useAuth();
   const { toggle, isFavorite, isLoading } = useToggleFavorite();
   const { data: feedLogos } = useFeedLogos();
@@ -81,6 +83,13 @@ const PropertyCard = ({ property, cityAvgPrice }: PropertyCardProps) => {
     "F": "bg-destructive text-destructive-foreground",
     "G": "bg-destructive text-destructive-foreground",
   };
+
+  // Affordability check (rentals only)
+  const requiredIncome = Number(property.price) * 3;
+  const fitsBudget =
+    property.listing_type === "huur" && userIncome && userIncome > 0
+      ? userIncome >= requiredIncome
+      : null;
 
   return (
     <Link to={`/woning/${property.slug || property.id}`}>
@@ -209,19 +218,64 @@ const PropertyCard = ({ property, cityAvgPrice }: PropertyCardProps) => {
 
           {/* Inkomen check (alleen huur) */}
           {property.listing_type === "huur" && (
-            <div className="mt-2 flex items-center gap-1.5 rounded-md bg-primary/5 px-2 py-1.5 text-[11px] text-foreground">
-              <Wallet className="h-3.5 w-3.5 shrink-0 text-primary" />
+            <div
+              className={cn(
+                "mt-2 flex items-center gap-1.5 rounded-md px-2 py-1.5 text-[11px]",
+                fitsBudget === true
+                  ? "bg-success/10 text-foreground"
+                  : fitsBudget === false
+                  ? "bg-destructive/10 text-foreground"
+                  : "bg-primary/5 text-foreground"
+              )}
+            >
+              {fitsBudget === true ? (
+                <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-success" />
+              ) : (
+                <Wallet
+                  className={cn(
+                    "h-3.5 w-3.5 shrink-0",
+                    fitsBudget === false ? "text-destructive" : "text-primary"
+                  )}
+                />
+              )}
               <span className="line-clamp-1">
-                Inkomen vanaf{" "}
-                <strong className="font-semibold">
-                  {new Intl.NumberFormat("nl-NL", {
-                    style: "currency",
-                    currency: "EUR",
-                    minimumFractionDigits: 0,
-                    maximumFractionDigits: 0,
-                  }).format(Number(property.price) * 3)}
-                </strong>{" "}
-                bruto/mnd
+                {fitsBudget === true ? (
+                  <>
+                    <strong className="font-semibold">Past binnen budget</strong>{" "}
+                    (vanaf{" "}
+                    {new Intl.NumberFormat("nl-NL", {
+                      style: "currency",
+                      currency: "EUR",
+                      minimumFractionDigits: 0,
+                      maximumFractionDigits: 0,
+                    }).format(requiredIncome)}
+                    )
+                  </>
+                ) : fitsBudget === false ? (
+                  <>
+                    <strong className="font-semibold">Te duur</strong>: vereist{" "}
+                    {new Intl.NumberFormat("nl-NL", {
+                      style: "currency",
+                      currency: "EUR",
+                      minimumFractionDigits: 0,
+                      maximumFractionDigits: 0,
+                    }).format(requiredIncome)}{" "}
+                    bruto/mnd
+                  </>
+                ) : (
+                  <>
+                    Inkomen vanaf{" "}
+                    <strong className="font-semibold">
+                      {new Intl.NumberFormat("nl-NL", {
+                        style: "currency",
+                        currency: "EUR",
+                        minimumFractionDigits: 0,
+                        maximumFractionDigits: 0,
+                      }).format(requiredIncome)}
+                    </strong>{" "}
+                    bruto/mnd
+                  </>
+                )}
               </span>
             </div>
           )}
