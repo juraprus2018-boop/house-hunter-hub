@@ -402,6 +402,12 @@ const CityPage = () => {
                 </Sheet>
               </div>
 
+              <IncomeBanner
+                grossIncome={filters.grossIncome}
+                listingType={filters.listingType}
+                onClear={() => setFilters({ ...filters, grossIncome: undefined })}
+              />
+
               {isLoading ? (
                 <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
                   {Array.from({ length: 9 }).map((_, index) => (
