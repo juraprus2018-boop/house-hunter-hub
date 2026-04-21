@@ -275,7 +275,7 @@ const PropertyTypeCityPage = ({ propertyType }: PropertyTypeCityPageProps) => {
                 <>
                   <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
                     {visibleProperties.map((property) => (
-                      <PropertyCard key={property.id} property={property} />
+                      <PropertyCard key={property.id} property={property} userIncome={filters.grossIncome} />
                     ))}
                   </div>
                   {visibleCount < properties.length && (
