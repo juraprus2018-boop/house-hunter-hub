@@ -301,6 +301,58 @@ const WoonQuiz = () => {
                   <Button size="lg" onClick={finish} className="w-full">
                     Bekijk mijn matches <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
+
+                  {answers.city && (
+                    <div className="mt-6 rounded-xl border-2 border-dashed border-primary/30 bg-primary/5 p-5 text-left">
+                      {alertDone ? (
+                        <div className="flex items-center gap-3 text-primary">
+                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/15">
+                            <Check className="h-5 w-5" />
+                          </div>
+                          <div>
+                            <p className="font-semibold">Je staat op de alert-lijst</p>
+                            <p className="text-sm text-muted-foreground">
+                              Je ontvangt elke ochtend nieuw aanbod in {answers.city}.
+                            </p>
+                          </div>
+                        </div>
+                      ) : (
+                        <>
+                          <div className="mb-3 flex items-start gap-3">
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary">
+                              <Bell className="h-5 w-5" />
+                            </div>
+                            <div>
+                              <p className="font-semibold">Wees als eerste op de hoogte</p>
+                              <p className="text-sm text-muted-foreground">
+                                Ontvang dagelijks gratis nieuw aanbod in {answers.city} per e-mail.
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex flex-col gap-2 sm:flex-row">
+                            <Input
+                              type="email"
+                              placeholder="jouw@email.nl"
+                              value={alertEmail}
+                              onChange={(e) => setAlertEmail(e.target.value)}
+                              disabled={alertSubmitting}
+                              className="bg-background"
+                            />
+                            <Button
+                              onClick={subscribeAlert}
+                              disabled={!alertEmail.trim() || alertSubmitting}
+                              className="shrink-0"
+                            >
+                              {alertSubmitting ? "Bezig…" : "Activeer alert"}
+                            </Button>
+                          </div>
+                          <p className="mt-2 text-xs text-muted-foreground">
+                            Gratis. Afmelden kan met één klik.
+                          </p>
+                        </>
+                      )}
+                    </div>
+                  )}
                 </div>
               )}
 
