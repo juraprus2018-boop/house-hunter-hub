@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
-import { MapPin, X } from "lucide-react";
+import { MapPin, X, Wallet } from "lucide-react";
 import { type FilterFacets } from "@/hooks/useProperties";
 
 type PropertyType = "appartement" | "huis" | "studio" | "kamer";
@@ -24,6 +24,7 @@ export interface SearchFilterValues {
   minBedrooms: number | undefined;
   minSurface: number | undefined;
   includeInactive: boolean;
+  grossIncome: number | undefined;
 }
 
 interface SearchFiltersProps {
@@ -61,6 +62,9 @@ const SearchFilters = ({ filters, onChange, onClear, hideLocation = false, facet
   const availableListingTypes = facets ? listingTypes.filter(t => (facets.listingTypes[t] || 0) > 0) : listingTypes;
   const availableBedrooms = facets ? bedroomOptions.filter(n => (facets.bedroomCounts[String(n)] || 0) > 0) : bedroomOptions;
   const availableSurfaces = facets ? surfaceOptions.filter(n => (facets.surfaceRanges[String(n)] || 0) > 0) : surfaceOptions;
+
+  const showIncomeFilter = filters.listingType !== "koop";
+  const incomeBasedMaxRent = filters.grossIncome ? Math.floor(filters.grossIncome / 3) : undefined;
 
   return (
     <div className="space-y-6">
@@ -143,6 +147,30 @@ const SearchFilters = ({ filters, onChange, onClear, hideLocation = false, facet
           step={50}
         />
       </div>
+
+      {showIncomeFilter && (
+        <div className="space-y-2 rounded-lg border border-primary/20 bg-primary/5 p-3">
+          <Label className="flex items-center gap-1.5 text-sm">
+            <Wallet className="h-4 w-4 text-primary" />
+            Inkomen-check (huur)
+          </Label>
+          <Input
+            type="number"
+            inputMode="numeric"
+            placeholder="Bruto maandinkomen, bv. 3500"
+            value={filters.grossIncome ?? ""}
+            onChange={(e) => {
+              const val = e.target.value ? Number(e.target.value) : undefined;
+              update({ grossIncome: val });
+            }}
+          />
+          {incomeBasedMaxRent && (
+            <p className="text-xs text-muted-foreground">
+              Toont alleen huur tot <strong>€{incomeBasedMaxRent.toLocaleString("nl-NL")}</strong> (inkomen ÷ 3).
+            </p>
+          )}
+        </div>
+      )}
 
       {availableBedrooms.length > 0 && (
         <div className="space-y-2">
