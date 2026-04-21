@@ -1,4 +1,4 @@
-import { Search, MapPin, Bell, ChevronDown } from "lucide-react";
+import { Search, MapPin, Bell, ChevronDown, Wallet } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useHomeStats } from "@/hooks/useHomeStats";
 import { Input } from "@/components/ui/input";
@@ -35,6 +35,7 @@ const HeroSection = () => {
   const [listingType, setListingType] = useState<string>("");
   const [maxPrice, setMaxPrice] = useState<string>("");
   const [minBedrooms, setMinBedrooms] = useState<string>("");
+  const [grossIncome, setGrossIncome] = useState<string>("");
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -43,6 +44,7 @@ const HeroSection = () => {
     if (listingType) params.set("aanbod", listingType);
     if (maxPrice) params.set("max_prijs", maxPrice);
     if (minBedrooms) params.set("min_kamers", minBedrooms);
+    if (grossIncome && listingType !== "koop") params.set("inkomen", grossIncome);
     navigate(`/zoeken?${params.toString()}`);
   };
 
