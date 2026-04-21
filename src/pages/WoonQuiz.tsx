@@ -37,9 +37,38 @@ const POPULAR_CITIES = [
 
 const WoonQuiz = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState<Answers>({});
   const [cityInput, setCityInput] = useState("");
+  const [alertEmail, setAlertEmail] = useState("");
+  const [alertSubmitting, setAlertSubmitting] = useState(false);
+  const [alertDone, setAlertDone] = useState(false);
+
+  const subscribeAlert = async () => {
+    if (!alertEmail.trim() || !answers.city) return;
+    setAlertSubmitting(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("daily-alert-subscribe", {
+        body: { email: alertEmail.trim(), city: answers.city },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      setAlertDone(true);
+      toast({
+        title: "Je bent ingeschreven",
+        description: data?.message || `Je krijgt dagelijks nieuw aanbod in ${answers.city}.`,
+      });
+    } catch (err) {
+      toast({
+        variant: "destructive",
+        title: "Inschrijven mislukt",
+        description: err instanceof Error ? err.message : "Probeer het later opnieuw.",
+      });
+    } finally {
+      setAlertSubmitting(false);
+    }
+  };
 
   const set = (patch: Partial<Answers>) => setAnswers((a) => ({ ...a, ...patch }));
   const next = () => setStep((s) => Math.min(s + 1, STEPS));
