@@ -8,7 +8,9 @@ import { Progress } from "@/components/ui/progress";
 import { Input } from "@/components/ui/input";
 import { cityToSlug } from "@/lib/cities";
 import SEOHead from "@/components/seo/SEOHead";
-import { Sparkles, ArrowRight, ArrowLeft, Home, Building2, DoorOpen, Bed } from "lucide-react";
+import { Sparkles, ArrowRight, ArrowLeft, Home, Building2, DoorOpen, Bed, Bell, Check } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 type Answers = {
   listingType?: "huur" | "koop";
@@ -35,9 +37,38 @@ const POPULAR_CITIES = [
 
 const WoonQuiz = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState<Answers>({});
   const [cityInput, setCityInput] = useState("");
+  const [alertEmail, setAlertEmail] = useState("");
+  const [alertSubmitting, setAlertSubmitting] = useState(false);
+  const [alertDone, setAlertDone] = useState(false);
+
+  const subscribeAlert = async () => {
+    if (!alertEmail.trim() || !answers.city) return;
+    setAlertSubmitting(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("daily-alert-subscribe", {
+        body: { email: alertEmail.trim(), city: answers.city },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      setAlertDone(true);
+      toast({
+        title: "Je bent ingeschreven",
+        description: data?.message || `Je krijgt dagelijks nieuw aanbod in ${answers.city}.`,
+      });
+    } catch (err) {
+      toast({
+        variant: "destructive",
+        title: "Inschrijven mislukt",
+        description: err instanceof Error ? err.message : "Probeer het later opnieuw.",
+      });
+    } finally {
+      setAlertSubmitting(false);
+    }
+  };
 
   const set = (patch: Partial<Answers>) => setAnswers((a) => ({ ...a, ...patch }));
   const next = () => setStep((s) => Math.min(s + 1, STEPS));
@@ -270,6 +301,58 @@ const WoonQuiz = () => {
                   <Button size="lg" onClick={finish} className="w-full">
                     Bekijk mijn matches <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
+
+                  {answers.city && (
+                    <div className="mt-6 rounded-xl border-2 border-dashed border-primary/30 bg-primary/5 p-5 text-left">
+                      {alertDone ? (
+                        <div className="flex items-center gap-3 text-primary">
+                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/15">
+                            <Check className="h-5 w-5" />
+                          </div>
+                          <div>
+                            <p className="font-semibold">Je staat op de alert-lijst</p>
+                            <p className="text-sm text-muted-foreground">
+                              Je ontvangt elke ochtend nieuw aanbod in {answers.city}.
+                            </p>
+                          </div>
+                        </div>
+                      ) : (
+                        <>
+                          <div className="mb-3 flex items-start gap-3">
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary">
+                              <Bell className="h-5 w-5" />
+                            </div>
+                            <div>
+                              <p className="font-semibold">Wees als eerste op de hoogte</p>
+                              <p className="text-sm text-muted-foreground">
+                                Ontvang dagelijks gratis nieuw aanbod in {answers.city} per e-mail.
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex flex-col gap-2 sm:flex-row">
+                            <Input
+                              type="email"
+                              placeholder="jouw@email.nl"
+                              value={alertEmail}
+                              onChange={(e) => setAlertEmail(e.target.value)}
+                              disabled={alertSubmitting}
+                              className="bg-background"
+                            />
+                            <Button
+                              onClick={subscribeAlert}
+                              disabled={!alertEmail.trim() || alertSubmitting}
+                              className="shrink-0"
+                            >
+                              {alertSubmitting ? "Bezig…" : "Activeer alert"}
+                            </Button>
+                          </div>
+                          <p className="mt-2 text-xs text-muted-foreground">
+                            Gratis. Afmelden kan met één klik.
+                          </p>
+                        </>
+                      )}
+                    </div>
+                  )}
                 </div>
               )}
 
