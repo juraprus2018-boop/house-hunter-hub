@@ -19,8 +19,8 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import SearchFilters, { type SearchFilterValues } from "@/components/search/SearchFilters";
+import IncomeBanner from "@/components/search/IncomeBanner";
 import AdSlot from "@/components/ads/AdSlot";
-import { Wallet } from "lucide-react";
 
 const EMPTY_FILTERS: SearchFilterValues = {
   city: "",
