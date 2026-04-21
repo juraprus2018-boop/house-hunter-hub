@@ -218,19 +218,64 @@ const PropertyCard = ({ property, cityAvgPrice, userIncome }: PropertyCardProps)
 
           {/* Inkomen check (alleen huur) */}
           {property.listing_type === "huur" && (
-            <div className="mt-2 flex items-center gap-1.5 rounded-md bg-primary/5 px-2 py-1.5 text-[11px] text-foreground">
-              <Wallet className="h-3.5 w-3.5 shrink-0 text-primary" />
+            <div
+              className={cn(
+                "mt-2 flex items-center gap-1.5 rounded-md px-2 py-1.5 text-[11px]",
+                fitsBudget === true
+                  ? "bg-success/10 text-foreground"
+                  : fitsBudget === false
+                  ? "bg-destructive/10 text-foreground"
+                  : "bg-primary/5 text-foreground"
+              )}
+            >
+              {fitsBudget === true ? (
+                <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-success" />
+              ) : (
+                <Wallet
+                  className={cn(
+                    "h-3.5 w-3.5 shrink-0",
+                    fitsBudget === false ? "text-destructive" : "text-primary"
+                  )}
+                />
+              )}
               <span className="line-clamp-1">
-                Inkomen vanaf{" "}
-                <strong className="font-semibold">
-                  {new Intl.NumberFormat("nl-NL", {
-                    style: "currency",
-                    currency: "EUR",
-                    minimumFractionDigits: 0,
-                    maximumFractionDigits: 0,
-                  }).format(Number(property.price) * 3)}
-                </strong>{" "}
-                bruto/mnd
+                {fitsBudget === true ? (
+                  <>
+                    <strong className="font-semibold">Past binnen budget</strong>{" "}
+                    (vanaf{" "}
+                    {new Intl.NumberFormat("nl-NL", {
+                      style: "currency",
+                      currency: "EUR",
+                      minimumFractionDigits: 0,
+                      maximumFractionDigits: 0,
+                    }).format(requiredIncome)}
+                    )
+                  </>
+                ) : fitsBudget === false ? (
+                  <>
+                    <strong className="font-semibold">Te duur</strong>: vereist{" "}
+                    {new Intl.NumberFormat("nl-NL", {
+                      style: "currency",
+                      currency: "EUR",
+                      minimumFractionDigits: 0,
+                      maximumFractionDigits: 0,
+                    }).format(requiredIncome)}{" "}
+                    bruto/mnd
+                  </>
+                ) : (
+                  <>
+                    Inkomen vanaf{" "}
+                    <strong className="font-semibold">
+                      {new Intl.NumberFormat("nl-NL", {
+                        style: "currency",
+                        currency: "EUR",
+                        minimumFractionDigits: 0,
+                        maximumFractionDigits: 0,
+                      }).format(requiredIncome)}
+                    </strong>{" "}
+                    bruto/mnd
+                  </>
+                )}
               </span>
             </div>
           )}
