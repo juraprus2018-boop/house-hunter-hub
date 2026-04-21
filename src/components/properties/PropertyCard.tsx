@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Heart, Bed, Bath, Maximize, MapPin, Zap, Share2, Eye, Wallet } from "lucide-react";
+import { Heart, Bed, Bath, Maximize, MapPin, Zap, Share2, Eye, Wallet, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -16,9 +16,11 @@ interface PropertyCardProps {
   property: Property;
   /** Average price for this property type in the same city (used for deal labels) */
   cityAvgPrice?: number;
+  /** Optional: user's gross monthly income (for affordability indicator on rentals) */
+  userIncome?: number;
 }
 
-const PropertyCard = ({ property, cityAvgPrice }: PropertyCardProps) => {
+const PropertyCard = ({ property, cityAvgPrice, userIncome }: PropertyCardProps) => {
   const { user } = useAuth();
   const { toggle, isFavorite, isLoading } = useToggleFavorite();
   const { data: feedLogos } = useFeedLogos();
@@ -81,6 +83,13 @@ const PropertyCard = ({ property, cityAvgPrice }: PropertyCardProps) => {
     "F": "bg-destructive text-destructive-foreground",
     "G": "bg-destructive text-destructive-foreground",
   };
+
+  // Affordability check (rentals only)
+  const requiredIncome = Number(property.price) * 3;
+  const fitsBudget =
+    property.listing_type === "huur" && userIncome && userIncome > 0
+      ? userIncome >= requiredIncome
+      : null;
 
   return (
     <Link to={`/woning/${property.slug || property.id}`}>
