@@ -136,6 +136,32 @@ const HeroSection = () => {
                 </Select>
               </div>
 
+              {/* Income check (only for huur) */}
+              {listingType === "huur" && (
+                <div className="flex items-center gap-2 border-t border-border/50 bg-primary/5 px-4 py-2.5">
+                  <Wallet className="h-4 w-4 shrink-0 text-primary" />
+                  <label htmlFor="hero-income" className="shrink-0 text-xs font-medium text-foreground sm:text-sm">
+                    Bruto inkomen p/m
+                  </label>
+                  <Input
+                    id="hero-income"
+                    type="number"
+                    inputMode="numeric"
+                    min={0}
+                    step={100}
+                    placeholder="bijv. 3500"
+                    className="h-9 flex-1 border-0 bg-transparent text-sm shadow-none focus-visible:ring-0"
+                    value={grossIncome}
+                    onChange={(e) => setGrossIncome(e.target.value)}
+                  />
+                  {grossIncome && Number(grossIncome) > 0 && (
+                    <span className="shrink-0 rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-semibold text-primary sm:text-xs">
+                      Max huur €{Math.floor(Number(grossIncome) / 3).toLocaleString("nl-NL")}
+                    </span>
+                  )}
+                </div>
+              )}
+
               {/* Search button */}
               <div className="p-3">
                 <Button
