@@ -37,6 +37,7 @@ const EMPTY_FILTERS: SearchFilterValues = {
   minBedrooms: undefined,
   minSurface: undefined,
   includeInactive: false,
+  grossIncome: undefined,
 };
 
 const PropertyCardSkeleton = () => (

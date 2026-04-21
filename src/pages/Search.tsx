@@ -29,6 +29,7 @@ const EMPTY_FILTERS: SearchFilterValues = {
   minBedrooms: undefined,
   minSurface: undefined,
   includeInactive: false,
+  grossIncome: undefined,
 };
 
 const SearchPage = () => {
@@ -43,6 +44,7 @@ const SearchPage = () => {
     listingType: (searchParams.get("aanbod") as SearchFilterValues["listingType"]) || "",
     maxPrice: searchParams.get("max_prijs") ? Number(searchParams.get("max_prijs")) : searchParams.get("maxPrijs") ? Number(searchParams.get("maxPrijs")) : undefined,
     minBedrooms: searchParams.get("min_kamers") ? Number(searchParams.get("min_kamers")) : undefined,
+    grossIncome: searchParams.get("inkomen") ? Number(searchParams.get("inkomen")) : undefined,
   });
 
   // Debounced city value for the actual query
@@ -64,8 +66,9 @@ const SearchPage = () => {
     if (filters.listingType) params.set("aanbod", filters.listingType);
     if (filters.maxPrice) params.set("max_prijs", String(filters.maxPrice));
     if (filters.minBedrooms) params.set("min_kamers", String(filters.minBedrooms));
+    if (filters.grossIncome) params.set("inkomen", String(filters.grossIncome));
     setSearchParams(params, { replace: true });
-  }, [debouncedCity, filters.propertyType, filters.listingType, filters.maxPrice, filters.minBedrooms, setSearchParams]);
+  }, [debouncedCity, filters.propertyType, filters.listingType, filters.maxPrice, filters.minBedrooms, filters.grossIncome, setSearchParams]);
 
   // Log search queries for analytics
   const lastLoggedRef = useRef("");
@@ -90,11 +93,18 @@ const SearchPage = () => {
     return () => clearTimeout(timeout);
   }, [debouncedCity, filters.propertyType, filters.listingType, filters.maxPrice, filters.minBedrooms]);
 
+  // Effective max price: combine user max with income-based cap (huur only)
+  const incomeMaxRent = filters.grossIncome ? Math.floor(filters.grossIncome / 3) : undefined;
+  const applyIncomeCap = incomeMaxRent && filters.listingType !== "koop";
+  const effectiveMaxPrice = applyIncomeCap
+    ? Math.min(filters.maxPrice ?? Infinity, incomeMaxRent)
+    : filters.maxPrice;
+
   const { data: facets } = useFilterFacets({
     city: debouncedCity || undefined,
     propertyType: filters.propertyType || undefined,
     listingType: filters.listingType || undefined,
-    maxPrice: filters.maxPrice,
+    maxPrice: effectiveMaxPrice,
     minBedrooms: filters.minBedrooms,
     includeInactive: filters.includeInactive,
   });
@@ -102,8 +112,8 @@ const SearchPage = () => {
   const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteProperties({
     city: debouncedCity || undefined,
     propertyType: filters.propertyType || undefined,
-    listingType: filters.listingType || undefined,
-    maxPrice: filters.maxPrice,
+    listingType: applyIncomeCap && !filters.listingType ? "huur" : (filters.listingType || undefined),
+    maxPrice: effectiveMaxPrice,
     minBedrooms: filters.minBedrooms,
     minSurface: filters.minSurface,
     includeInactive: filters.includeInactive,
@@ -128,8 +138,8 @@ const SearchPage = () => {
   const { data: mapProperties, isLoading: isMapLoading } = useMapProperties({
     city: debouncedCity || undefined,
     propertyType: filters.propertyType || undefined,
-    listingType: filters.listingType || undefined,
-    maxPrice: filters.maxPrice,
+    listingType: applyIncomeCap && !filters.listingType ? "huur" : (filters.listingType || undefined),
+    maxPrice: effectiveMaxPrice,
     minBedrooms: filters.minBedrooms,
     minSurface: filters.minSurface,
   }, viewMode === "map");
