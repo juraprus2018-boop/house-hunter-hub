@@ -8,7 +8,9 @@ import { Progress } from "@/components/ui/progress";
 import { Input } from "@/components/ui/input";
 import { cityToSlug } from "@/lib/cities";
 import SEOHead from "@/components/seo/SEOHead";
-import { Sparkles, ArrowRight, ArrowLeft, Home, Building2, DoorOpen, Bed } from "lucide-react";
+import { Sparkles, ArrowRight, ArrowLeft, Home, Building2, DoorOpen, Bed, Bell, Check } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 type Answers = {
   listingType?: "huur" | "koop";
