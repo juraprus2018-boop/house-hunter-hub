@@ -9,6 +9,7 @@ import PropertyCard from "@/components/properties/PropertyCard";
 import Breadcrumbs from "@/components/seo/Breadcrumbs";
 import SEOHead from "@/components/seo/SEOHead";
 import SearchFilters, { type SearchFilterValues } from "@/components/search/SearchFilters";
+import IncomeBanner from "@/components/search/IncomeBanner";
 import RelatedCities from "@/components/city/RelatedCities";
 import SimilarProperties from "@/components/city/SimilarProperties";
 import CityMarketStats, { useCityMarketData } from "@/components/city/CityMarketStats";
@@ -400,6 +401,12 @@ const CityPage = () => {
                   </SheetContent>
                 </Sheet>
               </div>
+
+              <IncomeBanner
+                grossIncome={filters.grossIncome}
+                listingType={filters.listingType}
+                onClear={() => setFilters({ ...filters, grossIncome: undefined })}
+              />
 
               {isLoading ? (
                 <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
