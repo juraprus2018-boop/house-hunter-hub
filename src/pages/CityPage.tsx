@@ -415,6 +415,7 @@ const CityPage = () => {
                         key={property.id}
                         property={property}
                         cityAvgPrice={marketData?.avgPriceByType?.[property.property_type]}
+                        userIncome={filters.grossIncome}
                       />
                     ))}
                   </div>
