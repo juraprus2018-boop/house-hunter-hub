@@ -266,6 +266,30 @@ const SearchPage = () => {
             {/* Results */}
             <div className="flex-1">
               <AdSlot slotKey="search_page" />
+              {filters.grossIncome && filters.grossIncome > 0 && filters.listingType !== "koop" && (
+                <div className="mb-4 flex flex-wrap items-center gap-2 rounded-lg border border-primary/20 bg-primary/5 px-4 py-3 text-sm">
+                  <Wallet className="h-4 w-4 shrink-0 text-primary" />
+                  <span>
+                    Met een bruto inkomen van{" "}
+                    <strong>
+                      €{filters.grossIncome.toLocaleString("nl-NL")}
+                    </strong>{" "}
+                    p/m tonen we huurwoningen tot{" "}
+                    <strong className="text-primary">
+                      €{Math.floor(filters.grossIncome / 3).toLocaleString("nl-NL")}
+                    </strong>{" "}
+                    (3x huur regel).
+                  </span>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="ml-auto h-7 text-xs"
+                    onClick={() => setFilters({ ...filters, grossIncome: undefined })}
+                  >
+                    Wissen
+                  </Button>
+                </div>
+              )}
               {isLoading ? (
                 <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
                   {Array.from({ length: 6 }).map((_, i) => (
@@ -288,7 +312,11 @@ const SearchPage = () => {
                   <>
                     <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
                       {properties.map((property) => (
-                        <PropertyCard key={property.id} property={property} />
+                        <PropertyCard
+                          key={property.id}
+                          property={property}
+                          userIncome={filters.grossIncome}
+                        />
                       ))}
                     </div>
                     {/* Infinite scroll trigger */}
