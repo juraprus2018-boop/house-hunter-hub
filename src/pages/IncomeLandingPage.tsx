@@ -106,7 +106,7 @@ const IncomeLandingPage = () => {
               </CardContent>
             </Card>
 
-            <AdSlot slotKey="income_top" />
+            <AdSlot slotKey="budget_top" />
 
             <Card>
               <CardContent className="space-y-3 p-6">
