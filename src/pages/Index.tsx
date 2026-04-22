@@ -14,6 +14,8 @@ import ExitIntentPopup from "@/components/ExitIntentPopup";
 import SEOHead from "@/components/seo/SEOHead";
 import AdSlot from "@/components/ads/AdSlot";
 import IncomeChecker from "@/components/home/IncomeChecker";
+import TrustStats from "@/components/home/TrustStats";
+import TestimonialsSection from "@/components/home/TestimonialsSection";
 
 const Index = () => {
   const organizationLd = {
@@ -61,6 +63,7 @@ const Index = () => {
       <Header />
       <main className="flex-1">
         <HeroSection />
+        <TrustStats />
         <FeaturedListings />
         <RecentlyViewed />
         <div className="container">
@@ -70,6 +73,7 @@ const Index = () => {
         <PopularCities />
         <IncomeChecker />
         <WhyUsSection />
+        <TestimonialsSection />
         <DailyAlertSection />
         <SEOContentSection />
       </main>
