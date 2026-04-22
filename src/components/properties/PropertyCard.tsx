@@ -142,7 +142,7 @@ const PropertyCard = ({ property, cityAvgPrice, userIncome }: PropertyCardProps)
 
           {/* Urgency banner for fresh listings */}
           {isFresh && (
-            <div className="absolute bottom-0 left-0 right-0 flex items-center gap-1.5 bg-gradient-to-r from-orange-600/95 to-red-600/95 px-3 py-1.5 text-[11px] font-semibold text-white">
+            <div className="absolute bottom-0 left-0 right-0 flex items-center gap-1.5 bg-destructive/90 px-3 py-1.5 text-[11px] font-semibold text-destructive-foreground backdrop-blur-sm">
               <Flame className="h-3.5 w-3.5 shrink-0" />
               <span>Wees de eerste die reageert</span>
             </div>
