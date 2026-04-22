@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Heart, Bed, Bath, Maximize, MapPin, Zap, Share2, Eye, Wallet, CheckCircle2 } from "lucide-react";
+import { Heart, Bed, Bath, Maximize, MapPin, Zap, Share2, Eye, Wallet, CheckCircle2, Flame } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -62,6 +62,8 @@ const PropertyCard = ({ property, cityAvgPrice, userIncome }: PropertyCardProps)
   const hoursAgo = (Date.now() - new Date(property.created_at).getTime()) / (1000 * 60 * 60);
   const isToday = hoursAgo < 24;
   const isNew = hoursAgo < 7 * 24;
+  // "Wees de eerste die reageert" - urgency for very fresh listings (<6h)
+  const isFresh = hoursAgo < 6 && property.status === "actief";
 
   // Deal label: compare price with city average for same type
   const dealLabel = (() => {
@@ -137,6 +139,14 @@ const PropertyCard = ({ property, cityAvgPrice, userIncome }: PropertyCardProps)
               {property.listing_type}
             </Badge>
           </div>
+
+          {/* Urgency banner for fresh listings */}
+          {isFresh && (
+            <div className="absolute bottom-0 left-0 right-0 flex items-center gap-1.5 bg-destructive/90 px-3 py-1.5 text-[11px] font-semibold text-destructive-foreground backdrop-blur-sm">
+              <Flame className="h-3.5 w-3.5 shrink-0" />
+              <span>Wees de eerste die reageert</span>
+            </div>
+          )}
 
           {/* Actions top-right */}
           <div className="absolute right-3 top-3 flex gap-1.5">
