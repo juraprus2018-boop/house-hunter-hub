@@ -250,6 +250,35 @@ const SearchPage = () => {
                     <MapIcon className="h-4 w-4" />
                   </Button>
                 </div>
+
+                {/* Share search */}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={async () => {
+                    const url = window.location.href;
+                    const title = `Woningen zoeken${debouncedCity ? ` in ${debouncedCity}` : ""}`;
+                    if (navigator.share) {
+                      try {
+                        await navigator.share({ title, text: "Bekijk deze zoekopdracht op WoonPeek", url });
+                        return;
+                      } catch {
+                        // user cancelled - fall through to clipboard
+                      }
+                    }
+                    try {
+                      await navigator.clipboard.writeText(url);
+                      setShareCopied(true);
+                      toast({ title: "Link gekopieerd", description: "Deel hem met wie je wilt." });
+                      setTimeout(() => setShareCopied(false), 2500);
+                    } catch {
+                      toast({ title: "Kopiëren mislukt", variant: "destructive" });
+                    }
+                  }}
+                >
+                  {shareCopied ? <Check className="mr-2 h-4 w-4" /> : <Share2 className="mr-2 h-4 w-4" />}
+                  {shareCopied ? "Gekopieerd" : "Delen"}
+                </Button>
               </div>
             </div>
           </div>
