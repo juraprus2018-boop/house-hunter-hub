@@ -13,6 +13,7 @@ import RecentlyViewed from "@/components/home/RecentlyViewed";
 import ExitIntentPopup from "@/components/ExitIntentPopup";
 import SEOHead from "@/components/seo/SEOHead";
 import AdSlot from "@/components/ads/AdSlot";
+import IncomeChecker from "@/components/home/IncomeChecker";
 
 const Index = () => {
   const organizationLd = {
@@ -67,6 +68,7 @@ const Index = () => {
         </div>
         <HowItWorksSection />
         <PopularCities />
+        <IncomeChecker />
         <WhyUsSection />
         <DailyAlertSection />
         <SEOContentSection />
