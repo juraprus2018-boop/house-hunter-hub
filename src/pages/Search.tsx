@@ -21,6 +21,7 @@ import {
 import SearchFilters, { type SearchFilterValues } from "@/components/search/SearchFilters";
 import IncomeBanner from "@/components/search/IncomeBanner";
 import AdSlot from "@/components/ads/AdSlot";
+import { toast } from "@/hooks/use-toast";
 
 const EMPTY_FILTERS: SearchFilterValues = {
   city: "",
@@ -36,6 +37,7 @@ const EMPTY_FILTERS: SearchFilterValues = {
 const SearchPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [viewMode, setViewMode] = useState<"list" | "map">("list");
+  const [shareCopied, setShareCopied] = useState(false);
   const pageSize = 12;
 
   const [filters, setFilters] = useState<SearchFilterValues>({
