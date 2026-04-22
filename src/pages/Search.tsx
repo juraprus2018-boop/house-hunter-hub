@@ -8,7 +8,7 @@ import SEOHead from "@/components/seo/SEOHead";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useInfiniteProperties, useFilterFacets, useMapProperties } from "@/hooks/useProperties";
-import { Search, SlidersHorizontal, List, Map as MapIcon, Loader2 } from "lucide-react";
+import { Search, SlidersHorizontal, List, Map as MapIcon, Loader2, Share2, Check } from "lucide-react";
 import ExploreMap from "@/components/explore/ExploreMap";
 import {
   Sheet,
