@@ -162,6 +162,16 @@ function buildCitiesSitemap(
   </url>
 `;
     }
+    // Inkomen-landingspagina's per stad (3x huur regel)
+    for (const income of [2000, 2500, 3000, 3500, 4000, 4500, 5000, 6000]) {
+      xml += `  <url>
+    <loc>${SITE_URL}/huur-bij-inkomen-${income}-${citySlug}</loc>
+    <lastmod>${date}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+`;
+    }
     xml += `  <url>
     <loc>${SITE_URL}/huurwoningen/${citySlug}</loc>
     <lastmod>${date}</lastmod>
