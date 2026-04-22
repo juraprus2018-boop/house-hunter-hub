@@ -66,6 +66,7 @@ import PostcodePage from "./pages/PostcodePage";
 import BudgetLandingPage from "./pages/BudgetLandingPage";
 import CityGuidePage from "./pages/CityGuidePage";
 import WoonQuiz from "./pages/WoonQuiz";
+import IncomeLandingPage from "./pages/IncomeLandingPage";
 import CookieConsent from "@/components/CookieConsent";
 import { cityPath } from "@/lib/cities";
 import { usePageTracking } from "@/hooks/usePageTracking";
@@ -150,6 +151,7 @@ const App = () => (
             <Route path="/woningen-postcode-:postcode" element={<PostcodePage />} />
             <Route path="/huurwoningen-onder-:budget-:city" element={<BudgetLandingPage listingType="huur" />} />
             <Route path="/koopwoningen-onder-:budget-:city" element={<BudgetLandingPage listingType="koop" />} />
+            <Route path="/huur-bij-inkomen-:income-:city" element={<IncomeLandingPage />} />
             <Route path="/verhuizen-naar-:city" element={<CityGuidePage />} />
             <Route path="/alerts/afmelden/:token" element={<AlertUnsubscribe />} />
             <Route path="/huurwoningen/:city/:filter" element={<FilteredLandingPage listingType="huur" />} />
