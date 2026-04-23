@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 
 const SEOContentSection = () => {
   return (
-    <section className="py-16 md:py-20">
+    <section className="bg-surface-cream/50 py-16 md:py-20">
       <div className="container">
         <div className="mx-auto max-w-3xl space-y-6 text-[0.9375rem] md:text-base leading-relaxed text-muted-foreground">
           <h2 className="font-display text-2xl font-bold text-foreground">

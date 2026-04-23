@@ -49,6 +49,35 @@
     --warning: 38 92% 50%;
     --warning-foreground: 0 0% 100%;
 
+    /* Vibrant accent palette for visual variety */
+    --terracotta: 14 75% 58%;
+    --terracotta-foreground: 0 0% 100%;
+    --terracotta-soft: 18 85% 96%;
+
+    --sky: 200 80% 52%;
+    --sky-foreground: 0 0% 100%;
+    --sky-soft: 200 70% 96%;
+
+    --amber: 38 92% 55%;
+    --amber-foreground: 30 50% 15%;
+    --amber-soft: 42 95% 95%;
+
+    --berry: 340 70% 55%;
+    --berry-foreground: 0 0% 100%;
+    --berry-soft: 340 70% 96%;
+
+    /* Soft section backgrounds */
+    --surface-cream: 38 50% 96%;
+    --surface-mint: 150 40% 95%;
+    --surface-sky: 200 50% 96%;
+    --surface-rose: 18 60% 96%;
+    --surface-lavender: 250 40% 96%;
+
+    /* Gradients */
+    --gradient-warm: linear-gradient(135deg, hsl(var(--surface-cream)) 0%, hsl(var(--surface-rose)) 100%);
+    --gradient-cool: linear-gradient(135deg, hsl(var(--surface-mint)) 0%, hsl(var(--surface-sky)) 100%);
+    --gradient-sunset: linear-gradient(135deg, hsl(var(--terracotta) / 0.08) 0%, hsl(var(--amber) / 0.12) 100%);
+
     /* Shadows */
     --shadow-sm: 0 1px 2px 0 hsl(160 30% 8% / 0.05);
     --shadow-md: 0 4px 6px -1px hsl(160 30% 8% / 0.1), 0 2px 4px -2px hsl(160 30% 8% / 0.1);

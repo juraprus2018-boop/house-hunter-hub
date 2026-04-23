@@ -78,6 +78,33 @@ export default {
           DEFAULT: "hsl(var(--warning))",
           foreground: "hsl(var(--warning-foreground))",
         },
+        terracotta: {
+          DEFAULT: "hsl(var(--terracotta))",
+          foreground: "hsl(var(--terracotta-foreground))",
+          soft: "hsl(var(--terracotta-soft))",
+        },
+        sky: {
+          DEFAULT: "hsl(var(--sky))",
+          foreground: "hsl(var(--sky-foreground))",
+          soft: "hsl(var(--sky-soft))",
+        },
+        amber: {
+          DEFAULT: "hsl(var(--amber))",
+          foreground: "hsl(var(--amber-foreground))",
+          soft: "hsl(var(--amber-soft))",
+        },
+        berry: {
+          DEFAULT: "hsl(var(--berry))",
+          foreground: "hsl(var(--berry-foreground))",
+          soft: "hsl(var(--berry-soft))",
+        },
+        surface: {
+          cream: "hsl(var(--surface-cream))",
+          mint: "hsl(var(--surface-mint))",
+          sky: "hsl(var(--surface-sky))",
+          rose: "hsl(var(--surface-rose))",
+          lavender: "hsl(var(--surface-lavender))",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",
