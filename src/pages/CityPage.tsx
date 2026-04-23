@@ -397,6 +397,13 @@ const CityPage = () => {
                 onClear={() => setFilters({ ...filters, grossIncome: undefined })}
               />
 
+              {/* Highlight properties added in the last 7 days. Only renders when ≥3 fresh listings. */}
+              <NewThisWeekSection
+                properties={allProperties}
+                cityName={cityName}
+                citySlug={citySlug}
+              />
+
               {isLoading ? (
                 <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
                   {Array.from({ length: 9 }).map((_, index) => (
