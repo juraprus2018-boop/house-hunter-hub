@@ -16,6 +16,7 @@ import CityMarketStats, { useCityMarketData } from "@/components/city/CityMarket
 import CityNeighborhoods from "@/components/city/CityNeighborhoods";
 import CityRentalTips from "@/components/city/CityRentalTips";
 import CityRealtors from "@/components/city/CityRealtors";
+import NewThisWeekSection from "@/components/city/NewThisWeekSection";
 import { useProperties, useFilterFacets } from "@/hooks/useProperties";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -394,6 +395,13 @@ const CityPage = () => {
                 grossIncome={filters.grossIncome}
                 listingType={filters.listingType}
                 onClear={() => setFilters({ ...filters, grossIncome: undefined })}
+              />
+
+              {/* Highlight properties added in the last 7 days. Only renders when ≥3 fresh listings. */}
+              <NewThisWeekSection
+                properties={allProperties}
+                cityName={cityName}
+                citySlug={citySlug}
               />
 
               {isLoading ? (
