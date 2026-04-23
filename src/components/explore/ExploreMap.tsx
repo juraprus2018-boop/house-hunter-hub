@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import "leaflet.markercluster";
@@ -8,9 +8,17 @@ import { Database } from "@/integrations/supabase/types";
 
 type Property = Database["public"]["Tables"]["properties"]["Row"];
 
+export interface CommuteRouteInfo {
+  address: string;
+  lat: number;
+  lng: number;
+  mode: "driving" | "cycling";
+}
+
 interface ExploreMapProps {
   properties: Property[];
   hoveredPropertyId?: string | null;
+  commute?: CommuteRouteInfo | null;
 }
 
 // Netherlands bounding box
@@ -53,11 +61,15 @@ const createCustomIcon = (isHovered = false) => {
   });
 };
 
-const ExploreMap = ({ properties, hoveredPropertyId }: ExploreMapProps) => {
+const ExploreMap = ({ properties, hoveredPropertyId, commute }: ExploreMapProps) => {
   const mapRef = useRef<L.Map | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const markersRef = useRef<Map<string, L.Marker>>(new Map());
   const clusterGroupRef = useRef<any>(null);
+  const routeLayerRef = useRef<L.GeoJSON | null>(null);
+  const workMarkerRef = useRef<L.Marker | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [routeInfo, setRouteInfo] = useState<{ minutes: number; km: number } | null>(null);
 
   // Initialize map
   useEffect(() => {
@@ -158,9 +170,20 @@ const ExploreMap = ({ properties, hoveredPropertyId }: ExploreMapProps) => {
           <div style="font-weight:600;font-size:14px;margin-bottom:4px">${property.title}</div>
           <div style="color:#666;font-size:12px;margin-bottom:6px">${property.street || ""} ${property.house_number || ""}, ${property.city}</div>
           <div style="font-weight:700;font-size:15px;color:hsl(var(--primary));margin-bottom:8px">${formatPrice(Number(property.price), property.listing_type)}</div>
-          <a href="/woning/${property.slug || property.id}" style="display:inline-block;padding:6px 12px;background:hsl(var(--primary));color:white;border-radius:6px;text-decoration:none;font-size:12px;font-weight:600">Bekijken →</a>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            <a href="/woning/${property.slug || property.id}" style="display:inline-block;padding:6px 12px;background:hsl(var(--primary));color:white;border-radius:6px;text-decoration:none;font-size:12px;font-weight:600">Bekijken →</a>
+            ${commute ? `<button data-route-id="${property.id}" style="cursor:pointer;padding:6px 12px;background:white;color:hsl(var(--primary));border:1px solid hsl(var(--primary));border-radius:6px;font-size:12px;font-weight:600">Toon route</button>` : ""}
+          </div>
         </div>
       `, { maxWidth: 250, className: "custom-popup" });
+
+      marker.on("popupopen", (e) => {
+        const el = (e as any).popup?.getElement?.() as HTMLElement | undefined;
+        const btn = el?.querySelector(`button[data-route-id="${property.id}"]`) as HTMLButtonElement | null;
+        if (btn) {
+          btn.onclick = () => setSelectedId(property.id);
+        }
+      });
 
       markersRef.current.set(property.id, marker);
       clusterGroup.addLayer(marker);
@@ -190,6 +213,92 @@ const ExploreMap = ({ properties, hoveredPropertyId }: ExploreMapProps) => {
     });
   }, [hoveredPropertyId]);
 
+  // Clear selection when commute is removed
+  useEffect(() => {
+    if (!commute) setSelectedId(null);
+  }, [commute]);
+
+  // Draw route from work address to selected property
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+
+    // Cleanup previous route + work marker
+    if (routeLayerRef.current) {
+      map.removeLayer(routeLayerRef.current);
+      routeLayerRef.current = null;
+    }
+    if (workMarkerRef.current) {
+      map.removeLayer(workMarkerRef.current);
+      workMarkerRef.current = null;
+    }
+    setRouteInfo(null);
+
+    if (!commute || !selectedId) return;
+    const property = properties.find((p) => p.id === selectedId);
+    if (!property?.latitude || !property?.longitude) return;
+
+    const profile = commute.mode === "driving" ? "driving" : "cycling";
+    const url = `https://router.project-osrm.org/route/v1/${profile}/${commute.lng},${commute.lat};${property.longitude},${property.latitude}?overview=full&geometries=geojson`;
+
+    let cancelled = false;
+    (async () => {
+      try {
+        const resp = await fetch(url);
+        if (!resp.ok) return;
+        const data = await resp.json();
+        const route = data?.routes?.[0];
+        if (!route?.geometry || cancelled) return;
+
+        const layer = L.geoJSON(route.geometry, {
+          style: {
+            color: "hsl(var(--primary))",
+            weight: 5,
+            opacity: 0.85,
+            dashArray: commute.mode === "cycling" ? "8,6" : undefined,
+          },
+        }).addTo(map);
+        routeLayerRef.current = layer;
+
+        // Work address marker (briefcase pin)
+        const workIcon = L.divIcon({
+          className: "custom-marker",
+          html: `<div style="
+            width:32px;height:32px;
+            background:hsl(var(--background));
+            border:3px solid hsl(var(--primary));
+            border-radius:50%;
+            box-shadow:0 2px 8px rgba(0,0,0,0.3);
+            display:flex;align-items:center;justify-content:center;
+            color:hsl(var(--primary));
+          ">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="2" y="7" width="20" height="14" rx="2"/>
+              <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
+            </svg>
+          </div>`,
+          iconSize: [32, 32],
+          iconAnchor: [16, 16],
+        });
+        workMarkerRef.current = L.marker([commute.lat, commute.lng], { icon: workIcon })
+          .addTo(map)
+          .bindPopup(`<div style="font-family:system-ui,sans-serif;font-size:12px"><strong>Werkadres</strong><br/>${commute.address}</div>`);
+
+        const minutes = Math.round((route.duration || 0) / 60);
+        const km = Math.round(((route.distance || 0) / 1000) * 10) / 10;
+        setRouteInfo({ minutes, km });
+
+        map.fitBounds(layer.getBounds(), { padding: [60, 60], maxZoom: 14 });
+      } catch {
+        // ignore
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [commute, selectedId, properties]);
+
   return (
     <>
       <style>{`
@@ -203,7 +312,17 @@ const ExploreMap = ({ properties, hoveredPropertyId }: ExploreMapProps) => {
         .custom-popup .leaflet-popup-content { margin: 12px !important; }
         .custom-popup .leaflet-popup-tip { box-shadow: 0 4px 20px rgba(0,0,0,0.1) !important; }
       `}</style>
-      <div ref={containerRef} className="h-full w-full" style={{ zIndex: 0 }} />
+      <div className="relative h-full w-full">
+        <div ref={containerRef} className="h-full w-full" style={{ zIndex: 0 }} />
+        {routeInfo && commute && (
+          <div className="absolute left-3 top-3 z-[400] rounded-lg border bg-card/95 px-3 py-2 text-xs shadow-md backdrop-blur">
+            <div className="font-semibold text-foreground">
+              {routeInfo.minutes} min {commute.mode === "driving" ? "auto" : "fiets"} · {routeInfo.km} km
+            </div>
+            <div className="text-muted-foreground">naar {commute.address}</div>
+          </div>
+        )}
+      </div>
     </>
   );
 };

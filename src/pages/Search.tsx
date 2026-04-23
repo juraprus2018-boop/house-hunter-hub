@@ -382,7 +382,10 @@ const SearchPage = () => {
                         <Skeleton className="h-full w-full" />
                       </div>
                     ) : (
-                      <ExploreMap properties={visibleMapProperties as any} />
+                      <ExploreMap
+                        properties={visibleMapProperties as any}
+                        commute={commute ? { address: commute.address, lat: commute.lat, lng: commute.lng, mode: commute.mode } : null}
+                      />
                     )}
                     <p className="text-xs text-muted-foreground mt-2">
                       {visibleMapProperties.length} woningen met locatie op de kaart
