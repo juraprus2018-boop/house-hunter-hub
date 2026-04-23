@@ -10,10 +10,11 @@ import RelatedCities from "@/components/city/RelatedCities";
 import { useProperties, useNearbyProperties } from "@/hooks/useProperties";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowRight, ChevronRight, MapPin, Search } from "lucide-react";
+import { ArrowRight, MapPin, Search } from "lucide-react";
 import { cityPath, citySlugToName } from "@/lib/cities";
 import { isValidDutchCity, getValidCityName } from "@/lib/dutchCities";
 import type { Database } from "@/integrations/supabase/types";
+import FAQSchema from "@/components/seo/FAQSchema";
 
 type ListingType = Database["public"]["Enums"]["listing_type"];
 
@@ -164,17 +165,8 @@ const ListingTypePage = ({ listingType }: ListingTypePageProps) => {
           ...(p.images?.length ? { image: p.images[0] } : {}),
         })),
       },
-      {
-        "@context": "https://schema.org",
-        "@type": "FAQPage",
-        mainEntity: faqItems.map((faq) => ({
-          "@type": "Question",
-          name: faq.question,
-          acceptedAnswer: { "@type": "Answer", text: faq.answer },
-        })),
-      },
     ],
-    [label.plural, locationLabel, pageDesc, canonical, totalCount, properties, faqItems]
+    [label.plural, locationLabel, pageDesc, canonical, totalCount, properties]
   );
 
   // Redirect invalid cities after all hooks
