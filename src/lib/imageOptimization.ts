@@ -50,8 +50,10 @@ export const optimizeImage = (src: string | undefined | null, opts: ImgOpts): st
       url: src.replace(/^https?:\/\//, ""),
       w: String(width),
       q: String(quality),
-      // weserv supports avif natively. 'auto' lets the proxy decide based on Accept header.
-      output: format === "auto" ? "webp" : format,
+      // weserv.nl no longer supports saving to AVIF (returns 400). Force WebP for
+      // every external image; browsers that prefer AVIF still get a small, modern
+      // WebP which is far better than the original JPG.
+      output: "webp",
       fit: "cover",
     });
     if (height) params.set("h", String(height));
