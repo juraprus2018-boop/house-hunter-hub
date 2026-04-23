@@ -606,6 +606,16 @@ const CityPage = () => {
             </div>
           </div>
         </section>
+
+        {/* FAQ with FAQPage JSON-LD (replaces the previously hidden-only schema) */}
+        <section className="border-t py-8">
+          <div className="container">
+            <FAQSchema
+              items={cityFaqItems}
+              title={`Veelgestelde vragen over woningen in ${cityName}`}
+            />
+          </div>
+        </section>
       </main>
       <Footer />
     </div>
