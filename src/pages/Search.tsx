@@ -20,6 +20,8 @@ import {
 } from "@/components/ui/sheet";
 import SearchFilters, { type SearchFilterValues } from "@/components/search/SearchFilters";
 import IncomeBanner from "@/components/search/IncomeBanner";
+import CommuteFilter, { type CommuteValue } from "@/components/search/CommuteFilter";
+import { useCommuteFilter } from "@/hooks/useCommuteFilter";
 import AdSlot from "@/components/ads/AdSlot";
 import { toast } from "@/hooks/use-toast";
 
@@ -38,6 +40,7 @@ const SearchPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [viewMode, setViewMode] = useState<"list" | "map">("list");
   const [shareCopied, setShareCopied] = useState(false);
+  const [commute, setCommute] = useState<CommuteValue | null>(null);
   const pageSize = 12;
 
   const [filters, setFilters] = useState<SearchFilterValues>({
