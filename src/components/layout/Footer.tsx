@@ -45,7 +45,7 @@ const Footer = () => {
               <li><Link to="/woningen/den-haag/onder-1000" className="text-muted-foreground transition-colors hover:text-foreground">Den Haag onder €1.000</Link></li>
               <li><Link to="/woningen/amsterdam/2-kamers" className="text-muted-foreground transition-colors hover:text-foreground">Amsterdam 2 kamers</Link></li>
               <li><Link to="/huurwoningen/groningen" className="text-muted-foreground transition-colors hover:text-foreground">Huurwoningen Groningen</Link></li>
-              <li><Link to="/dagelijkse-alert" className="text-muted-foreground transition-colors hover:text-foreground">Dagelijkse alert</Link></li>
+              <li><Link to="/dagelijkse-alert" className="text-muted-foreground transition-colors hover:text-foreground">Wekelijkse alert</Link></li>
             </ul>
           </div>
 

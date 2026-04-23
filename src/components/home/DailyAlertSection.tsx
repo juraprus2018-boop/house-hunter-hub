@@ -124,7 +124,7 @@ const DailyAlertSection = () => {
             <div className="hidden md:col-span-2 md:block">
               <img
                 src={dailyAlertImg}
-                alt="Dagelijkse woningalerts"
+                alt="Wekelijkse woningalerts"
                 className="h-full w-full object-cover"
                 loading="lazy"
               />
@@ -141,7 +141,7 @@ const DailyAlertSection = () => {
                     Alert voor nieuw woningaanbod
                   </h2>
                   <p className="text-sm text-muted-foreground">
-                    Ontvang een melding wanneer er nieuwe woningen in jouw stad beschikbaar zijn.
+                    Ontvang elke maandag een overzicht van nieuwe woningen in jouw stad.
                   </p>
                 </div>
               </div>
