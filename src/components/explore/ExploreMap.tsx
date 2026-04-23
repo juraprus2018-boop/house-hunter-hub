@@ -61,11 +61,15 @@ const createCustomIcon = (isHovered = false) => {
   });
 };
 
-const ExploreMap = ({ properties, hoveredPropertyId }: ExploreMapProps) => {
+const ExploreMap = ({ properties, hoveredPropertyId, commute }: ExploreMapProps) => {
   const mapRef = useRef<L.Map | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const markersRef = useRef<Map<string, L.Marker>>(new Map());
   const clusterGroupRef = useRef<any>(null);
+  const routeLayerRef = useRef<L.GeoJSON | null>(null);
+  const workMarkerRef = useRef<L.Marker | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [routeInfo, setRouteInfo] = useState<{ minutes: number; km: number } | null>(null);
 
   // Initialize map
   useEffect(() => {
