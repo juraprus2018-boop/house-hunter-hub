@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import "leaflet.markercluster";
@@ -8,9 +8,17 @@ import { Database } from "@/integrations/supabase/types";
 
 type Property = Database["public"]["Tables"]["properties"]["Row"];
 
+export interface CommuteRouteInfo {
+  address: string;
+  lat: number;
+  lng: number;
+  mode: "driving" | "cycling";
+}
+
 interface ExploreMapProps {
   properties: Property[];
   hoveredPropertyId?: string | null;
+  commute?: CommuteRouteInfo | null;
 }
 
 // Netherlands bounding box
