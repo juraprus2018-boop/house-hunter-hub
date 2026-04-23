@@ -108,7 +108,11 @@
   </head>
 
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <!-- Hero placeholder shown until React hydrates: prevents flash of blank page,
+           matches HeroSection background gradient so LCP feels instant. -->
+      <div class="hero-fallback" aria-hidden="true"></div>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
