@@ -51,7 +51,7 @@ const FeaturedListings = () => {
       <div className="container">
         <div className="mb-10 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <div className="mb-2 inline-flex items-center gap-1.5 rounded-full bg-accent/10 px-3 py-1 text-xs font-medium text-accent">
+            <div className="mb-2 inline-flex items-center gap-1.5 rounded-full bg-terracotta/10 px-3 py-1 text-xs font-medium text-terracotta">
               <Clock className="h-3.5 w-3.5" />
               Dagelijks bijgewerkt
             </div>
