@@ -148,7 +148,16 @@ const SearchPage = () => {
     maxPrice: effectiveMaxPrice,
     minBedrooms: filters.minBedrooms,
     minSurface: filters.minSurface,
-  }, viewMode === "map");
+  }, viewMode === "map" || !!commute);
+
+  // Apply commute filter to the appropriate dataset
+  const commuteSourceList = commute ? (mapProperties || []) : properties;
+  const { filtered: commuteFiltered, loading: commuteLoading, active: commuteActive, matchCount } = useCommuteFilter(
+    commuteSourceList as any,
+    commute,
+  );
+  const visibleListProperties = commuteActive ? commuteFiltered : properties;
+  const visibleMapProperties = commuteActive ? commuteFiltered : (mapProperties || []);
 
   const handleFilterChange = useCallback((newFilters: SearchFilterValues) => {
     setFilters(newFilters);
