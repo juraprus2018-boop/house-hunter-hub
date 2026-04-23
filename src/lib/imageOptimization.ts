@@ -11,12 +11,14 @@ export interface ImgOpts {
   width: number;
   height?: number;
   quality?: number;
+  /** Output format. 'auto' picks AVIF when supported by the proxy. Defaults to 'webp'. */
+  format?: "webp" | "avif" | "auto";
 }
 
 /** Build an optimized URL (WebP, resized) for a property image. */
 export const optimizeImage = (src: string | undefined | null, opts: ImgOpts): string => {
   if (!src) return "";
-  const { width, height, quality = 70 } = opts;
+  const { width, height, quality = 70, format = "webp" } = opts;
 
   // Local bundled assets (Vite hashed paths) - return as-is
   if (src.startsWith("/") || src.startsWith("data:") || src.startsWith("blob:")) {
@@ -36,7 +38,8 @@ export const optimizeImage = (src: string | undefined | null, opts: ImgOpts): st
         width: String(width),
         quality: String(quality),
         resize: "cover",
-        format: "webp",
+        // Supabase render endpoint only supports origin/webp; keep webp for broad support
+        format: format === "avif" ? "webp" : "webp",
       });
       if (height) params.set("height", String(height));
       return `${url.origin}${renderPath}?${params.toString()}`;
@@ -47,7 +50,8 @@ export const optimizeImage = (src: string | undefined | null, opts: ImgOpts): st
       url: src.replace(/^https?:\/\//, ""),
       w: String(width),
       q: String(quality),
-      output: "webp",
+      // weserv supports avif natively. 'auto' lets the proxy decide based on Accept header.
+      output: format === "auto" ? "webp" : format,
       fit: "cover",
     });
     if (height) params.set("h", String(height));
@@ -58,12 +62,12 @@ export const optimizeImage = (src: string | undefined | null, opts: ImgOpts): st
 };
 
 /** Generate a srcset string for responsive images. */
-export const buildSrcSet = (src: string | undefined | null, widths: number[], height?: number, quality = 70): string => {
+export const buildSrcSet = (src: string | undefined | null, widths: number[], height?: number, quality = 70, format: ImgOpts["format"] = "webp"): string => {
   if (!src) return "";
   return widths
     .map((w) => {
       const h = height ? Math.round((height / widths[0]) * w) : undefined;
-      return `${optimizeImage(src, { width: w, height: h, quality })} ${w}w`;
+      return `${optimizeImage(src, { width: w, height: h, quality, format })} ${w}w`;
     })
     .join(", ");
 };
