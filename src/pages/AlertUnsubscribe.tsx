@@ -34,7 +34,7 @@ const AlertUnsubscribe = () => {
         setMessage("Je was al afgemeld voor deze alerts.");
         setIsSuccess(true);
       } else if (data?.success) {
-        setMessage("Je bent succesvol afgemeld van de dagelijkse alerts.");
+        setMessage("Je bent succesvol afgemeld van de wekelijkse alerts.");
         setIsSuccess(true);
       } else {
         setMessage("Ongeldige of verlopen afmeldlink.");
@@ -51,7 +51,7 @@ const AlertUnsubscribe = () => {
     <div className="flex min-h-screen flex-col">
       <SEOHead
         title="Alert afmelden | WoonPeek"
-        description="Meld je af voor dagelijkse e-mailalerts van WoonPeek."
+        description="Meld je af voor wekelijkse e-mailalerts van WoonPeek."
         canonical="https://www.woonpeek.nl/alerts/afmelden"
       />
       <Header />

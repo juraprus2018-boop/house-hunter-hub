@@ -52,7 +52,7 @@ const ExitIntentPopup = () => {
         body: { email: email.trim(), source: "exit-intent" },
       });
       if (error) throw error;
-      toast.success("Je ontvangt nu dagelijks het nieuwste woningaanbod!");
+      toast.success("Je ontvangt nu wekelijks het nieuwste woningaanbod!");
       dismiss();
     } catch {
       toast.error("Er ging iets mis. Probeer het opnieuw.");
@@ -81,7 +81,7 @@ const ExitIntentPopup = () => {
             Mis geen nieuwe woningen!
           </h3>
           <p className="mt-2 text-sm text-muted-foreground">
-            Ontvang dagelijks gratis het nieuwste woningaanbod in je inbox. Eerder weten betekent sneller reageren.
+            Ontvang wekelijks gratis het nieuwste woningaanbod in je inbox. Eerder weten betekent sneller reageren.
           </p>
 
           <form onSubmit={handleSubmit} className="mt-6 flex w-full gap-2">
@@ -99,7 +99,7 @@ const ExitIntentPopup = () => {
           </form>
 
           <p className="mt-3 text-xs text-muted-foreground">
-            Gratis en dagelijks opzegbaar.{" "}
+            Gratis en altijd opzegbaar.{" "}
             <Link to="/privacy" className="underline hover:text-foreground">
               Privacybeleid
             </Link>

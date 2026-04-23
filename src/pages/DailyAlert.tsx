@@ -9,7 +9,7 @@ import bannerAlert from "@/assets/banner-alert.jpg";
 const ALERT_FAQ = [
   {
     question: "Hoe vaak ontvang ik een woningalert?",
-    answer: "Je ontvangt maximaal één e-mail per dag, na onze automatische scan van alle bronnen. Geen spam, alleen relevant aanbod.",
+    answer: "Je ontvangt elke maandagochtend één e-mail met het nieuwste woningaanbod van de afgelopen week. Geen spam, alleen relevant aanbod.",
   },
   {
     question: "Kan ik de alert filteren op stad?",
@@ -20,8 +20,8 @@ const ALERT_FAQ = [
     answer: "In elke alert-e-mail staat een uitschrijflink. Eén klik en je bent direct afgemeld.",
   },
   {
-    question: "Is de dagelijkse alert gratis?",
-    answer: "Ja, de dagelijkse woningalert is volledig gratis. Er zijn geen kosten aan verbonden.",
+    question: "Is de wekelijkse alert gratis?",
+    answer: "Ja, de wekelijkse woningalert is volledig gratis. Er zijn geen kosten aan verbonden.",
   },
 ];
 
@@ -39,8 +39,8 @@ const DailyAlert = () => {
   return (
     <div className="flex min-h-screen flex-col">
       <SEOHead
-        title="Dagelijkse Woningalert – Ontvang nieuw aanbod per e-mail | WoonPeek"
-        description="Schrijf je gratis in voor de WoonPeek dagelijkse alert en ontvang elke dag een e-mail met het nieuwste woningaanbod in Nederland."
+        title="Wekelijkse Woningalert – Ontvang nieuw aanbod per e-mail | WoonPeek"
+        description="Schrijf je gratis in voor de WoonPeek wekelijkse alert en ontvang elke maandag een e-mail met het nieuwste woningaanbod in Nederland."
         canonical="https://www.woonpeek.nl/dagelijkse-alert"
       />
       <script
@@ -49,39 +49,38 @@ const DailyAlert = () => {
       />
       <Header />
       <main className="flex-1">
-        <PageBanner image={bannerAlert} alt="Dagelijkse woningalert">
+        <PageBanner image={bannerAlert} alt="Wekelijkse woningalert">
           <Breadcrumbs
             items={[
               { label: "Home", href: "/" },
-              { label: "Dagelijkse Alert" },
+              { label: "Wekelijkse Alert" },
             ]}
           />
           <h1 className="mt-4 font-display text-3xl font-bold text-foreground md:text-4xl">
-            Dagelijkse Woningalert
+            Wekelijkse Woningalert
           </h1>
           <p className="mt-2 text-muted-foreground">
-            Ontvang elke dag het nieuwste woningaanbod in je inbox
+            Ontvang elke week het nieuwste woningaanbod in je inbox
           </p>
         </PageBanner>
         <DailyAlertSection />
         <section className="border-t bg-muted/30 py-12">
           <div className="container max-w-3xl space-y-6 text-sm text-muted-foreground leading-relaxed">
             <h2 className="font-display text-2xl font-bold text-foreground">
-              Dagelijkse woningalert van WoonPeek
+              Wekelijkse woningalert van WoonPeek
             </h2>
             <p>
-              Met de dagelijkse woningalert van WoonPeek ontvang je elke dag een overzichtelijke e-mail 
-              met het nieuwste woningaanbod in Nederland. Of je nu op zoek bent naar een huurwoning, 
+              Met de wekelijkse woningalert van WoonPeek ontvang je elke maandag een overzichtelijke e-mail 
+              met het nieuwste woningaanbod van de afgelopen week in Nederland. Of je nu op zoek bent naar een huurwoning, 
               koopwoning, studio of kamer: onze alert houdt je op de hoogte zonder dat je zelf hoeft te zoeken.
             </p>
             <h3 className="font-display text-xl font-semibold text-foreground pt-2">
-              Hoe werkt de dagelijkse alert?
+              Hoe werkt de wekelijkse alert?
             </h3>
             <p>
-              Na inschrijving ontvang je dagelijks één e-mail na onze automatische scan. In deze e-mail 
-              zie je hoeveel nieuwe woningen er die dag zijn toegevoegd, met een directe link naar het 
-              volledige overzicht. Zo ben je altijd als eerste op de hoogte en kun je snel reageren op 
-              interessante woningen.
+              Na inschrijving ontvang je elke maandagochtend één e-mail met een overzicht van alle nieuwe woningen 
+              die de afgelopen week zijn toegevoegd, met een directe link naar het volledige overzicht. 
+              Zo blijf je op de hoogte zonder dat je zelf hoeft te zoeken.
             </p>
             <h3 className="font-display text-xl font-semibold text-foreground pt-2">
               Waarom een woningalert instellen?
@@ -105,7 +104,7 @@ const DailyAlert = () => {
               </li>
             </ul>
             <p>
-              Schrijf je nu in met je e-mailadres en begin morgen al met het ontvangen van het nieuwste 
+              Schrijf je nu in met je e-mailadres en ontvang vanaf de eerstvolgende maandag het nieuwste 
               woningaanbod. Heb je een account? Log in en activeer de alert met één klik.
             </p>
           </div>

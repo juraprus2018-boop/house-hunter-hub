@@ -181,7 +181,7 @@ Deno.serve(async (req) => {
       const html = buildEmailHtml(
         latestProperties,
         `${filteredCount} nieuwe ${filteredCount === 1 ? 'woning' : 'woningen'} in ${cityLabel}!`,
-        `Hier is je dagelijks overzicht van het nieuwste woningaanbod in ${cityLabel}.`,
+        `Hier is je wekelijks overzicht van het nieuwste woningaanbod in ${cityLabel}.`,
         `https://www.woonpeek.nl/nieuw-aanbod`,
         unsubscribeUrl,
         filteredCount
