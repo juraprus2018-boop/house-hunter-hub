@@ -239,6 +239,9 @@ const SearchPage = () => {
                     </SheetHeader>
                     <div className="mt-6">
                       <SearchFilters filters={filters} onChange={handleFilterChange} onClear={clearFilters} facets={facets} />
+                      <div className="mt-6">
+                        <CommuteFilter value={commute} onChange={setCommute} />
+                      </div>
                     </div>
                   </SheetContent>
                 </Sheet>
