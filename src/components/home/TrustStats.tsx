@@ -64,20 +64,20 @@ const TrustStats = () => {
   ];
 
   return (
-    <section className="border-y bg-muted/30 py-8">
+    <section className="border-y bg-surface-cream py-10">
       <div className="container">
         <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
           {items.map((item) => (
             <div
               key={item.label}
-              className="flex items-center gap-3 rounded-lg border bg-background p-4 shadow-sm"
+              className="flex items-center gap-4 rounded-2xl border border-border bg-background p-5 shadow-sm transition-transform hover:-translate-y-0.5"
             >
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10">
-                <item.icon className="h-5 w-5 text-primary" />
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary/10">
+                <item.icon className="h-6 w-6 text-primary" />
               </div>
               <div>
-                <p className="text-xl font-bold leading-none">{item.value}</p>
-                <p className="mt-1 text-xs text-muted-foreground">{item.label}</p>
+                <p className="text-2xl font-bold leading-none text-foreground">{item.value}</p>
+                <p className="mt-1.5 text-sm text-muted-foreground">{item.label}</p>
               </div>
             </div>
           ))}

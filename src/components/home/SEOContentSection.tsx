@@ -4,15 +4,15 @@ const SEOContentSection = () => {
   return (
     <section className="py-16 md:py-20">
       <div className="container">
-        <div className="mx-auto max-w-3xl space-y-6 text-[0.9375rem] md:text-base leading-relaxed text-muted-foreground">
-          <h2 className="font-display text-2xl font-bold text-foreground">
+        <div className="mx-auto max-w-3xl space-y-6 text-base md:text-lg leading-relaxed text-muted-foreground">
+          <h2 className="font-display text-2xl md:text-3xl font-bold text-foreground">
             Woningen zoeken in Nederland
           </h2>
           <p>
             Op zoek naar een <strong>woning</strong> in Nederland? WoonPeek verzamelt dagelijks het
             nieuwste aanbod van <Link to="/huurwoningen" className="text-primary hover:underline">huurwoningen</Link>,{" "}
             <Link to="/appartementen" className="text-primary hover:underline">appartementen</Link>,
-            studio's en <Link to="/koopwoningen" className="text-primary hover:underline">koopwoningen</Link> uit heel Nederland op één overzichtelijke plek. Of je nu een
+            studio's en <Link to="/koopwoningen" className="text-primary hover:underline">koopwoningen</Link> uit heel Nederland op een overzichtelijke plek. Of je nu een
             starter bent die een eerste huurwoning zoekt, een gezin dat een ruimer
             huis wil kopen, of een student op zoek naar een betaalbare{" "}
             <Link to="/kamers" className="text-primary hover:underline">kamer</Link>: bij WoonPeek vind je
@@ -23,29 +23,13 @@ const SEOContentSection = () => {
             kans mist. Filter op stad, prijs, woningtype en aantal slaapkamers om direct de meest
             relevante <Link to="/zoeken" className="text-primary hover:underline">woningen in Nederland</Link> te vinden. Populaire zoeksteden zijn
             onder andere{" "}
-            <Link to="/woningen-amsterdam" className="text-primary hover:underline">
-              Amsterdam
-            </Link>
-            ,{" "}
-            <Link to="/woningen-rotterdam" className="text-primary hover:underline">
-              Rotterdam
-            </Link>
-            ,{" "}
-            <Link to="/woningen-utrecht" className="text-primary hover:underline">
-              Utrecht
-            </Link>
-            ,{" "}
-            <Link to="/woningen-den-haag" className="text-primary hover:underline">
-              Den Haag
-            </Link>{" "}
-            en{" "}
-            <Link to="/woningen-eindhoven" className="text-primary hover:underline">
-              Eindhoven
-            </Link>
-            . Bekijk het volledige overzicht op onze{" "}
-            <Link to="/steden" className="text-primary hover:underline">
-              stedenpagina
-            </Link>.
+            <Link to="/woningen-amsterdam" className="text-primary hover:underline">Amsterdam</Link>,{" "}
+            <Link to="/woningen-rotterdam" className="text-primary hover:underline">Rotterdam</Link>,{" "}
+            <Link to="/woningen-utrecht" className="text-primary hover:underline">Utrecht</Link>,{" "}
+            <Link to="/woningen-den-haag" className="text-primary hover:underline">Den Haag</Link> en{" "}
+            <Link to="/woningen-eindhoven" className="text-primary hover:underline">Eindhoven</Link>.
+            Bekijk het volledige overzicht op onze{" "}
+            <Link to="/steden" className="text-primary hover:underline">stedenpagina</Link>.
           </p>
           <p>
             Met onze gratis{" "}

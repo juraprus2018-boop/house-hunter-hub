@@ -116,9 +116,9 @@ const DailyAlertSection = () => {
   }, []);
 
   return (
-    <section className="py-16">
+    <section className="bg-surface-cream py-16 md:py-20">
       <div className="container">
-        <div className="overflow-hidden rounded-3xl border bg-card">
+        <div className="overflow-hidden rounded-3xl border border-border bg-background shadow-lg">
           <div className="grid md:grid-cols-5">
             {/* Image side */}
             <div className="hidden md:col-span-2 md:block">
@@ -133,14 +133,14 @@ const DailyAlertSection = () => {
             {/* Content side */}
             <div className="p-6 md:col-span-3 md:p-10">
               <div className="mb-6 flex items-center gap-3">
-                <div className="flex h-11 w-11 items-center justify-center rounded-full bg-primary/10">
-                  <BellRing className="h-5 w-5 text-primary" />
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-terracotta/15">
+                  <BellRing className="h-6 w-6 text-terracotta" />
                 </div>
                 <div>
-                  <h2 className="font-display text-2xl font-bold text-foreground md:text-3xl">
+                  <h2 className="font-display text-2xl font-bold text-foreground md:text-3xl lg:text-4xl">
                     Alert voor nieuw woningaanbod
                   </h2>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="mt-1 text-base text-muted-foreground">
                     Ontvang elke maandag een overzicht van nieuwe woningen in jouw stad.
                   </p>
                 </div>
