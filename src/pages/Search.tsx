@@ -306,6 +306,9 @@ const SearchPage = () => {
               <div className="sticky top-24 rounded-lg border bg-card p-6">
                 <h2 className="mb-4 font-display text-lg font-semibold">Filters</h2>
                 <SearchFilters filters={filters} onChange={handleFilterChange} onClear={clearFilters} facets={facets} />
+                <div className="mt-6">
+                  <CommuteFilter value={commute} onChange={setCommute} />
+                </div>
               </div>
             </aside>
 
