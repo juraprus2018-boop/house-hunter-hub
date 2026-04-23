@@ -312,15 +312,17 @@ const ExploreMap = ({ properties, hoveredPropertyId, commute }: ExploreMapProps)
         .custom-popup .leaflet-popup-content { margin: 12px !important; }
         .custom-popup .leaflet-popup-tip { box-shadow: 0 4px 20px rgba(0,0,0,0.1) !important; }
       `}</style>
-      <div ref={containerRef} className="h-full w-full" style={{ zIndex: 0 }} />
-      {routeInfo && commute && (
-        <div className="absolute left-3 top-3 z-[400] rounded-lg border bg-card/95 px-3 py-2 text-xs shadow-md backdrop-blur">
-          <div className="font-semibold text-foreground">
-            {routeInfo.minutes} min {commute.mode === "driving" ? "auto" : "fiets"} · {routeInfo.km} km
+      <div className="relative h-full w-full">
+        <div ref={containerRef} className="h-full w-full" style={{ zIndex: 0 }} />
+        {routeInfo && commute && (
+          <div className="absolute left-3 top-3 z-[400] rounded-lg border bg-card/95 px-3 py-2 text-xs shadow-md backdrop-blur">
+            <div className="font-semibold text-foreground">
+              {routeInfo.minutes} min {commute.mode === "driving" ? "auto" : "fiets"} · {routeInfo.km} km
+            </div>
+            <div className="text-muted-foreground">naar {commute.address}</div>
           </div>
-          <div className="text-muted-foreground">naar {commute.address}</div>
-        </div>
-      )}
+        )}
+      </div>
     </>
   );
 };
