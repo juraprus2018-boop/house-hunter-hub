@@ -105,13 +105,7 @@ const PropertyCard = ({ property, cityAvgPrice, userIncome, priority = false }: 
         <div className="relative aspect-[4/3] overflow-hidden">
           {property.images?.[0] ? (
             <picture>
-              {/* AVIF: ~30% smaller than WebP, modern browsers */}
-              <source
-                type="image/avif"
-                srcSet={buildSrcSet(property.images[0], [320, 480, 640], 360, 65, "avif")}
-                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 400px"
-              />
-              {/* WebP fallback */}
+              {/* WebP via weserv.nl proxy (AVIF saving is no longer supported by weserv) */}
               <source
                 type="image/webp"
                 srcSet={buildSrcSet(property.images[0], [320, 480, 640], 360, 72, "webp")}
