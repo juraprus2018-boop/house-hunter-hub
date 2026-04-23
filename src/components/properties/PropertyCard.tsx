@@ -9,6 +9,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
 import { Database } from "@/integrations/supabase/types";
 import propertyPlaceholder from "@/assets/property-placeholder.jpg";
+import { optimizeImage, buildSrcSet } from "@/lib/imageOptimization";
 
 type Property = Database["public"]["Tables"]["properties"]["Row"];
 
@@ -18,9 +19,11 @@ interface PropertyCardProps {
   cityAvgPrice?: number;
   /** Optional: user's gross monthly income (for affordability indicator on rentals) */
   userIncome?: number;
+  /** When true, the card hints the browser to fetch the image with high priority (use only for above-the-fold cards). */
+  priority?: boolean;
 }
 
-const PropertyCard = ({ property, cityAvgPrice, userIncome }: PropertyCardProps) => {
+const PropertyCard = ({ property, cityAvgPrice, userIncome, priority = false }: PropertyCardProps) => {
   const { user } = useAuth();
   const { toggle, isFavorite, isLoading } = useToggleFavorite();
   const { data: feedLogos } = useFeedLogos();
@@ -101,14 +104,21 @@ const PropertyCard = ({ property, cityAvgPrice, userIncome }: PropertyCardProps)
       )}>
         <div className="relative aspect-[4/3] overflow-hidden">
           <img
-            src={property.images?.[0] || propertyPlaceholder}
+            src={property.images?.[0] ? optimizeImage(property.images[0], { width: 480, height: 360, quality: 72 }) : propertyPlaceholder}
+            srcSet={
+              property.images?.[0]
+                ? buildSrcSet(property.images[0], [320, 480, 640], 360, 72)
+                : undefined
+            }
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 400px"
             alt={property.title}
-            loading="lazy"
+            loading={priority ? "eager" : "lazy"}
+            fetchPriority={priority ? "high" : "auto"}
             decoding="async"
             width={400}
             height={300}
             className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-            onError={(e) => { e.currentTarget.src = propertyPlaceholder; }}
+            onError={(e) => { e.currentTarget.src = propertyPlaceholder; e.currentTarget.srcset = ""; }}
           />
           {/* Badges top-left */}
           <div className="absolute left-3 top-3 flex flex-wrap gap-1.5">

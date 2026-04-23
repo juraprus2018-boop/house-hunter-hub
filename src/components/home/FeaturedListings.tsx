@@ -71,8 +71,8 @@ const FeaturedListings = () => {
         </div>
 
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {displayProperties.map((property) => (
-            <PropertyCard key={property.id} property={property} />
+          {displayProperties.map((property, idx) => (
+            <PropertyCard key={property.id} property={property} priority={idx === 0} />
           ))}
         </div>
 
