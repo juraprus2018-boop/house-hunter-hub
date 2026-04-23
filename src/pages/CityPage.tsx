@@ -16,6 +16,7 @@ import CityMarketStats, { useCityMarketData } from "@/components/city/CityMarket
 import CityNeighborhoods from "@/components/city/CityNeighborhoods";
 import CityRentalTips from "@/components/city/CityRentalTips";
 import CityRealtors from "@/components/city/CityRealtors";
+import NewThisWeekSection from "@/components/city/NewThisWeekSection";
 import { useProperties, useFilterFacets } from "@/hooks/useProperties";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
