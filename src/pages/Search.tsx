@@ -20,6 +20,8 @@ import {
 } from "@/components/ui/sheet";
 import SearchFilters, { type SearchFilterValues } from "@/components/search/SearchFilters";
 import IncomeBanner from "@/components/search/IncomeBanner";
+import CommuteFilter, { type CommuteValue } from "@/components/search/CommuteFilter";
+import { useCommuteFilter } from "@/hooks/useCommuteFilter";
 import AdSlot from "@/components/ads/AdSlot";
 import { toast } from "@/hooks/use-toast";
 
@@ -38,6 +40,7 @@ const SearchPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [viewMode, setViewMode] = useState<"list" | "map">("list");
   const [shareCopied, setShareCopied] = useState(false);
+  const [commute, setCommute] = useState<CommuteValue | null>(null);
   const pageSize = 12;
 
   const [filters, setFilters] = useState<SearchFilterValues>({
@@ -145,7 +148,16 @@ const SearchPage = () => {
     maxPrice: effectiveMaxPrice,
     minBedrooms: filters.minBedrooms,
     minSurface: filters.minSurface,
-  }, viewMode === "map");
+  }, viewMode === "map" || !!commute);
+
+  // Apply commute filter to the appropriate dataset
+  const commuteSourceList: any[] = commute ? (mapProperties || []) : properties;
+  const { filtered: commuteFiltered, loading: commuteLoading, active: commuteActive, matchCount } = useCommuteFilter(
+    commuteSourceList,
+    commute,
+  );
+  const visibleListProperties = (commuteActive ? commuteFiltered : properties) as typeof properties;
+  const visibleMapProperties = (commuteActive ? commuteFiltered : (mapProperties || [])) as any[];
 
   const handleFilterChange = useCallback((newFilters: SearchFilterValues) => {
     setFilters(newFilters);
@@ -227,6 +239,9 @@ const SearchPage = () => {
                     </SheetHeader>
                     <div className="mt-6">
                       <SearchFilters filters={filters} onChange={handleFilterChange} onClear={clearFilters} facets={facets} />
+                      <div className="mt-6">
+                        <CommuteFilter value={commute} onChange={setCommute} />
+                      </div>
                     </div>
                   </SheetContent>
                 </Sheet>
@@ -291,6 +306,9 @@ const SearchPage = () => {
               <div className="sticky top-24 rounded-lg border bg-card p-6">
                 <h2 className="mb-4 font-display text-lg font-semibold">Filters</h2>
                 <SearchFilters filters={filters} onChange={handleFilterChange} onClear={clearFilters} facets={facets} />
+                <div className="mt-6">
+                  <CommuteFilter value={commute} onChange={setCommute} />
+                </div>
               </div>
             </aside>
 
@@ -302,6 +320,24 @@ const SearchPage = () => {
                 listingType={filters.listingType}
                 onClear={() => setFilters({ ...filters, grossIncome: undefined })}
               />
+              {commuteActive && (
+                <div className="mb-4 flex items-center justify-between gap-3 rounded-lg border border-primary/20 bg-primary/5 p-3 text-sm">
+                  <div>
+                    {commuteLoading ? (
+                      <span className="text-muted-foreground">Reistijden berekenen…</span>
+                    ) : (
+                      <>
+                        <strong>{matchCount ?? 0}</strong> woningen binnen{" "}
+                        <strong>{commute!.maxMinutes} min</strong> {commute!.mode === "driving" ? "auto" : "fiets"} van{" "}
+                        <strong>{commute!.address}</strong>
+                      </>
+                    )}
+                  </div>
+                  <Button size="sm" variant="ghost" onClick={() => setCommute(null)}>
+                    Wis
+                  </Button>
+                </div>
+              )}
               {isLoading ? (
                 <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
                   {Array.from({ length: 6 }).map((_, i) => (
@@ -319,11 +355,11 @@ const SearchPage = () => {
                     </div>
                   ))}
                 </div>
-              ) : properties && properties.length > 0 ? (
+              ) : visibleListProperties && visibleListProperties.length > 0 ? (
               viewMode === "list" ? (
                   <>
                     <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                      {properties.map((property) => (
+                      {visibleListProperties.map((property) => (
                         <PropertyCard
                           key={property.id}
                           property={property}
@@ -334,7 +370,7 @@ const SearchPage = () => {
                     {/* Infinite scroll trigger */}
                     <div ref={loadMoreRef} className="flex justify-center py-8">
                       {isFetchingNextPage && <Loader2 className="h-6 w-6 animate-spin text-primary" />}
-                      {!hasNextPage && properties.length > 12 && (
+                      {!hasNextPage && !commuteActive && properties.length > 12 && (
                         <p className="text-sm text-muted-foreground">Alle {totalCount} woningen geladen</p>
                       )}
                     </div>
@@ -346,10 +382,10 @@ const SearchPage = () => {
                         <Skeleton className="h-full w-full" />
                       </div>
                     ) : (
-                      <ExploreMap properties={(mapProperties || []) as any} />
+                      <ExploreMap properties={visibleMapProperties as any} />
                     )}
                     <p className="text-xs text-muted-foreground mt-2">
-                      {mapProperties?.length || 0} woningen met locatie op de kaart
+                      {visibleMapProperties.length} woningen met locatie op de kaart
                     </p>
                   </div>
                 )
