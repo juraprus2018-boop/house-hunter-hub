@@ -208,11 +208,7 @@ const BestOfCityPage = ({ variant }: BestOfCityPageProps) => {
     ];
   }, [variant, validCityName, properties, neighborhoods]);
 
-  if (!validCityName) {
-    return <Navigate to="/niet-gevonden" replace />;
-  }
-
-  const cityName = validCityName;
+  const cityName = validCityName ?? "";
   const Icon = config.icon;
   const canonical = `https://www.woonpeek.nl/${config.pathPrefix}/${citySlug}`;
 
@@ -240,6 +236,10 @@ const BestOfCityPage = ({ variant }: BestOfCityPageProps) => {
       itemListElement: items,
     };
   }, [variant, neighborhoods, properties, cityName, config]);
+
+  if (!validCityName) {
+    return <Navigate to="/niet-gevonden" replace />;
+  }
 
   return (
     <div className="flex min-h-screen flex-col">
