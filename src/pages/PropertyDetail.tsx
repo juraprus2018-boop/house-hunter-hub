@@ -870,9 +870,16 @@ const PropertyDetail = () => {
         {/* ── Mortgage Calculator for koop ── */}
         {property.listing_type === "koop" && (
           <section className="border-t py-12">
-            <div className="container grid gap-6 lg:grid-cols-2 lg:max-w-4xl">
+            <div className="container grid gap-6 lg:grid-cols-2 lg:max-w-5xl">
               <AffordabilityWidget price={property.price} listingType="koop" />
               <MortgageCalculator propertyPrice={property.price} />
+            </div>
+            <div className="container mt-6 lg:max-w-5xl">
+              <NibudBudgetBreakdown
+                monthlyHousingCost={Math.round((property.price * 0.045) / 12 + 250)}
+                listingType="koop"
+                city={property.city}
+              />
             </div>
           </section>
         )}
@@ -880,8 +887,13 @@ const PropertyDetail = () => {
         {/* ── Affordability Widget for huur ── */}
         {property.listing_type === "huur" && (
           <section className="border-t py-12">
-            <div className="container max-w-lg">
+            <div className="container grid gap-6 lg:grid-cols-2 lg:max-w-5xl">
               <AffordabilityWidget price={property.price} listingType="huur" />
+              <NibudBudgetBreakdown
+                monthlyHousingCost={property.price}
+                listingType="huur"
+                city={property.city}
+              />
             </div>
           </section>
         )}
