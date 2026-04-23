@@ -320,6 +320,24 @@ const SearchPage = () => {
                 listingType={filters.listingType}
                 onClear={() => setFilters({ ...filters, grossIncome: undefined })}
               />
+              {commuteActive && (
+                <div className="mb-4 flex items-center justify-between gap-3 rounded-lg border border-primary/20 bg-primary/5 p-3 text-sm">
+                  <div>
+                    {commuteLoading ? (
+                      <span className="text-muted-foreground">Reistijden berekenen…</span>
+                    ) : (
+                      <>
+                        <strong>{matchCount ?? 0}</strong> woningen binnen{" "}
+                        <strong>{commute!.maxMinutes} min</strong> {commute!.mode === "driving" ? "auto" : "fiets"} van{" "}
+                        <strong>{commute!.address}</strong>
+                      </>
+                    )}
+                  </div>
+                  <Button size="sm" variant="ghost" onClick={() => setCommute(null)}>
+                    Wis
+                  </Button>
+                </div>
+              )}
               {isLoading ? (
                 <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
                   {Array.from({ length: 6 }).map((_, i) => (
@@ -337,11 +355,11 @@ const SearchPage = () => {
                     </div>
                   ))}
                 </div>
-              ) : properties && properties.length > 0 ? (
+              ) : visibleListProperties && visibleListProperties.length > 0 ? (
               viewMode === "list" ? (
                   <>
                     <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                      {properties.map((property) => (
+                      {visibleListProperties.map((property) => (
                         <PropertyCard
                           key={property.id}
                           property={property}
@@ -352,7 +370,7 @@ const SearchPage = () => {
                     {/* Infinite scroll trigger */}
                     <div ref={loadMoreRef} className="flex justify-center py-8">
                       {isFetchingNextPage && <Loader2 className="h-6 w-6 animate-spin text-primary" />}
-                      {!hasNextPage && properties.length > 12 && (
+                      {!hasNextPage && !commuteActive && properties.length > 12 && (
                         <p className="text-sm text-muted-foreground">Alle {totalCount} woningen geladen</p>
                       )}
                     </div>
@@ -364,10 +382,10 @@ const SearchPage = () => {
                         <Skeleton className="h-full w-full" />
                       </div>
                     ) : (
-                      <ExploreMap properties={(mapProperties || []) as any} />
+                      <ExploreMap properties={visibleMapProperties as any} />
                     )}
                     <p className="text-xs text-muted-foreground mt-2">
-                      {mapProperties?.length || 0} woningen met locatie op de kaart
+                      {visibleMapProperties.length} woningen met locatie op de kaart
                     </p>
                   </div>
                 )
