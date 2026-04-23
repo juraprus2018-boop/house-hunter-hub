@@ -191,21 +191,8 @@ const CityPage = () => {
           ...(property.images?.length ? { image: property.images[0] } : {}),
         })),
       },
-      // FAQPage (Google-supported rich result)
-      {
-        "@context": "https://schema.org",
-        "@type": "FAQPage",
-        mainEntity: cityFaqItems.map((faq) => ({
-          "@type": "Question",
-          name: faq.question,
-          acceptedAnswer: {
-            "@type": "Answer",
-            text: faq.answer,
-          },
-        })),
-      },
     ],
-    [cityName, filteredCount, filteredProperties, pageDescription, canonical, cityFaqItems]
+    [cityName, filteredCount, filteredProperties, pageDescription, canonical]
   );
 
   // Redirect to 404 if city doesn't exist in our known list
