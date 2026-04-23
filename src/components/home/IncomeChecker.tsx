@@ -36,18 +36,18 @@ const IncomeChecker = () => {
     : null;
 
   return (
-    <section className="py-12 md:py-16 bg-gradient-to-br from-amber-soft/60 via-background to-terracotta-soft/40">
+    <section className="py-12 md:py-16">
       <div className="container">
-        <div className="mx-auto max-w-3xl rounded-2xl border bg-card p-6 md:p-8 shadow-md">
+        <div className="mx-auto max-w-3xl rounded-2xl border border-border bg-card p-6 md:p-8 shadow-md">
           <div className="flex items-start gap-4 mb-6">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-amber/20">
-              <Wallet className="h-6 w-6 text-amber" />
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-terracotta/15">
+              <Wallet className="h-6 w-6 text-terracotta" />
             </div>
             <div>
-              <h2 className="font-display text-2xl font-bold">
+              <h2 className="font-display text-2xl md:text-3xl font-bold">
                 Welke huur past bij jouw inkomen?
               </h2>
-              <p className="mt-1 text-sm text-muted-foreground">
+              <p className="mt-2 text-base text-muted-foreground">
                 Verhuurders eisen meestal een bruto maandinkomen van 3x de huur. Bereken direct wat je kunt huren.
               </p>
             </div>

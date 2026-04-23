@@ -51,14 +51,14 @@ const FeaturedListings = () => {
       <div className="container">
         <div className="mb-10 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <div className="mb-2 inline-flex items-center gap-1.5 rounded-full bg-terracotta/10 px-3 py-1 text-xs font-medium text-terracotta">
+            <div className="mb-3 inline-flex items-center gap-1.5 rounded-full bg-terracotta/10 px-3 py-1.5 text-sm font-medium text-terracotta">
               <Clock className="h-3.5 w-3.5" />
               Dagelijks bijgewerkt
             </div>
-            <h2 className="font-display text-3xl font-bold text-foreground md:text-4xl">
+            <h2 className="font-display text-3xl font-bold text-foreground md:text-4xl lg:text-5xl">
               Nieuw geplaatst vandaag
             </h2>
-            <p className="mt-2 text-muted-foreground">
+            <p className="mt-3 text-lg text-muted-foreground">
               De nieuwste woningen op ons platform. Wees er snel bij!
             </p>
           </div>

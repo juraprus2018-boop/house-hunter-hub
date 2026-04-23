@@ -49,34 +49,16 @@
     --warning: 38 92% 50%;
     --warning-foreground: 0 0% 100%;
 
-    /* Vibrant accent palette for visual variety */
-    --terracotta: 14 75% 58%;
+    /* Brand palette: just 3 colors.
+       1. primary (deep forest green) — buttons, headings, brand
+       2. terracotta (warm earth accent) — highlights, badges, CTAs
+       3. surface-cream (warm off-white) — alternating section backgrounds */
+    --terracotta: 16 70% 52%;
     --terracotta-foreground: 0 0% 100%;
-    --terracotta-soft: 18 85% 96%;
+    --terracotta-soft: 18 65% 95%;
 
-    --sky: 200 80% 52%;
-    --sky-foreground: 0 0% 100%;
-    --sky-soft: 200 70% 96%;
-
-    --amber: 38 92% 55%;
-    --amber-foreground: 30 50% 15%;
-    --amber-soft: 42 95% 95%;
-
-    --berry: 340 70% 55%;
-    --berry-foreground: 0 0% 100%;
-    --berry-soft: 340 70% 96%;
-
-    /* Soft section backgrounds */
-    --surface-cream: 38 50% 96%;
-    --surface-mint: 150 40% 95%;
-    --surface-sky: 200 50% 96%;
-    --surface-rose: 18 60% 96%;
-    --surface-lavender: 250 40% 96%;
-
-    /* Gradients */
-    --gradient-warm: linear-gradient(135deg, hsl(var(--surface-cream)) 0%, hsl(var(--surface-rose)) 100%);
-    --gradient-cool: linear-gradient(135deg, hsl(var(--surface-mint)) 0%, hsl(var(--surface-sky)) 100%);
-    --gradient-sunset: linear-gradient(135deg, hsl(var(--terracotta) / 0.08) 0%, hsl(var(--amber) / 0.12) 100%);
+    --surface-cream: 38 45% 96%;
+    --surface-cream-deep: 38 40% 92%;
 
     /* Shadows */
     --shadow-sm: 0 1px 2px 0 hsl(160 30% 8% / 0.05);
@@ -136,6 +118,13 @@
     --sidebar-accent-foreground: 150 15% 95%;
     --sidebar-border: 160 20% 18%;
     --sidebar-ring: 145 50% 40%;
+
+    --terracotta: 16 65% 55%;
+    --terracotta-foreground: 0 0% 100%;
+    --terracotta-soft: 16 30% 18%;
+
+    --surface-cream: 160 25% 9%;
+    --surface-cream-deep: 160 25% 12%;
   }
 }
 
@@ -150,6 +139,8 @@
     font-weight: 500;
     overflow-wrap: break-word;
     word-break: break-word;
+    font-size: 1.0625rem;
+    line-height: 1.65;
   }
 
   h1, h2, h3, h4, h5, h6 {
@@ -158,7 +149,7 @@
   }
 
   p {
-    @apply text-base leading-relaxed;
+    @apply text-[1.0625rem] leading-relaxed;
   }
 }
 

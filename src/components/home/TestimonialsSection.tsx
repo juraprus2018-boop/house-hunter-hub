@@ -6,13 +6,13 @@ const testimonials = [
     name: "Lisa van den Berg",
     city: "Amsterdam",
     rating: 5,
-    text: "Eindelijk een site waar ik écht als eerste nieuwe huurwoningen zie. Ik heb binnen twee weken een appartement gevonden via de dagelijkse alert.",
+    text: "Eindelijk een site waar ik echt als eerste nieuwe huurwoningen zie. Ik heb binnen twee weken een appartement gevonden via de dagelijkse alert.",
   },
   {
     name: "Mark Janssen",
     city: "Utrecht",
     rating: 5,
-    text: "Heel handig dat al het aanbod uit verschillende bronnen op één plek staat. Bespaart me uren scrollen op tien verschillende sites.",
+    text: "Heel handig dat al het aanbod uit verschillende bronnen op een plek staat. Bespaart me uren scrollen op tien verschillende sites.",
   },
   {
     name: "Fatima El Amrani",
@@ -22,41 +22,35 @@ const testimonials = [
   },
 ];
 
-const cardStyles = [
-  "bg-amber-soft/50 border-amber/20",
-  "bg-sky-soft/60 border-sky/20",
-  "bg-terracotta-soft/40 border-terracotta/20",
-];
-
 const TestimonialsSection = () => {
   return (
-    <section className="bg-gradient-to-b from-background to-surface-cream/50 py-16">
+    <section className="bg-surface-cream py-16 md:py-20">
       <div className="container">
         <div className="mx-auto max-w-2xl text-center">
-          <h2 className="text-3xl font-bold tracking-tight md:text-4xl">
+          <h2 className="font-display text-3xl font-bold tracking-tight md:text-4xl lg:text-5xl">
             Wat zoekers over WoonPeek zeggen
           </h2>
-          <p className="mt-3 text-muted-foreground">
+          <p className="mt-4 text-lg text-muted-foreground">
             Ervaringen van mensen die via WoonPeek hun nieuwe woning ontdekten.
           </p>
         </div>
 
         <div className="mt-10 grid gap-6 md:grid-cols-3">
-          {testimonials.map((t, i) => (
-            <Card key={t.name} className={`${cardStyles[i % cardStyles.length]} transition-transform hover:-translate-y-1`}>
-              <CardContent className="space-y-4 p-6">
-                <Quote className="h-8 w-8 text-foreground/20" />
-                <p className="text-sm leading-relaxed text-foreground/90">
+          {testimonials.map((t) => (
+            <Card key={t.name} className="border-border bg-background transition-transform hover:-translate-y-1">
+              <CardContent className="space-y-4 p-7">
+                <Quote className="h-9 w-9 text-terracotta/40" />
+                <p className="text-base leading-relaxed text-foreground/90">
                   "{t.text}"
                 </p>
                 <div className="flex items-center justify-between border-t pt-4">
                   <div>
-                    <p className="text-sm font-semibold">{t.name}</p>
-                    <p className="text-xs text-muted-foreground">{t.city}</p>
+                    <p className="text-base font-semibold">{t.name}</p>
+                    <p className="text-sm text-muted-foreground">{t.city}</p>
                   </div>
                   <div className="flex">
                     {Array.from({ length: t.rating }).map((_, i) => (
-                      <Star key={i} className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                      <Star key={i} className="h-4 w-4 fill-terracotta text-terracotta" />
                     ))}
                   </div>
                 </div>
