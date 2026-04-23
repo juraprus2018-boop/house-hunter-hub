@@ -151,13 +151,13 @@ const SearchPage = () => {
   }, viewMode === "map" || !!commute);
 
   // Apply commute filter to the appropriate dataset
-  const commuteSourceList = commute ? (mapProperties || []) : properties;
+  const commuteSourceList: any[] = commute ? (mapProperties || []) : properties;
   const { filtered: commuteFiltered, loading: commuteLoading, active: commuteActive, matchCount } = useCommuteFilter(
-    commuteSourceList as any,
+    commuteSourceList,
     commute,
   );
-  const visibleListProperties = commuteActive ? commuteFiltered : properties;
-  const visibleMapProperties = commuteActive ? commuteFiltered : (mapProperties || []);
+  const visibleListProperties = (commuteActive ? commuteFiltered : properties) as typeof properties;
+  const visibleMapProperties = (commuteActive ? commuteFiltered : (mapProperties || [])) as any[];
 
   const handleFilterChange = useCallback((newFilters: SearchFilterValues) => {
     setFilters(newFilters);
