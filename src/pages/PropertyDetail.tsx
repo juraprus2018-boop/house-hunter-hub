@@ -558,6 +558,15 @@ const PropertyDetail = () => {
                 )}
               </div>
 
+              {/* ── Competition meter (urgency / social proof) ── */}
+              <CompetitionMeter
+                propertyId={property.id}
+                viewsCount={property.views_count || 0}
+                createdAt={property.created_at}
+                listingType={property.listing_type as "huur" | "koop"}
+                city={property.city}
+              />
+
               {/* ── Description ── */}
               <section>
                 <h2 className="font-display text-xl font-semibold mb-3">
