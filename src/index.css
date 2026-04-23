@@ -121,6 +121,8 @@
     font-weight: 500;
     overflow-wrap: break-word;
     word-break: break-word;
+    font-size: 1.0625rem;
+    line-height: 1.65;
   }
 
   h1, h2, h3, h4, h5, h6 {
@@ -129,7 +131,7 @@
   }
 
   p {
-    @apply text-base leading-relaxed;
+    @apply text-[1.0625rem] leading-relaxed;
   }
 }
 
