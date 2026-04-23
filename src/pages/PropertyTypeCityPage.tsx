@@ -13,9 +13,10 @@ import { useProperties, useFilterFacets } from "@/hooks/useProperties";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { ArrowRight, ChevronRight, MapPin, Search, SlidersHorizontal } from "lucide-react";
+import { ArrowRight, MapPin, Search, SlidersHorizontal } from "lucide-react";
 import { cityPath, citySlugToName } from "@/lib/cities";
 import type { Database } from "@/integrations/supabase/types";
+import FAQSchema from "@/components/seo/FAQSchema";
 
 type PropertyType = Database["public"]["Enums"]["property_type"];
 
@@ -160,17 +161,8 @@ const PropertyTypeCityPage = ({ propertyType }: PropertyTypeCityPageProps) => {
           ...(p.images?.length ? { image: p.images[0] } : {}),
         })),
       },
-      {
-        "@context": "https://schema.org",
-        "@type": "FAQPage",
-        mainEntity: faqItems.map((faq) => ({
-          "@type": "Question",
-          name: faq.question,
-          acceptedAnswer: { "@type": "Answer", text: faq.answer },
-        })),
-      },
     ],
-    [label.plural, locationLabel, pageDescription, canonical, totalCount, properties, faqItems]
+    [label.plural, locationLabel, pageDescription, canonical, totalCount, properties]
   );
 
   return (
@@ -451,24 +443,12 @@ const PropertyTypeCityPage = ({ propertyType }: PropertyTypeCityPageProps) => {
 
         {/* FAQ */}
         {cityName && (
-          <section className="border-t py-12">
+          <section className="border-t">
             <div className="container">
-              <h2 className="font-display text-2xl font-bold text-foreground mb-6">
-                Veelgestelde vragen over {label.plural.toLowerCase()} in {cityName}
-              </h2>
-              <div className="space-y-4">
-                {faqItems.map((faq, i) => (
-                  <details key={i} className="group rounded-xl border bg-card">
-                    <summary className="cursor-pointer px-6 py-4 text-base font-semibold text-foreground list-none flex items-center justify-between gap-4">
-                      {faq.question}
-                      <ChevronRight className="h-4 w-4 shrink-0 transition-transform group-open:rotate-90" />
-                    </summary>
-                    <div className="px-6 pb-5 text-base leading-relaxed text-muted-foreground">
-                      {faq.answer}
-                    </div>
-                  </details>
-                ))}
-              </div>
+              <FAQSchema
+                items={faqItems}
+                title={`Veelgestelde vragen over ${label.plural.toLowerCase()} in ${cityName}`}
+              />
             </div>
           </section>
         )}

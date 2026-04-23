@@ -472,28 +472,6 @@ const CityPage = () => {
         {/* Andere steden */}
         <RelatedCities currentCity={cityName} />
 
-        {/* FAQ Section */}
-        <section className="border-t py-12">
-          <div className="container">
-            <h2 className="font-display text-2xl font-bold text-foreground mb-6">
-              Veelgestelde vragen over woningen in {cityName}
-            </h2>
-            <div className="space-y-4">
-              {cityFaqItems.map((faq, i) => (
-                <details key={i} className="group rounded-xl border bg-card">
-                  <summary className="cursor-pointer px-6 py-4 text-base font-semibold text-foreground list-none flex items-center justify-between gap-4">
-                    {faq.question}
-                    <ChevronRight className="h-4 w-4 shrink-0 transition-transform group-open:rotate-90" />
-                  </summary>
-                  <div className="px-6 pb-5 text-base leading-relaxed text-muted-foreground">
-                    {faq.answer}
-                  </div>
-                </details>
-              ))}
-            </div>
-          </div>
-        </section>
-
         {/* Internal links hub */}
         <section className="border-t py-12">
           <div className="container">
