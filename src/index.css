@@ -49,6 +49,17 @@
     --warning: 38 92% 50%;
     --warning-foreground: 0 0% 100%;
 
+    /* Brand palette: just 3 colors.
+       1. primary (deep forest green) — buttons, headings, brand
+       2. terracotta (warm earth accent) — highlights, badges, CTAs
+       3. surface-cream (warm off-white) — alternating section backgrounds */
+    --terracotta: 16 70% 52%;
+    --terracotta-foreground: 0 0% 100%;
+    --terracotta-soft: 18 65% 95%;
+
+    --surface-cream: 38 45% 96%;
+    --surface-cream-deep: 38 40% 92%;
+
     /* Shadows */
     --shadow-sm: 0 1px 2px 0 hsl(160 30% 8% / 0.05);
     --shadow-md: 0 4px 6px -1px hsl(160 30% 8% / 0.1), 0 2px 4px -2px hsl(160 30% 8% / 0.1);
@@ -107,6 +118,13 @@
     --sidebar-accent-foreground: 150 15% 95%;
     --sidebar-border: 160 20% 18%;
     --sidebar-ring: 145 50% 40%;
+
+    --terracotta: 16 65% 55%;
+    --terracotta-foreground: 0 0% 100%;
+    --terracotta-soft: 16 30% 18%;
+
+    --surface-cream: 160 25% 9%;
+    --surface-cream-deep: 160 25% 12%;
   }
 }
 
