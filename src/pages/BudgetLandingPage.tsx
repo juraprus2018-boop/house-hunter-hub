@@ -13,6 +13,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { isValidDutchCity, getValidCityName } from "@/lib/dutchCities";
 import { citySlugToName } from "@/lib/cities";
 import { ArrowRight } from "lucide-react";
+import FAQSchema, { type FAQItem } from "@/components/seo/FAQSchema";
 
 interface BudgetLandingPageProps {
   listingType: "huur" | "koop";
@@ -72,6 +73,58 @@ const BudgetLandingPage = ({ listingType }: BudgetLandingPageProps) => {
   const tip = stats?.count && stats.avgSurface > 0
     ? `In ${cityName} ${action} onder ${formattedBudget} betekent gemiddeld ${stats.avgSurface}m² woonruimte. Het aanbod varieert van ${stats.minSurface}m² tot ${stats.maxSurface}m², dus er is keuze voor elke situatie.`
     : `Geen actief aanbod onder ${formattedBudget} in ${cityName} op dit moment. Maak een alert aan zodat je direct een mail krijgt zodra een passende woning beschikbaar komt.`;
+
+  // FAQ items: tailored per listing type and budget bracket so each landing page
+  // gets unique, helpful content (and a fair shot at a Google rich snippet).
+  const faqItems: FAQItem[] = listingType === "huur"
+    ? [
+        {
+          question: `Hoeveel huurwoningen zijn er onder ${formattedBudget} in ${cityName}?`,
+          answer: stats?.count
+            ? `Op dit moment zijn er ${stats.count} huurwoningen onder ${formattedBudget} per maand in ${cityName}. Het aanbod wordt dagelijks bijgewerkt vanuit meerdere bronnen.`
+            : `Er is op dit moment geen actief aanbod onder ${formattedBudget} per maand in ${cityName}. Stel een gratis alert in om bericht te krijgen zodra er een woning beschikbaar komt.`,
+        },
+        {
+          question: `Welk type woning kan ik huren voor ${formattedBudget} in ${cityName}?`,
+          answer: `Voor een budget van ${formattedBudget} per maand in ${cityName} bestaat het aanbod meestal uit studio's, appartementen en kamers.${stats?.avgSurface ? ` Gemiddeld krijg je ${stats.avgSurface} m² woonruimte voor dit budget.` : ""}`,
+        },
+        {
+          question: "Welk inkomen heb ik nodig voor deze woningen?",
+          answer: `Verhuurders hanteren meestal de 3x huur regel: je bruto maandinkomen moet minimaal driemaal de kale huurprijs zijn. Voor een huur van ${formattedBudget} betekent dat een bruto inkomen van ongeveer €${(budgetNum * 3).toLocaleString("nl-NL")} per maand.`,
+        },
+        {
+          question: `Hoe vind ik snel een huurwoning onder ${formattedBudget} in ${cityName}?`,
+          answer: `Het aanbod van betaalbare huurwoningen in ${cityName} is competitief: woningen worden vaak binnen enkele dagen verhuurd. Stel een gratis dagelijkse alert in op WoonPeek zodat je direct een e-mail krijgt zodra een passende woning online komt.`,
+        },
+        {
+          question: "Hoe vaak wordt het aanbod bijgewerkt?",
+          answer: "WoonPeek verzamelt dagelijks het nieuwste woningaanbod uit tientallen bronnen. Nieuw aanbod is meestal binnen enkele uren na publicatie zichtbaar op de site.",
+        },
+      ]
+    : [
+        {
+          question: `Hoeveel koopwoningen zijn er onder ${formattedBudget} in ${cityName}?`,
+          answer: stats?.count
+            ? `Op dit moment zijn er ${stats.count} koopwoningen onder ${formattedBudget} in ${cityName}. Het aanbod wordt dagelijks bijgewerkt.`
+            : `Er is op dit moment geen actief koopaanbod onder ${formattedBudget} in ${cityName}. Stel een gratis alert in om direct bericht te krijgen wanneer een passende woning beschikbaar komt.`,
+        },
+        {
+          question: `Welke bijkomende kosten heb ik bij een koopwoning van ${formattedBudget}?`,
+          answer: `Bij een koopwoning van ${formattedBudget} houd je rekening met circa 4% tot 6% bijkomende kosten: notaris, taxatie, hypotheekadvies en eventueel overdrachtsbelasting (2% voor woningen, 0% bij starters tot 35 jaar onder de NHG-grens).`,
+        },
+        {
+          question: `Welke hypotheek heb ik nodig voor ${formattedBudget}?`,
+          answer: `De maximale hypotheek hangt af van je bruto jaarinkomen, eventuele schulden en de actuele rente. Voor een woning van ${formattedBudget} ligt het benodigde bruto jaarinkomen vaak rond €${Math.round(budgetNum / 5.5 / 1000) * 1000}, afhankelijk van de looptijd en NHG.`,
+        },
+        {
+          question: `Welk type koopwoning vind ik voor ${formattedBudget} in ${cityName}?`,
+          answer: `Voor ${formattedBudget} bestaat het koopaanbod in ${cityName} meestal uit appartementen, hoekwoningen en kleinere tussenwoningen.${stats?.avgSurface ? ` Gemiddeld is dat ${stats.avgSurface} m² woonoppervlak.` : ""}`,
+        },
+        {
+          question: "Worden bezichtigingen via WoonPeek geregeld?",
+          answer: "Nee, WoonPeek is een aggregator: we tonen het aanbod en verwijzen direct door naar de aanbieder of makelaar. Bezichtigingen plan je rechtstreeks via de oorspronkelijke aanbieder.",
+        },
+      ];
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -151,6 +204,16 @@ const BudgetLandingPage = ({ listingType }: BudgetLandingPageProps) => {
                   </Button>
                 ))}
             </div>
+          </div>
+        </section>
+
+        {/* FAQ with FAQPage JSON-LD for rich snippet eligibility */}
+        <section className="border-t py-8">
+          <div className="container">
+            <FAQSchema
+              items={faqItems}
+              title={`Veelgestelde vragen over ${listingType === "huur" ? "huurwoningen" : "koopwoningen"} onder ${formattedBudget} in ${cityName}`}
+            />
           </div>
         </section>
       </main>

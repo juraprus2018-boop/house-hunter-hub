@@ -23,6 +23,7 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTr
 import { ArrowRight, ChevronRight, Search, SlidersHorizontal } from "lucide-react";
 import { cityPath, citySlugToName } from "@/lib/cities";
 import AdSlot from "@/components/ads/AdSlot";
+import FAQSchema, { type FAQItem } from "@/components/seo/FAQSchema";
 
 const EMPTY_FILTERS: SearchFilterValues = {
   city: "",
@@ -190,21 +191,8 @@ const CityPage = () => {
           ...(property.images?.length ? { image: property.images[0] } : {}),
         })),
       },
-      // FAQPage (Google-supported rich result)
-      {
-        "@context": "https://schema.org",
-        "@type": "FAQPage",
-        mainEntity: cityFaqItems.map((faq) => ({
-          "@type": "Question",
-          name: faq.question,
-          acceptedAnswer: {
-            "@type": "Answer",
-            text: faq.answer,
-          },
-        })),
-      },
     ],
-    [cityName, filteredCount, filteredProperties, pageDescription, canonical, cityFaqItems]
+    [cityName, filteredCount, filteredProperties, pageDescription, canonical]
   );
 
   // Redirect to 404 if city doesn't exist in our known list
@@ -616,6 +604,16 @@ const CityPage = () => {
                 voor actuele huurprijzen in {cityName} en andere steden.
               </p>
             </div>
+          </div>
+        </section>
+
+        {/* FAQ with FAQPage JSON-LD (replaces the previously hidden-only schema) */}
+        <section className="border-t py-8">
+          <div className="container">
+            <FAQSchema
+              items={cityFaqItems}
+              title={`Veelgestelde vragen over woningen in ${cityName}`}
+            />
           </div>
         </section>
       </main>

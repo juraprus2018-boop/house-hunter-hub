@@ -17,6 +17,7 @@ import PropertyCard from "@/components/properties/PropertyCard";
 import PriceAnalysis from "@/components/properties/PriceAnalysis";
 import NearbyAmenities from "@/components/properties/NearbyAmenities";
 import PropertyComments from "@/components/properties/PropertyComments";
+import CompetitionMeter from "@/components/properties/CompetitionMeter";
 import {
   Heart,
   Share2,
@@ -555,6 +556,15 @@ const PropertyDetail = () => {
                   </Popover>
                 )}
               </div>
+
+              {/* ── Competition meter (urgency / social proof) ── */}
+              <CompetitionMeter
+                propertyId={property.id}
+                viewsCount={property.views_count || 0}
+                createdAt={property.created_at}
+                listingType={property.listing_type as "huur" | "koop"}
+                city={property.city}
+              />
 
               {/* ── Description ── */}
               <section>
