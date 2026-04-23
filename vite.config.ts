@@ -29,21 +29,14 @@ export default defineConfig(({ mode }) => ({
       output: {
         manualChunks: (id) => {
           if (!id.includes("node_modules")) return undefined;
-          // Heavy libs that should NEVER load on first paint
-          if (id.includes("leaflet") || id.includes("react-leaflet")) return "vendor-leaflet";
-          if (id.includes("recharts") || id.includes("d3-")) return "vendor-charts";
-          if (id.includes("framer-motion")) return "vendor-motion";
-          if (id.includes("@tanstack")) return "vendor-query";
-          if (id.includes("@radix-ui")) return "vendor-radix";
-          if (id.includes("react-router")) return "vendor-router";
-          if (
-            id.includes("/react/") ||
-            id.includes("/react-dom/") ||
-            id.includes("/scheduler/")
-          )
-            return "vendor-react";
+          // Only split libs that do NOT depend on React at module-init time.
+          // Splitting React-dependent libs (radix, router, tanstack, framer-motion, recharts)
+          // into separate chunks can cause `createContext` errors when those chunks
+          // evaluate before the React chunk is ready.
+          if (id.includes("leaflet")) return "vendor-leaflet";
           if (id.includes("@supabase")) return "vendor-supabase";
-          if (id.includes("lucide-react")) return "vendor-icons";
+          // Everything else (react, react-dom, radix, router, query, motion, charts, icons)
+          // stays in the default vendor chunk so module init order is guaranteed.
           return "vendor";
         },
       },
