@@ -500,6 +500,15 @@ const CityPage = () => {
               <Link to={`/nieuw-aanbod/${citySlug}`} className="rounded-lg border bg-card px-4 py-3 text-base font-medium text-foreground transition-shadow hover:shadow-md hover:text-primary">
                 Nieuw aanbod vandaag in {cityName}
               </Link>
+              <Link to={`/goedkoopste-huurwoningen/${citySlug}`} className="rounded-lg border bg-card px-4 py-3 text-base font-medium text-foreground transition-shadow hover:shadow-md hover:text-primary">
+                Top 10 goedkoopste huurwoningen in {cityName}
+              </Link>
+              <Link to={`/grootste-huurwoningen/${citySlug}`} className="rounded-lg border bg-card px-4 py-3 text-base font-medium text-foreground transition-shadow hover:shadow-md hover:text-primary">
+                Top 10 grootste huurwoningen in {cityName}
+              </Link>
+              <Link to={`/beste-buurten/${citySlug}`} className="rounded-lg border bg-card px-4 py-3 text-base font-medium text-foreground transition-shadow hover:shadow-md hover:text-primary">
+                Beste buurten van {cityName}
+              </Link>
             </div>
 
             {/* By price */}
