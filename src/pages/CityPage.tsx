@@ -23,6 +23,7 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTr
 import { ArrowRight, ChevronRight, Search, SlidersHorizontal } from "lucide-react";
 import { cityPath, citySlugToName } from "@/lib/cities";
 import AdSlot from "@/components/ads/AdSlot";
+import FAQSchema, { type FAQItem } from "@/components/seo/FAQSchema";
 
 const EMPTY_FILTERS: SearchFilterValues = {
   city: "",
