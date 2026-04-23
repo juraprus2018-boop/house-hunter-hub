@@ -6,6 +6,10 @@
  */
 
 const SUPABASE_HOST = "uszlfqgxjvceugrpavde.supabase.co";
+const PROJECT_ID = import.meta.env.VITE_SUPABASE_PROJECT_ID;
+const IMAGE_PROXY_BASE = PROJECT_ID
+  ? `https://${PROJECT_ID}.supabase.co/functions/v1/image-proxy`
+  : "";
 
 export interface ImgOpts {
   width: number;
@@ -45,19 +49,13 @@ export const optimizeImage = (src: string | undefined | null, opts: ImgOpts): st
       return `${url.origin}${renderPath}?${params.toString()}`;
     }
 
-    // External images: route through weserv.nl (free, no auth, returns WebP)
-    const params = new URLSearchParams({
-      url: src.replace(/^https?:\/\//, ""),
-      w: String(width),
-      q: String(quality),
-      // weserv.nl no longer supports saving to AVIF (returns 400). Force WebP for
-      // every external image; browsers that prefer AVIF still get a small, modern
-      // WebP which is far better than the original JPG.
-      output: "webp",
-      fit: "cover",
-    });
-    if (height) params.set("h", String(height));
-    return `https://images.weserv.nl/?${params.toString()}`;
+    // External images: proxy through our own backend endpoint so third-party IP bans
+    // cannot break property cards in preview or production.
+    if (IMAGE_PROXY_BASE) {
+      return `${IMAGE_PROXY_BASE}?src=${encodeURIComponent(src)}`;
+    }
+
+    return src;
   } catch {
     return src;
   }
