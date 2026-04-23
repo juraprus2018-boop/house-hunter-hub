@@ -17,6 +17,8 @@ import PropertyCard from "@/components/properties/PropertyCard";
 import PriceAnalysis from "@/components/properties/PriceAnalysis";
 import NearbyAmenities from "@/components/properties/NearbyAmenities";
 import PropertyComments from "@/components/properties/PropertyComments";
+import CompetitionMeter from "@/components/properties/CompetitionMeter";
+import FAQSchema, { type FAQItem } from "@/components/seo/FAQSchema";
 import {
   Heart,
   Share2,
