@@ -143,6 +143,16 @@ function buildCitiesSitemap(
     <priority>0.6</priority>
   </url>
 `;
+    // Best-of listicle pages per city
+    for (const slug of ["goedkoopste-huurwoningen", "grootste-huurwoningen", "beste-buurten"]) {
+      xml += `  <url>
+    <loc>${SITE_URL}/${slug}/${citySlug}</loc>
+    <lastmod>${date}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+`;
+    }
     // Budget landingspagina's per stad (huur en koop)
     for (const budget of [750, 1000, 1250, 1500, 2000, 2500]) {
       xml += `  <url>
