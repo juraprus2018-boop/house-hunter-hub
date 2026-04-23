@@ -10,10 +10,11 @@ import RelatedCities from "@/components/city/RelatedCities";
 import { useProperties, useNearbyProperties } from "@/hooks/useProperties";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowRight, ChevronRight, MapPin, Search } from "lucide-react";
+import { ArrowRight, MapPin, Search } from "lucide-react";
 import { cityPath, citySlugToName } from "@/lib/cities";
 import { isValidDutchCity, getValidCityName } from "@/lib/dutchCities";
 import type { Database } from "@/integrations/supabase/types";
+import FAQSchema from "@/components/seo/FAQSchema";
 
 type ListingType = Database["public"]["Enums"]["listing_type"];
 
@@ -164,17 +165,8 @@ const ListingTypePage = ({ listingType }: ListingTypePageProps) => {
           ...(p.images?.length ? { image: p.images[0] } : {}),
         })),
       },
-      {
-        "@context": "https://schema.org",
-        "@type": "FAQPage",
-        mainEntity: faqItems.map((faq) => ({
-          "@type": "Question",
-          name: faq.question,
-          acceptedAnswer: { "@type": "Answer", text: faq.answer },
-        })),
-      },
     ],
-    [label.plural, locationLabel, pageDesc, canonical, totalCount, properties, faqItems]
+    [label.plural, locationLabel, pageDesc, canonical, totalCount, properties]
   );
 
   // Redirect invalid cities after all hooks
@@ -486,24 +478,12 @@ const ListingTypePage = ({ listingType }: ListingTypePageProps) => {
         )}
 
         {/* FAQ */}
-        <section className="border-t py-12">
+        <section className="border-t">
           <div className="container">
-            <h2 className="font-display text-2xl font-bold text-foreground mb-6">
-              Veelgestelde vragen over {label.plural.toLowerCase()} in {locationLabel}
-            </h2>
-            <div className="space-y-4">
-              {faqItems.map((faq, i) => (
-                <details key={i} className="group rounded-xl border bg-card">
-                  <summary className="cursor-pointer px-6 py-4 text-base font-semibold text-foreground list-none flex items-center justify-between gap-4">
-                    {faq.question}
-                    <ChevronRight className="h-4 w-4 shrink-0 transition-transform group-open:rotate-90" />
-                  </summary>
-                  <div className="px-6 pb-5 text-base leading-relaxed text-muted-foreground">
-                    {faq.answer}
-                  </div>
-                </details>
-              ))}
-            </div>
+            <FAQSchema
+              items={faqItems}
+              title={`Veelgestelde vragen over ${label.plural.toLowerCase()} in ${locationLabel}`}
+            />
           </div>
         </section>
 

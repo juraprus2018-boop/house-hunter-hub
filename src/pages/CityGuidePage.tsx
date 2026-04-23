@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { getValidCityName } from "@/lib/dutchCities";
 import { ArrowRight, MapPin, Building2, Train, Car, GraduationCap, Home, Map, Lightbulb, FileText } from "lucide-react";
+import FAQSchema, { type FAQItem } from "@/components/seo/FAQSchema";
 
 interface CityGuide {
   id: string;
@@ -93,6 +94,29 @@ const CityGuidePage = () => {
 
   const title = guide?.meta_title || `Verhuizen naar ${validCity}: Complete gids 2025 | WoonPeek`;
   const description = guide?.meta_description || `Alles over verhuizen naar ${validCity}: inschrijven gemeente, parkeervergunning, scholen, OV en woningmarkt. Praktische gids voor nieuwe inwoners.`;
+
+  const faqItems: FAQItem[] = [
+    {
+      question: `Hoe schrijf ik me in bij de gemeente ${validCity}?`,
+      answer: `Maak binnen 5 dagen na verhuizing een afspraak bij gemeente ${validCity} voor inschrijving in de Basisregistratie Personen (BRP). Neem een geldig identiteitsbewijs en je huurcontract of koopakte mee. Inschrijving is gratis en verplicht.`,
+    },
+    {
+      question: `Heb ik een parkeervergunning nodig in ${validCity}?`,
+      answer: `In veel wijken van ${validCity} geldt betaald parkeren of een vergunningsysteem. Vraag direct na inschrijving een bewonersvergunning aan bij de gemeente. De wachttijd en prijs verschillen per wijk.`,
+    },
+    {
+      question: `Wat is een goede buurt om in te wonen in ${validCity}?`,
+      answer: `${validCity} heeft diverse buurten met eigen karakter. Bekijk onze stadspagina voor wijkprofielen, gemiddelde huurprijzen en reviews van bewoners. Combineer dit met je voorkeur voor rust, voorzieningen en bereikbaarheid.`,
+    },
+    {
+      question: `Hoe vind ik een woning in ${validCity}?`,
+      answer: `WoonPeek bundelt dagelijks nieuw aanbod uit tientallen bronnen voor ${validCity}. Stel een gratis dagelijkse alert in zodat je direct bericht krijgt zodra een passende woning online komt.`,
+    },
+    {
+      question: `Welke scholen zijn er in ${validCity}?`,
+      answer: `${validCity} heeft basisscholen, middelbare scholen en in veel gevallen ook MBO/HBO opleidingen. Schrijf je kind tijdig in, want populaire scholen hanteren wachtlijsten of postcodebeleid.`,
+    },
+  ];
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -274,6 +298,15 @@ const CityGuidePage = () => {
                 </div>
               </CardContent>
             </Card>
+          </div>
+        </section>
+
+        <section className="border-t">
+          <div className="container">
+            <FAQSchema
+              items={faqItems}
+              title={`Veelgestelde vragen over verhuizen naar ${validCity}`}
+            />
           </div>
         </section>
       </main>

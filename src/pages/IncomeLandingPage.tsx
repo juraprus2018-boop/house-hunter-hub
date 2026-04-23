@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { getValidCityName } from "@/lib/dutchCities";
 import { ArrowRight, Wallet, CheckCircle2, Info } from "lucide-react";
+import FAQSchema, { type FAQItem } from "@/components/seo/FAQSchema";
 
 const VALID_INCOMES = [2000, 2500, 3000, 3500, 4000, 4500, 5000, 6000];
 
@@ -62,55 +63,30 @@ const IncomeLandingPage = () => {
     ? `Op basis van het huidige aanbod in ${cityName} krijg je gemiddeld ${stats.avgSurface}m² woonruimte voor maximaal ${formattedMaxRent}/mnd. De goedkoopste huurwoning binnen jouw inkomensgrens start vanaf €${stats.minPrice.toLocaleString("nl-NL")} per maand.`
     : `Op dit moment is er geen actief aanbod in ${cityName} dat aansluit bij ${formattedIncome} bruto inkomen. Maak een gratis alert aan om direct bericht te krijgen wanneer een passende woning beschikbaar komt.`;
 
-  // FAQ schema (mirrors the visible accordion below so Google can verify it)
-  const faqJsonLd = {
-    "@context": "https://schema.org",
-    "@type": "FAQPage",
-    mainEntity: [
-      {
-        "@type": "Question",
-        name: "Wat is de 3x huur regel?",
-        acceptedAnswer: {
-          "@type": "Answer",
-          text: `Verhuurders eisen meestal dat je bruto maandinkomen minimaal drie keer de kale huurprijs is. Bij ${formattedIncome} bruto kom je dus in aanmerking voor woningen tot ${formattedMaxRent} per maand.`,
-        },
-      },
-      {
-        "@type": "Question",
-        name: "Telt vakantiegeld of bonus mee?",
-        acceptedAnswer: {
-          "@type": "Answer",
-          text: "Ja, vakantiegeld (8%) en een vaste 13e maand mogen meestal worden meegerekend bij het bepalen van je bruto jaarinkomen. Deel dit door 12 voor je effectieve maandinkomen.",
-        },
-      },
-      {
-        "@type": "Question",
-        name: "Wat als ik samen huur?",
-        acceptedAnswer: {
-          "@type": "Answer",
-          text: "Bij een gezamenlijke huurovereenkomst tellen beide inkomens mee. Het tweede inkomen wordt door veel verhuurders voor 100% meegerekend, maar dit verschilt per partij.",
-        },
-      },
-      {
-        "@type": "Question",
-        name: `Hoeveel huurwoningen zijn er in ${cityName} bij een inkomen van ${formattedIncome}?`,
-        acceptedAnswer: {
-          "@type": "Answer",
-          text: stats?.count
-            ? `Op dit moment zijn er ${stats.count} huurwoningen in ${cityName} die binnen de 3x huur regel passen bij een bruto inkomen van ${formattedIncome}. Het aanbod wordt dagelijks bijgewerkt.`
-            : `Er is op dit moment geen actief aanbod in ${cityName} dat past bij ${formattedIncome} bruto inkomen. Stel een gratis alert in om direct bericht te krijgen.`,
-        },
-      },
-      {
-        "@type": "Question",
-        name: "Wat is mijn maximale huur bij dit inkomen?",
-        acceptedAnswer: {
-          "@type": "Answer",
-          text: `Op basis van de 3x huur regel kun je bij een bruto maandinkomen van ${formattedIncome} maximaal ${formattedMaxRent} kale huur per maand betalen. Servicekosten komen daar vaak nog bij.`,
-        },
-      },
-    ],
-  };
+  const faqItems: FAQItem[] = [
+    {
+      question: "Wat is de 3x huur regel?",
+      answer: `Verhuurders eisen meestal dat je bruto maandinkomen minimaal drie keer de kale huurprijs is. Bij ${formattedIncome} bruto kom je dus in aanmerking voor woningen tot ${formattedMaxRent} per maand.`,
+    },
+    {
+      question: "Telt vakantiegeld of bonus mee?",
+      answer: "Ja, vakantiegeld (8%) en een vaste 13e maand mogen meestal worden meegerekend bij het bepalen van je bruto jaarinkomen. Deel dit door 12 voor je effectieve maandinkomen.",
+    },
+    {
+      question: "Wat als ik samen huur?",
+      answer: "Bij een gezamenlijke huurovereenkomst tellen beide inkomens mee. Het tweede inkomen wordt door veel verhuurders voor 100% meegerekend, maar dit verschilt per partij.",
+    },
+    {
+      question: `Hoeveel huurwoningen zijn er in ${cityName} bij een inkomen van ${formattedIncome}?`,
+      answer: stats?.count
+        ? `Op dit moment zijn er ${stats.count} huurwoningen in ${cityName} die binnen de 3x huur regel passen bij een bruto inkomen van ${formattedIncome}. Het aanbod wordt dagelijks bijgewerkt.`
+        : `Er is op dit moment geen actief aanbod in ${cityName} dat past bij ${formattedIncome} bruto inkomen. Stel een gratis alert in om direct bericht te krijgen.`,
+    },
+    {
+      question: "Wat is mijn maximale huur bij dit inkomen?",
+      answer: `Op basis van de 3x huur regel kun je bij een bruto maandinkomen van ${formattedIncome} maximaal ${formattedMaxRent} kale huur per maand betalen. Servicekosten komen daar vaak nog bij.`,
+    },
+  ];
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -118,10 +94,6 @@ const IncomeLandingPage = () => {
         title={title}
         description={description}
         canonical={`https://www.woonpeek.nl/huur-bij-inkomen-${incomeNum}-${city}`}
-      />
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
       />
       <Header />
 
@@ -217,23 +189,12 @@ const IncomeLandingPage = () => {
           </div>
         </section>
 
-        <section className="py-8">
-          <div className="container max-w-3xl space-y-4">
-            <h2 className="text-2xl font-bold">Veelgestelde vragen over inkomen en huren</h2>
-            <div className="space-y-4">
-              <div>
-                <h3 className="font-semibold">Wat is de 3x huur regel?</h3>
-                <p className="text-muted-foreground">Verhuurders eisen meestal dat je bruto maandinkomen minimaal drie keer de kale huurprijs is. Bij {formattedIncome} bruto kom je dus in aanmerking voor woningen tot {formattedMaxRent} per maand.</p>
-              </div>
-              <div>
-                <h3 className="font-semibold">Telt vakantiegeld of bonus mee?</h3>
-                <p className="text-muted-foreground">Ja, vakantiegeld (8%) en een vaste 13e maand mogen meestal worden meegerekend bij het bepalen van je bruto jaarinkomen. Deel dit door 12 voor je effectieve maandinkomen.</p>
-              </div>
-              <div>
-                <h3 className="font-semibold">Wat als ik samen huur?</h3>
-                <p className="text-muted-foreground">Bij een gezamenlijke huurovereenkomst tellen beide inkomens mee. Het tweede inkomen wordt door veel verhuurders voor 100% meegerekend, maar dit verschilt per partij.</p>
-              </div>
-            </div>
+        <section className="border-t">
+          <div className="container">
+            <FAQSchema
+              items={faqItems}
+              title={`Veelgestelde vragen over huren bij ${formattedIncome} bruto inkomen`}
+            />
           </div>
         </section>
       </main>

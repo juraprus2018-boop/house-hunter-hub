@@ -472,28 +472,6 @@ const CityPage = () => {
         {/* Andere steden */}
         <RelatedCities currentCity={cityName} />
 
-        {/* FAQ Section */}
-        <section className="border-t py-12">
-          <div className="container">
-            <h2 className="font-display text-2xl font-bold text-foreground mb-6">
-              Veelgestelde vragen over woningen in {cityName}
-            </h2>
-            <div className="space-y-4">
-              {cityFaqItems.map((faq, i) => (
-                <details key={i} className="group rounded-xl border bg-card">
-                  <summary className="cursor-pointer px-6 py-4 text-base font-semibold text-foreground list-none flex items-center justify-between gap-4">
-                    {faq.question}
-                    <ChevronRight className="h-4 w-4 shrink-0 transition-transform group-open:rotate-90" />
-                  </summary>
-                  <div className="px-6 pb-5 text-base leading-relaxed text-muted-foreground">
-                    {faq.answer}
-                  </div>
-                </details>
-              ))}
-            </div>
-          </div>
-        </section>
-
         {/* Internal links hub */}
         <section className="border-t py-12">
           <div className="container">
@@ -521,6 +499,15 @@ const CityPage = () => {
             <div className="grid gap-2 sm:grid-cols-2 md:grid-cols-3 mb-6">
               <Link to={`/nieuw-aanbod/${citySlug}`} className="rounded-lg border bg-card px-4 py-3 text-base font-medium text-foreground transition-shadow hover:shadow-md hover:text-primary">
                 Nieuw aanbod vandaag in {cityName}
+              </Link>
+              <Link to={`/goedkoopste-huurwoningen/${citySlug}`} className="rounded-lg border bg-card px-4 py-3 text-base font-medium text-foreground transition-shadow hover:shadow-md hover:text-primary">
+                Top 10 goedkoopste huurwoningen in {cityName}
+              </Link>
+              <Link to={`/grootste-huurwoningen/${citySlug}`} className="rounded-lg border bg-card px-4 py-3 text-base font-medium text-foreground transition-shadow hover:shadow-md hover:text-primary">
+                Top 10 grootste huurwoningen in {cityName}
+              </Link>
+              <Link to={`/beste-buurten/${citySlug}`} className="rounded-lg border bg-card px-4 py-3 text-base font-medium text-foreground transition-shadow hover:shadow-md hover:text-primary">
+                Beste buurten van {cityName}
               </Link>
             </div>
 

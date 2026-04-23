@@ -72,6 +72,7 @@ const BudgetLandingPage = lazy(() => import("./pages/BudgetLandingPage"));
 const CityGuidePage = lazy(() => import("./pages/CityGuidePage"));
 const WoonQuiz = lazy(() => import("./pages/WoonQuiz"));
 const IncomeLandingPage = lazy(() => import("./pages/IncomeLandingPage"));
+const BestOfCityPage = lazy(() => import("./pages/BestOfCityPage"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -168,6 +169,9 @@ const App = () => (
               <Route path="/koopwoningen-onder-:budget-:city" element={<BudgetLandingPage listingType="koop" />} />
               <Route path="/huur-bij-inkomen-:income-:city" element={<IncomeLandingPage />} />
               <Route path="/verhuizen-naar-:city" element={<CityGuidePage />} />
+              <Route path="/goedkoopste-huurwoningen/:city" element={<BestOfCityPage variant="goedkoopste-huur" />} />
+              <Route path="/grootste-huurwoningen/:city" element={<BestOfCityPage variant="grootste-huur" />} />
+              <Route path="/beste-buurten/:city" element={<BestOfCityPage variant="beste-buurten" />} />
               <Route path="/alerts/afmelden/:token" element={<AlertUnsubscribe />} />
               <Route path="/huurwoningen/:city/:filter" element={<FilteredLandingPage listingType="huur" />} />
               <Route path="/huurwoningen/:city?" element={<ListingTypePage listingType="huur" />} />
