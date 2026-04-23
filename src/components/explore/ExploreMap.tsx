@@ -170,9 +170,20 @@ const ExploreMap = ({ properties, hoveredPropertyId, commute }: ExploreMapProps)
           <div style="font-weight:600;font-size:14px;margin-bottom:4px">${property.title}</div>
           <div style="color:#666;font-size:12px;margin-bottom:6px">${property.street || ""} ${property.house_number || ""}, ${property.city}</div>
           <div style="font-weight:700;font-size:15px;color:hsl(var(--primary));margin-bottom:8px">${formatPrice(Number(property.price), property.listing_type)}</div>
-          <a href="/woning/${property.slug || property.id}" style="display:inline-block;padding:6px 12px;background:hsl(var(--primary));color:white;border-radius:6px;text-decoration:none;font-size:12px;font-weight:600">Bekijken →</a>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            <a href="/woning/${property.slug || property.id}" style="display:inline-block;padding:6px 12px;background:hsl(var(--primary));color:white;border-radius:6px;text-decoration:none;font-size:12px;font-weight:600">Bekijken →</a>
+            ${commute ? `<button data-route-id="${property.id}" style="cursor:pointer;padding:6px 12px;background:white;color:hsl(var(--primary));border:1px solid hsl(var(--primary));border-radius:6px;font-size:12px;font-weight:600">Toon route</button>` : ""}
+          </div>
         </div>
       `, { maxWidth: 250, className: "custom-popup" });
+
+      marker.on("popupopen", (e) => {
+        const el = (e as any).popup?.getElement?.() as HTMLElement | undefined;
+        const btn = el?.querySelector(`button[data-route-id="${property.id}"]`) as HTMLButtonElement | null;
+        if (btn) {
+          btn.onclick = () => setSelectedId(property.id);
+        }
+      });
 
       markersRef.current.set(property.id, marker);
       clusterGroup.addLayer(marker);
