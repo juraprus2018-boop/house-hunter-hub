@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { BellRing, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -94,8 +94,18 @@ const DailyAlertSection = () => {
     setTurnstileToken(token);
   }, []);
 
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent<{ city?: string }>).detail;
+      if (detail?.city) setCity(detail.city);
+    };
+    window.addEventListener("woonpeek:prefill-alert", handler as EventListener);
+    return () =>
+      window.removeEventListener("woonpeek:prefill-alert", handler as EventListener);
+  }, []);
+
   return (
-    <section className="bg-surface-cream py-16 md:py-20">
+    <section id="daily-alert" className="bg-surface-cream py-16 md:py-20 scroll-mt-24">
       <div className="container">
         <div className="overflow-hidden rounded-3xl border border-border bg-background shadow-lg">
           <div className="grid md:grid-cols-5">
