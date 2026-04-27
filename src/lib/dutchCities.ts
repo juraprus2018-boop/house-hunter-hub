@@ -73,6 +73,8 @@ export const DUTCH_CITIES: string[] = [
   "Zaandam","Zaanstad","Zaltbommel","Zandvoort","Zeewolde","Zeist","Zevenaar",
   "Zevenhuizen","Zoetermeer","Zoeterwoude","Zuidlaren","Zuidplas","Zundert",
   "Zutphen","Zwartewaterland","Zwijndrecht","Zwolle",
+  // Ontbrekende gemeentenamen zelf
+  "Hof van Twente","Dijk en Waard","Voorne aan Zee",
   // Kernen van samengestelde gemeentes (toegevoegd na klant-feedback).
   // Veel Nederlandse gemeentes bestaan uit meerdere dorpen/kernen; deze worden
   // hier expliciet vermeld zodat gebruikers ook op kern-niveau alerts kunnen instellen.
