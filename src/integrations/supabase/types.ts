@@ -475,6 +475,7 @@ export type Database = {
           is_visible: boolean
           name: string
           property_count: number
+          slug: string | null
           source: string
           updated_at: string
         }
@@ -484,6 +485,7 @@ export type Database = {
           is_visible?: boolean
           name: string
           property_count?: number
+          slug?: string | null
           source?: string
           updated_at?: string
         }
@@ -493,6 +495,7 @@ export type Database = {
           is_visible?: boolean
           name?: string
           property_count?: number
+          slug?: string | null
           source?: string
           updated_at?: string
         }
@@ -1378,6 +1381,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      canonical_city_slug: { Args: { _name: string }; Returns: string }
       get_home_stats: { Args: never; Returns: Json }
       has_role: {
         Args: {
