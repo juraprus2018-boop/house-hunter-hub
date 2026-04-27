@@ -23,6 +23,7 @@ import {
   Search,
   Globe,
   Megaphone,
+  MapPinned,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -83,6 +84,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
     { to: "/admin/zoekopdrachten", label: "Zoekopdrachten", icon: Search },
     { to: "/admin/google-ranking", label: "Google Ranking", icon: Activity },
     { to: "/admin/paginatypen", label: "Paginatypen", icon: Globe },
+    { to: "/admin/plaatsen-check", label: "Plaatsen check", icon: MapPinned },
     { to: "/admin/advertenties", label: "Advertenties", icon: Megaphone },
     { to: "/admin/site-instellingen", label: "Site secties", icon: Settings },
     { to: "/admin/instellingen", label: "Instellingen", icon: Settings },

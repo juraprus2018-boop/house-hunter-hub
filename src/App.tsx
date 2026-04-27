@@ -63,6 +63,7 @@ const AdminComments = lazy(() => import("./pages/admin/AdminComments"));
 const AdminSearchQueries = lazy(() => import("./pages/admin/AdminSearchQueries"));
 const AdminGoogleRanking = lazy(() => import("./pages/admin/AdminGoogleRanking"));
 const AdminPageTypes = lazy(() => import("./pages/admin/AdminPageTypes"));
+const AdminPlaatsenCheck = lazy(() => import("./pages/admin/AdminPlaatsenCheck"));
 const UserChat = lazy(() => import("./pages/UserChat"));
 const BudgetTool = lazy(() => import("./pages/BudgetTool"));
 const CityComparePage = lazy(() => import("./pages/CityComparePage"));
@@ -144,6 +145,7 @@ const App = () => (
               <Route path="/admin/zoekopdrachten" element={<AdminSearchQueries />} />
               <Route path="/admin/google-ranking" element={<AdminGoogleRanking />} />
               <Route path="/admin/paginatypen" element={<AdminPageTypes />} />
+              <Route path="/admin/plaatsen-check" element={<AdminPlaatsenCheck />} />
               <Route path="/voorwaarden" element={<TermsAndConditions />} />
               <Route path="/privacy" element={<PrivacyPolicy />} />
               <Route path="/disclaimer" element={<Disclaimer />} />
