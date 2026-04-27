@@ -462,6 +462,15 @@ const Header = () => {
               </Link>
 
               <Link
+                to="/energie-vergelijken"
+                onClick={() => setIsOpen(false)}
+                className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-foreground transition-colors hover:bg-muted"
+              >
+                <Zap className="h-5 w-5" />
+                Energie vergelijken
+              </Link>
+
+              <Link
                 to="/woning-plaatsen"
                 onClick={() => setIsOpen(false)}
                 className="flex items-center gap-3 rounded-lg bg-accent px-3 py-2.5 font-medium text-accent-foreground transition-colors hover:bg-accent/90"
