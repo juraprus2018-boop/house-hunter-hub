@@ -1,21 +1,14 @@
 import { useCallback, useState } from "react";
 import { useMutation } from "@tanstack/react-query";
-import { BellRing, Loader2, MapPin } from "lucide-react";
+import { BellRing, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import TurnstileWidget from "@/components/security/TurnstileWidget";
 import dailyAlertImg from "@/assets/daily-alert-illustration.jpg";
-import { DUTCH_CITIES } from "@/lib/dutchCities";
+import MunicipalityCitySelect from "@/components/search/MunicipalityCitySelect";
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -26,10 +19,6 @@ const DailyAlertSection = () => {
   const [city, setCity] = useState("");
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   const turnstileSiteKey = import.meta.env.VITE_TURNSTILE_SITE_KEY as string | undefined;
-
-  // Use full Dutch cities list so users can subscribe to any place,
-  // not only cities that currently have active listings.
-  const cities = DUTCH_CITIES;
 
   const subscribe = useMutation({
     mutationFn: async (payload: {
@@ -138,24 +127,12 @@ const DailyAlertSection = () => {
 
               <div className="space-y-4">
                 {/* City selector (required) */}
-                <div>
-                  <label className="mb-1.5 block text-sm font-medium text-foreground">
-                    <MapPin className="mr-1 inline-block h-4 w-4" />
-                    Stad *
-                  </label>
-                  <Select value={city} onValueChange={setCity}>
-                    <SelectTrigger className="w-full sm:max-w-sm">
-                      <SelectValue placeholder="Selecteer een stad..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {(cities || []).map((c) => (
-                        <SelectItem key={c} value={c}>
-                          {c}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+                <MunicipalityCitySelect
+                  id="alert-city"
+                  value={city}
+                  onChange={setCity}
+                  className="sm:max-w-sm"
+                />
 
                 {/* Email field for guests */}
                 {!user && (
