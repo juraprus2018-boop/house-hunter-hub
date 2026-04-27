@@ -909,6 +909,13 @@ const PropertyDetail = () => {
           </section>
         )}
 
+        {/* ── Energie vergelijken ── */}
+        <section className="border-t py-10">
+          <div className="container lg:max-w-5xl">
+            <EnergyCompareTeaser variant="property" context={property.city} />
+          </div>
+        </section>
+
         {/* ── Comments Section ── */}
         <PropertyComments propertyId={property.id} />
 
