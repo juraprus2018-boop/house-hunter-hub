@@ -1,5 +1,5 @@
 import { useCallback, useState } from "react";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { BellRing, Loader2, MapPin } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/select";
 import TurnstileWidget from "@/components/security/TurnstileWidget";
 import dailyAlertImg from "@/assets/daily-alert-illustration.jpg";
+import { DUTCH_CITIES } from "@/lib/dutchCities";
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -26,20 +27,9 @@ const DailyAlertSection = () => {
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   const turnstileSiteKey = import.meta.env.VITE_TURNSTILE_SITE_KEY as string | undefined;
 
-  // Fetch available cities from properties
-  const { data: cities } = useQuery({
-    queryKey: ["alert-cities"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("properties")
-        .select("city")
-        .eq("status", "actief");
-      if (error) throw error;
-      const uniqueCities = [...new Set(data.map((p) => p.city))].sort();
-      return uniqueCities;
-    },
-    staleTime: 10 * 60 * 1000,
-  });
+  // Use full Dutch cities list so users can subscribe to any place,
+  // not only cities that currently have active listings.
+  const cities = DUTCH_CITIES;
 
   const subscribe = useMutation({
     mutationFn: async (payload: {
