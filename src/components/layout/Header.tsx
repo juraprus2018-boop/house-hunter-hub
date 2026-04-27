@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import {
   Search, Heart, PlusCircle, User, Menu, LogOut, Shield, Map, Bell,
   MapPin, CalendarDays, Home, Building2, DoorOpen, BedDouble, ChevronDown,
-  ChevronRight, Handshake, MessageCircle
+  ChevronRight, Handshake, MessageCircle, Zap
 } from "lucide-react";
 import logoWoonpeek from "@/assets/logo-woonpeek-v2.png";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -239,6 +239,19 @@ const Header = () => {
                   >
                     <Handshake className="mr-1.5 h-4 w-4" />
                     Voor makelaars
+                  </Link>
+                </NavigationMenuLink>
+              </NavigationMenuItem>
+
+              {/* Energie vergelijken */}
+              <NavigationMenuItem>
+                <NavigationMenuLink asChild>
+                  <Link
+                    to="/energie-vergelijken"
+                    className="group inline-flex h-9 w-max items-center justify-center rounded-md bg-transparent px-3 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
+                  >
+                    <Zap className="mr-1.5 h-4 w-4" />
+                    Energie
                   </Link>
                 </NavigationMenuLink>
               </NavigationMenuItem>
