@@ -114,9 +114,12 @@ Deno.serve(async (req) => {
         property_count: m.count,
         is_visible: true,
       }));
+      // Upsert op slug (gegenereerde kolom met UNIQUE-index) zodat varianten
+      // van dezelfde plaatsnaam ("'s-Heerenberg" / "S Heerenberg") nooit
+      // dubbel landen.
       const { data: upserted, error: upErr } = await supabase
         .from("extra_cities")
-        .upsert(rows, { onConflict: "name" })
+        .upsert(rows, { onConflict: "slug" })
         .select("name, property_count");
       if (upErr) throw upErr;
       added = (upserted ?? []).map((r) => ({
