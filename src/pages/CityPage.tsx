@@ -17,6 +17,7 @@ import CityNeighborhoods from "@/components/city/CityNeighborhoods";
 import CityRentalTips from "@/components/city/CityRentalTips";
 import CityRealtors from "@/components/city/CityRealtors";
 import NewThisWeekSection from "@/components/city/NewThisWeekSection";
+import EnergyCompareTeaser from "@/components/energy/EnergyCompareTeaser";
 import { useProperties, useFilterFacets } from "@/hooks/useProperties";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -462,6 +463,11 @@ const CityPage = () => {
 
         {/* Local realtors */}
         <CityRealtors cityName={cityName} />
+
+        {/* Energie vergelijken */}
+        <section className="container my-8">
+          <EnergyCompareTeaser variant="city" context={cityName} />
+        </section>
 
         {/* Nieuwste woningen in [stad] */}
         <SimilarProperties

@@ -74,6 +74,7 @@ const CityGuidePage = lazy(() => import("./pages/CityGuidePage"));
 const WoonQuiz = lazy(() => import("./pages/WoonQuiz"));
 const IncomeLandingPage = lazy(() => import("./pages/IncomeLandingPage"));
 const BestOfCityPage = lazy(() => import("./pages/BestOfCityPage"));
+const EnergieVergelijken = lazy(() => import("./pages/EnergieVergelijken"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -164,6 +165,7 @@ const App = () => (
               <Route path="/samenwerking" element={<Samenwerking />} />
               <Route path="/budget-tool" element={<BudgetTool />} />
               <Route path="/woonquiz" element={<WoonQuiz />} />
+              <Route path="/energie-vergelijken" element={<EnergieVergelijken />} />
               <Route path="/vergelijk/:city1-vs-:city2" element={<CityComparePage />} />
               <Route path="/huurprijzen/:city" element={<HuurprijsMonitor />} />
               <Route path="/woningen-postcode-:postcode" element={<PostcodePage />} />
