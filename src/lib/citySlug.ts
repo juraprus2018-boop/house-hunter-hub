@@ -25,15 +25,11 @@ export const citySlug = (raw: string): string => {
   //    "'s-heerenberg" -> "s-heerenberg", "'t harde" -> "t harde".
   s = s.replace(/^['‘’]([st])[\s-]/, "$1-");
 
-  // 5) Provincie-aanduidingen tussen haakjes wegslijpen, want "Bergen (NH)"
-  //    en "Bergen NH" en "Bergen-NH" horen samen te vallen.
-  //    Eerst expliciet bekende suffixen als platte tekst weghalen,
-  //    dan losse haakjes.
-  s = s.replace(
-    /[\s-]*\(?\s*(nh|zh|nb|gld|ov|fr|gr|dr|fl|ut|li|l|ze|stw|veere)\s*\)?$/i,
-    "",
-  );
-  s = s.replace(/\s*\([^)]*\)\s*/g, " ");
+  // 5) Provincie-aanduidingen normaliseren. We willen dat "Bergen (NH)",
+  //    "Bergen NH" en "Bergen-NH" gelijk zijn, MAAR dat "Bergen (NH)" en
+  //    "Bergen (L)" verschillend blijven. Dus: provinciecode behouden,
+  //    alleen de haakjes en spaties eromheen normaliseren.
+  s = s.replace(/\s*\(([^)]+)\)\s*/g, " $1 ");
 
   // 6) Alle niet-alfanumerieke tekens (spaties, koppeltekens, punten,
    //   apostrofs, …) vervangen door één hyphen.
