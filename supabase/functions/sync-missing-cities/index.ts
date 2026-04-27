@@ -6,9 +6,14 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
-// Import canonical lists from frontend so the function stays in sync.
-import { DUTCH_CITIES } from "../../../src/lib/dutchCities.ts";
-import { MUNICIPALITY_KERNEN } from "../../../src/lib/municipalities.ts";
+// Snapshot of frontend lists (generated; regenerate when src/lib/dutchCities.ts
+// or src/lib/municipalities.ts changes).
+import knownPlaces from "./known-places.json" with { type: "json" };
+const DUTCH_CITIES = knownPlaces.DUTCH_CITIES as string[];
+const MUNICIPALITY_KERNEN = knownPlaces.MUNICIPALITY_KERNEN as Record<
+  string,
+  string[]
+>;
 
 interface SyncBody {
   triggered_by?: string;
