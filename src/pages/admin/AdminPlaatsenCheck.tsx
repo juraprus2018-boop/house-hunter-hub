@@ -76,7 +76,7 @@ const AdminPlaatsenCheck = () => {
         .order("run_at", { ascending: false })
         .limit(20);
       if (error) throw error;
-      return (data ?? []) as MissingLogRow[];
+      return (data ?? []) as unknown as MissingLogRow[];
     },
   });
 
