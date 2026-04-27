@@ -8,6 +8,7 @@ import PopularCities from "@/components/home/PopularCities";
 import HowItWorksSection from "@/components/home/HowItWorksSection";
 import WhyUsSection from "@/components/home/WhyUsSection";
 import DailyAlertSection from "@/components/home/DailyAlertSection";
+import CityMapSection from "@/components/home/CityMapSection";
 import SEOContentSection from "@/components/home/SEOContentSection";
 import RecentlyViewed from "@/components/home/RecentlyViewed";
 import ExitIntentPopup from "@/components/ExitIntentPopup";
@@ -75,6 +76,7 @@ const Index = () => {
         <WhyUsSection />
         <TestimonialsSection />
         <DailyAlertSection />
+        <CityMapSection />
         <SEOContentSection />
       </main>
       <CitySkyline />
