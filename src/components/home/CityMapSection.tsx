@@ -9,7 +9,14 @@ import "leaflet.markercluster/dist/MarkerCluster.Default.css";
 import { MapPin, BellRing, ArrowRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { citySlug } from "@/lib/dutchCities";
+
+const citySlug = (city: string) =>
+  city
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\s+/g, "-");
 
 type CityPoint = {
   city: string;
