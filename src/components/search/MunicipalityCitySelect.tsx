@@ -15,6 +15,7 @@ import {
   hasMultipleKernen,
 } from "@/lib/municipalities";
 import { supabase } from "@/integrations/supabase/client";
+import { citySlug } from "@/lib/citySlug";
 
 interface MunicipalityCitySelectProps {
   /** Geselecteerde plaatsnaam (kern of enkelvoudige gemeente). */
@@ -58,10 +59,20 @@ const MunicipalityCitySelect = ({
 
   // Lijst van alle gemeentes (zowel composiet als enkelvoudig + extra).
   const municipalities = useMemo(() => {
-    const set = new Set<string>(DUTCH_CITIES);
-    Object.keys(MUNICIPALITY_KERNEN).forEach((m) => set.add(m));
-    (extraCities ?? []).forEach((c) => set.add(c));
-    return Array.from(set).sort((a, b) => a.localeCompare(b, "nl"));
+    // Dedupliceer op canonical slug zodat varianten als "'s-Heerenberg" /
+    // "s-Heerenberg" of "Bergen (NH)" / "Bergen NH" niet dubbel verschijnen.
+    const bySlug = new Map<string, string>();
+    const add = (name: string) => {
+      const key = citySlug(name);
+      if (!key) return;
+      if (!bySlug.has(key)) bySlug.set(key, name);
+    };
+    DUTCH_CITIES.forEach(add);
+    Object.keys(MUNICIPALITY_KERNEN).forEach(add);
+    (extraCities ?? []).forEach(add);
+    return Array.from(bySlug.values()).sort((a, b) =>
+      a.localeCompare(b, "nl"),
+    );
   }, [extraCities]);
 
   // Detecteer huidige gemeente op basis van `value`.
