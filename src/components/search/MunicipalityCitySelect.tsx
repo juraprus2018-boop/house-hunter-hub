@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { MapPin } from "lucide-react";
 import {
   Select,
@@ -13,6 +14,7 @@ import {
   getKernen,
   hasMultipleKernen,
 } from "@/lib/municipalities";
+import { supabase } from "@/integrations/supabase/client";
 
 interface MunicipalityCitySelectProps {
   /** Geselecteerde plaatsnaam (kern of enkelvoudige gemeente). */
@@ -39,12 +41,28 @@ const MunicipalityCitySelect = ({
   id,
   className,
 }: MunicipalityCitySelectProps) => {
-  // Lijst van alle gemeentes (zowel composiet als enkelvoudig).
+  // Auto-toegevoegde plaatsen uit de DB (extra_cities) worden mee gemerged
+  // zodat kernen die de sync-job ontdekt direct beschikbaar zijn.
+  const { data: extraCities } = useQuery({
+    queryKey: ["extra-cities-visible"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("extra_cities")
+        .select("name")
+        .eq("is_visible", true);
+      if (error) throw error;
+      return (data ?? []).map((r) => r.name as string);
+    },
+    staleTime: 5 * 60_000,
+  });
+
+  // Lijst van alle gemeentes (zowel composiet als enkelvoudig + extra).
   const municipalities = useMemo(() => {
     const set = new Set<string>(DUTCH_CITIES);
     Object.keys(MUNICIPALITY_KERNEN).forEach((m) => set.add(m));
+    (extraCities ?? []).forEach((c) => set.add(c));
     return Array.from(set).sort((a, b) => a.localeCompare(b, "nl"));
-  }, []);
+  }, [extraCities]);
 
   // Detecteer huidige gemeente op basis van `value`.
   const detectMunicipality = (city: string): string => {
