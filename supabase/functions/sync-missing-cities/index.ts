@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
+import { citySlug } from "./citySlug.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -20,12 +21,7 @@ interface SyncBody {
   auto_add?: boolean;
 }
 
-const norm = (s: string) =>
-  s
-    .normalize("NFKD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .trim();
+const norm = citySlug;
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -57,9 +53,19 @@ Deno.serve(async (req) => {
 
     const { data: existingExtra, error: extraErr } = await supabase
       .from("extra_cities")
-      .select("name");
+      .select("id, name");
     if (extraErr) throw extraErr;
-    (existingExtra ?? []).forEach((row) => known.add(norm(row.name)));
+    // Map slug -> canonical naam zodat we duplicaten met afwijkende spelling
+    // kunnen detecteren én opruimen.
+    const extraBySlug = new Map<string, { id: string; name: string }>();
+    for (const row of existingExtra ?? []) {
+      const key = norm(row.name);
+      if (!key) continue;
+      if (!extraBySlug.has(key)) {
+        extraBySlug.set(key, row);
+        known.add(key);
+      }
+    }
 
     // 2) Fetch unique cities from active properties (batched, > 1000 default limit).
     const cityCounts = new Map<string, number>();
@@ -82,12 +88,22 @@ Deno.serve(async (req) => {
       from += PAGE;
     }
 
-    // 3) Determine which are missing.
-    const missing: { name: string; count: number }[] = [];
+    // 3) Bepaal ontbrekende plaatsen — gededupliceerd op slug, anders zou
+    //    dezelfde plaats met verschillende spelling meerdere keren opduiken.
+    const missingBySlug = new Map<string, { name: string; count: number }>();
     for (const [city, count] of cityCounts.entries()) {
-      if (!known.has(norm(city))) missing.push({ name: city, count });
+      const key = norm(city);
+      if (!key || known.has(key)) continue;
+      const existing = missingBySlug.get(key);
+      if (existing) {
+        existing.count += count;
+      } else {
+        missingBySlug.set(key, { name: city, count });
+      }
     }
-    missing.sort((a, b) => b.count - a.count);
+    const missing = Array.from(missingBySlug.values()).sort(
+      (a, b) => b.count - a.count,
+    );
 
     // 4) Optionally auto-add to extra_cities (upsert by name).
     let added: { name: string; count: number }[] = [];
