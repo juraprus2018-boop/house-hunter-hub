@@ -468,6 +468,36 @@ export type Database = {
         }
         Relationships: []
       }
+      extra_cities: {
+        Row: {
+          created_at: string
+          id: string
+          is_visible: boolean
+          name: string
+          property_count: number
+          source: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_visible?: boolean
+          name: string
+          property_count?: number
+          source?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_visible?: boolean
+          name?: string
+          property_count?: number
+          source?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       facebook_group_posts: {
         Row: {
           group_id: string
@@ -736,6 +766,42 @@ export type Database = {
           telefoon?: string | null
           updated_at?: string
           website?: string | null
+        }
+        Relationships: []
+      }
+      missing_cities_log: {
+        Row: {
+          added_cities: Json
+          added_count: number
+          id: string
+          missing_cities: Json
+          missing_count: number
+          notes: string | null
+          run_at: string
+          total_unique_cities: number
+          triggered_by: string
+        }
+        Insert: {
+          added_cities?: Json
+          added_count?: number
+          id?: string
+          missing_cities?: Json
+          missing_count?: number
+          notes?: string | null
+          run_at?: string
+          total_unique_cities?: number
+          triggered_by?: string
+        }
+        Update: {
+          added_cities?: Json
+          added_count?: number
+          id?: string
+          missing_cities?: Json
+          missing_count?: number
+          notes?: string | null
+          run_at?: string
+          total_unique_cities?: number
+          triggered_by?: string
         }
         Relationships: []
       }
