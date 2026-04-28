@@ -163,6 +163,27 @@ async function renderShotstack(payload: unknown, apiKey: string): Promise<string
   throw new Error("Shotstack render timeout (>90s)");
 }
 
+/**
+ * Download Shotstack video en upload naar tiktok-media bucket.
+ * TikTok eist URL ownership op het bron-domein.
+ */
+async function rehostVideo(
+  sb: ReturnType<typeof createClient>,
+  propertyId: string,
+  videoUrl: string,
+): Promise<string> {
+  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+  const res = await fetch(videoUrl);
+  if (!res.ok) throw new Error(`Failed to download Shotstack video: ${res.status}`);
+  const buf = new Uint8Array(await res.arrayBuffer());
+  const path = `${propertyId}/${Date.now()}.mp4`;
+  const { error } = await sb.storage
+    .from("tiktok-media")
+    .upload(path, buf, { contentType: "video/mp4", upsert: true });
+  if (error) throw new Error(`Video rehost failed: ${error.message}`);
+  return `${supabaseUrl}/storage/v1/object/public/tiktok-media/${path}`;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -211,7 +232,10 @@ Deno.serve(async (req) => {
 
     // 1) Render video
     const payload = buildShotstackTimeline(prop);
-    const videoUrl = await renderShotstack(payload, shotstackKey);
+    const shotstackUrl = await renderShotstack(payload, shotstackKey);
+
+    // 1b) Rehost naar onze bucket (TikTok URL ownership)
+    const videoUrl = await rehostVideo(sb, prop.id, shotstackUrl);
 
     // 2) Get TikTok token (auto refresh)
     const token = await getValidTikTokToken(supabaseUrl, serviceKey);
