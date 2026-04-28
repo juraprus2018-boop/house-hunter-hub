@@ -24,6 +24,7 @@ import {
   Globe,
   Megaphone,
   MapPinned,
+  Music2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -76,6 +77,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
     { to: "/admin/scrapers", label: "Daisycon", icon: Activity },
     { to: "/admin/blog", label: "Blog", icon: FileText },
     { to: "/admin/facebook", label: "Facebook Groep", icon: Facebook },
+    { to: "/admin/tiktok", label: "TikTok", icon: Music2 },
     { to: "/admin/leads", label: "Makelaar Leads", icon: Handshake },
     { to: "/admin/email", label: "E-mail Sender", icon: Mail },
     { to: "/admin/alerts", label: "Alert Abonnees", icon: BellRing },
