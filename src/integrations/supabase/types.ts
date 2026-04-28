@@ -1355,30 +1355,84 @@ export type Database = {
         }
         Relationships: []
       }
+      tiktok_oauth_tokens: {
+        Row: {
+          access_token: string
+          avatar_url: string | null
+          created_at: string
+          display_name: string | null
+          expires_at: string
+          id: string
+          open_id: string
+          refresh_expires_at: string | null
+          refresh_token: string
+          scope: string | null
+          updated_at: string
+        }
+        Insert: {
+          access_token: string
+          avatar_url?: string | null
+          created_at?: string
+          display_name?: string | null
+          expires_at: string
+          id?: string
+          open_id: string
+          refresh_expires_at?: string | null
+          refresh_token: string
+          scope?: string | null
+          updated_at?: string
+        }
+        Update: {
+          access_token?: string
+          avatar_url?: string | null
+          created_at?: string
+          display_name?: string | null
+          expires_at?: string
+          id?: string
+          open_id?: string
+          refresh_expires_at?: string | null
+          refresh_token?: string
+          scope?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       tiktok_posts: {
         Row: {
           caption: string | null
+          error_message: string | null
           id: string
           notes: string | null
           posted_at: string
           posted_by: string | null
           property_id: string
+          publish_id: string | null
+          status: string
+          video_url: string | null
         }
         Insert: {
           caption?: string | null
+          error_message?: string | null
           id?: string
           notes?: string | null
           posted_at?: string
           posted_by?: string | null
           property_id: string
+          publish_id?: string | null
+          status?: string
+          video_url?: string | null
         }
         Update: {
           caption?: string | null
+          error_message?: string | null
           id?: string
           notes?: string | null
           posted_at?: string
           posted_by?: string | null
           property_id?: string
+          publish_id?: string | null
+          status?: string
+          video_url?: string | null
         }
         Relationships: []
       }
