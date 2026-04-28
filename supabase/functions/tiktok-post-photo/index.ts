@@ -25,6 +25,49 @@ interface PropertyRow {
   slug: string | null;
 }
 
+/**
+ * Kopieert externe foto's naar de tiktok-media bucket en geeft publieke URLs terug.
+ * TikTok eist dat alle PULL_FROM_URL bronnen op een geverifieerd domain staan.
+ * Foto's die al op supabase.co staan worden direct doorgegeven.
+ */
+async function rehostPhotos(
+  sb: ReturnType<typeof createClient>,
+  propertyId: string,
+  urls: string[],
+): Promise<string[]> {
+  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+  const out: string[] = [];
+  for (let i = 0; i < urls.length; i++) {
+    const src = urls[i];
+    // Already on our domain? Skip rehost.
+    if (src.includes(".supabase.co/storage/")) {
+      out.push(src);
+      continue;
+    }
+    try {
+      const res = await fetch(src, {
+        headers: { "User-Agent": "Mozilla/5.0 WoonPeek/1.0" },
+      });
+      if (!res.ok) continue;
+      const ct = res.headers.get("content-type") || "image/jpeg";
+      const ext = ct.includes("png") ? "png" : ct.includes("webp") ? "webp" : "jpg";
+      const buf = new Uint8Array(await res.arrayBuffer());
+      const path = `${propertyId}/${Date.now()}-${i}.${ext}`;
+      const { error } = await sb.storage
+        .from("tiktok-media")
+        .upload(path, buf, { contentType: ct, upsert: true });
+      if (error) {
+        console.error("rehost upload err", path, error.message);
+        continue;
+      }
+      out.push(`${supabaseUrl}/storage/v1/object/public/tiktok-media/${path}`);
+    } catch (e) {
+      console.error("rehost fetch err", src, e instanceof Error ? e.message : e);
+    }
+  }
+  return out;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -63,8 +106,14 @@ Deno.serve(async (req) => {
     }
 
     if (!prop) throw new Error("No suitable property to post");
-    const photos = (prop.images ?? []).slice(0, 35); // TikTok max 35
-    if (photos.length < 2) throw new Error(`Property ${prop.id} has fewer than 2 images`);
+    const sourcePhotos = (prop.images ?? []).slice(0, 35); // TikTok max 35
+    if (sourcePhotos.length < 2) throw new Error(`Property ${prop.id} has fewer than 2 images`);
+
+    // Rehost externe foto's naar tiktok-media bucket (TikTok URL ownership eis)
+    const photos = await rehostPhotos(sb, prop.id, sourcePhotos);
+    if (photos.length < 2) {
+      throw new Error(`Could not rehost enough photos (got ${photos.length})`);
+    }
 
     // Get TikTok token
     const token = await getValidTikTokToken(supabaseUrl, serviceKey);
