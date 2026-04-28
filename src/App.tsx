@@ -75,6 +75,7 @@ const WoonQuiz = lazy(() => import("./pages/WoonQuiz"));
 const IncomeLandingPage = lazy(() => import("./pages/IncomeLandingPage"));
 const BestOfCityPage = lazy(() => import("./pages/BestOfCityPage"));
 const EnergieVergelijken = lazy(() => import("./pages/EnergieVergelijken"));
+const AdminTikTok = lazy(() => import("./pages/admin/AdminTikTok"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -138,6 +139,7 @@ const App = () => (
               <Route path="/admin/gebruikers/:userId" element={<AdminUserDetail />} />
               <Route path="/admin/dagoverzicht" element={<AdminDailyActivity />} />
               <Route path="/admin/facebook" element={<AdminFacebookQueue />} />
+              <Route path="/admin/tiktok" element={<AdminTikTok />} />
               <Route path="/admin/leads" element={<AdminMakelaarLeads />} />
               <Route path="/admin/email" element={<AdminEmailSender />} />
               <Route path="/admin/alerts" element={<AdminAlertSubscribers />} />

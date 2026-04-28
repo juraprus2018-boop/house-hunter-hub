@@ -1355,6 +1355,33 @@ export type Database = {
         }
         Relationships: []
       }
+      tiktok_posts: {
+        Row: {
+          caption: string | null
+          id: string
+          notes: string | null
+          posted_at: string
+          posted_by: string | null
+          property_id: string
+        }
+        Insert: {
+          caption?: string | null
+          id?: string
+          notes?: string | null
+          posted_at?: string
+          posted_by?: string | null
+          property_id: string
+        }
+        Update: {
+          caption?: string | null
+          id?: string
+          notes?: string | null
+          posted_at?: string
+          posted_by?: string | null
+          property_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
