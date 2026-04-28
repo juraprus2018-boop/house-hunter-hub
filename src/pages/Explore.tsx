@@ -104,25 +104,36 @@ const ExplorePage = () => {
   });
 
   // Separate lightweight query for map markers (only when map visible)
-  const showMap = !isMobile || mobileView === "map";
+  // When a postcode filter is active we ALWAYS need the full set (not just the
+  // first paginated page), otherwise the list shows fewer results than the map.
+  const showMap = !isMobile || mobileView === "map" || !!postcodeCoords;
   const { data: mapData, isLoading: isMapLoading } = useMapProperties({
     listingType: listingType || undefined,
     sourceSite: selectedSource || undefined,
     city: selectedCity || undefined,
   }, showMap);
 
-  const allProperties = listData?.properties || [];
+  const paginatedList = listData?.properties || [];
   const totalCount = listData?.totalCount || 0;
 
-  // Properties are already filtered server-side by city/listing/source
-  // Only apply postcode distance filter client-side
+  // When a postcode filter is active, base the list on the full mapData set so
+  // the list and map stay in sync (otherwise the list only sees the first page
+  // of paginated results and shows fewer matches than the map).
   const filteredProperties = useMemo(() => {
-    if (!postcodeCoords) return allProperties;
-    return allProperties.filter((p) => {
+    if (!postcodeCoords) return paginatedList;
+    const fullSet = (mapData || []) as any[];
+    return fullSet.filter((p: any) => {
       if (!p.latitude || !p.longitude) return false;
-      return haversineKm(postcodeCoords.lat, postcodeCoords.lng, Number(p.latitude), Number(p.longitude)) <= distanceKm;
+      return (
+        haversineKm(
+          postcodeCoords.lat,
+          postcodeCoords.lng,
+          Number(p.latitude),
+          Number(p.longitude),
+        ) <= distanceKm
+      );
     });
-  }, [allProperties, postcodeCoords, distanceKm]);
+  }, [paginatedList, mapData, postcodeCoords, distanceKm]);
 
   // Map properties from the lightweight query
   const filteredMapProperties = useMemo(() => {
