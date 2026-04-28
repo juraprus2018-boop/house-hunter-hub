@@ -509,7 +509,12 @@ const ExplorePage = () => {
             {/* Desktop: split map + list */}
             {!isMobile && (
               <>
-                <div className="relative h-1/2 min-h-[300px] border-b">
+                <div
+                  className={cn(
+                    "relative border-b transition-[height] duration-300 ease-in-out overflow-hidden",
+                    mapCollapsed ? "h-0 min-h-0 border-b-0" : "h-1/2 min-h-[300px]"
+                  )}
+                >
                   {isMapLoading ? (
                     <div className="flex h-full items-center justify-center bg-muted/50">
                       <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -523,7 +528,23 @@ const ExplorePage = () => {
                     </Suspense>
                   )}
                 </div>
-                <div className="flex-1 overflow-y-auto p-6">
+                <div ref={listScrollRef} className="relative flex-1 overflow-y-auto p-6">
+                  {mapCollapsed && (
+                    <div className="sticky top-0 z-20 -mx-6 -mt-6 mb-4 flex justify-center border-b bg-card/95 px-6 py-2 backdrop-blur">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          setMapCollapsed(false);
+                          listScrollRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+                        }}
+                        className="gap-1.5"
+                      >
+                        <ChevronUp className="h-4 w-4" />
+                        Bekijk de kaart
+                      </Button>
+                    </div>
+                  )}
                   {renderPropertyList()}
                 </div>
               </>
