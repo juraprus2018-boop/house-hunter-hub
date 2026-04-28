@@ -242,6 +242,28 @@ const ExplorePage = () => {
         </div>
       </div>
 
+      {/* Bron-filter direct na Aanbod, boven Postcode/Plaatsen */}
+      <Separator />
+      <div className="p-5">
+        <Label className="mb-2 block text-sm font-medium">Bron</Label>
+        <Select
+          value={selectedSource || "all"}
+          onValueChange={(v) => setSelectedSource(v === "all" ? null : v)}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Alle bronnen" />
+          </SelectTrigger>
+          <SelectContent className="z-50 bg-popover">
+            <SelectItem value="all">Alle bronnen</SelectItem>
+            {activeSources.map(({ value, label, count }) => (
+              <SelectItem key={value} value={value}>
+                {label} ({count})
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
       <Separator />
 
       {/* Postcode + distance filter */}
@@ -353,31 +375,6 @@ const ExplorePage = () => {
           )}
         </div>
       </div>
-
-      {activeSources.length > 0 && (
-        <>
-          <Separator />
-          <div className="p-5">
-            <Label className="mb-2 block text-sm font-medium">Bron</Label>
-            <Select
-              value={selectedSource || "all"}
-              onValueChange={(v) => setSelectedSource(v === "all" ? null : v)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Alle bronnen" />
-              </SelectTrigger>
-              <SelectContent className="z-50 bg-popover">
-                <SelectItem value="all">Alle bronnen</SelectItem>
-                {activeSources.map(({ value, label, count }) => (
-                  <SelectItem key={value} value={value}>
-                    {label} ({count})
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </>
-      )}
     </>
   );
   const renderPropertyList = () => {
