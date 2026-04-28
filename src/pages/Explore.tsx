@@ -9,7 +9,7 @@ import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useProperties, useMapProperties, useCityList } from "@/hooks/useProperties";
-import { Loader2, MapPin, ChevronRight, SlidersHorizontal, X, Navigation, Map as MapIcon, List } from "lucide-react";
+import { Loader2, MapPin, ChevronRight, SlidersHorizontal, X, Navigation, Map as MapIcon, List, ChevronUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 const ExploreMap = lazy(() => import("@/components/explore/ExploreMap"));
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -147,12 +147,27 @@ const ExplorePage = () => {
 
   const { data: cities = [] } = useCityList();
 
+  // Bron-counts berekenen vanuit de volledige mapData set zodat de aantallen
+  // kloppen met de actieve filters (city/listingType/postcode).
   const activeSources = useMemo(() => {
-    return Object.entries(SOURCE_SITE_LABELS).map(([value, label]) => ({ value, label, count: 0 }));
-  }, []);
+    const counts = new Map<string, number>();
+    const source = postcodeCoords ? filteredMapProperties : (mapData || []);
+    for (const p of source as any[]) {
+      const key = (p.source_site || "").toLowerCase();
+      if (!key) continue;
+      counts.set(key, (counts.get(key) || 0) + 1);
+    }
+    return Object.entries(SOURCE_SITE_LABELS).map(([value, label]) => ({
+      value,
+      label,
+      count: counts.get(value) || 0,
+    }));
+  }, [mapData, filteredMapProperties, postcodeCoords]);
 
   const [hoveredPropertyId, setHoveredPropertyId] = useState<string | null>(null);
   const [listPage, setListPage] = useState(1);
+  const [mapCollapsed, setMapCollapsed] = useState(false);
+  const listScrollRef = useRef<HTMLDivElement>(null);
 
   const totalListPages = Math.max(1, Math.ceil(filteredProperties.length / LIST_PAGE_SIZE));
   const paginatedProperties = useMemo(() => {
@@ -167,6 +182,19 @@ const ExplorePage = () => {
   useEffect(() => {
     if (listPage > totalListPages) setListPage(totalListPages);
   }, [listPage, totalListPages]);
+
+  // Auto-collapse de kaart zodra de gebruiker door de lijst begint te scrollen.
+  useEffect(() => {
+    const el = listScrollRef.current;
+    if (!el || isMobile) return;
+    const onScroll = () => {
+      if (el.scrollTop > 80) {
+        setMapCollapsed(true);
+      }
+    };
+    el.addEventListener("scroll", onScroll, { passive: true });
+    return () => el.removeEventListener("scroll", onScroll);
+  }, [isMobile]);
 
   const clearPostcode = useCallback(() => {
     setPostcode("");
@@ -212,6 +240,28 @@ const ExplorePage = () => {
             Te koop
           </Button>
         </div>
+      </div>
+
+      {/* Bron-filter direct na Aanbod, boven Postcode/Plaatsen */}
+      <Separator />
+      <div className="p-5">
+        <Label className="mb-2 block text-sm font-medium">Bron</Label>
+        <Select
+          value={selectedSource || "all"}
+          onValueChange={(v) => setSelectedSource(v === "all" ? null : v)}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Alle bronnen" />
+          </SelectTrigger>
+          <SelectContent className="z-50 bg-popover">
+            <SelectItem value="all">Alle bronnen</SelectItem>
+            {activeSources.map(({ value, label, count }) => (
+              <SelectItem key={value} value={value}>
+                {label} ({count})
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       <Separator />
@@ -325,31 +375,6 @@ const ExplorePage = () => {
           )}
         </div>
       </div>
-
-      {activeSources.length > 0 && (
-        <>
-          <Separator />
-          <div className="p-5">
-            <Label className="mb-2 block text-sm font-medium">Bron</Label>
-            <Select
-              value={selectedSource || "all"}
-              onValueChange={(v) => setSelectedSource(v === "all" ? null : v)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Alle bronnen" />
-              </SelectTrigger>
-              <SelectContent className="z-50 bg-popover">
-                <SelectItem value="all">Alle bronnen</SelectItem>
-                {activeSources.map(({ value, label, count }) => (
-                  <SelectItem key={value} value={value}>
-                    {label} ({count})
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </>
-      )}
     </>
   );
   const renderPropertyList = () => {
@@ -484,7 +509,12 @@ const ExplorePage = () => {
             {/* Desktop: split map + list */}
             {!isMobile && (
               <>
-                <div className="relative h-1/2 min-h-[300px] border-b">
+                <div
+                  className={cn(
+                    "relative border-b transition-[height] duration-300 ease-in-out overflow-hidden",
+                    mapCollapsed ? "h-0 min-h-0 border-b-0" : "h-1/2 min-h-[300px]"
+                  )}
+                >
                   {isMapLoading ? (
                     <div className="flex h-full items-center justify-center bg-muted/50">
                       <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -498,7 +528,23 @@ const ExplorePage = () => {
                     </Suspense>
                   )}
                 </div>
-                <div className="flex-1 overflow-y-auto p-6">
+                <div ref={listScrollRef} className="relative flex-1 overflow-y-auto p-6">
+                  {mapCollapsed && (
+                    <div className="sticky top-0 z-20 -mx-6 -mt-6 mb-4 flex justify-center border-b bg-card/95 px-6 py-2 backdrop-blur">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          setMapCollapsed(false);
+                          listScrollRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+                        }}
+                        className="gap-1.5"
+                      >
+                        <ChevronUp className="h-4 w-4" />
+                        Bekijk de kaart
+                      </Button>
+                    </div>
+                  )}
                   {renderPropertyList()}
                 </div>
               </>
