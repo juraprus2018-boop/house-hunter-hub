@@ -175,7 +175,8 @@ export const useMapProperties = (filters?: Omit<PropertyFilters, "page" | "pageS
       return allMapProperties;
     },
     enabled,
-    staleTime: 60 * 1000,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
   });
 };
 
