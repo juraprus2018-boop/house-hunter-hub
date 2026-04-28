@@ -49,7 +49,7 @@ import MortgageCalculator from "@/components/properties/MortgageCalculator";
 import AffordabilityWidget from "@/components/properties/AffordabilityWidget";
 import NibudBudgetBreakdown from "@/components/properties/NibudBudgetBreakdown";
 import EnergyCompareTeaser from "@/components/energy/EnergyCompareTeaser";
-import SocialSlidesPreview from "@/components/properties/SocialSlidesPreview";
+import PropertyReelSlider from "@/components/properties/PropertyReelSlider";
 import { cn } from "@/lib/utils";
 import { cityPath } from "@/lib/cities";
 import {
@@ -917,13 +917,11 @@ const PropertyDetail = () => {
           </div>
         </section>
 
-        {/* ── Social media slides preview ── */}
+        {/* ── Reel-stijl verticale slider ── */}
         <section className="border-t py-10">
           <div className="container lg:max-w-5xl">
-            <SocialSlidesPreview
+            <PropertyReelSlider
               property={{
-                id: property.id,
-                title: property.title,
                 city: property.city,
                 price: Number(property.price),
                 listing_type: property.listing_type,
@@ -935,7 +933,6 @@ const PropertyDetail = () => {
                 street: property.street,
                 house_number: property.house_number,
                 images: property.images || [],
-                slug: property.slug,
               }}
             />
           </div>
