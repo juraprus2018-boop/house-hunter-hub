@@ -9,25 +9,14 @@ const useTopCities = () => {
   return useQuery({
     queryKey: ["top-cities-simple"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("properties")
-        .select("city")
-        .eq("status", "actief");
-
+      const { data, error } = await supabase.rpc("get_city_counts");
       if (error) throw error;
-
-      const cityCounts: Record<string, number> = {};
-      data.forEach((p) => {
-        const c = p.city.trim();
-        if (c && c !== "Onbekend") {
-          cityCounts[c] = (cityCounts[c] || 0) + 1;
-        }
-      });
-
-      return Object.entries(cityCounts)
-        .sort((a, b) => b[1] - a[1])
+      return (data ?? [])
         .slice(0, 12)
-        .map(([city, count]) => ({ city, count }));
+        .map((row: { city: string; count: number }) => ({
+          city: row.city,
+          count: Number(row.count),
+        }));
     },
     staleTime: 5 * 60 * 1000,
   });
