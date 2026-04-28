@@ -42,7 +42,7 @@ import {
   Tag,
   X,
 } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRecentlyViewed } from "@/hooks/useRecentlyViewed";
 import { trackDaisyconClick } from "@/hooks/usePageTracking";
 import MortgageCalculator from "@/components/properties/MortgageCalculator";
@@ -70,6 +70,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import AdSlot from "@/components/ads/AdSlot";
+import PropertyStickyBar from "@/components/properties/PropertyStickyBar";
 
 const SOURCE_SITE_META: Record<string, { label: string; color: string }> = {
   wooniezie: { label: "Wooniezie", color: "#FF6B00" },
