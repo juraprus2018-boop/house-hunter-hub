@@ -49,7 +49,6 @@ import MortgageCalculator from "@/components/properties/MortgageCalculator";
 import AffordabilityWidget from "@/components/properties/AffordabilityWidget";
 import NibudBudgetBreakdown from "@/components/properties/NibudBudgetBreakdown";
 import EnergyCompareTeaser from "@/components/energy/EnergyCompareTeaser";
-import PropertyReelSlider from "@/components/properties/PropertyReelSlider";
 import { cn } from "@/lib/utils";
 import { cityPath } from "@/lib/cities";
 import {
@@ -917,24 +916,6 @@ const PropertyDetail = () => {
           </div>
         </section>
 
-        {/* ── Extra horizontale full-width foto-slider ── */}
-        <section className="border-t border-b bg-black">
-          <PropertyReelSlider
-              property={{
-                city: property.city,
-                price: Number(property.price),
-                listing_type: property.listing_type,
-                property_type: property.property_type,
-                surface_area: property.surface_area,
-                bedrooms: property.bedrooms,
-                bathrooms: property.bathrooms,
-                energy_label: property.energy_label,
-                street: property.street,
-                house_number: property.house_number,
-                images: property.images || [],
-              }}
-            />
-        </section>
 
         {/* ── Comments Section ── */}
         <PropertyComments propertyId={property.id} />
