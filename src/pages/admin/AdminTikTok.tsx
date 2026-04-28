@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import AdminLayout from "./AdminLayout";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -17,6 +17,9 @@ import {
   Loader2,
   Search as SearchIcon,
   ImageIcon,
+  Link2,
+  Zap,
+  AlertTriangle,
 } from "lucide-react";
 import {
   generateSlides,
@@ -33,6 +36,77 @@ const AdminTikTok = () => {
   const [filter, setFilter] = useState("");
   const [previews, setPreviews] = useState<Record<string, string[]>>({});
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [autoPosting, setAutoPosting] = useState(false);
+
+  // ── TikTok account status ──
+  const { data: account, refetch: refetchAccount } = useQuery({
+    queryKey: ["tiktok-account"],
+    queryFn: async () => {
+      const { data } = await (supabase as any)
+        .from("tiktok_oauth_tokens")
+        .select("open_id,display_name,avatar_url,expires_at,refresh_expires_at,updated_at")
+        .order("updated_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      return data as
+        | {
+            open_id: string;
+            display_name: string | null;
+            avatar_url: string | null;
+            expires_at: string;
+            refresh_expires_at: string | null;
+            updated_at: string;
+          }
+        | null;
+    },
+  });
+
+  // ── Detect ?connected=1 / ?error=... after OAuth callback ──
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("connected") === "1") {
+      toast.success("TikTok account verbonden");
+      refetchAccount();
+      window.history.replaceState({}, "", window.location.pathname);
+    } else if (params.get("error")) {
+      toast.error("TikTok koppeling mislukt", { description: params.get("error") ?? "" });
+      window.history.replaceState({}, "", window.location.pathname);
+    }
+  }, [refetchAccount]);
+
+  const handleConnect = async () => {
+    try {
+      const { data, error } = await supabase.functions.invoke("tiktok-oauth-start");
+      if (error) throw error;
+      const url = (data as { url?: string } | null)?.url;
+      if (!url) throw new Error("Geen URL ontvangen");
+      window.location.href = url;
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Onbekende fout";
+      toast.error("Kon TikTok-koppeling niet starten", { description: msg });
+    }
+  };
+
+  const handleAutoPost = async (propertyId?: string) => {
+    setAutoPosting(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("tiktok-post-property", {
+        body: propertyId ? { property_id: propertyId } : {},
+      });
+      if (error) throw error;
+      const res = data as { success: boolean; message?: string; error?: string };
+      if (!res.success) throw new Error(res.error || "Onbekende fout");
+      toast.success("Video staat in je TikTok inbox", {
+        description: res.message ?? "Open de TikTok app en tap 'Post'.",
+      });
+      qc.invalidateQueries({ queryKey: ["admin-tiktok-properties"] });
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Onbekende fout";
+      toast.error("Auto-post mislukt", { description: msg });
+    } finally {
+      setAutoPosting(false);
+    }
+  };
 
   const { data, isLoading } = useQuery({
     queryKey: ["admin-tiktok-properties"],
@@ -137,10 +211,10 @@ const AdminTikTok = () => {
           <div>
             <h1 className="font-display text-2xl font-bold text-foreground sm:text-3xl">
               <Music2 className="mr-2 inline h-7 w-7 text-primary" />
-              TikTok semi-automatisch
+              TikTok automatisch
             </h1>
             <p className="mt-1 text-sm text-muted-foreground">
-              Genereer 5 verticale slides per woning, kopieer caption + hashtags, upload zelf via TikTok Photo Mode.
+              Volledig automatisch: dagelijks wordt een nieuwe woning omgezet naar een 9:16 video en in jouw TikTok inbox geplaatst. Open TikTok en tap 1× 'Post'.
             </p>
           </div>
           <Button onClick={handleOpenTikTok} variant="default" className="gap-2">
@@ -148,6 +222,68 @@ const AdminTikTok = () => {
             Open TikTok Upload
           </Button>
         </div>
+
+        {/* ── Account status / connect ── */}
+        <Card className="p-5">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-4">
+              {account?.avatar_url ? (
+                <img
+                  src={account.avatar_url}
+                  alt=""
+                  className="h-12 w-12 rounded-full border object-cover"
+                />
+              ) : (
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted">
+                  <Music2 className="h-5 w-5 text-muted-foreground" />
+                </div>
+              )}
+              <div className="min-w-0">
+                {account ? (
+                  <>
+                    <div className="flex items-center gap-2">
+                      <span className="font-semibold">{account.display_name || "TikTok"}</span>
+                      <Badge variant="secondary" className="gap-1">
+                        <CheckCircle2 className="h-3 w-3" /> Verbonden
+                      </Badge>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Token verloopt {new Date(account.expires_at).toLocaleString("nl-NL")} (auto-vernieuwd)
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <div className="flex items-center gap-2">
+                      <span className="font-semibold">Geen TikTok-account verbonden</span>
+                      <Badge variant="outline" className="gap-1 text-amber-700">
+                        <AlertTriangle className="h-3 w-3" /> Vereist
+                      </Badge>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Verbind je TikTok account zodat dagelijks automatisch een woning naar je inbox wordt geplaatst.
+                    </p>
+                  </>
+                )}
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Button onClick={handleConnect} variant={account ? "outline" : "default"} className="gap-2">
+                <Link2 className="h-4 w-4" />
+                {account ? "Opnieuw verbinden" : "Verbind TikTok"}
+              </Button>
+              {account && (
+                <Button onClick={() => handleAutoPost()} disabled={autoPosting} className="gap-2">
+                  {autoPosting ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Zap className="h-4 w-4" />
+                  )}
+                  Post nieuwste woning nu
+                </Button>
+              )}
+            </div>
+          </div>
+        </Card>
 
         {/* Werkwijze */}
         <Card className="bg-muted/40 p-5">
@@ -218,6 +354,21 @@ const AdminTikTok = () => {
                       </div>
 
                       <div className="flex flex-wrap gap-2">
+                        {account && (
+                          <Button
+                            size="sm"
+                            onClick={() => handleAutoPost(p.id)}
+                            disabled={autoPosting}
+                            className="gap-1"
+                          >
+                            {autoPosting ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <Zap className="h-4 w-4" />
+                            )}
+                            Auto-post naar TikTok
+                          </Button>
+                        )}
                         <Button
                           size="sm"
                           variant="outline"
