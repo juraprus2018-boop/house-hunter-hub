@@ -42,7 +42,7 @@ import {
   Tag,
   X,
 } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRecentlyViewed } from "@/hooks/useRecentlyViewed";
 import { trackDaisyconClick } from "@/hooks/usePageTracking";
 import MortgageCalculator from "@/components/properties/MortgageCalculator";
@@ -70,6 +70,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import AdSlot from "@/components/ads/AdSlot";
+import PropertyStickyBar from "@/components/properties/PropertyStickyBar";
 
 const SOURCE_SITE_META: Record<string, { label: string; color: string }> = {
   wooniezie: { label: "Wooniezie", color: "#FF6B00" },
@@ -97,6 +98,7 @@ const PropertyDetail = () => {
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [contactOpen, setContactOpen] = useState(false);
   const [contactForm, setContactForm] = useState({ name: "", email: "", phone: "", message: "" });
+  const galleryRef = useRef<HTMLElement>(null);
   const [sending, setSending] = useState(false);
 
   // Track recently viewed
@@ -326,6 +328,20 @@ const PropertyDetail = () => {
 
       <Header />
 
+      <PropertyStickyBar
+        propertyId={property.id}
+        title={property.title}
+        city={property.city}
+        price={Number(property.price)}
+        listingType={property.listing_type}
+        bedrooms={property.bedrooms}
+        surfaceArea={property.surface_area}
+        sourceUrl={sourceInfo.source_url}
+        sourceSite={sourceInfo.source_site}
+        triggerRef={galleryRef}
+        onContact={() => setContactOpen(true)}
+      />
+
       <main className="flex-1">
         {/* ── Inactive Banner ── */}
         {property.status !== "actief" && (
@@ -344,7 +360,7 @@ const PropertyDetail = () => {
         )}
 
         {/* ── Photo Gallery ── */}
-        <section className="relative bg-muted">
+        <section ref={galleryRef} className="relative bg-muted">
           <div className="cursor-pointer" onClick={() => { setLightboxOpen(true); setCurrentImageIndex(0); }}>
             {images.length >= 3 ? (
               <div className="mx-auto grid h-[300px] max-w-screen-2xl grid-cols-4 gap-1 md:h-[480px]">
