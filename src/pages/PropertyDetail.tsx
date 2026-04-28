@@ -328,6 +328,20 @@ const PropertyDetail = () => {
 
       <Header />
 
+      <PropertyStickyBar
+        propertyId={property.id}
+        title={property.title}
+        city={property.city}
+        price={Number(property.price)}
+        listingType={property.listing_type}
+        bedrooms={property.bedrooms}
+        surfaceArea={property.surface_area}
+        sourceUrl={sourceInfo.source_url}
+        sourceSite={sourceInfo.source_site}
+        triggerRef={galleryRef}
+        onContact={() => setContactOpen(true)}
+      />
+
       <main className="flex-1">
         {/* ── Inactive Banner ── */}
         {property.status !== "actief" && (
