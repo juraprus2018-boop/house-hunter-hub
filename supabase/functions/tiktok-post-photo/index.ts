@@ -132,8 +132,11 @@ Deno.serve(async (req) => {
         ? `Te huur in ${prop.city}`
         : `Te koop in ${prop.city}`;
 
-    // TikTok Photo Post via content/init met MEDIA_UPLOAD (= draft/inbox)
-    // Compatibel met sandbox-scopes (video.upload).
+    // DIRECT_POST: publiceert direct op het profiel zonder draft.
+    // Vereist Direct Post toggle aan in TikTok Developer Portal.
+    // Niet-audited apps: privacy_level MOET SELF_ONLY zijn (alleen jij ziet 'm).
+    // Na app audit: zet env var TIKTOK_PRIVACY_LEVEL=PUBLIC_TO_EVERYONE.
+    const PRIVACY_LEVEL = Deno.env.get("TIKTOK_PRIVACY_LEVEL") || "SELF_ONLY";
     const initRes = await fetch("https://open.tiktokapis.com/v2/post/publish/content/init/", {
       method: "POST",
       headers: {
@@ -145,7 +148,7 @@ Deno.serve(async (req) => {
           title,
           description: caption,
           disable_comment: false,
-          privacy_level: "SELF_ONLY", // verplicht in Sandbox / unaudited apps
+          privacy_level: PRIVACY_LEVEL,
           auto_add_music: true,
         },
         source_info: {
@@ -153,7 +156,7 @@ Deno.serve(async (req) => {
           photo_cover_index: 0,
           photo_images: photos,
         },
-        post_mode: "MEDIA_UPLOAD",
+        post_mode: "DIRECT_POST",
         media_type: "PHOTO",
       }),
     });
@@ -179,7 +182,9 @@ Deno.serve(async (req) => {
         publish_id: publishId,
         photo_count: photos.length,
         message:
-          "Foto-carrousel naar TikTok inbox gestuurd. Open de TikTok-app en tik op 'Post' om te publiceren.",
+          PRIVACY_LEVEL === "PUBLIC_TO_EVERYONE"
+            ? "Foto-carrousel direct gepubliceerd op TikTok."
+            : "Foto-carrousel direct geplaatst (privé / SELF_ONLY zichtbaar tot app audit).",
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );

@@ -250,17 +250,32 @@ Deno.serve(async (req) => {
       property_type: prop.property_type,
     });
 
-    const initRes = await fetch("https://open.tiktokapis.com/v2/post/publish/inbox/video/init/", {
+    // DIRECT_POST: publiceert direct op het profiel zonder draft.
+    // Vereist Direct Post toggle aan in TikTok Developer Portal.
+    // Niet-audited apps: privacy_level MOET SELF_ONLY zijn (alleen jij ziet 'm).
+    // Na app audit: zet PRIVACY_LEVEL hieronder op "PUBLIC_TO_EVERYONE".
+    const PRIVACY_LEVEL = Deno.env.get("TIKTOK_PRIVACY_LEVEL") || "SELF_ONLY";
+    const initRes = await fetch("https://open.tiktokapis.com/v2/post/publish/video/init/", {
       method: "POST",
       headers: {
         Authorization: `Bearer ${token.access_token}`,
         "Content-Type": "application/json; charset=UTF-8",
       },
       body: JSON.stringify({
+        post_info: {
+          title: caption.slice(0, 2200),
+          privacy_level: PRIVACY_LEVEL,
+          disable_duet: false,
+          disable_comment: false,
+          disable_stitch: false,
+          video_cover_timestamp_ms: 1000,
+        },
         source_info: {
           source: "PULL_FROM_URL",
           video_url: videoUrl,
         },
+        post_mode: "DIRECT_POST",
+        media_type: "VIDEO",
       }),
     });
     const initJson = await initRes.json();
@@ -285,7 +300,10 @@ Deno.serve(async (req) => {
         property_id: prop.id,
         publish_id: publishId,
         video_url: videoUrl,
-        message: "Video uploaded to TikTok inbox. Open TikTok app and tap 'Post' to publish.",
+        message:
+          PRIVACY_LEVEL === "PUBLIC_TO_EVERYONE"
+            ? "Video direct gepubliceerd op TikTok."
+            : "Video direct geplaatst (privé / SELF_ONLY zichtbaar tot app audit).",
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
