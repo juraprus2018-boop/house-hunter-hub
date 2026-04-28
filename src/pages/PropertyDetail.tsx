@@ -917,10 +917,9 @@ const PropertyDetail = () => {
           </div>
         </section>
 
-        {/* ── Reel-stijl verticale slider ── */}
-        <section className="border-t py-10">
-          <div className="container lg:max-w-5xl">
-            <PropertyReelSlider
+        {/* ── Extra horizontale full-width foto-slider ── */}
+        <section className="border-t border-b bg-black">
+          <PropertyReelSlider
               property={{
                 city: property.city,
                 price: Number(property.price),
@@ -935,7 +934,6 @@ const PropertyDetail = () => {
                 images: property.images || [],
               }}
             />
-          </div>
         </section>
 
         {/* ── Comments Section ── */}
