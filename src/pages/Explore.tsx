@@ -9,7 +9,7 @@ import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useProperties, useMapProperties, useCityList } from "@/hooks/useProperties";
-import { Loader2, MapPin, ChevronRight, SlidersHorizontal, X, Navigation, Map as MapIcon, List } from "lucide-react";
+import { Loader2, MapPin, ChevronRight, SlidersHorizontal, X, Navigation, Map as MapIcon, List, ChevronUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 const ExploreMap = lazy(() => import("@/components/explore/ExploreMap"));
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -147,12 +147,27 @@ const ExplorePage = () => {
 
   const { data: cities = [] } = useCityList();
 
+  // Bron-counts berekenen vanuit de volledige mapData set zodat de aantallen
+  // kloppen met de actieve filters (city/listingType/postcode).
   const activeSources = useMemo(() => {
-    return Object.entries(SOURCE_SITE_LABELS).map(([value, label]) => ({ value, label, count: 0 }));
-  }, []);
+    const counts = new Map<string, number>();
+    const source = postcodeCoords ? filteredMapProperties : (mapData || []);
+    for (const p of source as any[]) {
+      const key = (p.source_site || "").toLowerCase();
+      if (!key) continue;
+      counts.set(key, (counts.get(key) || 0) + 1);
+    }
+    return Object.entries(SOURCE_SITE_LABELS).map(([value, label]) => ({
+      value,
+      label,
+      count: counts.get(value) || 0,
+    }));
+  }, [mapData, filteredMapProperties, postcodeCoords]);
 
   const [hoveredPropertyId, setHoveredPropertyId] = useState<string | null>(null);
   const [listPage, setListPage] = useState(1);
+  const [mapCollapsed, setMapCollapsed] = useState(false);
+  const listScrollRef = useRef<HTMLDivElement>(null);
 
   const totalListPages = Math.max(1, Math.ceil(filteredProperties.length / LIST_PAGE_SIZE));
   const paginatedProperties = useMemo(() => {
@@ -167,6 +182,19 @@ const ExplorePage = () => {
   useEffect(() => {
     if (listPage > totalListPages) setListPage(totalListPages);
   }, [listPage, totalListPages]);
+
+  // Auto-collapse de kaart zodra de gebruiker door de lijst begint te scrollen.
+  useEffect(() => {
+    const el = listScrollRef.current;
+    if (!el || isMobile) return;
+    const onScroll = () => {
+      if (el.scrollTop > 80) {
+        setMapCollapsed(true);
+      }
+    };
+    el.addEventListener("scroll", onScroll, { passive: true });
+    return () => el.removeEventListener("scroll", onScroll);
+  }, [isMobile]);
 
   const clearPostcode = useCallback(() => {
     setPostcode("");
