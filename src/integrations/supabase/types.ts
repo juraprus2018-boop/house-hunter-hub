@@ -1463,6 +1463,13 @@ export type Database = {
     }
     Functions: {
       canonical_city_slug: { Args: { _name: string }; Returns: string }
+      get_city_counts: {
+        Args: never
+        Returns: {
+          city: string
+          count: number
+        }[]
+      }
       get_home_stats: { Args: never; Returns: Json }
       has_role: {
         Args: {
