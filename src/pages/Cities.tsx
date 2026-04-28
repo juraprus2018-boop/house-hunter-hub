@@ -15,21 +15,12 @@ const useCityCounts = () =>
   useQuery({
     queryKey: ["city-counts"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("properties")
-        .select("city")
-        .eq("status", "actief");
+      const { data, error } = await supabase.rpc("get_city_counts");
       if (error) throw error;
-
-      const counts: Record<string, number> = {};
-      data.forEach((p) => {
-        const c = p.city.trim();
-        counts[c] = (counts[c] || 0) + 1;
-      });
-
-      return Object.entries(counts)
-        .map(([city, count]) => ({ city, count }))
-        .sort((a, b) => b.count - a.count);
+      return (data ?? []).map((row: { city: string; count: number }) => ({
+        city: row.city,
+        count: Number(row.count),
+      }));
     },
   });
 
