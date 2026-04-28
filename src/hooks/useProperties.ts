@@ -175,7 +175,8 @@ export const useMapProperties = (filters?: Omit<PropertyFilters, "page" | "pageS
       return allMapProperties;
     },
     enabled,
-    staleTime: 60 * 1000,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
   });
 };
 
@@ -203,29 +204,31 @@ export const useCityList = () => {
   return useQuery({
     queryKey: ["city-list"],
     queryFn: async () => {
-      const allCities: string[] = [];
-      let from = 0;
-      while (true) {
-        const { data, error } = await supabase
+      // Use the get_city_counts RPC for fast aggregation (server-side GROUP BY)
+      // instead of fetching every row and counting client-side.
+      const { data, error } = await (supabase as any).rpc("get_city_counts");
+      if (error) {
+        // Fallback to old behaviour on error
+        const { data: rows } = await supabase
           .from("properties")
           .select("city")
           .eq("status", "actief")
-          .range(from, from + 999);
-        if (error) throw error;
-        if (!data || data.length === 0) break;
-        allCities.push(...data.map((d) => d.city));
-        if (data.length < 1000) break;
-        from += 1000;
+          .limit(1000);
+        const counts = new Map<string, number>();
+        for (const r of rows || []) {
+          if (r.city) counts.set(r.city, (counts.get(r.city) || 0) + 1);
+        }
+        return Array.from(counts.entries())
+          .sort((a, b) => b[1] - a[1])
+          .map(([name, count]) => ({ name, count }));
       }
-      const cityCount = new Map<string, number>();
-      for (const city of allCities) {
-        if (city) cityCount.set(city, (cityCount.get(city) || 0) + 1);
-      }
-      return Array.from(cityCount.entries())
-        .sort((a, b) => b[1] - a[1])
-        .map(([name, count]) => ({ name, count }));
+      return (data || [])
+        .map((r: any) => ({ name: r.city as string, count: Number(r.count) || 0 }))
+        .filter((r: any) => r.name)
+        .sort((a: any, b: any) => b.count - a.count);
     },
-    staleTime: 5 * 60 * 1000,
+    staleTime: 10 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
   });
 };
 

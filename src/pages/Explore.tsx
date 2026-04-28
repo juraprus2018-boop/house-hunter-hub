@@ -453,7 +453,12 @@ const ExplorePage = () => {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setSidebarOpen(true)}
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setSidebarOpen(true);
+                  }}
                   className="gap-1.5 h-8 px-2.5"
                 >
                   <SlidersHorizontal className="h-3.5 w-3.5" />
