@@ -87,18 +87,25 @@ const AdminTikTok = () => {
     }
   };
 
-  const handleAutoPost = async (propertyId?: string) => {
+  const handleAutoPost = async (
+    propertyId?: string,
+    mode: "video" | "photo" = "video",
+  ) => {
     setAutoPosting(true);
     try {
-      const { data, error } = await supabase.functions.invoke("tiktok-post-property", {
+      const fn = mode === "photo" ? "tiktok-post-photo" : "tiktok-post-property";
+      const { data, error } = await supabase.functions.invoke(fn, {
         body: propertyId ? { property_id: propertyId } : {},
       });
       if (error) throw error;
       const res = data as { success: boolean; message?: string; error?: string };
       if (!res.success) throw new Error(res.error || "Onbekende fout");
-      toast.success("Video staat in je TikTok inbox", {
-        description: res.message ?? "Open de TikTok app en tap 'Post'.",
-      });
+      toast.success(
+        mode === "photo"
+          ? "Foto-carrousel staat in je TikTok inbox"
+          : "Video staat in je TikTok inbox",
+        { description: res.message ?? "Open de TikTok app en tap 'Post'." },
+      );
       qc.invalidateQueries({ queryKey: ["admin-tiktok-properties"] });
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Onbekende fout";
@@ -278,7 +285,22 @@ const AdminTikTok = () => {
                   ) : (
                     <Zap className="h-4 w-4" />
                   )}
-                  Post nieuwste woning nu
+                  Post nieuwste (video)
+                </Button>
+              )}
+              {account && (
+                <Button
+                  onClick={() => handleAutoPost(undefined, "photo")}
+                  disabled={autoPosting}
+                  variant="secondary"
+                  className="gap-2"
+                >
+                  {autoPosting ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Zap className="h-4 w-4" />
+                  )}
+                  Post nieuwste (foto's)
                 </Button>
               )}
             </div>
