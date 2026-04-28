@@ -436,11 +436,16 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Sort feeds: smallest first (by properties_imported) so small feeds like Kamernet
-    // get processed before large ones like Huurwoningen.nl that may cause timeouts
+    // Round-robin: process the feed that hasn't been imported the longest first.
+    // This guarantees every feed gets a turn (otherwise large feeds like Kamernet
+    // eat the entire time budget and Huurwoningen.nl / Huurzone.nl never run).
     if (!feedId) {
-      feeds.sort((a: any, b: any) => (a.properties_imported || 0) - (b.properties_imported || 0));
-      console.log(`Feed processing order: ${feeds.map((f: any) => `${f.name} (${f.properties_imported || 0})`).join(', ')}`);
+      feeds.sort((a: any, b: any) => {
+        const aTime = a.last_import_at ? new Date(a.last_import_at).getTime() : 0;
+        const bTime = b.last_import_at ? new Date(b.last_import_at).getTime() : 0;
+        return aTime - bTime; // oldest (or never imported) first
+      });
+      console.log(`Feed processing order: ${feeds.map((f: any) => `${f.name} (last: ${f.last_import_at || 'never'})`).join(', ')}`);
     }
 
     // Create import job for progress tracking
