@@ -49,6 +49,7 @@ import MortgageCalculator from "@/components/properties/MortgageCalculator";
 import AffordabilityWidget from "@/components/properties/AffordabilityWidget";
 import NibudBudgetBreakdown from "@/components/properties/NibudBudgetBreakdown";
 import EnergyCompareTeaser from "@/components/energy/EnergyCompareTeaser";
+import SocialSlidesPreview from "@/components/properties/SocialSlidesPreview";
 import { cn } from "@/lib/utils";
 import { cityPath } from "@/lib/cities";
 import {
@@ -913,6 +914,30 @@ const PropertyDetail = () => {
         <section className="border-t py-10">
           <div className="container lg:max-w-5xl">
             <EnergyCompareTeaser variant="property" context={property.city} />
+          </div>
+        </section>
+
+        {/* ── Social media slides preview ── */}
+        <section className="border-t py-10">
+          <div className="container lg:max-w-5xl">
+            <SocialSlidesPreview
+              property={{
+                id: property.id,
+                title: property.title,
+                city: property.city,
+                price: Number(property.price),
+                listing_type: property.listing_type,
+                property_type: property.property_type,
+                surface_area: property.surface_area,
+                bedrooms: property.bedrooms,
+                bathrooms: property.bathrooms,
+                energy_label: property.energy_label,
+                street: property.street,
+                house_number: property.house_number,
+                images: property.images || [],
+                slug: property.slug,
+              }}
+            />
           </div>
         </section>
 
