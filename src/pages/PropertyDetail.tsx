@@ -98,6 +98,7 @@ const PropertyDetail = () => {
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [contactOpen, setContactOpen] = useState(false);
   const [contactForm, setContactForm] = useState({ name: "", email: "", phone: "", message: "" });
+  const galleryRef = useRef<HTMLElement>(null);
   const [sending, setSending] = useState(false);
 
   // Track recently viewed
@@ -345,7 +346,7 @@ const PropertyDetail = () => {
         )}
 
         {/* ── Photo Gallery ── */}
-        <section className="relative bg-muted">
+        <section ref={galleryRef} className="relative bg-muted">
           <div className="cursor-pointer" onClick={() => { setLightboxOpen(true); setCurrentImageIndex(0); }}>
             {images.length >= 3 ? (
               <div className="mx-auto grid h-[300px] max-w-screen-2xl grid-cols-4 gap-1 md:h-[480px]">
