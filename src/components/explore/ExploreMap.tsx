@@ -165,14 +165,14 @@ const ExploreMap = ({ properties, hoveredPropertyId, commute }: ExploreMapProps)
         [Number(property.latitude), Number(property.longitude)],
         { icon: createCustomIcon(false) }
       ).bindPopup(`
-        <div style="min-width:200px;font-family:system-ui,sans-serif">
-          ${property.images?.[0] ? `<img src="${property.images[0]}" style="width:100%;height:100px;object-fit:cover;border-radius:8px;margin-bottom:8px" />` : ""}
-          <div style="font-weight:600;font-size:14px;margin-bottom:4px">${property.title}</div>
-          <div style="color:#666;font-size:12px;margin-bottom:6px">${property.street || ""} ${property.house_number || ""}, ${property.city}</div>
-          <div style="font-weight:700;font-size:15px;color:hsl(var(--primary));margin-bottom:8px">${formatPrice(Number(property.price), property.listing_type)}</div>
-          <div style="display:flex;gap:6px;flex-wrap:wrap">
-            <a href="/woning/${property.slug || property.id}" style="display:inline-block;padding:6px 12px;background:hsl(var(--primary));color:white;border-radius:6px;text-decoration:none;font-size:12px;font-weight:600">Bekijken →</a>
-            ${commute ? `<button data-route-id="${property.id}" style="cursor:pointer;padding:6px 12px;background:white;color:hsl(var(--primary));border:1px solid hsl(var(--primary));border-radius:6px;font-size:12px;font-weight:600">Toon route</button>` : ""}
+        <div style="min-width:220px;padding:4px 6px 6px;font-family:system-ui,sans-serif">
+          ${property.images?.[0] ? `<img src="${property.images[0]}" style="width:100%;height:110px;object-fit:cover;border-radius:8px;margin-bottom:10px;display:block" />` : ""}
+          <div style="font-weight:600;font-size:14px;line-height:1.3;margin-bottom:4px">${property.title}</div>
+          <div style="color:#666;font-size:12px;margin-bottom:8px">${property.street || ""} ${property.house_number || ""}, ${property.city}</div>
+          <div style="font-weight:700;font-size:15px;color:hsl(var(--primary));margin-bottom:12px">${formatPrice(Number(property.price), property.listing_type)}</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;padding-bottom:2px">
+            <a href="/woning/${property.slug || property.id}" style="display:inline-block;padding:8px 14px;background:hsl(var(--primary));color:white;border-radius:6px;text-decoration:none;font-size:13px;font-weight:600;line-height:1">Bekijken →</a>
+            ${commute ? `<button data-route-id="${property.id}" style="cursor:pointer;padding:8px 14px;background:white;color:hsl(var(--primary));border:1px solid hsl(var(--primary));border-radius:6px;font-size:13px;font-weight:600;line-height:1">Toon route</button>` : ""}
           </div>
         </div>
       `, { maxWidth: 250, className: "custom-popup" });
